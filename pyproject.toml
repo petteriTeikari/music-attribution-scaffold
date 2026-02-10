@@ -17,6 +17,7 @@ classifiers = [
 dependencies = [
     "alembic>=1.14",
     "asyncpg>=0.30",
+    "fastapi>=0.115",
     "httpx>=0.28",
     "jellyfish>=1.1",
     "loguru>=0.7.0",
@@ -34,6 +35,7 @@ dependencies = [
     "splink>=4.0",
     "sqlalchemy[asyncio]>=2.0",
     "thefuzz>=0.22",
+    "uvicorn>=0.34",
     "valkey>=6.0",
 ]
 
