@@ -1,0 +1,212 @@
+# DPP Traceability Domain Overlay
+#
+# Customizes the domain-agnostic scaffold for Digital Product Passport
+# traceability in physical goods supply chains.
+
+domain_id: dpp_traceability
+title: "Digital Product Passport (DPP) Traceability"
+status: active
+last_updated: 2026-02-10
+
+description: >
+  Supply chain traceability for physical goods, focused on EU ESPR
+  (Ecodesign for Sustainable Products Regulation) Digital Product
+  Passport compliance. Tracks products from raw materials through
+  manufacturing to consumer, with provenance and sustainability claims.
+
+  Companion domain from the AI Passport v2 manuscript on DPP as
+  agentic supply chain infrastructure.
+
+# --- Core Entities ---
+
+entities:
+  - entity_type: product
+    description: "Finished good with a Digital Product Passport"
+    identifiers: [GTIN, GS1 Digital Link, EU DPP ID]
+    resolution_difficulty: medium
+    notes: "Product variants (size, color) complicate identity"
+
+  - entity_type: component
+    description: "Sub-assembly or part within a product"
+    identifiers: [Supplier part number, batch/lot ID]
+    resolution_difficulty: high
+    notes: "Components often lack standardized identifiers"
+
+  - entity_type: material
+    description: "Raw material with sustainability and compliance attributes"
+    identifiers: [CAS number (chemicals), HS code (trade)]
+    resolution_difficulty: high
+    notes: "Material composition claims are hard to verify (oracle problem)"
+
+  - entity_type: supplier
+    description: "Organization in the supply chain"
+    identifiers: [GLN, DUNS, LEI, company registration]
+    resolution_difficulty: medium
+    notes: "Subsidiaries and trading names create ambiguity"
+
+  - entity_type: event
+    description: "Supply chain event (manufacturing, shipping, testing)"
+    identifiers: [EPCIS Event ID, timestamp + location]
+    resolution_difficulty: low
+    notes: "Events are append-only and timestamped"
+
+# --- Data Sources ---
+
+data_sources:
+  - source_id: gs1
+    name: "GS1 Standards (GTIN, GLN, Digital Link)"
+    type: standard_registry
+    reliability: 0.9
+    coverage: "Global product identification, strong for retail"
+    api_available: true
+    notes: "GS1 Digital Link as the canonical product identifier"
+
+  - source_id: epcis
+    name: "EPCIS (Electronic Product Code Information Services)"
+    type: event_standard
+    reliability: 0.85
+    coverage: "Supply chain event tracking, strong for logistics"
+    api_available: true
+    notes: "EPCIS 2.0 with JSON-LD support"
+
+  - source_id: supplier_declarations
+    name: "Supplier Self-Declarations"
+    type: self_reported
+    reliability: 0.5
+    coverage: "Material composition, compliance certifications"
+    api_available: false
+    notes: "Subject to oracle problem — claims may not match reality"
+
+  - source_id: certification_bodies
+    name: "Third-Party Certification Bodies"
+    type: authoritative
+    reliability: 0.9
+    coverage: "Limited to certified products/processes"
+    api_available: true
+    notes: "OEKO-TEX, FSC, Fairtrade, ISO certifications"
+
+  - source_id: customs_data
+    name: "Customs and Trade Data"
+    type: government
+    reliability: 0.85
+    coverage: "Cross-border movement, HS codes, origin declarations"
+    api_available: true
+    notes: "EU Single Window, national customs APIs"
+
+# --- Assurance Levels (T0-T3) ---
+
+assurance_levels:
+  model_name: "T0-T3"
+  description: >
+    Tiered provenance assurance for DPP traceability records.
+    Adapted from the A0-A3 model for physical goods supply chains.
+  tiers:
+    - level: 0
+      code: T0
+      name: "Unverified Claim"
+      description: "Supplier has declared a claim but no verification applied"
+      criteria: "Self-declaration only, no cross-referencing"
+      confidence_range: [0.0, 0.3]
+
+    - level: 1
+      code: T1
+      name: "Document-Backed"
+      description: "Claim supported by uploaded documentation (invoices, CoA)"
+      criteria: "Supporting documents parsed and linked to claim"
+      confidence_range: [0.3, 0.6]
+
+    - level: 2
+      code: T2
+      name: "Cross-Referenced"
+      description: "Multiple independent sources corroborate the claim"
+      criteria: "GS1 + EPCIS + supplier data agree, consistency score above threshold"
+      confidence_range: [0.6, 0.85]
+
+    - level: 3
+      code: T3
+      name: "Third-Party Verified"
+      description: "Independent certification body has verified the claim"
+      criteria: "Valid certification from recognized body, within validity period"
+      confidence_range: [0.85, 1.0]
+
+# --- Compliance Requirements ---
+
+compliance:
+  - regulation: EU ESPR (Ecodesign for Sustainable Products Regulation)
+    relevance: critical
+    impact: >
+      Mandates Digital Product Passports for textiles, electronics, and
+      other product categories starting 2027. Requires machine-readable
+      product data including sustainability attributes, material
+      composition, and repair information.
+    affected_decisions:
+      - regulatory_posture
+      - api_protocol
+      - data_model_complexity
+
+  - regulation: EU REACH
+    relevance: high
+    impact: >
+      Chemical substance restrictions. Material composition tracking
+      must support Substances of Very High Concern (SVHC) screening.
+    affected_decisions:
+      - data_model_complexity
+
+  - regulation: EU Conflict Minerals Regulation
+    relevance: medium
+    impact: >
+      Supply chain due diligence for tin, tungsten, tantalum, and gold.
+      Requires supplier traceability to smelter level.
+    affected_decisions:
+      - data_model_complexity
+      - regulatory_posture
+
+  - regulation: GDPR
+    relevance: medium
+    impact: >
+      Supplier contact information and business data protection.
+      Less PII-heavy than music attribution but still relevant.
+    affected_decisions:
+      - regulatory_posture
+      - backup_dr_strategy
+
+# --- Vocabulary Mapping ---
+
+vocabulary:
+  # Maps generic scaffold terms to DPP-domain terms
+  source_entity: "product"
+  primary_entity: "product"
+  relationship_entity: "supply chain event"
+  confidence_score: "traceability confidence"
+  assurance_level: "T0-T3 level"
+  permission_grant: "data sharing consent"
+  consumer_agent: "supply chain agent"
+  authoritative_verifier: "certification body"
+
+# --- PRD Prior Adjustments ---
+
+prd_prior_adjustments:
+  description: >
+    Domain-specific probability adjustments for DPP traceability.
+    DPP systems have stronger compliance requirements and enterprise
+    customer expectations.
+  adjustments:
+    - decision_id: regulatory_posture
+      adjustment: "Increase compliance_first by +0.20, decrease best_effort by -0.15"
+      rationale: "EU ESPR mandates compliance — best_effort is not viable for DPP"
+
+    - decision_id: api_protocol
+      adjustment: "Increase rest_openapi by +0.10, decrease mcp_primary by -0.10"
+      rationale: "Supply chain systems use REST/EDI, MCP is less relevant"
+
+    - decision_id: data_model_complexity
+      adjustment: "Increase graph_enriched_relational by +0.10"
+      rationale: "Supply chain graph (product→component→material→supplier) is deeply nested"
+
+    - decision_id: auth_strategy
+      adjustment: "Increase managed_auth_service by +0.10"
+      rationale: "Enterprise supply chain customers expect SSO"
+
+    - decision_id: observability_stack
+      adjustment: "Increase datadog by +0.10"
+      rationale: "Enterprise SLA monitoring for supply chain visibility"
