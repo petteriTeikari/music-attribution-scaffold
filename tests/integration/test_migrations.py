@@ -38,7 +38,7 @@ def alembic_config(postgres_for_migrations, tmp_path):
     """Create Alembic config pointing to test database."""
     from alembic.config import Config
 
-    conn_url = postgres_for_migrations.get_connection_url().replace("+psycopg2", "")
+    conn_url = postgres_for_migrations.get_connection_url().replace("+psycopg2", "+psycopg")
     cfg = Config()
     cfg.set_main_option("script_location", "alembic")
     cfg.set_main_option("sqlalchemy.url", conn_url)
