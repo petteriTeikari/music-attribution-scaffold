@@ -1,0 +1,32 @@
+{
+  "template": "https://github.com/your-org/cookiecutter-py-template",
+  "commit": null,
+  "checkout": null,
+  "context": {
+    "cookiecutter": {
+      "project_name": "Music Attribution Scaffold",
+      "project_slug": "music-attribution",
+      "project_description": "Open-source research scaffold for music attribution with transparent confidence scoring",
+      "author_name": "Petteri Teikari",
+      "author_email": "",
+      "python_version": "3.13",
+      "min_python_version": "3.11",
+      "template_tier": "standard",
+      "license": "MIT",
+      "project_type": "library",
+      "include_r_support": "no",
+      "include_typescript": "no",
+      "ts_package_manager": "bun",
+      "ts_linter": "biome",
+      "include_docker": "yes",
+      "include_github_actions": "yes",
+      "include_hydra": "no",
+      "include_knowledge_base": "no",
+      "include_mode_system": "yes",
+      "include_session_tracking": "yes",
+      "database": "none",
+      "organization_name": "petteriTeikari"
+    }
+  },
+  "directory": null
+}

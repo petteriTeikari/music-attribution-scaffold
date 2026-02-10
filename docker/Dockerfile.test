@@ -1,0 +1,47 @@
+# Dockerfile.test - Test environment that mirrors GitHub Actions CI
+# IMPORTANT: Keep in sync with .github/workflows/ci.yml
+#
+# This image matches the CI environment exactly:
+# - Same Python versions (3.11, 3.13)
+# - Same uv version
+# - Same dependency groups
+# - Same test commands
+#
+# Note: GitHub Actions runs as 'runner' user with proper permissions.
+# We run as root in container for simplicity since container is isolated.
+
+ARG PYTHON_VERSION=3.13
+FROM python:${PYTHON_VERSION}-slim
+
+# Match CI environment: Ubuntu-based with minimal tools
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    git \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install uv - same as astral-sh/setup-uv@v4 in CI
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
+
+# Set environment variables matching CI
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    UV_LINK_MODE=copy \
+    CI=true \
+    RUNNING_IN_DOCKER=true
+
+WORKDIR /app
+
+# Copy dependency files first (Docker layer caching)
+# README.md required by pyproject.toml metadata
+COPY pyproject.toml uv.lock* README.md ./
+
+# Install dependencies with EXACT same command as CI
+# This must match .github/workflows/ci.yml exactly
+RUN uv sync --frozen --group dev --group test
+
+# Copy source code and tests
+COPY src/ ./src/
+COPY tests/ ./tests/
+
+# Default command matches CI test step
+CMD ["uv", "run", "pytest", "tests/", "-v", "--cov=src/music_attribution", "--cov-report=term-missing"]

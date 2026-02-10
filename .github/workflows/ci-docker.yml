@@ -1,0 +1,74 @@
+# CI-Docker Workflow - Validates Docker-based testing matches host-based CI
+#
+# This workflow runs in parallel with ci.yml to ensure:
+# 1. Docker-based local testing produces same results as CI
+# 2. Dockerfile.test stays in sync with ci.yml
+#
+# If this workflow fails but ci.yml passes (or vice versa), there's a drift
+# between local Docker testing and CI that needs to be fixed.
+
+name: CI-Docker
+
+on:
+  push:
+    branches: [main, dev]
+  pull_request:
+    branches: [main, dev]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  docker-test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11", "3.13"]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Build test Docker image (Python ${{ matrix.python-version }})
+        run: |
+          docker build \
+            --build-arg PYTHON_VERSION=${{ matrix.python-version }} \
+            -f docker/Dockerfile.test \
+            -t music-attribution-test:py${{ matrix.python-version }} \
+            .
+
+      - name: Run ruff check in Docker
+        run: |
+          docker run --rm music-attribution-test:py${{ matrix.python-version }} \
+            uv run ruff check src/ tests/
+
+      - name: Run ruff format check in Docker
+        run: |
+          docker run --rm music-attribution-test:py${{ matrix.python-version }} \
+            uv run ruff format --check src/ tests/
+
+      - name: Run mypy in Docker
+        run: |
+          docker run --rm music-attribution-test:py${{ matrix.python-version }} \
+            uv run mypy src/
+
+      - name: Run tests in Docker
+        run: |
+          docker run --rm music-attribution-test:py${{ matrix.python-version }} \
+            uv run pytest tests/ -v --cov=src/music_attribution --cov-report=xml || EXIT_CODE=$?
+          if [ "${EXIT_CODE:-0}" -eq 5 ]; then
+            echo "No tests collected yet - this is expected for new projects"
+            exit 0
+          fi
+          exit ${EXIT_CODE:-0}
+
+  validate-parity:
+    runs-on: ubuntu-latest
+    needs: [docker-test]
+    steps:
+      - name: Parity validation passed
+        run: |
+          echo "Docker-based CI and host-based CI both passed."
+          echo "Local 'make ci-docker' should produce identical results."

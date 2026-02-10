@@ -1,0 +1,115 @@
+[project]
+name = "music-attribution"
+version = "0.1.0"
+description = "Open-source research scaffold for music attribution with transparent confidence scoring"
+readme = "README.md"
+requires-python = ">=3.11"
+license = "MIT"
+authors = [
+    { name = "Petteri Teikari" },
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.13",
+]
+dependencies = [
+    "loguru>=0.7.0",
+]
+
+[project.urls]
+Repository = "https://github.com/petteriTeikari/music-attribution-scaffold"
+Documentation = "https://github.com/petteriTeikari/music-attribution-scaffold#readme"
+
+[dependency-groups]
+dev = [
+    "pre-commit>=4.0.0",
+    "ruff>=0.8.0",
+    "mypy>=1.15.0",
+    "pillow>=12.1.0",
+]
+test = [
+    "pytest>=8.3.0",
+    "pytest-cov>=6.0.0",
+    "pytest-timeout>=2.3.0",
+    "pytest-asyncio>=0.25.0",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/music_attribution"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+addopts = ["-v", "--tb=short", "-ra", "--strict-markers"]
+markers = [
+    "unit: Pure function unit tests (fast, no external deps)",
+    "integration: Integration tests using external services",
+    "e2e: End-to-end tests (full pipeline, may be slow)",
+    "slow: Tests that take > 30 seconds",
+]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+
+[tool.ruff]
+target-version = "py311"
+line-length = 120
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = [
+    "E",    # pycodestyle errors
+    "W",    # pycodestyle warnings
+    "F",    # pyflakes
+    "I",    # isort
+    "B",    # flake8-bugbear
+    "C4",   # flake8-comprehensions
+    "UP",   # pyupgrade
+    "ARG",  # flake8-unused-arguments
+    "SIM",  # flake8-simplify
+]
+ignore = [
+    "E501",  # line too long (handled by formatter)
+    "B008",  # do not perform function calls in argument defaults
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["S101", "ARG001"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+docstring-code-format = true
+
+[tool.mypy]
+python_version = "3.11"
+warn_return_any = true
+warn_unused_ignores = true
+show_error_codes = true
+check_untyped_defs = true
+no_implicit_optional = true
+strict_optional = true
+exclude = [
+    "tests/",
+    "scripts/",
+    ".venv/",
+]
+
+[tool.coverage.run]
+branch = true
+source = ["src/music_attribution"]
+omit = ["tests/*", "*/__pycache__/*"]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "if TYPE_CHECKING:",
+    "raise NotImplementedError",
+    "@abstractmethod",
+]
+show_missing = true

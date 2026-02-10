@@ -1,0 +1,8 @@
+services:
+  app:
+    build:
+      context: .
+      target: production
+    image: music-attribution:latest
+    environment:
+      - PYTHONUNBUFFERED=1

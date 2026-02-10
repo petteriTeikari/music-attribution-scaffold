@@ -1,0 +1,89 @@
+# Docker Compose for local testing that mirrors GitHub Actions CI
+#
+# Usage:
+#   docker compose -f docker/docker-compose.test.yml run --rm test
+#   docker compose -f docker/docker-compose.test.yml run --rm test-py311
+#   docker compose -f docker/docker-compose.test.yml run --rm lint
+#
+# Or use the wrapper script:
+#   ./scripts/test-docker.sh
+
+services:
+  # Python 3.13 tests (matches CI matrix)
+  test:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.test
+      args:
+        PYTHON_VERSION: "3.13"
+    environment:
+      - CI=true
+      - RUNNING_IN_DOCKER=true
+      - PYTHONPATH=/app/src
+    volumes:
+      # Mount source for live development (optional, remove for pure CI mirror)
+      - ../src:/app/src:ro
+      - ../tests:/app/tests:ro
+      # Coverage output persistence
+      - ../htmlcov:/app/htmlcov
+      - ../.coverage:/app/.coverage
+    command: ["uv", "run", "pytest", "tests/", "-v", "--cov=src/music_attribution", "--cov-report=term-missing", "--cov-report=html"]
+
+  # Python 3.11 tests (matches CI matrix)
+  test-py311:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.test
+      args:
+        PYTHON_VERSION: "3.11"
+    environment:
+      - CI=true
+      - RUNNING_IN_DOCKER=true
+      - PYTHONPATH=/app/src
+    volumes:
+      - ../src:/app/src:ro
+      - ../tests:/app/tests:ro
+    command: ["uv", "run", "pytest", "tests/", "-v"]
+
+  # Linting - matches CI exactly
+  lint:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.test
+      args:
+        PYTHON_VERSION: "3.13"
+    environment:
+      - CI=true
+      - RUNNING_IN_DOCKER=true
+    volumes:
+      - ../src:/app/src:ro
+      - ../tests:/app/tests:ro
+    command: >
+      sh -c "uv run ruff check src/ tests/ &&
+             uv run ruff format --check src/ tests/ &&
+             uv run mypy src/"
+
+  # Full CI simulation - runs ALL checks in sequence
+  ci:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.test
+      args:
+        PYTHON_VERSION: "3.13"
+    environment:
+      - CI=true
+      - RUNNING_IN_DOCKER=true
+      - PYTHONPATH=/app/src
+    volumes:
+      - ../src:/app/src:ro
+      - ../tests:/app/tests:ro
+      - ../htmlcov:/app/htmlcov
+    command: >
+      sh -c "echo '=== Ruff Check ===' &&
+             uv run ruff check src/ tests/ &&
+             echo '=== Ruff Format Check ===' &&
+             uv run ruff format --check src/ tests/ &&
+             echo '=== Mypy ===' &&
+             uv run mypy src/ &&
+             echo '=== Pytest ===' &&
+             uv run pytest tests/ -v --cov=src/music_attribution --cov-report=term-missing"
