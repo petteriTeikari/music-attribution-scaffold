@@ -1,0 +1,1122 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ATTRIBUTION SPRINT - EXECUTABLE PLAN v2.0
+  ======================================
+  Version: 2.0.0
+  Created: 2026-02-03
+  Last Modified: 2026-02-03
+
+  PURPOSE: Machine-readable, crash-resistant execution plan for Claude Code.
+  SCOPE: Sprint MVP (4-6 weeks) with expansion hooks for full roadmap.
+
+  CHANGELOG v2.0:
+  - Fixed dependency chain (1A.2-1A.4 now depend on 1A.1b)
+  - Added Task 1A.1b for knowledge-base parent directory
+  - Added SYNTHESIS.md to all subdirectories
+  - Added cold-resume-protocol and status-update-protocol
+  - Added infrastructure tasks (Pulumi, Docker Compose)
+  - Added missing ADRs for D1, D4, D5
+  - Fixed PLAN.md section references
+  - Added uv run prefix to all Python commands
+  - Added explicit expansion hooks
+  - Clarified checkpoint approval process
+
+  HOW TO USE:
+  1. Claude Code reads this file at session start
+  2. Find current task via status="in_progress" or first status="pending"
+  3. Execute task following exact instructions
+  4. Update status in this XML file using Edit tool
+  5. Stop at checkpoint="true" for human approval
+
+  COLD RESUME: Search for status="in_progress" to find interrupted task.
+-->
+
+<executable-plan
+  project="music-attribution-scaffold"
+  version="2.0.0"
+  target-completion="2026-03-15">
+
+  <!-- ============================================================
+       PROTOCOLS - Read these first for execution semantics
+       ============================================================ -->
+  <protocols>
+    <path-convention>
+      All paths are relative to project-root:
+      /home/petteri/Dropbox/github-personal/music-attribution-scaffold
+      Use absolute paths in bash commands.
+    </path-convention>
+
+    <cold-resume-protocol>
+      1. Search for status="in_progress" to find interrupted task
+      2. Check outputs section - verify which files already exist
+      3. Resume from first missing file (do NOT recreate existing files)
+      4. If all outputs exist, mark task completed and proceed to next
+      5. If stuck, check modification-log for context
+    </cold-resume-protocol>
+
+    <status-update-protocol>
+      After completing each task:
+      1. Use Edit tool to change status="pending" to status="in_progress" when starting
+      2. Use Edit tool to change status="in_progress" to status="completed" when done
+      3. Add modification-log entry with date and task ID
+    </status-update-protocol>
+
+    <checkpoint-protocol>
+      When checkpoint="true":
+      1. Output: "CHECKPOINT REACHED: Phase {id} complete. Awaiting human approval."
+      2. List what was accomplished
+      3. Wait for user message containing "approved" or "continue"
+      4. If user provides feedback, update modification-log before proceeding
+    </checkpoint-protocol>
+
+    <error-recovery>
+      If a step fails:
+      1. Document error in modification-log
+      2. Attempt fix based on error message
+      3. If unfixable, mark task status="blocked" and note reason
+      4. Proceed to next independent task if possible
+    </error-recovery>
+  </protocols>
+
+  <!-- ============================================================
+       CONTEXT SECTION - Essential information for execution
+       ============================================================ -->
+  <context>
+    <project-root>/home/petteri/Dropbox/github-personal/music-attribution-scaffold</project-root>
+    <background-plan>docs/planning/initial-hierarchical-doc-planning/PLAN.md</background-plan>
+    <finops-plan>docs/planning/finops-optimization-plan.md</finops-plan>
+
+    <key-decisions>
+      <decision id="D1" adr="0002">Documentation format: Pure Markdown (no LaTeX)</decision>
+      <decision id="D2" adr="0001">Database: PostgreSQL + pgvector (no Neo4j)</decision>
+      <decision id="D3" adr="none">Knowledge structure: SYNTHESIS.md pattern at each level</decision>
+      <decision id="D4" adr="0003">AI frameworks: Pure Python + Pydantic (no LangChain)</decision>
+      <decision id="D5" adr="0004">UQ approach: Conformal prediction via MAPIE</decision>
+      <decision id="D6" adr="none">Infrastructure: Render + Neon + Cloudflare R2</decision>
+      <decision id="D7" adr="none">IaC: Pulumi (Python)</decision>
+      <decision id="D8" adr="none">Mogen integration: The system as data provider via MCP</decision>
+    </key-decisions>
+
+    <command-prefix>
+      All Python commands must use: uv run
+      Example: uv run pytest, uv run python, uv run mypy
+    </command-prefix>
+  </context>
+
+  <!-- ============================================================
+       MODIFICATION LOG - Track changes as we learn
+       ============================================================ -->
+  <modification-log>
+    <entry date="2026-02-03" author="claude">v1.0 - Initial plan created from PLAN.md v6</entry>
+    <entry date="2026-02-03" author="claude">v2.0 - Optimized after 3-reviewer analysis</entry>
+    <entry date="2026-02-03" author="claude">Phase 1A completed - directory structure and scaffolds</entry>
+    <entry date="2026-02-03" author="claude">Phase 1B completed - 4 PRDs and knowledge content</entry>
+  </modification-log>
+
+  <!-- ============================================================
+       PHASE 1A: FOUNDATION LOCK (1-2 days)
+       ============================================================ -->
+  <phase id="1A" name="Foundation Lock" duration="1-2 days" status="completed">
+    <description>Lock directory structure and create all scaffold files. No content yet.</description>
+    <note>Duration is for Claude Code execution. Human review buffer separate.</note>
+
+    <task id="1A.1" status="pending" checkpoint="false">
+      <name>Create docs/prd/ structure</name>
+      <instructions>
+        1. Create directory:
+           mkdir -p /home/petteri/Dropbox/github-personal/music-attribution-scaffold/docs/prd/
+
+        2. Create docs/prd/README.md with:
+           - H1 title: "# Product Requirements Documents"
+           - H2: "## PRD Index"
+           - Navigation table with columns: | PRD | Description | Status | Last Updated |
+           - Leave table body empty (rows added in Phase 1B)
+
+        3. Create docs/prd/SYNTHESIS.md with:
+           - H1 title: "# PRD Synthesis"
+           - Placeholder: "&lt;!-- TODO: Add cross-PRD insights after Phase 1B --&gt;"
+
+        4. Verify: ls -la /home/petteri/Dropbox/github-personal/music-attribution-scaffold/docs/prd/
+      </instructions>
+      <success-criteria>
+        - docs/prd/README.md exists with navigation table header
+        - docs/prd/SYNTHESIS.md exists with placeholder
+      </success-criteria>
+      <outputs>
+        <file>docs/prd/README.md</file>
+        <file>docs/prd/SYNTHESIS.md</file>
+      </outputs>
+    </task>
+
+    <task id="1A.1b" status="pending" checkpoint="false">
+      <name>Create docs/knowledge-base/ root structure</name>
+      <instructions>
+        1. Create directory:
+           mkdir -p /home/petteri/Dropbox/github-personal/music-attribution-scaffold/docs/knowledge-base/
+
+        2. Create docs/knowledge-base/README.md with:
+           - H1: "# Knowledge Base"
+           - Description: "RAG-optimized markdown for LLM consumption"
+           - H2: "## Directory Structure"
+           - Table: | Directory | Purpose |
+           - Rows: domain/ (Music industry knowledge), technical/ (AI/RAG trends), sources/ (Literature notes)
+           - Link to existing docs/knowledge-base/README.md for raw-sources workflow
+
+        3. Verify: ls -la /home/petteri/Dropbox/github-personal/music-attribution-scaffold/docs/knowledge-base/
+      </instructions>
+      <success-criteria>
+        - docs/knowledge-base/README.md exists (root level, not the existing ai/ one)
+        - Contains navigation table to subdirectories
+      </success-criteria>
+      <outputs>
+        <file>docs/knowledge-base/README.md</file>
+      </outputs>
+      <note>Existing docs/knowledge-base/ai/ and music/ directories should be preserved</note>
+    </task>
+
+    <task id="1A.2" status="pending" checkpoint="false" depends-on="1A.1b">
+      <name>Create docs/knowledge-base/domain/ structure</name>
+      <instructions>
+        1. Create directories:
+           mkdir -p /home/petteri/Dropbox/github-personal/music-attribution-scaffold/docs/knowledge-base/domain/attribution/
+           mkdir -p /home/petteri/Dropbox/github-personal/music-attribution-scaffold/docs/knowledge-base/domain/music-industry/
+           mkdir -p /home/petteri/Dropbox/github-personal/music-attribution-scaffold/docs/knowledge-base/domain/economics/
+           mkdir -p /home/petteri/Dropbox/github-personal/music-attribution-scaffold/docs/knowledge-base/domain/legal/
+
+        2. Create docs/knowledge-base/domain/README.md with:
+           - H1: "# Domain Knowledge"
+           - Table: | Subdirectory | Topic | Key Concepts |
+           - Rows for each subdirectory
+
+        3. Create docs/knowledge-base/domain/SYNTHESIS.md with:
+           - H1: "# Domain Knowledge Synthesis"
+           - Placeholder sections for each subdirectory
+
+        4. Create README.md AND SYNTHESIS.md in each subdirectory:
+           - attribution/README.md, attribution/SYNTHESIS.md
+           - music-industry/README.md, music-industry/SYNTHESIS.md
+           - economics/README.md, economics/SYNTHESIS.md
+           - legal/README.md, legal/SYNTHESIS.md
+      </instructions>
+      <success-criteria>
+        - docs/knowledge-base/domain/README.md exists
+        - docs/knowledge-base/domain/SYNTHESIS.md exists
+        - Each subdirectory has README.md and SYNTHESIS.md
+        - Total: 10 new files
+      </success-criteria>
+      <outputs>
+        <file>docs/knowledge-base/domain/README.md</file>
+        <file>docs/knowledge-base/domain/SYNTHESIS.md</file>
+        <file>docs/knowledge-base/domain/attribution/README.md</file>
+        <file>docs/knowledge-base/domain/attribution/SYNTHESIS.md</file>
+        <file>docs/knowledge-base/domain/music-industry/README.md</file>
+        <file>docs/knowledge-base/domain/music-industry/SYNTHESIS.md</file>
+        <file>docs/knowledge-base/domain/economics/README.md</file>
+        <file>docs/knowledge-base/domain/economics/SYNTHESIS.md</file>
+        <file>docs/knowledge-base/domain/legal/README.md</file>
+        <file>docs/knowledge-base/domain/legal/SYNTHESIS.md</file>
+      </outputs>
+    </task>
+
+    <task id="1A.3" status="pending" checkpoint="false" depends-on="1A.1b">
+      <name>Create docs/knowledge-base/technical/ structure</name>
+      <instructions>
+        1. Create directories:
+           mkdir -p /home/petteri/Dropbox/github-personal/music-attribution-scaffold/docs/knowledge-base/technical/rag/
+           mkdir -p /home/petteri/Dropbox/github-personal/music-attribution-scaffold/docs/knowledge-base/technical/uncertainty/
+           mkdir -p /home/petteri/Dropbox/github-personal/music-attribution-scaffold/docs/knowledge-base/technical/mcp/
+           mkdir -p /home/petteri/Dropbox/github-personal/music-attribution-scaffold/docs/knowledge-base/technical/semantic-search/
+           mkdir -p /home/petteri/Dropbox/github-personal/music-attribution-scaffold/docs/knowledge-base/technical/agentic-systems/
+           mkdir -p /home/petteri/Dropbox/github-personal/music-attribution-scaffold/docs/knowledge-base/technical/context-engineering/
+
+        2. Create docs/knowledge-base/technical/README.md with:
+           - H1: "# Technical Knowledge"
+           - Table: | Subdirectory | Topic | Key References |
+
+        3. Create docs/knowledge-base/technical/SYNTHESIS.md with:
+           - H1: "# Technical Knowledge Synthesis"
+           - Placeholder sections
+
+        4. Create README.md AND SYNTHESIS.md in each subdirectory
+      </instructions>
+      <success-criteria>
+        - docs/knowledge-base/technical/README.md exists
+        - docs/knowledge-base/technical/SYNTHESIS.md exists
+        - Each of 6 subdirectories has README.md and SYNTHESIS.md
+        - Total: 14 new files
+      </success-criteria>
+      <outputs>
+        <file>docs/knowledge-base/technical/README.md</file>
+        <file>docs/knowledge-base/technical/SYNTHESIS.md</file>
+        <file>docs/knowledge-base/technical/rag/README.md</file>
+        <file>docs/knowledge-base/technical/rag/SYNTHESIS.md</file>
+        <file>docs/knowledge-base/technical/uncertainty/README.md</file>
+        <file>docs/knowledge-base/technical/uncertainty/SYNTHESIS.md</file>
+        <file>docs/knowledge-base/technical/mcp/README.md</file>
+        <file>docs/knowledge-base/technical/mcp/SYNTHESIS.md</file>
+        <file>docs/knowledge-base/technical/semantic-search/README.md</file>
+        <file>docs/knowledge-base/technical/semantic-search/SYNTHESIS.md</file>
+        <file>docs/knowledge-base/technical/agentic-systems/README.md</file>
+        <file>docs/knowledge-base/technical/agentic-systems/SYNTHESIS.md</file>
+        <file>docs/knowledge-base/technical/context-engineering/README.md</file>
+        <file>docs/knowledge-base/technical/context-engineering/SYNTHESIS.md</file>
+      </outputs>
+    </task>
+
+    <task id="1A.4" status="pending" checkpoint="false" depends-on="1A.1b">
+      <name>Create docs/knowledge-base/sources/ structure</name>
+      <instructions>
+        1. Create directory:
+           mkdir -p /home/petteri/Dropbox/github-personal/music-attribution-scaffold/docs/knowledge-base/sources/
+
+        2. Create docs/knowledge-base/sources/README.md with:
+           - H1: "# Literature Notes"
+           - Description: "Each file represents a single source (paper, blog, webinar)"
+           - H2: "## Naming Convention"
+           - Format: `{author-year-topic}.md` (e.g., `edge-2025-graph-rag.md`)
+           - H2: "## Template"
+           - Frontmatter example with: title, type: source, created, tags, url
+           - Reference: PLAN.md Section 6.1 for frontmatter schema
+      </instructions>
+      <success-criteria>
+        - docs/knowledge-base/sources/README.md exists
+        - Contains naming convention and template
+      </success-criteria>
+      <outputs>
+        <file>docs/knowledge-base/sources/README.md</file>
+      </outputs>
+    </task>
+
+    <task id="1A.5" status="pending" checkpoint="false">
+      <name>Create docs/architecture/ and initial ADRs</name>
+      <instructions>
+        1. Create directories:
+           mkdir -p /home/petteri/Dropbox/github-personal/music-attribution-scaffold/docs/architecture/adr/
+
+        2. Create docs/architecture/README.md with:
+           - H1: "# Architecture Documentation"
+           - H2: "## Architecture Decision Records"
+           - Table: | ADR | Title | Status | Date |
+           - Link to adr/ directory
+
+        3. Create ADR-0001 (D2): docs/architecture/adr/0001-use-postgresql-pgvector.md
+           - H1: "# ADR-0001: Use PostgreSQL + pgvector"
+           - ## Status: Accepted
+           - ## Context: Need database for embeddings and entity storage
+           - ## Decision: PostgreSQL + pgvector over Neo4j
+           - ## Consequences: (from PLAN.md Key Decisions table)
+           - Reference: PLAN.md Section 11 for full rationale
+
+        4. Create ADR-0002 (D1): docs/architecture/adr/0002-pure-markdown-no-latex.md
+           - H1: "# ADR-0002: Pure Markdown Documentation"
+           - ## Status: Accepted
+           - ## Context: Need documentation format for Claude Code
+           - ## Decision: Pure Markdown, no LaTeX
+           - ## Consequences: Simple tooling, Claude Code native
+
+        5. Create ADR-0003 (D4): docs/architecture/adr/0003-pure-python-no-langchain.md
+           - H1: "# ADR-0003: Pure Python + Pydantic"
+           - ## Status: Accepted
+           - ## Context: Need AI framework approach
+           - ## Decision: Avoid LangChain, use pure Python + Pydantic
+           - ## Consequences: Better debugging, no framework lock-in
+
+        6. Create ADR-0004 (D5): docs/architecture/adr/0004-conformal-prediction-mapie.md
+           - H1: "# ADR-0004: Conformal Prediction via MAPIE"
+           - ## Status: Accepted
+           - ## Context: Need uncertainty quantification approach
+           - ## Decision: Use MAPIE for conformal prediction
+           - ## Consequences: Formal guarantees without logit access
+      </instructions>
+      <success-criteria>
+        - docs/architecture/README.md exists with ADR index
+        - 4 ADR files exist (0001-0004)
+        - Each ADR has Context, Decision, Consequences sections
+      </success-criteria>
+      <outputs>
+        <file>docs/architecture/README.md</file>
+        <file>docs/architecture/adr/0001-use-postgresql-pgvector.md</file>
+        <file>docs/architecture/adr/0002-pure-markdown-no-latex.md</file>
+        <file>docs/architecture/adr/0003-pure-python-no-langchain.md</file>
+        <file>docs/architecture/adr/0004-conformal-prediction-mapie.md</file>
+      </outputs>
+    </task>
+
+    <task id="1A.6" status="pending" checkpoint="false">
+      <name>Create src/ module structure</name>
+      <instructions>
+        1. Create directories:
+           mkdir -p /home/petteri/Dropbox/github-personal/music-attribution-scaffold/src/attribution_sprint/attribution/
+           mkdir -p /home/petteri/Dropbox/github-personal/music-attribution-scaffold/src/attribution_sprint/mcp/
+           mkdir -p /home/petteri/Dropbox/github-personal/music-attribution-scaffold/src/attribution_sprint/chat/
+           mkdir -p /home/petteri/Dropbox/github-personal/music-attribution-scaffold/src/attribution_sprint/confidence/
+
+        2. Create __init__.py in each directory with module docstring:
+           ```python
+           """Music Attribution Scaffold - {module_name} module."""
+           ```
+           Where {module_name} is: attribution, mcp, chat, or confidence
+
+        3. Update src/attribution_sprint/__init__.py to export modules:
+           Add: from attribution_sprint import attribution, mcp, chat, confidence
+
+        4. Verify imports work:
+           uv run python -c "from attribution_sprint import attribution, mcp, chat, confidence; print('OK')"
+      </instructions>
+      <success-criteria>
+        - All 4 subdirectories exist
+        - All __init__.py files have docstrings
+        - Import verification command prints "OK"
+      </success-criteria>
+      <outputs>
+        <file>src/attribution_sprint/attribution/__init__.py</file>
+        <file>src/attribution_sprint/mcp/__init__.py</file>
+        <file>src/attribution_sprint/chat/__init__.py</file>
+        <file>src/attribution_sprint/confidence/__init__.py</file>
+      </outputs>
+    </task>
+
+    <task id="1A.7" status="pending" checkpoint="false" depends-on="1A.2,1A.3,1A.4">
+      <name>Create root knowledge-base SYNTHESIS.md</name>
+      <instructions>
+        1. Create docs/knowledge-base/SYNTHESIS.md with:
+           - H1: "# Knowledge Base Synthesis"
+           - H2: "## Domain Knowledge"
+           - Link to domain/SYNTHESIS.md
+           - Placeholder for key domain insights
+           - H2: "## Technical Knowledge"
+           - Link to technical/SYNTHESIS.md
+           - Placeholder for key technical insights
+           - H2: "## Cross-Domain Connections"
+           - Placeholder for how domain and technical relate
+      </instructions>
+      <success-criteria>
+        - docs/knowledge-base/SYNTHESIS.md exists
+        - Contains links to domain/ and technical/ SYNTHESIS.md
+      </success-criteria>
+      <outputs>
+        <file>docs/knowledge-base/SYNTHESIS.md</file>
+      </outputs>
+    </task>
+
+    <task id="1A.8" status="pending" checkpoint="true" depends-on="1A.1,1A.1b,1A.2,1A.3,1A.4,1A.5,1A.6,1A.7">
+      <name>CHECKPOINT: Verify Phase 1A completion</name>
+      <instructions>
+        1. Verify file counts:
+           find /home/petteri/Dropbox/github-personal/music-attribution-scaffold/docs -name "*.md" -type f | wc -l
+           Expected: ~35 markdown files
+
+        2. Verify Python imports:
+           uv run python -c "from attribution_sprint import attribution, mcp, chat, confidence; print('Imports OK')"
+
+        3. Run pre-commit on all files:
+           pre-commit run --all-files
+           Fix any issues before proceeding
+
+        4. STOP and output: "CHECKPOINT REACHED: Phase 1A complete. Created directory structure with ~35 docs and 4 Python modules. Awaiting human approval."
+
+        5. Wait for human approval (message containing "approved" or "continue")
+
+        6. AFTER approval, git commit:
+           git add docs/ src/attribution_sprint/
+           git commit -m "feat(docs): complete Phase 1A directory structure
+
+           - Created docs/prd/ with README and SYNTHESIS
+           - Created docs/knowledge-base/ with domain/ and technical/ hierarchies
+           - Created docs/architecture/ with 4 ADRs
+           - Created src/attribution_sprint/ module structure
+           - All SYNTHESIS.md files in place per PLAN.md pattern
+
+           Co-Authored-By: Claude Opus 4.5 &lt;noreply@anthropic.com&gt;"
+      </instructions>
+      <success-criteria>
+        - All directories and files from 1A.1-1A.7 exist
+        - Python imports work
+        - Pre-commit passes
+        - Human approval received
+        - Git commit successful
+      </success-criteria>
+      <human-approval-required>true</human-approval-required>
+    </task>
+
+    <expansion-hook id="1A-structure">
+      If additional directories needed during Phase 1A execution, add tasks here.
+      Examples: tests/fixtures/, scripts/migrations/
+    </expansion-hook>
+  </phase>
+
+  <!-- ============================================================
+       PHASE 1B: CONTENT ELABORATION (3-5 days)
+       ============================================================ -->
+  <phase id="1B" name="Content Elaboration" duration="3-5 days" status="completed" depends-on="1A">
+    <description>Fill scaffold with actual content. PRD drafts, knowledge synthesis.</description>
+
+    <task id="1B.1" status="pending" checkpoint="false">
+      <name>Create vision-v1.md PRD</name>
+      <instructions>
+        1. Create docs/prd/vision-v1.md following template in PLAN.md Section 4.2 (12 sections)
+
+        2. Required sections (complete these):
+           - H1: "# the system Vision PRD v1"
+           - Status: Draft v0.8
+           - Executive Summary: Music attribution platform for UK market
+           - Problem Statement: 40%+ incorrect attribution in music databases
+           - Product Vision: Cross-reference Discogs, MusicBrainz, system own
+
+        3. Stub sections (TODO placeholders OK):
+           - Technical Architecture (reference attribution-engine-prd)
+           - Implementation Roadmap
+           - Success Metrics
+
+        4. Cross-references:
+           - Link to attribution-engine-prd.md
+           - Link to chat-interface-prd.md
+           - Link to mcp-server-prd.md
+      </instructions>
+      <template-reference>PLAN.md Section 4.2 "PRD Template for the system"</template-reference>
+      <success-criteria>
+        - File exists with all 12 PRD section headers
+        - Executive Summary and Problem Statement complete
+        - Cross-references to other PRDs
+      </success-criteria>
+      <outputs>
+        <file>docs/prd/vision-v1.md</file>
+      </outputs>
+    </task>
+
+    <task id="1B.2" status="pending" checkpoint="false">
+      <name>Create attribution-engine-prd.md</name>
+      <instructions>
+        1. Create docs/prd/attribution-engine-prd.md following PLAN.md Section 4.2 template
+
+        2. Focus sections:
+           - Multi-source aggregation (Discogs, MusicBrainz, the system)
+           - Confidence scoring (PLAN.md Section 7.5 compute_confidence)
+           - Entity resolution (PLAN.md Section 11.3 rule-based + phonetic)
+
+        3. Technical details from PLAN.md:
+           - Section 11.3: Entity Resolution Strategy
+           - Section 11.4: Database Schema (unified_entities, source_records, field_confidence)
+           - Section 11.9: Conflict Resolution Matrix
+
+        4. Include interface contracts from PLAN.md Section 12.2:
+           - ArtistAttributionResponse model
+           - SongAttribution model
+           - Credit model
+      </instructions>
+      <success-criteria>
+        - Technical architecture section complete
+        - References all 3 data sources
+        - Includes Pydantic model definitions
+      </success-criteria>
+      <outputs>
+        <file>docs/prd/attribution-engine-prd.md</file>
+      </outputs>
+    </task>
+
+    <task id="1B.3" status="pending" checkpoint="false">
+      <name>Create chat-interface-prd.md</name>
+      <instructions>
+        1. Create docs/prd/chat-interface-prd.md
+
+        2. Focus on user journey (from original prompt):
+           - Album at a time workflow
+           - Easiest ones first, biggest gaps later
+           - "Make it fun through conversation"
+
+        3. Confidence display patterns:
+           - High (≥0.8): Show as verified
+           - Medium (0.7-0.8): Show with caveats
+           - Low (0.6-0.7): Prompt for confirmation
+           - Below threshold (&lt;0.6): Request input
+
+        4. MCP hooks for Mogen integration:
+           - Artist permission verification
+           - Data contribution workflow
+      </instructions>
+      <success-criteria>
+        - User journey documented
+        - Confidence display patterns defined
+        - MCP integration points identified
+      </success-criteria>
+      <outputs>
+        <file>docs/prd/chat-interface-prd.md</file>
+      </outputs>
+    </task>
+
+    <task id="1B.4" status="pending" checkpoint="false">
+      <name>Create mcp-server-prd.md</name>
+      <instructions>
+        1. Create docs/prd/mcp-server-prd.md
+
+        2. Three-Tier Trust Model (from PLAN.md Section 6.3.2):
+           - Tier 1 (Internal): Full read/write - System Chat, Admin - Unlimited
+           - Tier 2 (Verified): Read + scoped write - Mogen, partners - 1000 req/hour
+           - Tier 3 (Public): Read-only - ChatGPT, unknown - 100 req/hour
+
+        3. MCP tool definitions (from PLAN.md Section 12.2):
+           - get_artist_attribution: Get complete attribution data
+           - search_songs: Search with confidence filter
+           - verify_credit: Verify if a credit claim is accurate
+
+        4. Security requirements:
+           - OAuth 2.0 token validation
+           - Rate limiting per tier
+           - Audit logging for write operations
+           - RFC 8707 Resource Indicators
+      </instructions>
+      <success-criteria>
+        - Three-tier model fully documented
+        - MCP tool schemas defined with JSON
+        - Security requirements listed
+      </success-criteria>
+      <outputs>
+        <file>docs/prd/mcp-server-prd.md</file>
+      </outputs>
+    </task>
+
+    <task id="1B.5" status="pending" checkpoint="false" depends-on="1B.1,1B.2,1B.3,1B.4">
+      <name>Update docs/prd/README.md and SYNTHESIS.md</name>
+      <instructions>
+        1. Update docs/prd/README.md:
+           - Fill navigation table with all 4 PRDs
+           - Add lineage diagram showing vision-v1 as master
+           - Add status indicators
+
+        2. Update docs/prd/SYNTHESIS.md:
+           - Key decisions across PRDs
+           - Cross-PRD dependencies
+           - Open questions
+      </instructions>
+      <success-criteria>
+        - README has complete PRD table with links
+        - SYNTHESIS aggregates insights from all PRDs
+      </success-criteria>
+      <outputs>
+        <file>docs/prd/README.md</file>
+        <file>docs/prd/SYNTHESIS.md</file>
+      </outputs>
+    </task>
+
+    <task id="1B.6" status="pending" checkpoint="false">
+      <name>Create domain/attribution/ knowledge content</name>
+      <instructions>
+        1. Create docs/knowledge-base/domain/attribution/a0-a3-framework.md:
+           - H1: "# A0-A3 Attribution Assurance Framework"
+           - Define four levels:
+             - A0 (Unknown): No attribution data available
+             - A1 (Claimed): Single source, unverified
+             - A2 (Corroborated): Multiple sources agree
+             - A3 (Verified): Authoritative verification
+           - Reference PLAN.md Section 1.5
+
+        2. Create docs/knowledge-base/domain/attribution/oracle-problem.md:
+           - H1: "# The Oracle Problem in Music Attribution"
+           - Core insight: No external source can verify ALL claims
+           - Epistemic limits on verification
+           - Implications for confidence scoring
+
+        3. Update docs/knowledge-base/domain/attribution/SYNTHESIS.md:
+           - Cross-reference both files
+           - Key insight: A3 is rarely achievable, system must handle uncertainty
+      </instructions>
+      <success-criteria>
+        - a0-a3-framework.md defines all 4 levels
+        - oracle-problem.md explains epistemic limits
+        - SYNTHESIS.md aggregates insights
+      </success-criteria>
+      <outputs>
+        <file>docs/knowledge-base/domain/attribution/a0-a3-framework.md</file>
+        <file>docs/knowledge-base/domain/attribution/oracle-problem.md</file>
+        <file>docs/knowledge-base/domain/attribution/SYNTHESIS.md</file>
+      </outputs>
+    </task>
+
+    <task id="1B.7" status="pending" checkpoint="false">
+      <name>Create technical/uncertainty/ knowledge content</name>
+      <instructions>
+        1. Create docs/knowledge-base/technical/uncertainty/conformal-prediction.md:
+           - H1: "# Conformal Prediction for the system"
+           - Explain: Generates prediction sets with coverage guarantees
+           - MAPIE library reference
+           - Example: "Composer is {A, B, C} with 95% probability"
+           - Reference PLAN.md Section 7.3
+
+        2. Create docs/knowledge-base/technical/uncertainty/beigi-taxonomy.md:
+           - H1: "# LLM Uncertainty Taxonomy (Beigi et al. 2024)"
+           - Four categories:
+             - Logit-based: Measures vocabulary probability
+             - Self-evaluation: Poor self-awareness
+             - Consistency-based: Challenged by paraphrasing
+             - Internal-based: High computational cost
+           - Key insight: "All methods estimate confidence, but fail to identify specific uncertainty sources"
+           - Reference PLAN.md Section 7.2.1
+
+        3. Update docs/knowledge-base/technical/uncertainty/SYNTHESIS.md:
+           - Cross-reference both files
+           - The system approach: Source-level explainability
+      </instructions>
+      <success-criteria>
+        - conformal-prediction.md explains MAPIE approach
+        - beigi-taxonomy.md summarizes 4 categories
+        - SYNTHESIS.md has the system-specific insight
+      </success-criteria>
+      <outputs>
+        <file>docs/knowledge-base/technical/uncertainty/conformal-prediction.md</file>
+        <file>docs/knowledge-base/technical/uncertainty/beigi-taxonomy.md</file>
+        <file>docs/knowledge-base/technical/uncertainty/SYNTHESIS.md</file>
+      </outputs>
+    </task>
+
+    <task id="1B.8" status="pending" checkpoint="false" depends-on="1B.6,1B.7">
+      <name>Update root knowledge-base SYNTHESIS.md</name>
+      <instructions>
+        1. Update docs/knowledge-base/SYNTHESIS.md:
+           - Add synthesis from domain/attribution
+           - Add synthesis from technical/uncertainty
+           - Cross-domain connection: "UQ taxonomy informs why A3 is hard"
+      </instructions>
+      <success-criteria>
+        - SYNTHESIS.md references specific insights from 1B.6 and 1B.7
+        - Cross-domain connections documented
+      </success-criteria>
+      <outputs>
+        <file>docs/knowledge-base/SYNTHESIS.md</file>
+      </outputs>
+    </task>
+
+    <task id="1B.9" status="pending" checkpoint="true" depends-on="1B.1,1B.2,1B.3,1B.4,1B.5,1B.6,1B.7,1B.8">
+      <name>CHECKPOINT: Verify Phase 1B completion</name>
+      <instructions>
+        1. Verify all PRDs exist:
+           ls docs/prd/*.md | grep -c .md
+           Expected: 6 files (README, SYNTHESIS, 4 PRDs)
+
+        2. Verify knowledge content:
+           find docs/knowledge-base -name "*.md" -type f | wc -l
+           Expected: ~40 files
+
+        3. Check for remaining TODOs:
+           grep -r "TODO" docs/prd/ | head -20
+           Document any critical TODOs
+
+        4. Run pre-commit: pre-commit run --all-files
+
+        5. STOP and output: "CHECKPOINT REACHED: Phase 1B complete. 4 PRDs drafted, domain and technical knowledge populated. Awaiting human review."
+
+        6. Wait for human approval
+
+        7. AFTER approval, git commit:
+           git add docs/
+           git commit -m "feat(docs): complete Phase 1B content elaboration
+
+           - 4 PRDs drafted (vision, attribution, chat, mcp)
+           - Domain knowledge: attribution framework, oracle problem
+           - Technical knowledge: conformal prediction, Beigi taxonomy
+           - All SYNTHESIS.md files updated
+
+           Co-Authored-By: Claude Opus 4.5 &lt;noreply@anthropic.com&gt;"
+      </instructions>
+      <success-criteria>
+        - 4 PRDs with Executive Summaries
+        - Knowledge-base populated
+        - Pre-commit passes
+        - Human approval received
+      </success-criteria>
+      <human-approval-required>true</human-approval-required>
+    </task>
+
+    <expansion-hook id="1B-content">
+      Additional knowledge content to add as needed:
+      - domain/economics/friction-taxonomy.md (PLAN.md Section 1.5)
+      - domain/economics/deterrence-model.md
+      - technical/rag/graph-rag.md (Edge et al. 2025)
+      - technical/mcp/security-model.md
+      - technical/context-engineering/prompt-caching.md
+    </expansion-hook>
+  </phase>
+
+  <!-- ============================================================
+       PHASE 2: IMPLEMENTATION SCAFFOLD (3-5 days)
+       ============================================================ -->
+  <phase id="2" name="Implementation Scaffold" duration="3-5 days" status="pending" depends-on="1B">
+    <description>Create Python implementation scaffolds and infrastructure setup.</description>
+
+    <task id="2.1" status="pending" checkpoint="false">
+      <name>Implement confidence scoring module</name>
+      <instructions>
+        1. Create src/attribution_sprint/confidence/models.py with Pydantic models:
+           ```python
+           from pydantic import BaseModel
+
+           class DataSource(BaseModel):
+               name: str
+               authority_weight: float
+               timestamp: str
+
+           class ConfidenceResult(BaseModel):
+               score: float
+               level: str  # "verified", "high", "medium", "low"
+               sources: list[str]
+               explanation: str
+           ```
+
+        2. Create src/attribution_sprint/confidence/scorer.py:
+           - AUTHORITY_WEIGHTS constant (from PLAN.md Section 7.5):
+             system_own: 1.0, musicbrainz: 0.8, discogs: 0.7, user_submitted: 0.5
+           - compute_confidence(sources: list[DataSource]) -> ConfidenceResult
+           - Implement agreement ratio + authority boost formula
+
+        3. Create tests/unit/test_confidence.py:
+           - Test compute_confidence with 0, 1, multiple sources
+           - Test authority weight application
+           - Test confidence level assignment
+
+        4. Verify: uv run pytest tests/unit/test_confidence.py -v
+      </instructions>
+      <success-criteria>
+        - Models match PLAN.md Section 7.5
+        - compute_confidence returns ConfidenceResult
+        - All tests pass
+      </success-criteria>
+      <outputs>
+        <file>src/attribution_sprint/confidence/models.py</file>
+        <file>src/attribution_sprint/confidence/scorer.py</file>
+        <file>tests/unit/test_confidence.py</file>
+      </outputs>
+    </task>
+
+    <task id="2.2" status="pending" checkpoint="false">
+      <name>Implement MCP server skeleton</name>
+      <instructions>
+        1. Add mcp dependency: uv add mcp
+
+        2. Create src/attribution_sprint/mcp/models.py with tool schemas:
+           - ArtistAttributionRequest(artist_id, include_sources, confidence_threshold)
+           - SongSearchRequest(query, min_confidence)
+           - CreditVerificationRequest(song_id, credit_type, claimed_name)
+
+        3. Create src/attribution_sprint/mcp/access.py:
+           ```python
+           from enum import Enum
+
+           class AccessTier(Enum):
+               INTERNAL = 1  # Full access
+               VERIFIED = 2  # 1000 req/hour
+               PUBLIC = 3    # 100 req/hour
+           ```
+
+        4. Create src/attribution_sprint/mcp/server.py:
+           - Define MCP tools: get_artist_attribution, search_songs, verify_credit
+           - Placeholder handlers returning mock data with confidence=0.85
+           - Access tier checking (placeholder - always allow for now)
+
+        5. Create tests/unit/test_mcp.py:
+           - Test tool registration
+           - Test placeholder responses
+      </instructions>
+      <success-criteria>
+        - MCP tools defined and callable
+        - Access tiers enum exists
+        - Tests pass
+      </success-criteria>
+      <outputs>
+        <file>src/attribution_sprint/mcp/models.py</file>
+        <file>src/attribution_sprint/mcp/access.py</file>
+        <file>src/attribution_sprint/mcp/server.py</file>
+        <file>tests/unit/test_mcp.py</file>
+      </outputs>
+    </task>
+
+    <task id="2.3" status="pending" checkpoint="false">
+      <name>Implement attribution engine skeleton</name>
+      <instructions>
+        1. Create src/attribution_sprint/attribution/models.py:
+           - Credit(name, role, confidence, sources)
+           - SongAttribution(song_id, title, composers, performers, field_confidence)
+           - AttributionResult(artist_id, canonical_name, overall_confidence, songs)
+
+        2. Create src/attribution_sprint/attribution/engine.py:
+           - AgentMessage model for multi-agent pattern
+           - run_attribution_pipeline(query) async function
+           - Placeholder steps: fetch → analyze → score → summarize
+
+        3. Create src/attribution_sprint/attribution/sources/base.py:
+           - SourceAdapter abstract base class
+           - fetch_artist(artist_id) method signature
+           - fetch_songs(artist_id) method signature
+
+        4. Create placeholder adapters:
+           - sources/discogs.py (DiscogsAdapter)
+           - sources/musicbrainz.py (MusicBrainzAdapter)
+           - Each returns mock data for now
+
+        5. Create tests/unit/test_attribution.py
+      </instructions>
+      <success-criteria>
+        - Models match PLAN.md Section 12.2
+        - run_attribution_pipeline exists as async function
+        - Source adapters have consistent interface
+        - Tests pass
+      </success-criteria>
+      <outputs>
+        <file>src/attribution_sprint/attribution/models.py</file>
+        <file>src/attribution_sprint/attribution/engine.py</file>
+        <file>src/attribution_sprint/attribution/sources/__init__.py</file>
+        <file>src/attribution_sprint/attribution/sources/base.py</file>
+        <file>src/attribution_sprint/attribution/sources/discogs.py</file>
+        <file>src/attribution_sprint/attribution/sources/musicbrainz.py</file>
+        <file>tests/unit/test_attribution.py</file>
+      </outputs>
+    </task>
+
+    <task id="2.4" status="pending" checkpoint="false">
+      <name>Create Docker Compose for local development</name>
+      <instructions>
+        1. Create docker-compose.yml at project root:
+           - postgres service using pgvector/pgvector:pg16
+           - app service building from Dockerfile
+           - Environment variables from .env
+
+        2. Verify existing Dockerfile works with compose
+
+        3. Test: docker compose up -d postgres
+           Verify PostgreSQL starts
+
+        4. Document in README.md:
+           - Local development setup commands
+           - Environment variable requirements
+      </instructions>
+      <success-criteria>
+        - docker-compose.yml exists
+        - PostgreSQL service starts
+        - README updated with setup instructions
+      </success-criteria>
+      <outputs>
+        <file>docker-compose.yml</file>
+      </outputs>
+    </task>
+
+    <task id="2.5" status="pending" checkpoint="true" depends-on="2.1,2.2,2.3,2.4">
+      <name>CHECKPOINT: Verify Phase 2 completion</name>
+      <instructions>
+        1. Run type checking: uv run mypy src/attribution_sprint/
+           All files should pass
+
+        2. Run all tests: uv run pytest tests/ -v
+           All tests should pass
+
+        3. Verify Docker: docker compose up -d &amp;&amp; docker compose ps
+           Services should be running
+
+        4. Verify imports:
+           uv run python -c "
+           from attribution_sprint.confidence.scorer import compute_confidence
+           from attribution_sprint.mcp.server import server
+           from attribution_sprint.attribution.engine import run_attribution_pipeline
+           print('All imports OK')
+           "
+
+        5. STOP: "CHECKPOINT REACHED: Phase 2 complete. Implementation scaffolds ready. Awaiting human review."
+
+        6. AFTER approval, git commit:
+           git add src/ tests/ docker-compose.yml
+           git commit -m "feat(core): complete Phase 2 implementation scaffold
+
+           - Confidence scoring module with tests
+           - MCP server skeleton with 3 tools
+           - Attribution engine with source adapters
+           - Docker Compose for local development
+
+           Co-Authored-By: Claude Opus 4.5 &lt;noreply@anthropic.com&gt;"
+      </instructions>
+      <success-criteria>
+        - mypy passes
+        - All tests pass
+        - Docker services start
+        - All imports work
+        - Human approval received
+      </success-criteria>
+      <human-approval-required>true</human-approval-required>
+    </task>
+
+    <expansion-hook id="2-infra">
+      Infrastructure tasks to add when ready:
+      - Pulumi project scaffold (infrastructure/ directory)
+      - Neon database provisioning
+      - Cloudflare R2 bucket setup
+      - GitHub Actions CI/CD workflow
+    </expansion-hook>
+  </phase>
+
+  <!-- ============================================================
+       PHASE 3: INTEGRATION (3-5 days) - MVP COMPLETION
+       ============================================================ -->
+  <phase id="3" name="Integration" duration="3-5 days" status="pending" depends-on="2">
+    <description>Connect components, add database, prepare for demo.</description>
+
+    <task id="3.1" status="pending" checkpoint="false">
+      <name>Set up PostgreSQL + pgvector schema</name>
+      <instructions>
+        1. Initialize Alembic: alembic init alembic
+
+        2. Create migration implementing schema from PLAN.md Section 11.4:
+           - change_events table (event store)
+           - source_records table (raw data with provenance)
+           - unified_entities table (resolved, deduplicated)
+           - entity_links table (source_records to unified_entities)
+           - field_confidence table (per-field scoring)
+
+        3. Enable pgvector: CREATE EXTENSION IF NOT EXISTS vector;
+
+        4. Test with Docker Compose:
+           docker compose up -d postgres
+           alembic upgrade head
+
+        5. Verify tables exist:
+           docker compose exec postgres psql -U postgres -d attribution -c "\dt"
+      </instructions>
+      <success-criteria>
+        - Alembic configured
+        - Migration creates all 5 tables
+        - pgvector extension enabled
+        - Tables verified in Docker PostgreSQL
+      </success-criteria>
+      <outputs>
+        <file>alembic.ini</file>
+        <file>alembic/env.py</file>
+        <file>alembic/versions/001_initial_schema.py</file>
+        <file>src/attribution_sprint/db/__init__.py</file>
+        <file>src/attribution_sprint/db/models.py</file>
+      </outputs>
+    </task>
+
+    <task id="3.2" status="pending" checkpoint="false" depends-on="3.1">
+      <name>Connect attribution engine to database</name>
+      <instructions>
+        1. Create src/attribution_sprint/attribution/repository.py:
+           - save_attribution_result(result) - persist to database
+           - get_attribution(artist_id) - retrieve from database
+           - search_songs(query, min_confidence) - search with pgvector
+
+        2. Update source adapters to read from source_records table
+
+        3. Create tests/integration/test_attribution_db.py:
+           - Test save and retrieve
+           - Test search functionality
+           - Requires running Docker PostgreSQL
+
+        4. Run integration tests:
+           docker compose up -d postgres
+           uv run pytest tests/integration/ -v
+      </instructions>
+      <success-criteria>
+        - Repository implements save/get/search
+        - Integration tests pass with Docker PostgreSQL
+      </success-criteria>
+      <outputs>
+        <file>src/attribution_sprint/attribution/repository.py</file>
+        <file>tests/integration/test_attribution_db.py</file>
+      </outputs>
+    </task>
+
+    <task id="3.3" status="pending" checkpoint="true" depends-on="3.1,3.2">
+      <name>CHECKPOINT: Sprint MVP complete</name>
+      <instructions>
+        1. Run full test suite:
+           uv run pytest tests/ -v
+           All tests must pass
+
+        2. Verify Docker stack end-to-end:
+           docker compose up -d
+           docker compose ps (all services healthy)
+           docker compose logs app (no errors)
+
+        3. Create docs/BACKLOG.md documenting deferred items:
+           - Phase 4: Chat Interface
+           - Phase 5: MCP Production hardening
+           - Phase 6: Scale to Hetzner/Kamal
+           - Phase 7: UQ Research (calibration, MAPIE)
+           - Any TODOs from Phase 1-3
+
+        4. STOP: "CHECKPOINT REACHED: Sprint MVP complete! Attribution engine, MCP server, and database connected. Ready for demo."
+
+        5. AFTER approval:
+           git add .
+           git commit -m "feat: complete Sprint MVP
+
+           - PostgreSQL + pgvector schema
+           - Attribution engine connected to database
+           - Full test suite passing
+           - Docker Compose stack working
+
+           Co-Authored-By: Claude Opus 4.5 &lt;noreply@anthropic.com&gt;"
+
+           git tag v0.1.0-mvp
+           git push origin v0.1.0-mvp
+      </instructions>
+      <success-criteria>
+        - All tests pass
+        - Docker stack works end-to-end
+        - BACKLOG.md created
+        - Tag v0.1.0-mvp created
+      </success-criteria>
+      <human-approval-required>true</human-approval-required>
+    </task>
+
+    <expansion-hook id="3-integration">
+      Add integration tasks as needed:
+      - MCP security hardening (OAuth, rate limiting)
+      - Additional source adapters
+      - Performance optimization
+    </expansion-hook>
+  </phase>
+
+  <!-- ============================================================
+       FUTURE PHASES - EXPANSION HOOKS
+       ============================================================ -->
+  <future-phases>
+    <phase id="4" name="Chat Interface" status="not-started">
+      <description>Build conversational gap-filling interface</description>
+      <trigger>After Phase 3 approval and user feedback on demo</trigger>
+      <scope>
+        - Chat UI components
+        - Confidence display patterns
+        - Album workflow
+      </scope>
+    </phase>
+
+    <phase id="5" name="MCP Production" status="not-started">
+      <description>Harden MCP server for third-party access</description>
+      <trigger>When Mogen integration is ready</trigger>
+      <scope>
+        - OAuth 2.0 implementation
+        - Rate limiting per tier
+        - Audit logging
+        - Security testing
+      </scope>
+    </phase>
+
+    <phase id="6" name="Scale Infrastructure" status="not-started">
+      <description>Migrate to Hetzner/Kamal per FinOps plan</description>
+      <trigger>When monthly costs exceed €50 OR user base > 100</trigger>
+      <scope>
+        - Pulumi IaC implementation
+        - Kamal deployment setup
+        - Neon to self-hosted migration path
+      </scope>
+    </phase>
+
+    <phase id="7" name="UQ Research" status="not-started">
+      <description>Advanced uncertainty quantification</description>
+      <trigger>After MVP, when confidence scoring needs improvement</trigger>
+      <scope>
+        - Calibration validation set (100+ examples)
+        - ECE evaluation implementation (prefer smoothECE: https://github.com/apple/ml-calibration)
+        - MAPIE conformal prediction
+        - Selective abstention (SConU)
+      </scope>
+    </phase>
+  </future-phases>
+
+</executable-plan>

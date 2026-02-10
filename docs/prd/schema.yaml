@@ -1,0 +1,144 @@
+# PRD Frontmatter Schema
+# All PRD markdown files should have YAML frontmatter that validates against this schema
+
+$schema: "https://json-schema.org/draft/2020-12/schema"
+type: object
+required:
+  - id
+  - title
+  - status
+  - version
+  - requires
+
+properties:
+  id:
+    type: string
+    description: |
+      Unique path-based identifier matching file location.
+      Example: "attribution-engine/confidence-scoring"
+    pattern: "^[a-z0-9-]+(/[a-z0-9-]+)*$"
+
+  title:
+    type: string
+    description: Human-readable title for the PRD
+    maxLength: 100
+
+  status:
+    type: string
+    enum:
+      - active       # Currently recommended choice
+      - experimental # Under evaluation, not production-ready
+      - deprecated   # Superseded by another option
+      - rejected     # Evaluated and explicitly NOT recommended
+    description: Current status of this PRD/option
+
+  version:
+    type: string
+    pattern: "^\\d+\\.\\d+\\.\\d+$"
+    description: Semantic version (major.minor.patch)
+
+  last_updated:
+    type: string
+    format: date
+    description: Last modification date (YYYY-MM-DD)
+
+  # Context assembly for LLMs
+  requires:
+    type: array
+    items:
+      type: string
+    description: |
+      PRDs that MUST be loaded for context. Include #section for partial loading.
+      Example: ["vision-v1.md#executive-summary", "uncertainty/toc-uncertainty.md"]
+
+  cross_refs:
+    type: array
+    items:
+      type: string
+    description: |
+      Related PRDs for optional context enrichment.
+      Example: ["observability/langfuse.md#confidence-tracking"]
+
+  alternatives:
+    type: array
+    items:
+      type: string
+    description: |
+      Sibling options in the same decision space.
+      Example: ["data-layer/graph/neo4j.md", "data-layer/graph/pgvector-only.md"]
+
+  # Rejection documentation
+  rejection_of:
+    type: string
+    nullable: true
+    description: |
+      If this is a rejection doc, reference what option it rejects.
+      Example: "data-layer/graph/neo4j"
+
+  rejection_detail:
+    type: string
+    nullable: true
+    description: |
+      Path to detailed evaluation doc for substantive rejections.
+      Example: "knowledge-base/technical/databases/neo4j-evaluation.md"
+
+  # Discovery and organization
+  tags:
+    type: array
+    items:
+      type: string
+    description: Freeform tags for discovery and filtering
+
+  priority:
+    type: string
+    enum: [high, medium, low]
+    description: Implementation priority based on Imogen/Andy guidance
+
+  # Changelog (embedded version history)
+  changelog:
+    type: array
+    items:
+      type: object
+      required: [version, date, changes]
+      properties:
+        version:
+          type: string
+        date:
+          type: string
+          format: date
+        changes:
+          type: string
+    description: Version history embedded in the document
+
+# Example valid frontmatter:
+#
+# ---
+# id: attribution-engine/confidence-scoring
+# title: Confidence Scoring for Attribution Data
+# status: active
+# version: 0.1.0
+# last_updated: 2026-02-04
+# priority: high
+#
+# requires:
+#   - vision-v1.md#executive-summary
+#   - uncertainty/toc-uncertainty.md
+#
+# cross_refs:
+#   - observability/langfuse.md#confidence-tracking
+#   - chat-interface/conversational-gap-filling.md
+#
+# alternatives: []
+# rejection_of: null
+# rejection_detail: null
+#
+# tags:
+#   - confidence
+#   - uncertainty
+#   - core-engine
+#
+# changelog:
+#   - version: "0.1.0"
+#     date: 2026-02-04
+#     changes: "Initial draft based on Imogen's 90-100% confidence requirement"
+# ---

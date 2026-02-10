@@ -1,0 +1,87 @@
+# Music Attribution PRD Composition Defaults
+# Current active technology choices (Hydra-inspired)
+#
+# To override for a specific scenario, create an overrides file:
+# overrides/scale-mode.yaml, overrides/enterprise.yaml, etc.
+
+composition:
+  # L1: Master vision
+  vision: vision-v1
+
+  # L2: Core domains
+  attribution_engine:
+    aggregation: multi-source-aggregation
+    scoring: confidence-scoring        # Conformal prediction based
+    source_tracking: source-attribution  # Per-source confidence (Andy's insight)
+    gap_handling: gap-analysis          # Actionable suggestions
+
+  chat_interface:
+    mode: two-role                      # gather/edit + query
+    gap_filling: conversational-gap-filling
+    workflow: album-workflow            # "One album at a time" per Imogen
+
+  mcp_server:
+    read_api: active
+    write_api: active
+    permissions_api: active             # For Mogen integration
+
+  data_layer:
+    database: postgresql                # Unified: relational + vector + graph
+    graph: apache-age                   # PostgreSQL extension, NOT neo4j
+    vector: pgvector                    # NOT dedicated VDB
+    retrieval: hybrid-retrieval         # Vector + graph combined
+
+  identity_permissions:
+    identity: artist-id
+    consent: permission-bundles
+
+  # L2*: Cross-cutting concerns
+  uncertainty:
+    method: conformal-prediction        # Formal guarantees
+    calibration: active                 # "90% confident" must be accurate
+    selective: active                   # Abstain when uncertain
+
+  observability:
+    llm_tracing: langfuse               # Confidence tracking
+    system_metrics: prometheus-grafana
+    distributed_tracing: opentelemetry  # Optional
+
+  security:
+    multi_tenancy: active               # Rights orgs, labels isolation
+    audit_logging: active
+    secrets: environment-variables      # Simple for MVP  # pragma: allowlist secret
+
+  infrastructure:
+    compute: render                     # Simplicity over AWS/GCP
+    database_hosting: neon              # Managed PostgreSQL
+    deployment: docker                  # Container-based
+
+  # Voice agent (for the system attribution + Imogen digital twin)
+  voice_agent:
+    pipeline: vapi                      # Managed for fast iteration
+    tts: inworld                        # Cost-effective, high quality
+    stt: deepgram                       # Low latency
+    persona: configurable               # Can serve attribution + digital twin use cases
+
+  # Explicitly NOT using (see REJECTED.md for rationale)
+  rejected:
+    - neo4j                             # Operational complexity
+    - langchain                         # Over-abstraction
+    - pinecone                          # Separate service unnecessary
+    - weaviate                          # Separate service unnecessary
+    - kubernetes                        # Over-engineering
+    - mongodb                           # ACID required
+
+# Override examples:
+#
+# Scale mode (>1000 users):
+# data_layer:
+#   vector: qdrant                      # Dedicated VDB at scale
+#   graph: neo4j                        # If graph algorithms needed
+#
+# Enterprise mode:
+# infrastructure:
+#   compute: aws-ecs
+#   secrets: aws-secrets-manager
+# security:
+#   compliance: soc2

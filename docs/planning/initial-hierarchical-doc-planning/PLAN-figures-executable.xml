@@ -1,0 +1,530 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ATTRIBUTION SPRINT - FIGURES EXECUTABLE PLAN v1.0
+  ================================================
+  Version: 1.0.0
+  Created: 2026-02-03
+
+  PURPOSE: Machine-readable plan for repository infographics and figure generation.
+  SCOPE: Two-level documentation figures (technical + domain) with content/style decoupling.
+
+  AUDIENCE LEVELS:
+  - LOW-LEVEL (Technical): For developers/engineers - implementation details
+  - HIGH-LEVEL (Domain): For tech-savvy music industry experts - problem/solution context
+
+  DESIGN AESTHETIC:
+  - Dense infographics (Herman Miller modernism, Economist-style)
+  - Mermaid diagrams meet elegant graphical design
+  - Content/style strictly decoupled for future style customization
+
+  HOW TO USE:
+  1. Complete scaffold tasks first (STYLE-GUIDE, directory structure)
+  2. Create figure plans with semantic tags (no visual properties in content)
+  3. Generate figures via Nano Banana Pro (upload STYLE-GUIDE + figure-plan)
+  4. Embed in README.md files
+-->
+
+<executable-plan
+  project="music-attribution-scaffold"
+  version="1.0.0"
+  type="figures"
+  depends-on="PLAN-executable.xml Phase 1B">
+
+  <!-- ============================================================
+       PROTOCOLS
+       ============================================================ -->
+  <protocols>
+    <content-style-decoupling>
+      CRITICAL: Content files use SEMANTIC TAGS only.
+      Visual properties (colors, fonts) are defined in STYLE-GUIDE.md.
+
+      Example:
+      - Content: "role": "primary_pathway"
+      - Style: "primary_pathway": "#2E5B8C"
+
+      This allows style changes without editing content files.
+    </content-style-decoupling>
+
+    <two-level-documentation>
+      Every major component gets TWO figure types:
+      1. LOW-LEVEL (Technical): Implementation details for developers
+      2. HIGH-LEVEL (Domain): Problem/solution for music industry experts
+
+      Same content, different framing and detail level.
+    </two-level-documentation>
+
+    <figure-plan-template>
+      Each figure plan must include:
+      - Metadata (ID, title, audience, priority)
+      - Purpose and key message
+      - Panel layout (ASCII diagram)
+      - Content elements (labels, values, relationships)
+      - Semantic tags (NOT visual properties)
+      - JSON export block for Nano Banana Pro
+    </figure-plan-template>
+  </protocols>
+
+  <!-- ============================================================
+       CONTEXT
+       ============================================================ -->
+  <context>
+    <project-root>/home/petteri/Dropbox/github-personal/music-attribution-scaffold</project-root>
+    <figures-directory>docs/figures</figures-directory>
+
+    <reference-materials>
+      <ref type="style-workflow">/home/petteri/Dropbox/github-personal/sci-llm-writer/manuscripts/foundationPLR/figures/PROMPTING-INSTRUCTIONS.md</ref>
+      <ref type="content-template">/home/petteri/Dropbox/github-personal/sci-llm-writer/manuscripts/foundationPLR/figures/CONTENT-TEMPLATE.md</ref>
+      <ref type="repo-figures-pattern">/home/petteri/Dropbox/github-personal/foundation-PLR/foundation_PLR/docs/repo-figures/</ref>
+    </reference-materials>
+
+    <audience-definitions>
+      <audience id="developer" level="low">
+        Software engineers implementing the system.
+        Needs: Code paths, schemas, API contracts, config patterns.
+      </audience>
+      <audience id="domain-expert" level="high">
+        Tech-savvy music industry professionals (think Imogen Heap's audience).
+        Needs: Problem context, solution benefits, how the system addresses AI attribution.
+      </audience>
+    </audience-definitions>
+  </context>
+
+  <!-- ============================================================
+       PHASE F1: SCAFFOLD (Infrastructure)
+       ============================================================ -->
+  <phase id="F1" name="Figure Infrastructure" status="pending">
+    <description>Set up figure generation infrastructure with content/style decoupling.</description>
+
+    <task id="F1.1" status="pending">
+      <name>Create docs/figures/ directory structure</name>
+      <instructions>
+        1. Create directories:
+           mkdir -p docs/figures/figure-plans
+           mkdir -p docs/figures/generated
+           mkdir -p docs/figures/visual-references
+
+        2. Create docs/figures/README.md with:
+           - Overview of figure catalog
+           - Two-level documentation philosophy
+           - Workflow for Nano Banana Pro generation
+           - Figure index table (empty, populated later)
+
+        3. Create docs/figures/.gitignore:
+           # Keep generated/ tracked for now
+           # visual-references/*.jpg
+           # visual-references/*.png
+      </instructions>
+      <outputs>
+        <file>docs/figures/README.md</file>
+        <file>docs/figures/.gitignore</file>
+      </outputs>
+    </task>
+
+    <task id="F1.2" status="pending" depends-on="F1.1">
+      <name>Create the system STYLE-GUIDE.md</name>
+      <instructions>
+        1. Create docs/figures/STYLE-GUIDE.md with:
+           - The system-specific color palette (NOT foundationPLR colors)
+           - Semantic tag mappings for the system concepts:
+             * attribution_verified, attribution_claimed, attribution_unknown
+             * source_system, source_musicbrainz, source_discogs
+             * tier_internal, tier_verified, tier_public
+             * confidence_high, confidence_medium, confidence_low
+           - Typography specifications
+           - Rendering keywords for Nano Banana Pro
+           - Negative prompt (styles to avoid)
+
+        2. Color palette suggestions (to be refined):
+           - Primary: Deep blue (#1E3A5F) - trust, authority
+           - Secondary: Warm gold (#D4A03C) - creativity, music
+           - Success: Green (#4A7C59) - verified
+           - Warning: Amber (#E09F3E) - needs review
+           - Background: Off-white (#F8F6F0)
+
+        3. Ensure NO visual properties in figure-plan content files.
+      </instructions>
+      <outputs>
+        <file>docs/figures/STYLE-GUIDE.md</file>
+      </outputs>
+    </task>
+
+    <task id="F1.3" status="pending" depends-on="F1.1">
+      <name>Create CONTENT-TEMPLATE.md for figure plans</name>
+      <instructions>
+        1. Create docs/figures/CONTENT-TEMPLATE.md adapting from:
+           /home/petteri/Dropbox/github-personal/sci-llm-writer/manuscripts/foundationPLR/figures/CONTENT-TEMPLATE.md
+
+        2. Customize for the system:
+           - Two audience levels (developer, domain-expert)
+           - The system-specific semantic tags
+           - JSON export block format
+
+        3. Include examples of semantic tag usage.
+      </instructions>
+      <outputs>
+        <file>docs/figures/CONTENT-TEMPLATE.md</file>
+      </outputs>
+    </task>
+
+    <task id="F1.4" status="pending" checkpoint="true" depends-on="F1.1,F1.2,F1.3">
+      <name>CHECKPOINT: Figure infrastructure complete</name>
+      <instructions>
+        1. Verify files exist:
+           ls docs/figures/*.md
+
+        2. Verify STYLE-GUIDE has semantic tag mappings
+
+        3. STOP: "CHECKPOINT: Figure infrastructure complete. Ready for figure plans."
+
+        4. After approval, commit:
+           git add docs/figures/
+           git commit -m "feat(docs): add figure generation infrastructure
+
+           - STYLE-GUIDE.md with the system semantic tags
+           - CONTENT-TEMPLATE.md for figure plans
+           - Two-level documentation structure
+
+           Co-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>"
+      </instructions>
+      <human-approval-required>true</human-approval-required>
+    </task>
+  </phase>
+
+  <!-- ============================================================
+       PHASE F2: TECHNICAL FIGURES (Low-Level)
+       ============================================================ -->
+  <phase id="F2" name="Technical Figures" status="pending" depends-on="F1">
+    <description>Figure plans for developers explaining implementation.</description>
+
+    <task id="F2.1" status="pending">
+      <name>Create fig-tech-01: Attribution Pipeline</name>
+      <instructions>
+        Create docs/figures/figure-plans/fig-tech-01-attribution-pipeline.md
+
+        Shows: Data flow from sources through entity resolution to unified entities.
+
+        Content elements:
+        - Three source adapters (Discogs, MusicBrainz, System Own)
+        - Entity resolution stage (fuzzy matching)
+        - Conflict resolution (voting + authority)
+        - Confidence scoring (agreement + weight)
+        - PostgreSQL storage
+
+        Use semantic tags: source_discogs, source_musicbrainz, source_system,
+        processing_stage, data_flow, storage_layer
+
+        Include JSON export block.
+      </instructions>
+      <outputs>
+        <file>docs/figures/figure-plans/fig-tech-01-attribution-pipeline.md</file>
+      </outputs>
+    </task>
+
+    <task id="F2.2" status="pending">
+      <name>Create fig-tech-02: MCP Server Architecture</name>
+      <instructions>
+        Create docs/figures/figure-plans/fig-tech-02-mcp-architecture.md
+
+        Shows: Three-tier trust model and MCP tool exposure.
+
+        Content elements:
+        - Three access tiers with rate limits
+        - MCP tools (get_artist_attribution, search_songs, verify_credit)
+        - OAuth flow
+        - Resource indicators (RFC 8707)
+
+        Use semantic tags: tier_internal, tier_verified, tier_public,
+        mcp_tool, security_layer, api_endpoint
+
+        Include JSON export block.
+      </instructions>
+      <outputs>
+        <file>docs/figures/figure-plans/fig-tech-02-mcp-architecture.md</file>
+      </outputs>
+    </task>
+
+    <task id="F2.3" status="pending">
+      <name>Create fig-tech-03: Confidence Scoring Algorithm</name>
+      <instructions>
+        Create docs/figures/figure-plans/fig-tech-03-confidence-scoring.md
+
+        Shows: How confidence scores are computed.
+
+        Content elements:
+        - Authority weights table
+        - Agreement ratio calculation
+        - Confidence level thresholds (verified/high/medium/low)
+        - A0-A3 mapping
+
+        Use semantic tags: confidence_high, confidence_medium, confidence_low,
+        calculation_step, threshold_boundary
+
+        Include JSON export block.
+      </instructions>
+      <outputs>
+        <file>docs/figures/figure-plans/fig-tech-03-confidence-scoring.md</file>
+      </outputs>
+    </task>
+
+    <task id="F2.4" status="pending">
+      <name>Create fig-tech-04: Database Schema</name>
+      <instructions>
+        Create docs/figures/figure-plans/fig-tech-04-database-schema.md
+
+        Shows: PostgreSQL schema for attribution data.
+
+        Content elements:
+        - source_records table
+        - unified_entities table
+        - entity_links table
+        - field_confidence table
+        - pgvector extension
+
+        Use semantic tags: table_primary, table_link, field_key, field_value,
+        relationship_fk
+
+        Include JSON export block.
+      </instructions>
+      <outputs>
+        <file>docs/figures/figure-plans/fig-tech-04-database-schema.md</file>
+      </outputs>
+    </task>
+  </phase>
+
+  <!-- ============================================================
+       PHASE F3: DOMAIN FIGURES (High-Level)
+       ============================================================ -->
+  <phase id="F3" name="Domain Figures" status="pending" depends-on="F1">
+    <description>Figure plans for music industry experts explaining the problem/solution.</description>
+
+    <task id="F3.1" status="pending">
+      <name>Create fig-domain-01: The Attribution Crisis</name>
+      <instructions>
+        Create docs/figures/figure-plans/fig-domain-01-attribution-crisis.md
+
+        Shows: Why 40%+ of music metadata is incorrect and what this costs.
+
+        Content elements:
+        - Data silos (multiple databases, none complete)
+        - Lost royalties statistic
+        - AI training without consent
+        - Independent artist exclusion from major deals
+
+        Use semantic tags: problem_statement, impact_metric, stakeholder_artist,
+        stakeholder_platform
+
+        Audience: Music industry professionals (Imogen Heap's readers)
+
+        Include JSON export block.
+      </instructions>
+      <outputs>
+        <file>docs/figures/figure-plans/fig-domain-01-attribution-crisis.md</file>
+      </outputs>
+    </task>
+
+    <task id="F3.2" status="pending">
+      <name>Create fig-domain-02: Attribution Solution Overview</name>
+      <instructions>
+        Create docs/figures/figure-plans/fig-domain-02-auracles-solution.md
+
+        Shows: How the system solves the attribution problem.
+
+        Content elements:
+        - Artist-controlled identity (Artist ID)
+        - Multi-source cross-referencing
+        - Confidence transparency (A0-A3 levels)
+        - AI permissions via MCP
+
+        Use semantic tags: solution_component, benefit_artist, benefit_platform,
+        integration_point
+
+        Audience: Music industry professionals
+
+        Include JSON export block.
+      </instructions>
+      <outputs>
+        <file>docs/figures/figure-plans/fig-domain-02-auracles-solution.md</file>
+      </outputs>
+    </task>
+
+    <task id="F3.3" status="pending">
+      <name>Create fig-domain-03: MCP for AI Attribution</name>
+      <instructions>
+        Create docs/figures/figure-plans/fig-domain-03-mcp-ai-attribution.md
+
+        Shows: How MCP enables ethical AI training with artist consent.
+
+        Content elements:
+        - Artist sets permissions in the system
+        - AI platform queries via MCP
+        - Permission check before training
+        - Attribution maintained in outputs
+
+        Reference: Imogen Heap's Medium article vision
+
+        Use semantic tags: permission_flow, ai_platform, artist_control,
+        consent_check
+
+        Audience: Music industry + AI platforms
+
+        Include JSON export block.
+      </instructions>
+      <outputs>
+        <file>docs/figures/figure-plans/fig-domain-03-mcp-ai-attribution.md</file>
+      </outputs>
+    </task>
+
+    <task id="F3.4" status="pending">
+      <name>Create fig-domain-04: Trust Tiers Explained</name>
+      <instructions>
+        Create docs/figures/figure-plans/fig-domain-04-trust-tiers.md
+
+        Shows: Three-tier access model in business terms.
+
+        Content elements:
+        - Internal (system apps): Full access
+        - Verified (Mogen, partners): Trusted collaboration
+        - Public (unknown AI): Read-only, rate-limited
+
+        Use semantic tags: tier_internal, tier_verified, tier_public,
+        access_level, business_relationship
+
+        Audience: Music industry decision-makers
+
+        Include JSON export block.
+      </instructions>
+      <outputs>
+        <file>docs/figures/figure-plans/fig-domain-04-trust-tiers.md</file>
+      </outputs>
+    </task>
+  </phase>
+
+  <!-- ============================================================
+       PHASE F4: README MERMAID DIAGRAMS
+       ============================================================ -->
+  <phase id="F4" name="README Diagrams" status="pending" depends-on="F1">
+    <description>Add Mermaid diagrams to hierarchical README.md files.</description>
+
+    <task id="F4.1" status="pending">
+      <name>Add Mermaid to docs/prd/README.md</name>
+      <instructions>
+        Update docs/prd/README.md with Mermaid diagram showing PRD hierarchy:
+
+        ```mermaid
+        graph TD
+            V[vision-v1] --> A[attribution-engine]
+            V --> C[chat-interface]
+            V --> M[mcp-server]
+            A --> M
+            A --> C
+        ```
+      </instructions>
+      <outputs>
+        <file>docs/prd/README.md</file>
+      </outputs>
+    </task>
+
+    <task id="F4.2" status="pending">
+      <name>Add Mermaid to docs/knowledge-base/README.md</name>
+      <instructions>
+        Update docs/knowledge-base/README.md with Mermaid diagram showing knowledge hierarchy:
+
+        ```mermaid
+        graph TD
+            KB[Knowledge Base] --> D[domain/]
+            KB --> T[technical/]
+            KB --> S[sources/]
+            D --> DA[attribution/]
+            D --> DM[music-industry/]
+            T --> TU[uncertainty/]
+            T --> TM[mcp/]
+        ```
+      </instructions>
+      <outputs>
+        <file>docs/knowledge-base/README.md</file>
+      </outputs>
+    </task>
+
+    <task id="F4.3" status="pending">
+      <name>Add Mermaid to docs/architecture/README.md</name>
+      <instructions>
+        Update docs/architecture/README.md with Mermaid diagram showing system architecture:
+
+        ```mermaid
+        graph TB
+            subgraph External
+                DIS[Discogs]
+                MB[MusicBrainz]
+            end
+            subgraph Attribution
+                AE[Attribution Engine]
+                MCP[MCP Server]
+                CHAT[Chat Interface]
+                DB[(PostgreSQL)]
+            end
+            subgraph Clients
+                AI[AI Platforms]
+                WEB[Web App]
+            end
+            DIS --> AE
+            MB --> AE
+            AE --> DB
+            DB --> MCP
+            DB --> CHAT
+            MCP --> AI
+            CHAT --> WEB
+        ```
+      </instructions>
+      <outputs>
+        <file>docs/architecture/README.md</file>
+      </outputs>
+    </task>
+
+    <task id="F4.4" status="pending" checkpoint="true" depends-on="F4.1,F4.2,F4.3">
+      <name>CHECKPOINT: README diagrams complete</name>
+      <instructions>
+        1. Verify Mermaid diagrams render correctly on GitHub
+
+        2. STOP: "CHECKPOINT: README Mermaid diagrams complete."
+
+        3. After approval, commit:
+           git add docs/
+           git commit -m "feat(docs): add Mermaid diagrams to README files
+
+           - PRD hierarchy diagram
+           - Knowledge base structure diagram
+           - System architecture diagram
+
+           Co-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>"
+      </instructions>
+      <human-approval-required>true</human-approval-required>
+    </task>
+  </phase>
+
+  <!-- ============================================================
+       FUTURE PHASES
+       ============================================================ -->
+  <future-phases>
+    <phase id="F5" name="Figure Generation" status="not-started">
+      <description>Generate actual figures using Nano Banana Pro</description>
+      <trigger>After figure plans are reviewed and approved</trigger>
+      <scope>
+        - Upload STYLE-GUIDE.md + figure-plan to Gemini
+        - Generate with Nano Banana Pro
+        - Save to docs/figures/generated/
+        - Embed in documentation
+      </scope>
+    </phase>
+
+    <phase id="F6" name="Style Refinement" status="not-started">
+      <description>Iterate on the system visual identity</description>
+      <trigger>After initial figures generated and reviewed</trigger>
+      <scope>
+        - Refine color palette based on feedback
+        - Update STYLE-GUIDE.md (content files unchanged)
+        - Regenerate figures with new style
+      </scope>
+    </phase>
+  </future-phases>
+
+</executable-plan>

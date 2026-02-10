@@ -1,0 +1,13 @@
+# Visual references (inspiration images, not tracked)
+visual-references/*.jpg
+visual-references/*.jpeg
+visual-references/*.png
+visual-references/*.gif
+
+# Keep the generated/ directory tracked for now
+# We want generated figures in version control
+
+# Temporary files
+*.tmp
+*.bak
+*~
