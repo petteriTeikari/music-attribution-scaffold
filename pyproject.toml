@@ -30,6 +30,7 @@ dependencies = [
     "pydantic-ai>=1.0",
     "pydantic-settings>=2.0",
     "python3-discogs-client>=2.8",
+    "sentence-transformers>=3.0",
     "splink>=4.0",
     "sqlalchemy[asyncio]>=2.0",
     "thefuzz>=0.22",
