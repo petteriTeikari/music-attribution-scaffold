@@ -1,0 +1,46 @@
+# Template sync configuration
+# Defines how this project syncs with its cookiecutter template
+
+template:
+  url: "https://github.com/your-org/cookiecutter-py-template"
+  version: "1.0.0"
+
+sync_rules:
+  # Files that should always sync from template
+  always_sync:
+    - ".claude/CLAUDE.md"
+    - ".claude/golden-paths.md"
+    - ".claude/auto-context.yaml"
+    - ".claude/GUARDRAILS.md"
+    - ".claude/rules/*.md"
+    - "scripts/validate_*.py"
+    - "scripts/check_*.py"
+
+  # Files that should never sync (project-specific)
+  never_sync:
+    - "README.md"
+    - "src/**"
+    - "tests/**"
+    - "pyproject.toml"
+    - "uv.lock"
+    - ".env*"
+    - "knowledge-base/biblio/**"
+
+  # Files that should merge on conflict
+  merge_on_conflict:
+    - ".gitignore"
+    - ".pre-commit-config.yaml"
+    - "CLAUDE.md"
+    - "Makefile"
+
+# Validation before sync
+pre_sync_checks:
+  - "All tests pass"
+  - "No uncommitted changes"
+  - "On clean branch"
+
+# Actions after sync
+post_sync_actions:
+  - "uv sync"
+  - "pre-commit install"
+  - "make test"

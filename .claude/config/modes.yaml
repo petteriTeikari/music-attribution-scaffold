@@ -1,0 +1,68 @@
+# Adaptive Mode Configuration
+# Modes control risk tolerance and scope of changes
+
+default_mode: maintenance
+
+modes:
+  creation:
+    description: "Early development phase with high tolerance for changes"
+    risk_tolerance: high
+    max_files_per_change: 20
+    max_lines_per_change: 1000
+    auto_triggers:
+      - "file_count < 50"
+      - "git_commits < 20"
+      - "no_ci_config"
+    allowed_actions:
+      - create_new_modules
+      - refactor_architecture
+      - add_dependencies
+      - create_tests
+    review_required: false
+
+  maintenance:
+    description: "Production code with conservative changes"
+    risk_tolerance: low
+    max_files_per_change: 3
+    max_lines_per_change: 200
+    auto_triggers:
+      - "file_count > 200"
+      - "has_ci_config"
+      - "has_test_coverage > 60"
+    allowed_actions:
+      - bug_fixes
+      - documentation
+      - minor_refactoring
+      - add_tests
+    review_required: true
+
+  debug:
+    description: "Debugging mode with medium risk tolerance"
+    risk_tolerance: medium
+    max_files_per_change: 10
+    max_lines_per_change: 500
+    auto_triggers:
+      - "explicit_debug_request"
+      - "failing_tests"
+      - "error_in_logs"
+    allowed_actions:
+      - add_logging
+      - add_debug_output
+      - fix_bugs
+      - add_tests
+    review_required: false
+
+mode_transitions:
+  creation_to_maintenance:
+    triggers:
+      - "ci_passing"
+      - "test_coverage > 60"
+      - "file_count > 100"
+  maintenance_to_debug:
+    triggers:
+      - "test_failure"
+      - "explicit_request"
+  debug_to_maintenance:
+    triggers:
+      - "tests_passing"
+      - "issue_resolved"

@@ -1,0 +1,68 @@
+name: Template Sync Check
+
+on:
+  schedule:
+    - cron: '0 0 * * 0'  # Weekly on Sunday
+  workflow_dispatch:
+
+jobs:
+  check-template:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install cruft
+        run: pip install cruft
+
+      - name: Check for template updates
+        id: cruft-check
+        run: |
+          if cruft check; then
+            echo "up_to_date=true" >> $GITHUB_OUTPUT
+          else
+            echo "up_to_date=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create issue if outdated
+        if: steps.cruft-check.outputs.up_to_date == 'false'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const title = 'Template update available';
+            const body = `The cookiecutter template has updates available.
+
+            Run the following to update:
+            \`\`\`bash
+            cruft update
+            \`\`\`
+
+            Or check differences:
+            \`\`\`bash
+            cruft diff
+            \`\`\`
+            `;
+
+            // Check if issue already exists
+            const issues = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: 'template-update'
+            });
+
+            if (issues.data.length === 0) {
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: title,
+                body: body,
+                labels: ['template-update']
+              });
+            }
