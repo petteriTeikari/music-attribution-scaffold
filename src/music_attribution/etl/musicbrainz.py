@@ -107,7 +107,7 @@ class MusicBrainzConnector:
         data = await self._api_call(
             musicbrainzngs.get_artist_by_id,
             mbid,
-            includes=["aliases", "isnis"],
+            includes=["aliases"],
         )
         return self.transform_artist(data["artist"])
 
