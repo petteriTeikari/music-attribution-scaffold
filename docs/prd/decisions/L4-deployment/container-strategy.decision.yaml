@@ -1,0 +1,151 @@
+# Container Strategy
+#
+# How application code is packaged for deployment.
+
+decision_id: container_strategy
+title: "Container Strategy"
+description: >
+  Determines how application code is packaged and distributed for
+  deployment. Containerization (Docker) is the de facto standard
+  but not always necessary for simple PaaS deployments.
+
+decision_level: L4_deployment
+status: active
+last_updated: 2026-02-10
+
+options:
+  - option_id: docker_compose
+    title: "Docker + Docker Compose"
+    description: >
+      Dockerfiles for each service, docker-compose.yaml for local
+      development and simple production. Standard containerization
+      without orchestration complexity.
+    prior_probability: 0.40
+    status: recommended
+
+  - option_id: buildpacks
+    title: "Buildpacks (Platform Auto-Detect)"
+    description: >
+      Let the platform detect and build containers automatically
+      (Heroku/Render buildpacks, Cloud Native Buildpacks). Zero
+      Docker knowledge required.
+    prior_probability: 0.25
+    status: viable
+
+  - option_id: kubernetes
+    title: "Kubernetes"
+    description: >
+      Full container orchestration with Kubernetes. Helm charts or
+      Kustomize for configuration. Maximum scaling flexibility,
+      highest operational complexity.
+    prior_probability: 0.10
+    status: deferred
+    constraints:
+      - "Kubernetes expertise on team"
+      - "Higher infrastructure cost"
+      - "Complex local development setup"
+
+  - option_id: no_containers
+    title: "No Containers (Direct Deploy)"
+    description: >
+      Deploy code directly without containerization. Systemd services,
+      PM2 for Node, or uvicorn/gunicorn directly. Simple but
+      environment-dependent.
+    prior_probability: 0.25
+    status: viable
+
+conditional_on:
+  - parent_decision_id: compute_platform
+    influence_strength: strong
+    conditional_table:
+      - given_parent_option: render
+        then_probabilities:
+          docker_compose: 0.40
+          buildpacks: 0.35
+          kubernetes: 0.05
+          no_containers: 0.20
+      - given_parent_option: vercel_plus_backend
+        then_probabilities:
+          docker_compose: 0.25
+          buildpacks: 0.30
+          kubernetes: 0.05
+          no_containers: 0.40
+      - given_parent_option: railway
+        then_probabilities:
+          docker_compose: 0.35
+          buildpacks: 0.35
+          kubernetes: 0.05
+          no_containers: 0.25
+      - given_parent_option: fly_io
+        then_probabilities:
+          docker_compose: 0.55
+          buildpacks: 0.15
+          kubernetes: 0.10
+          no_containers: 0.20
+      - given_parent_option: hetzner_dedicated
+        then_probabilities:
+          docker_compose: 0.50
+          buildpacks: 0.05
+          kubernetes: 0.20
+          no_containers: 0.25
+      - given_parent_option: aws_ecs
+        then_probabilities:
+          docker_compose: 0.30
+          buildpacks: 0.10
+          kubernetes: 0.40
+          no_containers: 0.20
+
+archetype_weights:
+  engineer_heavy_startup:
+    probability_overrides:
+      docker_compose: 0.40
+      buildpacks: 0.10
+      kubernetes: 0.25
+      no_containers: 0.25
+    rationale: "Docker standard, Kubernetes when scaling."
+
+  musician_first_team:
+    probability_overrides:
+      docker_compose: 0.25
+      buildpacks: 0.40
+      kubernetes: 0.00
+      no_containers: 0.35
+    rationale: "Buildpacks or direct deploy. Avoid Docker complexity."
+
+  solo_hacker:
+    probability_overrides:
+      docker_compose: 0.30
+      buildpacks: 0.30
+      kubernetes: 0.00
+      no_containers: 0.40
+    rationale: "Direct deploy for speed, Docker when reproducibility matters."
+
+  well_funded_startup:
+    probability_overrides:
+      docker_compose: 0.35
+      buildpacks: 0.15
+      kubernetes: 0.30
+      no_containers: 0.20
+    rationale: "Docker standard, Kubernetes path for enterprise."
+
+volatility:
+  classification: stable
+  last_assessed: 2026-02-10
+  next_review: 2026-05-10
+  change_drivers:
+    - "Container alternative technologies (Firecracker, Wasm)"
+    - "Kubernetes simplification efforts"
+
+domain_applicability:
+  music_attribution: 1.0
+  dpp_traceability: 1.0
+  generic_graph_rag: 1.0
+
+tags:
+  - deployment
+  - containers
+  - docker
+
+references:
+  - "../infrastructure/toc-infrastructure.md"
+  - "../REJECTED.md"

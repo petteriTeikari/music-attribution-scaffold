@@ -1,0 +1,179 @@
+# Infrastructure as Code Tooling
+#
+# How infrastructure is provisioned and managed.
+
+decision_id: iac_tooling
+title: "Infrastructure as Code Tooling"
+description: >
+  Determines whether and how infrastructure is codified. Ranges from
+  no IaC (manual setup via platform dashboards) to full declarative
+  infrastructure management. IaC becomes important when infrastructure
+  complexity exceeds what one person can remember.
+
+decision_level: L4_deployment
+status: active
+last_updated: 2026-02-10
+
+options:
+  - option_id: none_manual
+    title: "None / Manual"
+    description: >
+      Infrastructure managed via platform dashboards and CLI commands.
+      No codified infrastructure. Fast for simple setups, becomes
+      unmaintainable as complexity grows.
+    prior_probability: 0.35
+    status: viable
+
+  - option_id: terraform
+    title: "Terraform"
+    description: >
+      HashiCorp's declarative IaC with HCL. Largest ecosystem,
+      broadest provider support. State management required.
+      Industry standard for multi-cloud infrastructure.
+    prior_probability: 0.25
+    status: viable
+    constraints:
+      - "HCL learning curve"
+      - "State backend management"
+      - "Provider version compatibility"
+
+  - option_id: pulumi
+    title: "Pulumi"
+    description: >
+      IaC using general-purpose programming languages (Python, TypeScript).
+      No DSL learning curve. Better testing story than Terraform.
+      Smaller ecosystem but growing.
+    prior_probability: 0.20
+    status: viable
+    constraints:
+      - "Pulumi Cloud or self-managed state"
+
+  - option_id: platform_native
+    title: "Platform Native (render.yaml / fly.toml)"
+    description: >
+      Platform-specific configuration files that define infrastructure
+      alongside code. Limited to single-platform deployments but
+      zero additional tooling.
+    prior_probability: 0.20
+    status: viable
+    complements:
+      - "compute_platform.render"
+      - "compute_platform.fly_io"
+
+conditional_on:
+  - parent_decision_id: build_vs_buy_posture
+    influence_strength: strong
+    conditional_table:
+      - given_parent_option: custom_build
+        then_probabilities:
+          none_manual: 0.10
+          terraform: 0.40
+          pulumi: 0.30
+          platform_native: 0.20
+      - given_parent_option: managed_services
+        then_probabilities:
+          none_manual: 0.30
+          terraform: 0.20
+          pulumi: 0.15
+          platform_native: 0.35
+      - given_parent_option: saas_maximalist
+        then_probabilities:
+          none_manual: 0.50
+          terraform: 0.10
+          pulumi: 0.10
+          platform_native: 0.30
+
+  - parent_decision_id: compute_platform
+    influence_strength: moderate
+    conditional_table:
+      - given_parent_option: render
+        then_probabilities:
+          none_manual: 0.25
+          terraform: 0.20
+          pulumi: 0.15
+          platform_native: 0.40
+      - given_parent_option: vercel_plus_backend
+        then_probabilities:
+          none_manual: 0.35
+          terraform: 0.20
+          pulumi: 0.15
+          platform_native: 0.30
+      - given_parent_option: railway
+        then_probabilities:
+          none_manual: 0.30
+          terraform: 0.20
+          pulumi: 0.15
+          platform_native: 0.35
+      - given_parent_option: fly_io
+        then_probabilities:
+          none_manual: 0.20
+          terraform: 0.25
+          pulumi: 0.15
+          platform_native: 0.40
+      - given_parent_option: hetzner_dedicated
+        then_probabilities:
+          none_manual: 0.15
+          terraform: 0.40
+          pulumi: 0.30
+          platform_native: 0.15
+      - given_parent_option: aws_ecs
+        then_probabilities:
+          none_manual: 0.05
+          terraform: 0.45
+          pulumi: 0.35
+          platform_native: 0.15
+
+archetype_weights:
+  engineer_heavy_startup:
+    probability_overrides:
+      none_manual: 0.10
+      terraform: 0.40
+      pulumi: 0.35
+      platform_native: 0.15
+    rationale: "Engineers adopt IaC early and prefer Terraform or Pulumi."
+
+  musician_first_team:
+    probability_overrides:
+      none_manual: 0.45
+      terraform: 0.10
+      pulumi: 0.10
+      platform_native: 0.35
+    rationale: "Manual or platform-native. IaC is too much overhead."
+
+  solo_hacker:
+    probability_overrides:
+      none_manual: 0.40
+      terraform: 0.10
+      pulumi: 0.15
+      platform_native: 0.35
+    rationale: "Platform-native config or manual. IaC when scaling."
+
+  well_funded_startup:
+    probability_overrides:
+      none_manual: 0.10
+      terraform: 0.40
+      pulumi: 0.30
+      platform_native: 0.20
+    rationale: "IaC from the start for reproducibility and compliance."
+
+volatility:
+  classification: stable
+  last_assessed: 2026-02-10
+  next_review: 2026-05-10
+  change_drivers:
+    - "Terraform licensing changes (OpenTofu fork)"
+    - "Pulumi ecosystem growth"
+    - "Platform-native IaC improvements"
+
+domain_applicability:
+  music_attribution: 1.0
+  dpp_traceability: 1.0
+  generic_graph_rag: 1.0
+
+tags:
+  - deployment
+  - infrastructure-as-code
+  - devops
+
+references:
+  - "../infrastructure/toc-infrastructure.md"

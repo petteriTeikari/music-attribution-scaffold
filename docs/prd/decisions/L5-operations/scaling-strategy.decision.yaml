@@ -1,0 +1,142 @@
+# Scaling Strategy
+#
+# How the system handles growth in users, data, and traffic.
+
+decision_id: scaling_strategy
+title: "Scaling Strategy"
+description: >
+  Determines the approach to handling growth. This is a spectrum from
+  "don't scale" (accept limits) to "scale everything" (distributed
+  systems). Most attribution/traceability systems start small and
+  may never need horizontal scaling.
+
+decision_level: L5_operations
+status: active
+last_updated: 2026-02-10
+
+options:
+  - option_id: vertical_only
+    title: "Vertical Scaling Only"
+    description: >
+      Scale by upgrading to larger machines. No distributed systems
+      complexity. Sufficient for most use cases up to ~100K users
+      and ~10M records.
+    prior_probability: 0.40
+    status: recommended
+
+  - option_id: read_replicas
+    title: "Read Replicas + CDN"
+    description: >
+      Add read replicas for database, CDN for static assets. Handles
+      read-heavy workloads without application architecture changes.
+    prior_probability: 0.25
+    status: viable
+
+  - option_id: horizontal_stateless
+    title: "Horizontal (Stateless App Layer)"
+    description: >
+      Multiple stateless application instances behind a load balancer.
+      Database remains centralized. Handles application compute scaling
+      without distributed data concerns.
+    prior_probability: 0.20
+    status: viable
+    constraints:
+      - "Stateless application design"
+      - "External session store (Redis)"
+      - "Load balancer configuration"
+
+  - option_id: fully_distributed
+    title: "Fully Distributed"
+    description: >
+      Distributed database, application sharding, event-driven
+      architecture. Maximum scale but maximum complexity. Rarely
+      needed for attribution systems.
+    prior_probability: 0.15
+    status: deferred
+    constraints:
+      - "Distributed systems expertise"
+      - "Event sourcing or CQRS patterns"
+      - "Significantly higher infrastructure cost"
+
+conditional_on:
+  - parent_decision_id: target_market_segment
+    influence_strength: moderate
+    conditional_table:
+      - given_parent_option: independent_creators
+        then_probabilities:
+          vertical_only: 0.50
+          read_replicas: 0.25
+          horizontal_stateless: 0.15
+          fully_distributed: 0.10
+      - given_parent_option: mid_tier_labels
+        then_probabilities:
+          vertical_only: 0.40
+          read_replicas: 0.30
+          horizontal_stateless: 0.20
+          fully_distributed: 0.10
+      - given_parent_option: enterprise_rights_orgs
+        then_probabilities:
+          vertical_only: 0.20
+          read_replicas: 0.25
+          horizontal_stateless: 0.30
+          fully_distributed: 0.25
+      - given_parent_option: ai_platform_consumers
+        then_probabilities:
+          vertical_only: 0.25
+          read_replicas: 0.30
+          horizontal_stateless: 0.25
+          fully_distributed: 0.20
+
+archetype_weights:
+  engineer_heavy_startup:
+    probability_overrides:
+      vertical_only: 0.30
+      read_replicas: 0.25
+      horizontal_stateless: 0.25
+      fully_distributed: 0.20
+    rationale: "Engineers plan for scale but start simple."
+
+  musician_first_team:
+    probability_overrides:
+      vertical_only: 0.60
+      read_replicas: 0.25
+      horizontal_stateless: 0.10
+      fully_distributed: 0.05
+    rationale: "Vertical scaling handles musician-first team's user base."
+
+  solo_hacker:
+    probability_overrides:
+      vertical_only: 0.70
+      read_replicas: 0.15
+      horizontal_stateless: 0.10
+      fully_distributed: 0.05
+    rationale: "Scale by upgrading the machine. Distributed systems are impossible solo."
+
+  well_funded_startup:
+    probability_overrides:
+      vertical_only: 0.20
+      read_replicas: 0.25
+      horizontal_stateless: 0.30
+      fully_distributed: 0.25
+    rationale: "Plan for horizontal scaling from the architecture level."
+
+volatility:
+  classification: stable
+  last_assessed: 2026-02-10
+  next_review: 2026-05-10
+  change_drivers:
+    - "User growth rate exceeding projections"
+    - "Database size crossing performance thresholds"
+
+domain_applicability:
+  music_attribution: 1.0
+  dpp_traceability: 1.0
+  generic_graph_rag: 1.0
+
+tags:
+  - operations
+  - scaling
+  - performance
+
+references:
+  - "../infrastructure/toc-infrastructure.md"

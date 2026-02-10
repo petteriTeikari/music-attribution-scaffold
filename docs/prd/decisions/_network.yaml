@@ -95,6 +95,53 @@ nodes:
     file: L3-implementation/auth-strategy.decision.yaml
     title: "Authentication & Authorization Strategy"
 
+  # L4: Deployment Decisions
+  - id: compute_platform
+    level: L4_deployment
+    file: L4-deployment/compute-platform.decision.yaml
+    title: "Compute Platform"
+
+  - id: database_hosting
+    level: L4_deployment
+    file: L4-deployment/database-hosting.decision.yaml
+    title: "Database Hosting"
+
+  - id: ci_cd_pipeline
+    level: L4_deployment
+    file: L4-deployment/ci-cd-pipeline.decision.yaml
+    title: "CI/CD Pipeline"
+
+  - id: iac_tooling
+    level: L4_deployment
+    file: L4-deployment/iac-tooling.decision.yaml
+    title: "Infrastructure as Code Tooling"
+
+  - id: container_strategy
+    level: L4_deployment
+    file: L4-deployment/container-strategy.decision.yaml
+    title: "Container Strategy"
+
+  # L5: Operations Decisions
+  - id: observability_stack
+    level: L5_operations
+    file: L5-operations/observability-stack.decision.yaml
+    title: "Observability Stack"
+
+  - id: scaling_strategy
+    level: L5_operations
+    file: L5-operations/scaling-strategy.decision.yaml
+    title: "Scaling Strategy"
+
+  - id: backup_dr_strategy
+    level: L5_operations
+    file: L5-operations/backup-dr-strategy.decision.yaml
+    title: "Backup & Disaster Recovery Strategy"
+
+  - id: secrets_management
+    level: L5_operations
+    file: L5-operations/secrets-management.decision.yaml
+    title: "Secrets Management"
+
 # --- Edge Declarations ---
 
 edges:
@@ -191,3 +238,100 @@ edges:
     to: frontend_framework
     influence: moderate
     rationale: "Monoliths pair with server-rendered, microservices with SPAs"
+
+  # L1 → L4 skip-connections
+  - from: build_vs_buy_posture
+    to: compute_platform
+    influence: strong
+    rationale: "Build posture is the primary driver of compute platform choice"
+
+  - from: build_vs_buy_posture
+    to: iac_tooling
+    influence: strong
+    rationale: "Custom builders adopt IaC, SaaS maximalists skip it"
+
+  - from: build_vs_buy_posture
+    to: ci_cd_pipeline
+    influence: moderate
+    rationale: "Custom builders need full CI/CD, SaaS maximalists use auto-deploy"
+
+  # L2 → L4 edges
+  - from: service_decomposition
+    to: compute_platform
+    influence: moderate
+    rationale: "Microservices need orchestration, monoliths run on simple PaaS"
+
+  - from: service_decomposition
+    to: container_strategy
+    influence: moderate
+    rationale: "Microservices typically require containerization"
+
+  # L3 → L4 edges
+  - from: primary_database
+    to: database_hosting
+    influence: strong
+    rationale: "Database choice directly constrains hosting options"
+
+  - from: primary_database
+    to: backup_dr_strategy
+    influence: moderate
+    rationale: "Database type determines backup approach"
+
+  # L4 → L4 cross-influences
+  - from: compute_platform
+    to: database_hosting
+    influence: moderate
+    rationale: "Compute platform creates hosting affinity (AWS ECS → RDS)"
+
+  - from: compute_platform
+    to: container_strategy
+    influence: strong
+    rationale: "Platform determines container requirements"
+
+  - from: compute_platform
+    to: iac_tooling
+    influence: moderate
+    rationale: "Complex platforms need IaC, simple PaaS uses platform-native"
+
+  # L4 → L5 edges
+  - from: compute_platform
+    to: observability_stack
+    influence: moderate
+    rationale: "Platform capabilities constrain observability options"
+
+  - from: compute_platform
+    to: scaling_strategy
+    influence: moderate
+    rationale: "Platform determines available scaling mechanisms"
+
+  - from: compute_platform
+    to: secrets_management
+    influence: moderate
+    rationale: "Platform provides or constrains secrets management"
+
+  - from: database_hosting
+    to: backup_dr_strategy
+    influence: strong
+    rationale: "Hosting provider determines backup capabilities"
+
+  # L1 → L5 skip-connections
+  - from: build_vs_buy_posture
+    to: observability_stack
+    influence: moderate
+    rationale: "Custom builders invest in observability, SaaS maximalists use minimal"
+
+  - from: regulatory_posture
+    to: secrets_management
+    influence: moderate
+    rationale: "Compliance requirements drive secrets management sophistication"
+
+  - from: target_market_segment
+    to: scaling_strategy
+    influence: moderate
+    rationale: "Enterprise segments need horizontal scaling readiness"
+
+  # L2 → L5 skip-connections
+  - from: ai_framework_strategy
+    to: observability_stack
+    influence: moderate
+    rationale: "LLM usage drives need for Langfuse-style LLM tracing"
