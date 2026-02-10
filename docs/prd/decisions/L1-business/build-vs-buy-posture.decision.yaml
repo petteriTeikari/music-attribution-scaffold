@@ -1,0 +1,140 @@
+# Build vs Buy Posture
+#
+# The foundational strategic decision: how much does the team build
+# from scratch vs. assembling managed services? This cascades through
+# every subsequent level of the decision network.
+
+decision_id: build_vs_buy_posture
+title: "Build vs Buy Posture"
+description: >
+  Determines the team's default stance on building custom infrastructure
+  versus adopting managed services and SaaS platforms. This is the single
+  highest-leverage decision in the network — it shifts probability
+  distributions across all downstream L2-L5 choices.
+
+  The spectrum runs from "custom_build" (maximum control, maximum ops burden)
+  through "managed_services" (balanced) to "saas_maximalist" (minimum ops,
+  minimum control). Teams rarely sit at the extremes; this decision captures
+  the center of gravity.
+
+decision_level: L1_business
+status: active
+last_updated: 2026-02-10
+
+options:
+  - option_id: custom_build
+    title: "Custom Build"
+    description: >
+      Build core infrastructure in-house. Self-managed databases,
+      custom deployment pipelines, full control over the stack.
+      Requires 3+ engineers with infrastructure experience.
+    prior_probability: 0.40
+    status: viable
+    constraints:
+      - "Team size >= 3 engineers"
+      - "Infrastructure experience on team"
+      - "Budget for compute resources"
+    complements:
+      - "compute_platform.hetzner_dedicated"
+      - "iac_tooling.terraform"
+
+  - option_id: managed_services
+    title: "Managed Services"
+    description: >
+      Use managed databases, PaaS compute, and hosted observability.
+      Build application logic in-house but outsource infrastructure
+      operations. Good balance of control and operational simplicity.
+    prior_probability: 0.35
+    status: recommended
+    constraints:
+      - "Team size >= 2 engineers"
+      - "Budget for managed service costs ($200-1000/month)"
+    complements:
+      - "compute_platform.render"
+      - "database_hosting.neon"
+
+  - option_id: saas_maximalist
+    title: "SaaS Maximalist"
+    description: >
+      Minimize custom code. Use Supabase for backend, Vercel for
+      frontend, third-party APIs for everything. Optimized for
+      solo developers or teams with minimal engineering capacity.
+    prior_probability: 0.25
+    status: viable
+    constraints:
+      - "Acceptance of vendor lock-in risk"
+      - "Use cases fit within SaaS platform constraints"
+    complements:
+      - "compute_platform.vercel_plus_backend"
+      - "primary_database.supabase"
+
+# No conditional_on — this is a root node (no parents)
+
+archetype_weights:
+  engineer_heavy_startup:
+    probability_overrides:
+      custom_build: 0.60
+      managed_services: 0.30
+      saas_maximalist: 0.10
+    rationale: >
+      Engineer-heavy teams have the capacity and preference for
+      infrastructure control. They see managed services as training
+      wheels to outgrow.
+
+  musician_first_team:
+    probability_overrides:
+      custom_build: 0.05
+      managed_services: 0.35
+      saas_maximalist: 0.60
+    rationale: >
+      Musician-first teams want to focus on the product experience,
+      not infrastructure. SaaS-heavy stacks reduce ops burden to
+      near-zero.
+
+  solo_hacker:
+    probability_overrides:
+      custom_build: 0.10
+      managed_services: 0.30
+      saas_maximalist: 0.60
+    rationale: >
+      Solo developers cannot sustain infrastructure operations.
+      SaaS maximalism is a survival strategy, not a preference.
+
+  well_funded_startup:
+    probability_overrides:
+      custom_build: 0.45
+      managed_services: 0.40
+      saas_maximalist: 0.15
+    rationale: >
+      Well-funded teams can afford either path. Slight lean toward
+      custom build for competitive differentiation, but pragmatic
+      about managed services for non-core components.
+
+volatility:
+  classification: stable
+  last_assessed: 2026-02-10
+  next_review: 2026-05-10
+  change_drivers:
+    - "Significant funding event changes team capacity"
+    - "SaaS platform pricing changes (e.g., Vercel pricing model shifts)"
+    - "Team composition changes (hiring/departures)"
+
+domain_applicability:
+  music_attribution: 1.0
+  dpp_traceability: 1.0
+  generic_graph_rag: 1.0
+
+tags:
+  - strategic
+  - foundational
+  - team-capacity
+
+rationale: >
+  Prior probabilities reflect the general software market: most teams land
+  in the managed services middle ground. Custom build is slightly higher
+  than SaaS maximalist because teams that reach the point of building an
+  attribution/traceability system tend to have engineering capacity.
+
+references:
+  - "../REJECTED.md"
+  - "../SYNTHESIS.md#build-vs-buy-decision-matrix"

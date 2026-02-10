@@ -1,0 +1,166 @@
+# Revenue Model
+#
+# How the system generates revenue. Tightly coupled with target market
+# segment and influences infrastructure cost tolerance.
+
+decision_id: revenue_model
+title: "Revenue Model"
+description: >
+  Defines the primary monetization strategy. This decision interacts
+  strongly with target market segment (enterprise customers expect
+  different pricing than independent creators) and influences downstream
+  infrastructure decisions (API metering requires different observability
+  than flat-rate subscriptions).
+
+decision_level: L1_business
+status: active
+last_updated: 2026-02-10
+
+options:
+  - option_id: freemium_saas
+    title: "Freemium SaaS"
+    description: >
+      Free tier for basic attribution (limited tracks/queries),
+      paid tiers for advanced features (bulk operations, API access,
+      priority support). Classic PLG (product-led growth) model.
+    prior_probability: 0.35
+    status: recommended
+    constraints:
+      - "Must sustain free tier infrastructure costs"
+      - "Clear value differentiation between tiers"
+      - "Self-service upgrade path"
+
+  - option_id: api_usage_metered
+    title: "API Usage Metered"
+    description: >
+      Pay-per-query or tiered API access. Primary revenue from
+      AI platforms and integration partners. Requires robust
+      metering and billing infrastructure.
+    prior_probability: 0.25
+    status: viable
+    constraints:
+      - "API metering infrastructure required"
+      - "Billing integration (Stripe metered billing)"
+      - "Rate limiting and abuse prevention"
+
+  - option_id: enterprise_licensing
+    title: "Enterprise Licensing"
+    description: >
+      Annual contracts with rights organizations and major labels.
+      Custom pricing, SLAs, dedicated support. High revenue per
+      customer but long sales cycles.
+    prior_probability: 0.15
+    status: viable
+    constraints:
+      - "Sales team or founder-led sales"
+      - "Contract management infrastructure"
+      - "SOC2 or equivalent compliance"
+
+  - option_id: open_core
+    title: "Open Core"
+    description: >
+      Core attribution engine is open-source. Revenue from hosted
+      service (managed version), enterprise features (SSO, audit
+      logs, SLAs), and support contracts. Builds community and trust.
+    prior_probability: 0.25
+    status: viable
+    constraints:
+      - "Clear boundary between open and commercial features"
+      - "Community management effort"
+      - "Dual licensing considerations"
+
+conditional_on:
+  - parent_decision_id: target_market_segment
+    influence_strength: strong
+    conditional_table:
+      - given_parent_option: independent_creators
+        then_probabilities:
+          freemium_saas: 0.55
+          api_usage_metered: 0.10
+          enterprise_licensing: 0.05
+          open_core: 0.30
+
+      - given_parent_option: mid_tier_labels
+        then_probabilities:
+          freemium_saas: 0.35
+          api_usage_metered: 0.20
+          enterprise_licensing: 0.20
+          open_core: 0.25
+
+      - given_parent_option: enterprise_rights_orgs
+        then_probabilities:
+          freemium_saas: 0.10
+          api_usage_metered: 0.15
+          enterprise_licensing: 0.55
+          open_core: 0.20
+
+      - given_parent_option: ai_platform_consumers
+        then_probabilities:
+          freemium_saas: 0.15
+          api_usage_metered: 0.55
+          enterprise_licensing: 0.15
+          open_core: 0.15
+
+archetype_weights:
+  engineer_heavy_startup:
+    probability_overrides:
+      freemium_saas: 0.25
+      api_usage_metered: 0.25
+      enterprise_licensing: 0.15
+      open_core: 0.35
+    rationale: >
+      Engineer-heavy teams favor open core — they understand the model
+      and can sustain open-source community engagement.
+
+  musician_first_team:
+    probability_overrides:
+      freemium_saas: 0.55
+      api_usage_metered: 0.10
+      enterprise_licensing: 0.05
+      open_core: 0.30
+    rationale: >
+      Musician-first teams need simple PLG revenue. Freemium aligns
+      with their creator-focused user base.
+
+  solo_hacker:
+    probability_overrides:
+      freemium_saas: 0.40
+      api_usage_metered: 0.30
+      enterprise_licensing: 0.00
+      open_core: 0.30
+    rationale: >
+      Solo hackers cannot sustain enterprise sales cycles.
+      API metering and freemium provide scalable revenue.
+
+  well_funded_startup:
+    probability_overrides:
+      freemium_saas: 0.25
+      api_usage_metered: 0.20
+      enterprise_licensing: 0.30
+      open_core: 0.25
+    rationale: >
+      Well-funded teams can pursue enterprise deals and multi-model
+      revenue strategies simultaneously.
+
+volatility:
+  classification: shifting
+  last_assessed: 2026-02-10
+  next_review: 2026-04-10
+  change_drivers:
+    - "AI training data licensing market maturation"
+    - "Competitor pricing strategies"
+    - "Regulatory mandates creating compliance-driven demand"
+    - "Open-source community traction"
+
+domain_applicability:
+  music_attribution: 1.0
+  dpp_traceability: 0.9
+  generic_graph_rag: 0.8
+
+tags:
+  - strategic
+  - monetization
+  - business-model
+
+references:
+  - "../vision-v1.md#market-opportunity"

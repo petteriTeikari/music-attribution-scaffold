@@ -1,0 +1,58 @@
+# Probabilistic PRD Decision Network Topology
+#
+# DAG adjacency list defining all decision nodes and directed edges.
+# Edges flow from parent → child (upstream → downstream influence).
+# Used for visualization, acyclicity validation, and traversal.
+#
+# Invariants:
+#   - Graph must be acyclic (no circular dependencies)
+#   - All node.id values must match decision_id in corresponding .decision.yaml
+#   - All edge endpoints must reference declared nodes
+#   - Edge direction: from (parent) → to (child)
+
+network:
+  name: "Probabilistic PRD Decision Network"
+  version: "1.0.0"
+  last_updated: 2026-02-10
+  description: >
+    Bayesian decision network for the Music Attribution Scaffold.
+    5-level hierarchy (L1 Business → L5 Operations) with conditional
+    probability edges encoding how upstream choices influence downstream options.
+
+# --- Node Declarations ---
+
+nodes:
+  # L1: Business Decisions
+  - id: build_vs_buy_posture
+    level: L1_business
+    file: L1-business/build-vs-buy-posture.decision.yaml
+    title: "Build vs Buy Posture"
+
+  - id: target_market_segment
+    level: L1_business
+    file: L1-business/target-market-segment.decision.yaml
+    title: "Target Market Segment"
+
+  - id: revenue_model
+    level: L1_business
+    file: L1-business/revenue-model.decision.yaml
+    title: "Revenue Model"
+
+  - id: regulatory_posture
+    level: L1_business
+    file: L1-business/regulatory-posture.decision.yaml
+    title: "Regulatory Posture"
+
+# --- Edge Declarations ---
+
+edges:
+  # L1 → L1 cross-influences
+  - from: target_market_segment
+    to: revenue_model
+    influence: moderate
+    rationale: "Market segment constrains viable revenue models"
+
+  - from: target_market_segment
+    to: regulatory_posture
+    influence: weak
+    rationale: "Enterprise segments demand stricter compliance"
