@@ -1,0 +1,83 @@
+# Music Attribution MVP Scenario
+#
+# Maps to the current defaults.yaml choices — the "collapsed probability path"
+# that the scaffold currently implements. Engineer-heavy team building the
+# reference implementation for the SSRN preprint.
+
+scenario_id: music_attribution_mvp
+title: "Music Attribution MVP"
+description: >
+  The reference implementation scenario for the Music Attribution Scaffold.
+  This is what defaults.yaml currently represents: an engineer-heavy team
+  building the companion code for the SSRN preprint, optimized for
+  demonstrating CTO-level architectural thinking while remaining deployable.
+
+archetype: engineer_heavy_startup
+domain: music_attribution
+
+resolved_decisions:
+  # L1 Business
+  build_vs_buy_posture: managed_services      # Pragmatic: managed for MVP, custom later
+  target_market_segment: independent_creators  # Artists like Imogen as primary persona
+  revenue_model: open_core                     # Open-source scaffold with commercial potential
+  regulatory_posture: compliance_aware         # EU AI Act awareness built in, not blocking
+
+  # L2 Architecture
+  data_model_complexity: graph_enriched_relational  # PostgreSQL + Apache AGE
+  api_protocol: mcp_primary                         # AI-native protocol
+  service_decomposition: modular_monolith            # Clear module boundaries, single deploy
+  ai_framework_strategy: direct_api_pydantic         # No framework abstraction
+
+  # L3 Implementation
+  primary_database: postgresql_unified         # PostgreSQL + pgvector + Apache AGE
+  graph_strategy: apache_age                   # Graph queries without separate DB
+  vector_strategy: pgvector                    # Embeddings in PostgreSQL
+  llm_provider: anthropic_primary              # Claude for MCP-native integration
+  frontend_framework: htmx_jinja               # Server-rendered admin interface
+  auth_strategy: api_key_only                  # API-first for MVP
+
+  # L4 Deployment
+  compute_platform: render                     # Simple PaaS deployment
+  database_hosting: neon                       # Managed PostgreSQL
+  ci_cd_pipeline: github_actions               # Standard CI with pre-commit hooks
+  iac_tooling: platform_native                 # render.yaml for deployment config
+  container_strategy: docker_compose           # Docker for reproducibility
+
+  # L5 Operations
+  observability_stack: langfuse_plus_platform  # LLM tracing + platform metrics
+  scaling_strategy: vertical_only              # Scale the machine, not architecture
+  backup_dr_strategy: managed_provider_backups # Neon PITR
+  secrets_management: environment_variables    # Platform env vars
+
+joint_probability: 0.0012
+# Product of archetype-adjusted probabilities for each choice.
+# Low absolute value is expected — any specific path through 23 decisions
+# will have low joint probability. The value is meaningful for comparison
+# between scenarios (higher = more "natural" for the archetype).
+
+rationale: >
+  This scenario represents the "golden path" for the scaffold — the choices
+  that defaults.yaml currently encodes. It balances architectural ambition
+  (graph-enriched data model, MCP protocol, conformal prediction) with
+  operational pragmatism (managed PostgreSQL, PaaS deployment, minimal ops).
+
+  The key insight: this is a research scaffold, not a production system.
+  Choices are optimized for demonstrating patterns, not for serving 100K users.
+
+trade_offs:
+  gains:
+    - "Unified PostgreSQL stack (one database to rule them all)"
+    - "MCP-native API (forward-looking, differentiating)"
+    - "Low operational overhead (managed everything)"
+    - "Docker-based reproducibility"
+    - "Pre-commit hooks and GitHub Actions for quality"
+  sacrifices:
+    - "No frontend UI in MVP (API-only)"
+    - "No enterprise auth (API keys only)"
+    - "No horizontal scaling readiness"
+    - "No IaC beyond platform config"
+    - "Limited disaster recovery (provider backups only)"
+
+references:
+  - "../defaults.yaml"
+  - "../SYNTHESIS.md"

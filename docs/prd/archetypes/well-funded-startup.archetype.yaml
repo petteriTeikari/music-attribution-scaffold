@@ -1,0 +1,130 @@
+# Well-Funded Startup Archetype
+#
+# A 10-30+ person team with significant funding. Enterprise customers
+# expected. Can invest in infrastructure for competitive advantage.
+
+archetype_id: well_funded_startup
+title: "Well-Funded Startup"
+description: >
+  A Series A+ startup with $5M+ funding, 10-30+ team members including
+  dedicated DevOps/SRE, and enterprise customers in the pipeline. The team
+  can afford to invest in infrastructure that provides long-term competitive
+  advantage. Enterprise credibility (SOC2, SLAs, uptime guarantees) is a
+  business requirement, not a nice-to-have.
+
+  This archetype represents the "scale-up" path — what the scaffold looks
+  like when resources are available and enterprise customers demand
+  production-grade infrastructure.
+
+team_profile:
+  size: "10-30+"
+  composition:
+    engineers: "7-20"
+    product: "2-3"
+    design: "1-3"
+    devops: "2-4"
+    security_compliance: "1-2"
+  technical_experience:
+    backend: advanced
+    frontend: advanced
+    infrastructure: advanced
+    ml_ai: intermediate_to_advanced
+  budget_range:
+    monthly_infrastructure: "$5000-50000"
+    annual_saas_tools: "$50000-200000"
+
+hard_constraints:
+  - "Must support SOC2 compliance path"
+  - "Must provide 99.9%+ uptime SLA capability"
+  - "Must support SSO (SAML/OIDC) for enterprise customers"
+  - "Must have audit logging for all data access"
+  - "Must support multi-region deployment option"
+  - "Production data encrypted at rest with customer-managed keys"
+
+soft_preferences:
+  - "Prefer cloud-native services with enterprise support contracts"
+  - "Prefer infrastructure-as-code for all environments"
+  - "Prefer distributed database capabilities for future global expansion"
+  - "Prefer comprehensive observability with SLA dashboards"
+  - "Prefer modular monolith now with clear microservices decomposition path"
+  - "Value reliability and maintainability over development speed"
+
+decision_overrides:
+  # L1 Business
+  build_vs_buy_posture:
+    preferred: custom_build
+    rationale: "Competitive differentiation requires infrastructure control"
+  target_market_segment:
+    preferred: enterprise_rights_orgs
+    rationale: "Highest revenue potential, justifies infrastructure investment"
+  revenue_model:
+    preferred: enterprise_licensing
+    rationale: "Annual contracts match enterprise procurement"
+  regulatory_posture:
+    preferred: compliance_first
+    rationale: "Enterprise customers require compliance from day one"
+
+  # L2 Architecture
+  data_model_complexity:
+    preferred: graph_enriched_relational
+    rationale: "Rich data model for competitive advantage"
+  api_protocol:
+    preferred: mcp_primary
+    rationale: "AI-native with REST/GraphQL as additional interfaces"
+  service_decomposition:
+    preferred: modular_monolith
+    rationale: "Planned decomposition path, microservices when needed"
+  ai_framework_strategy:
+    preferred: direct_api_pydantic
+    rationale: "Maximum control for production-grade AI features"
+
+  # L3 Implementation
+  primary_database:
+    preferred: postgresql_unified
+    rationale: "PostgreSQL ecosystem with CockroachDB upgrade path"
+  graph_strategy:
+    preferred: apache_age
+    rationale: "Start with AGE, evaluate Neo4j if graph workload grows"
+  vector_strategy:
+    preferred: pgvector
+    rationale: "Start unified, graduate to dedicated VDB at scale"
+  llm_provider:
+    preferred: multi_provider
+    rationale: "Multi-provider for resilience and best-in-class per task"
+  frontend_framework:
+    preferred: nextjs
+    rationale: "Largest talent pool, strongest ecosystem"
+  auth_strategy:
+    preferred: managed_auth_service
+    rationale: "Clerk/Auth0 for speed, custom for enterprise SSO later"
+
+  # L4 Deployment
+  compute_platform:
+    preferred: aws_ecs
+    rationale: "Enterprise credibility and scaling headroom"
+  database_hosting:
+    preferred: aws_rds
+    rationale: "Enterprise SLAs, Multi-AZ, IAM integration"
+  ci_cd_pipeline:
+    preferred: github_actions
+    rationale: "Standard with custom pipeline for complex builds"
+  iac_tooling:
+    preferred: terraform
+    rationale: "Industry standard for multi-cloud"
+  container_strategy:
+    preferred: docker_compose
+    rationale: "Docker standard, Kubernetes path when scaling"
+
+  # L5 Operations
+  observability_stack:
+    preferred: datadog
+    rationale: "Enterprise-grade APM for SLA dashboards"
+  scaling_strategy:
+    preferred: horizontal_stateless
+    rationale: "Horizontal scaling readiness from architecture level"
+  backup_dr_strategy:
+    preferred: continuous_replication
+    rationale: "Enterprise SLAs require near-zero RPO"
+  secrets_management:
+    preferred: cloud_secrets_manager
+    rationale: "AWS Secrets Manager for compliance and rotation"
