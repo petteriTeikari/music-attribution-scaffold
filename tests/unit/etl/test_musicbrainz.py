@@ -2,10 +2,7 @@
 
 from __future__ import annotations
 
-import asyncio
-import time
-from datetime import UTC, datetime
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pytest
 
@@ -79,22 +76,18 @@ def sample_artist_response() -> dict:
 class TestMusicBrainzConnector:
     """Unit tests for MusicBrainz ETL connector."""
 
-    def test_fetch_recording_by_mbid(self, connector, sample_recording_response) -> None:
+    async def test_fetch_recording_by_mbid(self, connector, sample_recording_response) -> None:
         """Test fetching a recording by MBID with mocked API."""
         with patch("musicbrainzngs.get_recording_by_id", return_value={"recording": sample_recording_response}):
-            record = asyncio.get_event_loop().run_until_complete(
-                connector.fetch_recording("b10bbbfc-cf9e-42e0-be17-e2c3e1d2600d")
-            )
+            record = await connector.fetch_recording("b10bbbfc-cf9e-42e0-be17-e2c3e1d2600d")
             assert isinstance(record, NormalizedRecord)
             assert record.source == "MUSICBRAINZ"
             assert record.canonical_name == "Come Together"
 
-    def test_fetch_artist_by_mbid(self, connector, sample_artist_response) -> None:
+    async def test_fetch_artist_by_mbid(self, connector, sample_artist_response) -> None:
         """Test fetching an artist by MBID with mocked API."""
         with patch("musicbrainzngs.get_artist_by_id", return_value={"artist": sample_artist_response}):
-            record = asyncio.get_event_loop().run_until_complete(
-                connector.fetch_artist("b10bbbfc-cf9e-42e0-be17-e2c3e1d2600a")
-            )
+            record = await connector.fetch_artist("b10bbbfc-cf9e-42e0-be17-e2c3e1d2600a")
             assert isinstance(record, NormalizedRecord)
             assert record.entity_type == "ARTIST"
             assert record.canonical_name == "The Beatles"
@@ -140,14 +133,13 @@ class TestMusicBrainzConnector:
 class TestTokenBucketRateLimiter:
     """Tests for the rate limiter."""
 
-    def test_rate_limiter_enforces_one_per_second(self) -> None:
+    async def test_rate_limiter_enforces_one_per_second(self) -> None:
         """Test that rate limiter enforces the configured rate."""
         limiter = TokenBucketRateLimiter(rate=2.0, capacity=2)
-        # Should be able to acquire twice immediately
-        assert asyncio.get_event_loop().run_until_complete(limiter.acquire())
-        assert asyncio.get_event_loop().run_until_complete(limiter.acquire())
+        assert await limiter.acquire()
+        assert await limiter.acquire()
 
-    def test_retry_on_503_with_backoff(self, connector, sample_recording_response) -> None:
+    async def test_retry_on_503_with_backoff(self, connector, sample_recording_response) -> None:
         """Test that 503 errors trigger retries with backoff."""
         import musicbrainzngs
 
@@ -161,8 +153,6 @@ class TestTokenBucketRateLimiter:
             return {"recording": sample_recording_response}
 
         with patch("musicbrainzngs.get_recording_by_id", side_effect=mock_get):
-            record = asyncio.get_event_loop().run_until_complete(
-                connector.fetch_recording("b10bbbfc-cf9e-42e0-be17-e2c3e1d2600d")
-            )
+            record = await connector.fetch_recording("b10bbbfc-cf9e-42e0-be17-e2c3e1d2600d")
             assert record.canonical_name == "Come Together"
             assert call_count == 3
