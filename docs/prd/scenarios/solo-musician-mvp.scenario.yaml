@@ -1,0 +1,76 @@
+# Solo Musician MVP Scenario
+#
+# A single musician with basic coding skills building an attribution
+# tool for their own catalog. Maximum simplicity, zero ops.
+
+scenario_id: solo_musician_mvp
+title: "Solo Musician MVP"
+description: >
+  A musician who can code (or has a developer friend) building an
+  attribution verification tool for their own catalog of 50-500 tracks.
+  Every choice is filtered through "can one non-engineer maintain this?"
+
+archetype: musician_first_team
+domain: music_attribution
+
+resolved_decisions:
+  # L1 Business
+  build_vs_buy_posture: saas_maximalist        # Minimize custom code
+  target_market_segment: independent_creators  # Serving themselves and peers
+  revenue_model: freemium_saas                 # Free tier for personal use
+  regulatory_posture: best_effort              # No compliance overhead
+
+  # L2 Architecture
+  data_model_complexity: simple_relational     # Foreign keys and join tables
+  api_protocol: rest_openapi                   # Most accessible protocol
+  service_decomposition: monolith              # Single deployable
+  ai_framework_strategy: lightweight_sdk       # instructor/mirascope for convenience
+
+  # L3 Implementation
+  primary_database: supabase                   # All-in-one backend
+  graph_strategy: sql_joins_only               # No graph infrastructure
+  vector_strategy: no_vector_search            # Fuzzy string matching
+  llm_provider: openai_primary                 # Most tutorials available
+  frontend_framework: nextjs                   # Templates and tutorials
+  auth_strategy: supabase_auth                 # Bundled with Supabase
+
+  # L4 Deployment
+  compute_platform: vercel_plus_backend        # Vercel for Next.js frontend
+  database_hosting: supabase_hosted            # Bundled Supabase experience
+  ci_cd_pipeline: platform_native_autodeploy   # Git push deploys
+  iac_tooling: none_manual                     # Dashboard configuration
+  container_strategy: buildpacks               # Auto-detect, no Docker
+
+  # L5 Operations
+  observability_stack: minimal_logging         # Platform dashboards
+  scaling_strategy: vertical_only              # Handles 500 tracks easily
+  backup_dr_strategy: managed_provider_backups # Supabase daily backups
+  secrets_management: environment_variables    # Platform env vars
+
+joint_probability: 0.0023
+# Higher joint probability than engineer-heavy scenario because musician-first
+# archetype has stronger preferences (more concentrated distributions).
+
+rationale: >
+  This scenario represents the minimum viable attribution tool: Supabase
+  handles everything (database, auth, real-time), Vercel serves the Next.js
+  frontend, and the musician never touches a terminal. The trade-off is
+  capability ceiling — no graph queries, no vector search, no MCP.
+
+  For a catalog of 500 tracks with mostly correct metadata that needs
+  verification, this is more than sufficient.
+
+trade_offs:
+  gains:
+    - "Zero operational burden"
+    - "Fully free tier deployment possible"
+    - "Visual admin via Supabase dashboard"
+    - "Auth built-in (social logins, magic links)"
+    - "Real-time updates for collaborative editing"
+  sacrifices:
+    - "No graph-based attribution network analysis"
+    - "No embedding-based entity resolution"
+    - "No MCP protocol (not serving AI platforms)"
+    - "Supabase vendor lock-in"
+    - "Limited to Supabase extension availability"
+    - "No infrastructure-as-code"

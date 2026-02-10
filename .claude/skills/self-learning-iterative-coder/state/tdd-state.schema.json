@@ -1,0 +1,197 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "tdd-state.schema.json",
+  "title": "TDD Iteration State",
+  "description": "Crash-recovery state for the self-learning iterative TDD coder. Tracks plan execution progress, per-task iteration history, and convergence status.",
+  "type": "object",
+  "required": ["plan_file", "plan_version", "execution_mode", "tasks", "convergence"],
+  "properties": {
+    "plan_file": {
+      "type": "string",
+      "description": "Path to the executable plan file (XML, YAML, or JSON)"
+    },
+    "plan_version": {
+      "type": "string",
+      "description": "Version of the plan file (from plan metadata)"
+    },
+    "execution_mode": {
+      "type": "string",
+      "enum": ["autonomous", "interactive"],
+      "description": "Whether to run through tasks without pausing (autonomous) or pause for developer review (interactive)"
+    },
+    "current_task_id": {
+      "type": ["string", "null"],
+      "description": "ID of the task currently being worked on, or null if between tasks"
+    },
+    "current_phase": {
+      "type": ["string", "null"],
+      "enum": ["RED", "GREEN", "VERIFY", "FIX", "CHECKPOINT", "DONE", "PLAN_COMPLETE", null],
+      "description": "Current phase within the inner TDD loop, or PLAN_COMPLETE when all non-deferred tasks are done"
+    },
+    "inner_iteration": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Current inner iteration number for the active task"
+    },
+    "session_task_count": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Number of tasks attempted in this session"
+    },
+    "session_inner_iterations": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Cumulative inner iterations this session (budget: 20)"
+    },
+    "session_start": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp of when this session started"
+    },
+    "tasks": {
+      "type": "object",
+      "description": "Per-task state, keyed by task ID",
+      "additionalProperties": {
+        "type": "object",
+        "required": ["status"],
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": ["NOT_STARTED", "IN_PROGRESS", "DONE", "STUCK", "FORCE_STOP", "DONE_WITH_CAVEATS", "DEFERRED"],
+            "description": "Task execution status"
+          },
+          "name": {
+            "type": "string",
+            "description": "Human-readable task name"
+          },
+          "inner_iterations": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Total inner iterations used for this task"
+          },
+          "current_phase": {
+            "type": ["string", "null"],
+            "enum": ["RED", "GREEN", "VERIFY", "FIX", "CHECKPOINT", "DONE", null]
+          },
+          "commit_hashes": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "Git commit hashes for this task's checkpoints"
+          },
+          "test_files": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "Test file paths created for this task"
+          },
+          "source_files": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "Source file paths created/modified for this task"
+          },
+          "deps_added": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "Package dependencies added for this task"
+          },
+          "red_commit": {
+            "type": ["string", "null"],
+            "description": "Commit hash for the RED phase (failing tests)"
+          },
+          "test_count": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Number of test functions written"
+          },
+          "test_results": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "iteration": { "type": "integer" },
+                "pass": { "type": "integer" },
+                "fail": { "type": "integer" },
+                "errors": { "type": "integer" },
+                "lint_issues": { "type": "integer" },
+                "type_errors": { "type": "integer" },
+                "overall": {
+                  "type": "string",
+                  "enum": ["ALL_GREEN", "FAILING"]
+                }
+              }
+            },
+            "description": "Test results per iteration"
+          },
+          "fix_attempts": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "iteration": { "type": "integer" },
+                "category": { "type": "string" },
+                "description": { "type": "string" },
+                "result": {
+                  "type": "string",
+                  "enum": ["resolved", "persists", "new_failure"]
+                }
+              }
+            },
+            "description": "Fix attempts for debugging and anti-loop detection"
+          },
+          "residual_issues": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "Unresolved issues at FORCE_STOP"
+          },
+          "started_at": {
+            "type": ["string", "null"],
+            "format": "date-time"
+          },
+          "completed_at": {
+            "type": ["string", "null"],
+            "format": "date-time"
+          }
+        }
+      }
+    },
+    "deferred_tasks": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Task IDs that are deferred (not counted toward convergence)"
+    },
+    "convergence": {
+      "type": "object",
+      "required": ["reached", "tasks_done", "tasks_total"],
+      "properties": {
+        "reached": {
+          "type": "boolean",
+          "description": "Whether plan-level convergence has been reached"
+        },
+        "tasks_done": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "tasks_total": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "tasks_stuck": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "tasks_deferred": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "total_tests": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Total unit tests passing at convergence"
+        },
+        "all_non_deferred_complete": {
+          "type": "boolean",
+          "description": "Whether all non-deferred tasks are DONE"
+        }
+      }
+    }
+  }
+}

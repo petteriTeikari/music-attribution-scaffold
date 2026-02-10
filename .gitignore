@@ -87,3 +87,4 @@ docs/knowledge-base/ai/raw-sources/*
 docs/figures/generated/*.png
 docs/figures/visual-references/
 docs/knowledge-base/sources/*
+docs/tmp/*

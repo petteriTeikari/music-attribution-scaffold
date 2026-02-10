@@ -1,0 +1,99 @@
+name: CISO Assistant Security Check
+
+on:
+  pull_request:
+    paths:
+      - '**.py'
+      - '**.yaml'
+      - '**.yml'
+      - '**.md'
+      - '.github/workflows/ciso-assistant-security.yml'
+
+permissions:
+  contents: read
+  pull-requests: write
+  actions: write
+
+jobs:
+  compliance-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - name: Set up Python with uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install dependencies
+        run: uv sync --frozen --no-dev
+
+      - name: Run Compliance Check
+        id: security-scan
+        run: |
+          uv run python scripts/security/compliance_check.py --validate --output compliance_results.json
+
+          # Extract scores for downstream steps
+          COMPLIANCE_SCORE=$(python3 -c "import json; print(int(json.load(open('compliance_results.json'))['overall_compliance']))")
+          CRITICAL_COUNT=$(python3 -c "import json; print(json.load(open('compliance_results.json'))['critical_findings'])")
+          echo "compliance_score=$COMPLIANCE_SCORE" >> $GITHUB_OUTPUT
+          echo "critical_count=$CRITICAL_COUNT" >> $GITHUB_OUTPUT
+
+      - name: Generate PR Comment
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const report = JSON.parse(fs.readFileSync('compliance_results.json', 'utf8'));
+            const score = report.overall_compliance;
+            const critical = report.critical_findings;
+            const total = report.total_findings;
+            const passed = report.checks_passed;
+            const checks = report.checks_total;
+
+            // Build per-check summary
+            const details = report.validation_details;
+            let checkLines = '';
+            for (const [name, check] of Object.entries(details)) {
+              const icon = check.passed ? ':white_check_mark:' : ':x:';
+              const count = check.findings.length;
+              checkLines += `| ${icon} | ${check.description} | ${count} |\n`;
+            }
+
+            const body = `## CISO Assistant Security Check Results
+
+            **Overall Compliance Score**: ${score}%
+            **Critical Findings**: ${critical}
+            **Total Findings**: ${total}
+
+            ### Checks (${passed}/${checks} passed)
+
+            | Status | Check | Findings |
+            |--------|-------|----------|
+            ${checkLines}
+
+            Full report available in artifacts.`.replace(/^            /gm, '');
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: body
+            });
+
+      - name: Upload Compliance Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ciso-compliance-report
+          path: compliance_results.json
+
+      - name: Fail if Critical Findings
+        if: steps.security-scan.outputs.critical_count != '0'
+        run: |
+          echo "Critical security findings detected. Please address before merging."
+          cat compliance_results.json | python3 -m json.tool
+          exit 1

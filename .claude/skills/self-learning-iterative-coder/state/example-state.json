@@ -1,0 +1,55 @@
+{
+  "plan_file": "docs/planning/probabilistic-prd-executable-plan.xml",
+  "plan_version": "2.1",
+  "execution_mode": "autonomous",
+  "current_task_id": "2.3b",
+  "current_phase": "FIX",
+  "inner_iteration": 2,
+  "session_task_count": 4,
+  "session_inner_iterations": 7,
+  "session_start": "2026-02-10T20:00:00Z",
+  "tasks": {
+    "0.1": {
+      "status": "DONE",
+      "name": "Pydantic boundary object schemas",
+      "inner_iterations": 2,
+      "commit_hashes": ["5fdcefe", "053b4a8"],
+      "test_count": 34,
+      "completed_at": "2026-02-10T20:15:00Z"
+    },
+    "1.1": {
+      "status": "DONE",
+      "name": "MusicBrainz connector",
+      "inner_iterations": 2,
+      "commit_hashes": ["cd0543f", "0dd9593"],
+      "test_count": 9,
+      "completed_at": "2026-02-10T21:00:00Z"
+    },
+    "2.3": {
+      "status": "DONE",
+      "name": "Embedding-based semantic matching",
+      "inner_iterations": 1,
+      "commit_hashes": ["d4a01cd"],
+      "test_count": 5,
+      "completed_at": "2026-02-11T01:00:00Z"
+    },
+    "2.3b": {
+      "status": "IN_PROGRESS",
+      "name": "Splink probabilistic record linkage",
+      "inner_iterations": 2,
+      "commit_hashes": [],
+      "test_count": 5,
+      "completed_at": null
+    }
+  },
+  "deferred_tasks": ["5.1", "5.2", "5.3", "6.1", "6.2", "6.3", "6.4", "6.5", "6.6", "6.7"],
+  "convergence": {
+    "reached": false,
+    "tasks_done": 3,
+    "tasks_total": 27,
+    "tasks_stuck": 0,
+    "tasks_deferred": 10,
+    "total_tests": 48,
+    "all_non_deferred_complete": false
+  }
+}

@@ -430,6 +430,24 @@ block-beta
 
 ---
 
+## Probabilistic PRD Cross-Reference
+
+The architectural decisions documented in this synthesis are now formalized in the **probabilistic decision network** ([decisions/](decisions/)). Key connections:
+
+| Synthesis Decision | Decision Node | Status |
+|-------------------|---------------|--------|
+| Database: PostgreSQL + pgvector | [primary-database](decisions/L3-implementation/primary-database.decision.yaml) | recommended (P=0.45) |
+| AI Framework: Pure Python + Pydantic | [ai-framework-strategy](decisions/L2-architecture/ai-framework-strategy.decision.yaml) | recommended (P=0.40) |
+| API Protocol: MCP | [api-protocol](decisions/L2-architecture/api-protocol.decision.yaml) | recommended (P=0.35) |
+| Graph: Apache AGE | [graph-strategy](decisions/L3-implementation/graph-strategy.decision.yaml) | recommended (P=0.40) |
+| Compute: Render | [compute-platform](decisions/L4-deployment/compute-platform.decision.yaml) | recommended (P=0.30) |
+
+The probabilistic system extends these choices with conditional dependencies, team archetype modulation (4 profiles), domain overlays (music + DPP), and temporal volatility tracking.
+
+See [decisions/REPORT.md](decisions/REPORT.md) for visual network topology and archetype comparison charts.
+
+---
+
 ## Related Knowledge
 
 - [domain/attribution/](../knowledge-base/domain/attribution/) - A0-A3 framework, oracle problem
@@ -437,3 +455,6 @@ block-beta
 - [technical/mcp/](../knowledge-base/technical/mcp/) - Protocol security
 - [UNKNOWNS-FOR-DOMAIN-EXPERTS.md](UNKNOWNS-FOR-DOMAIN-EXPERTS.md) - Questions for Imogen/Andy
 - [REJECTED.md](REJECTED.md) - Why NOT to use certain technologies
+- [decisions/](decisions/) - Probabilistic decision network
+- [archetypes/](archetypes/) - Team archetype profiles
+- [domains/](domains/) - Domain overlay system

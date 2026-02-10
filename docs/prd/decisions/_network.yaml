@@ -1,0 +1,414 @@
+# Probabilistic PRD Decision Network Topology
+#
+# DAG adjacency list defining all decision nodes and directed edges.
+# Edges flow from parent → child (upstream → downstream influence).
+# Used for visualization, acyclicity validation, and traversal.
+#
+# Invariants:
+#   - Graph must be acyclic (no circular dependencies)
+#   - All node.id values must match decision_id in corresponding .decision.yaml
+#   - All edge endpoints must reference declared nodes
+#   - Edge direction: from (parent) → to (child)
+
+network:
+  name: "Probabilistic PRD Decision Network"
+  version: "1.2.0"
+  last_updated: 2026-02-10
+  description: >
+    Bayesian decision network for the Music Attribution Scaffold.
+    5-level hierarchy (L1 Business → L5 Operations) with conditional
+    probability edges encoding how upstream choices influence downstream options.
+
+# --- Node Declarations ---
+
+nodes:
+  # L1: Business Decisions
+  - id: build_vs_buy_posture
+    level: L1_business
+    file: L1-business/build-vs-buy-posture.decision.yaml
+    title: "Build vs Buy Posture"
+
+  - id: target_market_segment
+    level: L1_business
+    file: L1-business/target-market-segment.decision.yaml
+    title: "Target Market Segment"
+
+  - id: revenue_model
+    level: L1_business
+    file: L1-business/revenue-model.decision.yaml
+    title: "Revenue Model"
+
+  - id: regulatory_posture
+    level: L1_business
+    file: L1-business/regulatory-posture.decision.yaml
+    title: "Regulatory Posture"
+
+  # L2: Architecture Decisions
+  - id: data_model_complexity
+    level: L2_architecture
+    file: L2-architecture/data-model-complexity.decision.yaml
+    title: "Data Model Complexity"
+
+  - id: api_protocol
+    level: L2_architecture
+    file: L2-architecture/api-protocol.decision.yaml
+    title: "API Protocol"
+
+  - id: service_decomposition
+    level: L2_architecture
+    file: L2-architecture/service-decomposition.decision.yaml
+    title: "Service Decomposition"
+
+  - id: ai_framework_strategy
+    level: L2_architecture
+    file: L2-architecture/ai-framework-strategy.decision.yaml
+    title: "AI Framework Strategy"
+
+  - id: artifact_decoupling_strategy
+    level: L2_architecture
+    file: L2-architecture/artifact-decoupling-strategy.decision.yaml
+    title: "Artifact Decoupling Strategy"
+
+  # L3: Implementation Decisions
+  - id: primary_database
+    level: L3_implementation
+    file: L3-implementation/primary-database.decision.yaml
+    title: "Primary Database"
+
+  - id: graph_strategy
+    level: L3_implementation
+    file: L3-implementation/graph-strategy.decision.yaml
+    title: "Graph Query Strategy"
+
+  - id: vector_strategy
+    level: L3_implementation
+    file: L3-implementation/vector-strategy.decision.yaml
+    title: "Vector Search Strategy"
+
+  - id: llm_provider
+    level: L3_implementation
+    file: L3-implementation/llm-provider.decision.yaml
+    title: "LLM Provider"
+
+  - id: frontend_framework
+    level: L3_implementation
+    file: L3-implementation/frontend-framework.decision.yaml
+    title: "Frontend Framework"
+
+  - id: auth_strategy
+    level: L3_implementation
+    file: L3-implementation/auth-strategy.decision.yaml
+    title: "Authentication & Authorization Strategy"
+
+  - id: data_quality_strategy
+    level: L3_implementation
+    file: L3-implementation/data-quality-strategy.decision.yaml
+    title: "Data Quality & Validation Strategy"
+
+  # L4: Deployment Decisions
+  - id: compute_platform
+    level: L4_deployment
+    file: L4-deployment/compute-platform.decision.yaml
+    title: "Compute Platform"
+
+  - id: database_hosting
+    level: L4_deployment
+    file: L4-deployment/database-hosting.decision.yaml
+    title: "Database Hosting"
+
+  - id: ci_cd_pipeline
+    level: L4_deployment
+    file: L4-deployment/ci-cd-pipeline.decision.yaml
+    title: "CI/CD Pipeline"
+
+  - id: iac_tooling
+    level: L4_deployment
+    file: L4-deployment/iac-tooling.decision.yaml
+    title: "Infrastructure as Code Tooling"
+
+  - id: container_strategy
+    level: L4_deployment
+    file: L4-deployment/container-strategy.decision.yaml
+    title: "Container Strategy"
+
+  # L5: Operations Decisions
+  - id: observability_stack
+    level: L5_operations
+    file: L5-operations/observability-stack.decision.yaml
+    title: "Observability Stack"
+
+  - id: scaling_strategy
+    level: L5_operations
+    file: L5-operations/scaling-strategy.decision.yaml
+    title: "Scaling Strategy"
+
+  - id: backup_dr_strategy
+    level: L5_operations
+    file: L5-operations/backup-dr-strategy.decision.yaml
+    title: "Backup & Disaster Recovery Strategy"
+
+  - id: secrets_management
+    level: L5_operations
+    file: L5-operations/secrets-management.decision.yaml
+    title: "Secrets Management"
+
+  - id: schema_governance
+    level: L5_operations
+    file: L5-operations/schema-governance.decision.yaml
+    title: "Schema Governance & Data Lineage"
+
+# --- Edge Declarations ---
+
+edges:
+  # L1 → L1 cross-influences
+  - from: target_market_segment
+    to: revenue_model
+    influence: moderate
+    rationale: "Market segment constrains viable revenue models"
+
+  - from: target_market_segment
+    to: regulatory_posture
+    influence: weak
+    rationale: "Enterprise segments demand stricter compliance"
+
+  # L1 → L2 edges
+  - from: build_vs_buy_posture
+    to: data_model_complexity
+    influence: moderate
+    rationale: "Custom builders can handle more complex data models"
+
+  - from: build_vs_buy_posture
+    to: service_decomposition
+    influence: strong
+    rationale: "Build posture directly constrains decomposition options"
+
+  - from: build_vs_buy_posture
+    to: ai_framework_strategy
+    influence: moderate
+    rationale: "SaaS maximalists lean toward frameworks, custom builders toward direct API"
+
+  - from: target_market_segment
+    to: api_protocol
+    influence: strong
+    rationale: "AI consumers need MCP, creators need REST/GraphQL"
+
+  - from: target_market_segment
+    to: frontend_framework
+    influence: moderate
+    rationale: "API consumers don't need frontend, creators do"
+
+  - from: build_vs_buy_posture
+    to: artifact_decoupling_strategy
+    influence: strong
+    rationale: "Custom builders invest in full artifact separation, SaaS teams accept coupling"
+
+  - from: ai_framework_strategy
+    to: artifact_decoupling_strategy
+    influence: moderate
+    rationale: "LLM-heavy projects need prompt decoupling; no-LLM projects skip it"
+
+  # L1 → L3 skip-connections
+  - from: build_vs_buy_posture
+    to: primary_database
+    influence: strong
+    rationale: "Build posture is the strongest predictor of database choice"
+
+  - from: build_vs_buy_posture
+    to: auth_strategy
+    influence: moderate
+    rationale: "Custom builders more likely to roll own auth"
+
+  - from: target_market_segment
+    to: auth_strategy
+    influence: strong
+    rationale: "Enterprise needs SSO, API consumers need API keys"
+
+  - from: build_vs_buy_posture
+    to: llm_provider
+    influence: weak
+    rationale: "Custom builders more likely to consider self-hosted models"
+
+  # L2 → L3 edges
+  - from: data_model_complexity
+    to: primary_database
+    influence: strong
+    rationale: "Graph-enriched models require PostgreSQL+AGE or Neo4j"
+
+  - from: data_model_complexity
+    to: graph_strategy
+    influence: strong
+    rationale: "Data model complexity directly determines graph strategy"
+
+  - from: primary_database
+    to: graph_strategy
+    influence: strong
+    rationale: "Database choice constrains available graph extensions"
+
+  - from: primary_database
+    to: vector_strategy
+    influence: strong
+    rationale: "PostgreSQL enables pgvector, SQLite enables sqlite-vec"
+
+  - from: ai_framework_strategy
+    to: llm_provider
+    influence: moderate
+    rationale: "Framework choice affects viable providers"
+
+  - from: ai_framework_strategy
+    to: vector_strategy
+    influence: moderate
+    rationale: "No-LLM strategy reduces vector search need"
+
+  - from: service_decomposition
+    to: frontend_framework
+    influence: moderate
+    rationale: "Monoliths pair with server-rendered, microservices with SPAs"
+
+  # L1 → L4 skip-connections
+  - from: build_vs_buy_posture
+    to: compute_platform
+    influence: strong
+    rationale: "Build posture is the primary driver of compute platform choice"
+
+  - from: build_vs_buy_posture
+    to: iac_tooling
+    influence: strong
+    rationale: "Custom builders adopt IaC, SaaS maximalists skip it"
+
+  - from: build_vs_buy_posture
+    to: ci_cd_pipeline
+    influence: moderate
+    rationale: "Custom builders need full CI/CD, SaaS maximalists use auto-deploy"
+
+  # L2 → L4 edges
+  - from: service_decomposition
+    to: compute_platform
+    influence: moderate
+    rationale: "Microservices need orchestration, monoliths run on simple PaaS"
+
+  - from: service_decomposition
+    to: container_strategy
+    influence: moderate
+    rationale: "Microservices typically require containerization"
+
+  # L3 → L4 edges
+  - from: primary_database
+    to: database_hosting
+    influence: strong
+    rationale: "Database choice directly constrains hosting options"
+
+  - from: primary_database
+    to: backup_dr_strategy
+    influence: moderate
+    rationale: "Database type determines backup approach"
+
+  # L4 → L4 cross-influences
+  - from: compute_platform
+    to: database_hosting
+    influence: moderate
+    rationale: "Compute platform creates hosting affinity (AWS ECS → RDS)"
+
+  - from: compute_platform
+    to: container_strategy
+    influence: strong
+    rationale: "Platform determines container requirements"
+
+  - from: compute_platform
+    to: iac_tooling
+    influence: moderate
+    rationale: "Complex platforms need IaC, simple PaaS uses platform-native"
+
+  # L4 → L5 edges
+  - from: compute_platform
+    to: observability_stack
+    influence: moderate
+    rationale: "Platform capabilities constrain observability options"
+
+  - from: compute_platform
+    to: scaling_strategy
+    influence: moderate
+    rationale: "Platform determines available scaling mechanisms"
+
+  - from: compute_platform
+    to: secrets_management
+    influence: moderate
+    rationale: "Platform provides or constrains secrets management"
+
+  - from: database_hosting
+    to: backup_dr_strategy
+    influence: strong
+    rationale: "Hosting provider determines backup capabilities"
+
+  # L1 → L5 skip-connections
+  - from: build_vs_buy_posture
+    to: observability_stack
+    influence: moderate
+    rationale: "Custom builders invest in observability, SaaS maximalists use minimal"
+
+  - from: regulatory_posture
+    to: secrets_management
+    influence: moderate
+    rationale: "Compliance requirements drive secrets management sophistication"
+
+  - from: target_market_segment
+    to: scaling_strategy
+    influence: moderate
+    rationale: "Enterprise segments need horizontal scaling readiness"
+
+  # L2 → L3 edges (artifact decoupling)
+  - from: artifact_decoupling_strategy
+    to: data_quality_strategy
+    influence: moderate
+    rationale: "Decoupled data artifacts need versioned quality checks"
+
+  # L2 → L4 edges (artifact decoupling)
+  - from: artifact_decoupling_strategy
+    to: ci_cd_pipeline
+    influence: moderate
+    rationale: "Decoupled artifacts need CI/CD support for each type"
+
+  # L2 → L5 edges (artifact decoupling)
+  - from: artifact_decoupling_strategy
+    to: schema_governance
+    influence: strong
+    rationale: "Artifact decoupling is the architectural driver for schema governance"
+
+  - from: artifact_decoupling_strategy
+    to: observability_stack
+    influence: moderate
+    rationale: "More independently versioned artifacts require more observability"
+
+  # L1 → L3 skip-connections (data quality)
+  - from: build_vs_buy_posture
+    to: data_quality_strategy
+    influence: moderate
+    rationale: "Custom builders invest in comprehensive validation, SaaS teams keep it simple"
+
+  # L2 → L3 edges (data quality)
+  - from: data_model_complexity
+    to: data_quality_strategy
+    influence: moderate
+    rationale: "Complex data models need statistical validation beyond Pydantic"
+
+  # L3 → L5 edges (data quality → schema governance)
+  - from: data_quality_strategy
+    to: schema_governance
+    influence: moderate
+    rationale: "Advanced validation tools drive need for schema governance infrastructure"
+
+  # L1 → L5 skip-connections (schema governance)
+  - from: build_vs_buy_posture
+    to: schema_governance
+    influence: moderate
+    rationale: "Custom builders need schema governance, SaaS teams use platform catalogs"
+
+  - from: regulatory_posture
+    to: schema_governance
+    influence: moderate
+    rationale: "Compliance requirements drive data lineage and schema governance needs"
+
+  # L2 → L5 skip-connections
+  - from: ai_framework_strategy
+    to: observability_stack
+    influence: moderate
+    rationale: "LLM usage drives need for Langfuse-style LLM tracing"

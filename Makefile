@@ -1,5 +1,7 @@
-.PHONY: help install install-dev lint format typecheck test test-unit test-integration test-cov clean
-.PHONY: ci-local ci-docker test-docker test-docker-py311 lint-docker docker-build docker-clean
+.PHONY: help install install-dev
+.PHONY: test test-py311 test-all lint
+.PHONY: test-local test-unit test-integration test-cov lint-local format typecheck ci-local
+.PHONY: ci-docker docker-build docker-clean clean
 
 .DEFAULT_GOAL := help
 
@@ -15,63 +17,64 @@ help:  ## Show this help message
 # =============================================================================
 
 install:  ## Install production dependencies only
-	uv sync
+	uv sync --frozen
 
 install-dev:  ## Install all dependencies (dev + test groups)
-	uv sync --group dev --group test
+	uv sync --frozen --group dev --group test
 	uv run pre-commit install
 
 # =============================================================================
-# LOCAL DEVELOPMENT (may differ from CI - use ci-docker for exact match)
+# DOCKER TESTING (DEFAULT - mirrors GitHub Actions exactly)
 # =============================================================================
 
-lint:  ## Run linting checks locally
+test: ## Default: run tests in Docker (CI-parity)
+	@./scripts/test-docker.sh --build
+
+test-py311:  ## Tests in Docker (Python 3.11, CI matrix)
+	@./scripts/test-docker.sh py311 --build
+
+test-all:  ## Full CI simulation in Docker (lint + typecheck + tests)
+	@./scripts/test-docker.sh ci --build
+
+lint:  ## Lint in Docker (CI-parity)
+	@./scripts/test-docker.sh lint --build
+
+ci-docker: test-all  ## Alias for test-all
+
+# =============================================================================
+# LOCAL DEVELOPMENT (quick iteration, may differ from CI)
+# =============================================================================
+
+test-local:  ## Run tests locally (fast, no Docker)
+	@uv run pytest tests/ -v || ([ $$? -eq 5 ] && echo "No tests collected yet" && exit 0)
+
+test-unit:  ## Run unit tests only (local)
+	@uv run pytest tests/unit/ -v -m unit || ([ $$? -eq 5 ] && echo "No unit tests collected yet" && exit 0)
+
+test-integration:  ## Run integration tests only (local)
+	@uv run pytest tests/integration/ -v -m integration || ([ $$? -eq 5 ] && echo "No integration tests collected yet" && exit 0)
+
+test-cov:  ## Run tests with coverage (local)
+	uv run pytest tests/ -v --cov=src/music_attribution --cov-report=html --cov-report=term-missing
+
+lint-local:  ## Run linting locally (fast, no Docker)
 	uv run ruff check src/ tests/
 	uv run ruff format --check src/ tests/
 	uv run mypy src/
 
-format:  ## Format code with ruff
+format:  ## Format code with ruff (local)
 	uv run ruff check --fix src/ tests/
 	uv run ruff format src/ tests/
 
-typecheck:  ## Run type checking with mypy
+typecheck:  ## Run type checking with mypy (local)
 	uv run mypy src/
 
-test:  ## Run all tests locally
-	@uv run pytest tests/ -v || ([ $$? -eq 5 ] && echo "No tests collected yet - add tests to tests/" && exit 0)
-
-test-unit:  ## Run unit tests only
-	@uv run pytest tests/unit/ -v -m unit || ([ $$? -eq 5 ] && echo "No unit tests collected yet" && exit 0)
-
-test-integration:  ## Run integration tests only
-	@uv run pytest tests/integration/ -v -m integration || ([ $$? -eq 5 ] && echo "No integration tests collected yet" && exit 0)
-
-test-cov:  ## Run tests with coverage report
-	uv run pytest tests/ -v --cov=src/music_attribution --cov-report=html --cov-report=term-missing
-
-# =============================================================================
-# CI SIMULATION (RECOMMENDED - mirrors GitHub Actions exactly)
-# =============================================================================
-
-ci-local:  ## Run full CI locally (lint + typecheck + test) - quick but may differ from CI
+ci-local:  ## Run full CI locally (quick but may differ from CI)
 	@echo "Running local CI simulation..."
-	@echo "NOTE: For exact CI match, use 'make ci-docker'"
+	@echo "NOTE: For exact CI match, use 'make test-all'"
 	@echo ""
-	$(MAKE) lint
+	$(MAKE) lint-local
 	$(MAKE) test-cov
-
-ci-docker:  ## Run full CI in Docker (RECOMMENDED - mirrors GitHub Actions exactly)
-	@echo "Running CI simulation in Docker (mirrors GitHub Actions)..."
-	@./scripts/test-docker.sh ci --build
-
-test-docker:  ## Run tests in Docker (Python 3.13, mirrors CI)
-	@./scripts/test-docker.sh --build
-
-test-docker-py311:  ## Run tests in Docker (Python 3.11, mirrors CI matrix)
-	@./scripts/test-docker.sh py311 --build
-
-lint-docker:  ## Run linting in Docker (mirrors CI)
-	@./scripts/test-docker.sh lint --build
 
 # =============================================================================
 # DOCKER MANAGEMENT

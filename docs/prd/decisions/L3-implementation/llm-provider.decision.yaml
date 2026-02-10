@@ -1,0 +1,169 @@
+# LLM Provider
+#
+# Which LLM provider(s) the system uses for entity resolution,
+# confidence assessment, and conversational features.
+
+decision_id: llm_provider
+title: "LLM Provider"
+description: >
+  Selects the primary LLM provider for AI-powered features: entity
+  resolution, confidence narrative generation, conversational gap-filling,
+  and permission reasoning. This decision interacts with AI framework
+  strategy and affects cost structure, latency, and capability ceiling.
+
+decision_level: L3_implementation
+status: active
+last_updated: 2026-02-10
+
+options:
+  - option_id: anthropic_primary
+    title: "Anthropic (Claude) Primary"
+    description: >
+      Claude as the primary LLM. Strong structured output, long
+      context, good reasoning. MCP-native integration. Higher
+      cost per token but better output quality for complex tasks.
+    prior_probability: 0.35
+    status: recommended
+
+  - option_id: openai_primary
+    title: "OpenAI (GPT) Primary"
+    description: >
+      GPT-4 family as primary LLM. Broadest ecosystem, most
+      third-party integrations, function calling maturity.
+      Strong developer tooling (Assistants API, embeddings).
+    prior_probability: 0.30
+    status: viable
+
+  - option_id: multi_provider
+    title: "Multi-Provider (Router)"
+    description: >
+      Use multiple providers with routing logic (e.g., Claude for
+      reasoning, GPT-4o for structured output, local models for
+      embeddings). Maximum flexibility, higher complexity.
+    prior_probability: 0.20
+    status: viable
+    constraints:
+      - "Provider abstraction layer required"
+      - "Multiple API key management"
+      - "Cost tracking across providers"
+
+  - option_id: open_source_local
+    title: "Open Source / Local Models"
+    description: >
+      Self-hosted open-source models (Llama, Mistral, Qwen) via
+      Ollama, vLLM, or similar. Maximum data privacy, no API costs,
+      but requires GPU infrastructure and model management.
+    prior_probability: 0.15
+    status: experimental
+    constraints:
+      - "GPU infrastructure (A100/H100 or consumer GPU for small models)"
+      - "Model management and updating"
+      - "Quality gap on complex reasoning tasks"
+
+conditional_on:
+  - parent_decision_id: ai_framework_strategy
+    influence_strength: moderate
+    conditional_table:
+      - given_parent_option: direct_api_pydantic
+        then_probabilities:
+          anthropic_primary: 0.40
+          openai_primary: 0.30
+          multi_provider: 0.15
+          open_source_local: 0.15
+      - given_parent_option: lightweight_sdk
+        then_probabilities:
+          anthropic_primary: 0.35
+          openai_primary: 0.35
+          multi_provider: 0.20
+          open_source_local: 0.10
+      - given_parent_option: orchestration_framework
+        then_probabilities:
+          anthropic_primary: 0.25
+          openai_primary: 0.35
+          multi_provider: 0.30
+          open_source_local: 0.10
+      - given_parent_option: no_llm
+        then_probabilities:
+          anthropic_primary: 0.00
+          openai_primary: 0.00
+          multi_provider: 0.00
+          open_source_local: 1.00
+
+  - parent_decision_id: build_vs_buy_posture
+    influence_strength: weak
+    conditional_table:
+      - given_parent_option: custom_build
+        then_probabilities:
+          anthropic_primary: 0.30
+          openai_primary: 0.25
+          multi_provider: 0.20
+          open_source_local: 0.25
+      - given_parent_option: managed_services
+        then_probabilities:
+          anthropic_primary: 0.35
+          openai_primary: 0.35
+          multi_provider: 0.20
+          open_source_local: 0.10
+      - given_parent_option: saas_maximalist
+        then_probabilities:
+          anthropic_primary: 0.35
+          openai_primary: 0.40
+          multi_provider: 0.20
+          open_source_local: 0.05
+
+archetype_weights:
+  engineer_heavy_startup:
+    probability_overrides:
+      anthropic_primary: 0.30
+      openai_primary: 0.25
+      multi_provider: 0.25
+      open_source_local: 0.20
+    rationale: "Engineers explore all options. Multi-provider and local models viable."
+
+  musician_first_team:
+    probability_overrides:
+      anthropic_primary: 0.35
+      openai_primary: 0.40
+      multi_provider: 0.15
+      open_source_local: 0.10
+    rationale: "Single provider simplicity. OpenAI has broader ecosystem awareness."
+
+  solo_hacker:
+    probability_overrides:
+      anthropic_primary: 0.35
+      openai_primary: 0.35
+      multi_provider: 0.10
+      open_source_local: 0.20
+    rationale: "Single provider for simplicity. Local models for cost-sensitive prototyping."
+
+  well_funded_startup:
+    probability_overrides:
+      anthropic_primary: 0.35
+      openai_primary: 0.30
+      multi_provider: 0.25
+      open_source_local: 0.10
+    rationale: "Can afford multi-provider strategy. Anthropic for quality, OpenAI for breadth."
+
+volatility:
+  classification: volatile
+  last_assessed: 2026-02-10
+  next_review: 2026-03-10
+  change_drivers:
+    - "Model capability leaps (Claude 4.5, GPT-5)"
+    - "Pricing changes across providers"
+    - "Open-source model quality convergence"
+    - "Data residency/privacy requirements from regulations"
+
+domain_applicability:
+  music_attribution: 1.0
+  dpp_traceability: 0.8
+  generic_graph_rag: 1.0
+
+tags:
+  - implementation
+  - llm
+  - ai
+  - provider
+
+references:
+  - "../attribution-engine/toc-attribution-engine.md"

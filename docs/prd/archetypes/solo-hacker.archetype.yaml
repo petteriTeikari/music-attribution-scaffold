@@ -1,0 +1,128 @@
+# Solo Hacker Archetype
+#
+# One person building everything. Maximum velocity, zero ops.
+# The "weekend project that might become a startup" profile.
+
+archetype_id: solo_hacker
+title: "Solo Hacker"
+description: >
+  A single developer building an attribution/traceability system, either
+  as a side project, a proof of concept, or the seed of a future startup.
+  Technical skills may be high, but time and operational capacity are the
+  binding constraints. Every decision is filtered through "can one person
+  maintain this?"
+
+  This archetype optimizes ruthlessly for simplicity and zero-ops. Features
+  that require ongoing maintenance (self-hosted databases, Kubernetes,
+  custom monitoring) are effectively eliminated regardless of their
+  technical merits.
+
+team_profile:
+  size: "1"
+  composition:
+    engineers: "1 (full-stack)"
+    product: "0 (engineer makes product decisions)"
+    design: "0"
+    devops: "0"
+  technical_experience:
+    backend: intermediate_to_advanced
+    frontend: intermediate
+    infrastructure: beginner_to_intermediate
+    ml_ai: beginner_to_intermediate
+  budget_range:
+    monthly_infrastructure: "$0-50"
+    annual_saas_tools: "$0-500"
+
+hard_constraints:
+  - "Zero ongoing operational tasks (no cron jobs to babysit)"
+  - "Must work within free tier limits for initial development"
+  - "Single deployment target (no multi-service orchestration)"
+  - "Local development must work offline or with minimal dependencies"
+  - "No enterprise sales process — self-service only"
+
+soft_preferences:
+  - "Prefer SQLite for development, managed PostgreSQL for production"
+  - "Prefer serverless/edge for zero-scale-to-zero cost"
+  - "Prefer type-safe languages/frameworks that catch errors at dev time"
+  - "Prefer single-file deployment configurations"
+  - "Value iteration speed over architectural purity"
+
+decision_overrides:
+  # L1 Business
+  build_vs_buy_posture:
+    preferred: saas_maximalist
+    rationale: "One person cannot operate infrastructure"
+  target_market_segment:
+    preferred: independent_creators
+    rationale: "Smallest viable market segment, direct reach"
+  revenue_model:
+    preferred: freemium_saas
+    rationale: "Scalable without sales team"
+  regulatory_posture:
+    preferred: best_effort
+    rationale: "No capacity for compliance overhead"
+
+  # L2 Architecture
+  data_model_complexity:
+    preferred: simple_relational
+    rationale: "Minimum viable data model"
+  api_protocol:
+    preferred: rest_openapi
+    rationale: "Fastest to build and test"
+  service_decomposition:
+    preferred: monolith
+    rationale: "Single deployable or serverless functions"
+  ai_framework_strategy:
+    preferred: lightweight_sdk
+    rationale: "SDK for velocity, direct API as fallback"
+
+  # L3 Implementation
+  primary_database:
+    preferred: sqlite_turso
+    rationale: "SQLite for dev, Turso for production. Zero ops."
+  graph_strategy:
+    preferred: application_layer_graph
+    rationale: "NetworkX in-memory for analysis, no graph DB"
+  vector_strategy:
+    preferred: no_vector_search
+    rationale: "Fuzzy string matching sufficient for MVP"
+  llm_provider:
+    preferred: anthropic_primary
+    rationale: "Best quality per token for complex tasks"
+  frontend_framework:
+    preferred: no_frontend
+    rationale: "API-first, build frontend when validated"
+  auth_strategy:
+    preferred: api_key_only
+    rationale: "Simplest auth for API-first system"
+
+  # L4 Deployment
+  compute_platform:
+    preferred: railway
+    rationale: "Free tier, simple deployment, good DX"
+  database_hosting:
+    preferred: turso
+    rationale: "Edge SQLite, generous free tier"
+  ci_cd_pipeline:
+    preferred: platform_native_autodeploy
+    rationale: "Git push deploys, nothing to configure"
+  iac_tooling:
+    preferred: platform_native
+    rationale: "fly.toml or render.yaml, nothing more"
+  container_strategy:
+    preferred: no_containers
+    rationale: "Direct deploy for speed"
+
+  # L5 Operations
+  observability_stack:
+    preferred: minimal_logging
+    rationale: "Structured logging to stdout, read platform logs"
+  scaling_strategy:
+    preferred: vertical_only
+    rationale: "Scale the machine, not the architecture"
+  backup_dr_strategy:
+    preferred: minimal_git_based
+    rationale: "Code in git, data small enough for manual export"
+  secrets_management:
+    preferred: dotenv_gitignored
+    rationale: ".env locally, platform env vars in production"

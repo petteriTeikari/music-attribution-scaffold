@@ -389,9 +389,26 @@ See [UNKNOWNS-FOR-DOMAIN-EXPERTS.md](UNKNOWNS-FOR-DOMAIN-EXPERTS.md) for the com
 
 ---
 
+## Probabilistic PRD System
+
+The PRD system extends beyond traditional linear documents into a **Bayesian decision network** with conditional probabilities, team archetype modulation, and cross-domain applicability.
+
+| Directory | Contents |
+|-----------|----------|
+| [decisions/](decisions/) | 23 decision nodes across 5 levels (L1 Business → L5 Operations) with conditional probability tables |
+| [decisions/REPORT.md](decisions/REPORT.md) | Visual report with mermaid diagrams showing network topology, archetype comparisons, and scenario paths |
+| [archetypes/](archetypes/) | 4 team profiles (engineer-heavy, musician-first, solo hacker, well-funded) that modulate decision probabilities |
+| [scenarios/](scenarios/) | 3 composed paths through the network (music MVP, solo musician, DPP enterprise) |
+| [domains/](domains/) | Domain overlay system — music attribution and DPP traceability share the same architecture |
+
+Start with [decisions/README.md](decisions/README.md) for the conceptual model, or [decisions/REPORT.md](decisions/REPORT.md) for visual summaries.
+
+---
+
 ## See Also
 
 - [SYNTHESIS.md](SYNTHESIS.md) - Cross-PRD insights and decisions
 - [REJECTED.md](REJECTED.md) - Why NOT to use certain technologies
 - [UNKNOWNS-FOR-DOMAIN-EXPERTS.md](UNKNOWNS-FOR-DOMAIN-EXPERTS.md) - Questions for domain experts
 - [../knowledge-base/](../knowledge-base/) - Domain and technical knowledge
+- [../planning/probabilistic-prd-design.md](../planning/probabilistic-prd-design.md) - Probabilistic PRD design rationale

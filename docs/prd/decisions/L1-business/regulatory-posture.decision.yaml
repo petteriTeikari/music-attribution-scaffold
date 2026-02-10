@@ -1,0 +1,162 @@
+# Regulatory Posture
+#
+# How proactively the system addresses regulatory compliance.
+# Influences security architecture, audit logging depth, and
+# deployment topology (data residency).
+
+decision_id: regulatory_posture
+title: "Regulatory Posture"
+description: >
+  Determines the team's approach to regulatory compliance. Ranges from
+  "best-effort" (do the minimum, address compliance when customers demand it)
+  to "compliance-first" (build compliance into the architecture from day one).
+  This decision has strong implications for infrastructure costs, development
+  velocity, and addressable market segments.
+
+  Key regulations: EU AI Act (transparency, risk classification),
+  GDPR (data residency, right to erasure), DSA (platform obligations),
+  and sector-specific rules (music: collective management directives;
+  DPP: EU ESPR digital product passport mandates).
+
+decision_level: L1_business
+status: active
+last_updated: 2026-02-10
+
+options:
+  - option_id: best_effort
+    title: "Best Effort"
+    description: >
+      Minimal compliance work. Focus on product-market fit first.
+      Address regulatory requirements reactively when customers
+      or markets demand it. Acceptable for pre-revenue MVPs.
+    prior_probability: 0.30
+    status: viable
+    constraints:
+      - "Not targeting enterprise/regulated customers initially"
+      - "Acceptance of compliance debt"
+
+  - option_id: compliance_aware
+    title: "Compliance Aware"
+    description: >
+      Design with compliance in mind but don't over-invest.
+      Implement audit logging, basic data residency controls,
+      and consent management. Address specific regulations when
+      entering relevant markets.
+    prior_probability: 0.40
+    status: recommended
+    constraints:
+      - "Audit logging infrastructure"
+      - "Basic consent management"
+      - "Data classification awareness"
+
+  - option_id: compliance_first
+    title: "Compliance First"
+    description: >
+      Build regulatory compliance into the architecture from day one.
+      SOC2 certification path, GDPR-by-design, EU AI Act risk
+      classification, comprehensive audit trails. Required for
+      enterprise and rights organization customers.
+    prior_probability: 0.30
+    status: viable
+    constraints:
+      - "Dedicated compliance/legal resource"
+      - "Higher infrastructure costs (audit storage, encryption)"
+      - "Slower development velocity"
+
+conditional_on:
+  - parent_decision_id: target_market_segment
+    influence_strength: moderate
+    conditional_table:
+      - given_parent_option: independent_creators
+        then_probabilities:
+          best_effort: 0.50
+          compliance_aware: 0.40
+          compliance_first: 0.10
+
+      - given_parent_option: mid_tier_labels
+        then_probabilities:
+          best_effort: 0.20
+          compliance_aware: 0.55
+          compliance_first: 0.25
+
+      - given_parent_option: enterprise_rights_orgs
+        then_probabilities:
+          best_effort: 0.05
+          compliance_aware: 0.25
+          compliance_first: 0.70
+
+      - given_parent_option: ai_platform_consumers
+        then_probabilities:
+          best_effort: 0.25
+          compliance_aware: 0.45
+          compliance_first: 0.30
+
+archetype_weights:
+  engineer_heavy_startup:
+    probability_overrides:
+      best_effort: 0.25
+      compliance_aware: 0.45
+      compliance_first: 0.30
+    rationale: >
+      Engineer-heavy teams can implement compliance features
+      efficiently but prefer to defer until product-market fit.
+
+  musician_first_team:
+    probability_overrides:
+      best_effort: 0.45
+      compliance_aware: 0.45
+      compliance_first: 0.10
+    rationale: >
+      Musician-first teams lack compliance expertise and should
+      focus on product. Best-effort with compliance awareness.
+
+  solo_hacker:
+    probability_overrides:
+      best_effort: 0.60
+      compliance_aware: 0.35
+      compliance_first: 0.05
+    rationale: >
+      Solo hackers cannot sustain compliance overhead. Best-effort
+      is the only viable option until there is revenue.
+
+  well_funded_startup:
+    probability_overrides:
+      best_effort: 0.10
+      compliance_aware: 0.35
+      compliance_first: 0.55
+    rationale: >
+      Well-funded teams targeting enterprise customers need
+      compliance-first posture to win contracts.
+
+volatility:
+  classification: volatile
+  last_assessed: 2026-02-10
+  next_review: 2026-03-10
+  change_drivers:
+    - "EU AI Act enforcement timeline (August 2026 provisions)"
+    - "GDPR enforcement actions against AI training data"
+    - "EU ESPR digital product passport mandates (2027+)"
+    - "US state-level AI transparency laws"
+    - "Industry self-regulation initiatives"
+
+domain_applicability:
+  music_attribution: 1.0
+  dpp_traceability: 1.0
+  generic_graph_rag: 0.7
+
+tags:
+  - strategic
+  - compliance
+  - regulatory
+  - eu-ai-act
+  - gdpr
+
+rationale: >
+  The "compliance aware" middle ground gets the highest prior because most
+  teams in the attribution/traceability space recognize regulatory relevance
+  but cannot justify full compliance investment pre-PMF. The volatile
+  classification reflects rapid regulatory evolution in 2026.
+
+references:
+  - "../security/toc-security.md"
+  - "../mcp-server/permissions-api.md"

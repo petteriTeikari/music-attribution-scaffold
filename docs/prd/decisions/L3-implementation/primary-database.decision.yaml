@@ -1,0 +1,181 @@
+# Primary Database
+#
+# The core persistent store. This decision has the highest downstream
+# impact of any L3 choice — it affects graph strategy, vector strategy,
+# hosting, backup, and operational complexity.
+
+decision_id: primary_database
+title: "Primary Database"
+description: >
+  Selects the primary persistent data store for the system. In the
+  attribution/traceability domain, the database must support relational
+  data (entities, credits, permissions), ideally with vector search
+  (embeddings for similarity) and graph queries (relationship traversal).
+
+  The "unified PostgreSQL" approach (PostgreSQL + pgvector + Apache AGE)
+  is the current recommended default, trading some per-feature performance
+  for dramatic operational simplicity.
+
+decision_level: L3_implementation
+status: active
+last_updated: 2026-02-10
+
+options:
+  - option_id: postgresql_unified
+    title: "PostgreSQL Unified"
+    description: >
+      PostgreSQL as the single data store with pgvector for embeddings
+      and Apache AGE for graph queries. One database to manage, backup,
+      and scale. ACID guarantees across all data types.
+    prior_probability: 0.45
+    status: recommended
+    complements:
+      - "graph_strategy.apache_age"
+      - "vector_strategy.pgvector"
+
+  - option_id: supabase
+    title: "Supabase"
+    description: >
+      Managed PostgreSQL via Supabase with built-in auth, real-time
+      subscriptions, and REST/GraphQL APIs. Lower operational overhead
+      but constrained extension support (pgvector yes, AGE limited).
+    prior_probability: 0.25
+    status: viable
+    constraints:
+      - "Extension availability on Supabase platform"
+      - "Vendor lock-in on Supabase-specific features"
+
+  - option_id: sqlite_turso
+    title: "SQLite / Turso"
+    description: >
+      SQLite for development, Turso (libSQL) for production. Edge-first,
+      zero-ops for small deployments. Limited to simple relational
+      queries — no graph extensions, vector support via external service.
+    prior_probability: 0.15
+    status: viable
+    constraints:
+      - "No graph query support"
+      - "Vector search requires separate service"
+      - "Limited concurrent write throughput"
+
+  - option_id: cockroachdb
+    title: "CockroachDB"
+    description: >
+      Distributed SQL database with PostgreSQL wire compatibility.
+      Horizontal scaling, multi-region support, strong consistency.
+      Overkill for MVP but viable for enterprise/global deployments.
+    prior_probability: 0.15
+    status: deferred
+    constraints:
+      - "Higher operational complexity than PostgreSQL"
+      - "Cost premium for managed service"
+      - "Extension compatibility varies"
+
+conditional_on:
+  - parent_decision_id: build_vs_buy_posture
+    influence_strength: strong
+    conditional_table:
+      - given_parent_option: custom_build
+        then_probabilities:
+          postgresql_unified: 0.60
+          supabase: 0.05
+          sqlite_turso: 0.10
+          cockroachdb: 0.25
+      - given_parent_option: managed_services
+        then_probabilities:
+          postgresql_unified: 0.45
+          supabase: 0.30
+          sqlite_turso: 0.10
+          cockroachdb: 0.15
+      - given_parent_option: saas_maximalist
+        then_probabilities:
+          postgresql_unified: 0.15
+          supabase: 0.50
+          sqlite_turso: 0.30
+          cockroachdb: 0.05
+
+  - parent_decision_id: data_model_complexity
+    influence_strength: strong
+    conditional_table:
+      - given_parent_option: simple_relational
+        then_probabilities:
+          postgresql_unified: 0.30
+          supabase: 0.30
+          sqlite_turso: 0.30
+          cockroachdb: 0.10
+      - given_parent_option: graph_enriched_relational
+        then_probabilities:
+          postgresql_unified: 0.65
+          supabase: 0.15
+          sqlite_turso: 0.05
+          cockroachdb: 0.15
+      - given_parent_option: full_knowledge_graph
+        then_probabilities:
+          postgresql_unified: 0.50
+          supabase: 0.05
+          sqlite_turso: 0.00
+          cockroachdb: 0.45
+      - given_parent_option: document_centric
+        then_probabilities:
+          postgresql_unified: 0.25
+          supabase: 0.40
+          sqlite_turso: 0.25
+          cockroachdb: 0.10
+
+archetype_weights:
+  engineer_heavy_startup:
+    probability_overrides:
+      postgresql_unified: 0.60
+      supabase: 0.10
+      sqlite_turso: 0.05
+      cockroachdb: 0.25
+    rationale: "Engineers value PostgreSQL's extension ecosystem and full control."
+
+  musician_first_team:
+    probability_overrides:
+      postgresql_unified: 0.20
+      supabase: 0.55
+      sqlite_turso: 0.20
+      cockroachdb: 0.05
+    rationale: "Supabase provides the most accessible managed PostgreSQL experience."
+
+  solo_hacker:
+    probability_overrides:
+      postgresql_unified: 0.15
+      supabase: 0.40
+      sqlite_turso: 0.40
+      cockroachdb: 0.05
+    rationale: "SQLite for zero-ops development, Supabase for managed production."
+
+  well_funded_startup:
+    probability_overrides:
+      postgresql_unified: 0.45
+      supabase: 0.15
+      sqlite_turso: 0.05
+      cockroachdb: 0.35
+    rationale: "PostgreSQL for MVP, CockroachDB path for multi-region scaling."
+
+volatility:
+  classification: stable
+  last_assessed: 2026-02-10
+  next_review: 2026-05-10
+  change_drivers:
+    - "PostgreSQL extension ecosystem maturity (AGE stability)"
+    - "Supabase extension support expansion"
+    - "Turso feature parity with PostgreSQL"
+
+domain_applicability:
+  music_attribution: 1.0
+  dpp_traceability: 1.0
+  generic_graph_rag: 1.0
+
+tags:
+  - implementation
+  - database
+  - postgresql
+  - core-infrastructure
+
+references:
+  - "../data-layer/toc-data-layer.md"
+  - "../REJECTED.md"
+  - "../defaults.yaml"

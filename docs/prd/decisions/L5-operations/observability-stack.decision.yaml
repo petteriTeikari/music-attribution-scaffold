@@ -1,0 +1,165 @@
+# Observability Stack
+#
+# How the system is monitored, traced, and debugged in production.
+
+decision_id: observability_stack
+title: "Observability Stack"
+description: >
+  Determines the monitoring, logging, tracing, and alerting infrastructure.
+  In attribution/traceability systems, observability serves a dual purpose:
+  operational health monitoring AND confidence score tracking (e.g., tracking
+  calibration drift over time via Langfuse).
+
+decision_level: L5_operations
+status: active
+last_updated: 2026-02-10
+
+options:
+  - option_id: langfuse_plus_platform
+    title: "Langfuse + Platform Metrics"
+    description: >
+      Langfuse for LLM tracing and confidence tracking, platform-native
+      metrics (Render/Railway dashboards) for infrastructure. Minimal
+      setup, good for LLM-heavy systems. Current scaffold default.
+    prior_probability: 0.30
+    status: recommended
+
+  - option_id: grafana_stack
+    title: "Grafana Stack (Prometheus + Loki + Tempo)"
+    description: >
+      Full open-source observability: Prometheus for metrics, Loki for
+      logs, Tempo for traces, Grafana for dashboards. Self-hosted or
+      Grafana Cloud. Comprehensive but requires setup.
+    prior_probability: 0.25
+    status: viable
+    constraints:
+      - "Grafana/Prometheus operational knowledge"
+      - "Infrastructure for running the stack"
+
+  - option_id: datadog
+    title: "Datadog"
+    description: >
+      Enterprise-grade SaaS observability with APM, logs, metrics,
+      and tracing in one platform. Excellent but expensive at scale.
+    prior_probability: 0.15
+    status: viable
+    constraints:
+      - "Budget for Datadog pricing ($15-30/host/month+)"
+      - "Vendor lock-in on dashboard definitions"
+
+  - option_id: minimal_logging
+    title: "Minimal (Structured Logging Only)"
+    description: >
+      Structured JSON logging to stdout, consumed by platform log
+      aggregation. No dedicated metrics, tracing, or dashboards.
+      Sufficient for early-stage MVPs.
+    prior_probability: 0.30
+    status: viable
+
+conditional_on:
+  - parent_decision_id: build_vs_buy_posture
+    influence_strength: moderate
+    conditional_table:
+      - given_parent_option: custom_build
+        then_probabilities:
+          langfuse_plus_platform: 0.20
+          grafana_stack: 0.40
+          datadog: 0.15
+          minimal_logging: 0.25
+      - given_parent_option: managed_services
+        then_probabilities:
+          langfuse_plus_platform: 0.35
+          grafana_stack: 0.20
+          datadog: 0.15
+          minimal_logging: 0.30
+      - given_parent_option: saas_maximalist
+        then_probabilities:
+          langfuse_plus_platform: 0.30
+          grafana_stack: 0.10
+          datadog: 0.20
+          minimal_logging: 0.40
+
+  - parent_decision_id: ai_framework_strategy
+    influence_strength: moderate
+    conditional_table:
+      - given_parent_option: direct_api_pydantic
+        then_probabilities:
+          langfuse_plus_platform: 0.35
+          grafana_stack: 0.25
+          datadog: 0.15
+          minimal_logging: 0.25
+      - given_parent_option: lightweight_sdk
+        then_probabilities:
+          langfuse_plus_platform: 0.35
+          grafana_stack: 0.25
+          datadog: 0.15
+          minimal_logging: 0.25
+      - given_parent_option: orchestration_framework
+        then_probabilities:
+          langfuse_plus_platform: 0.40
+          grafana_stack: 0.25
+          datadog: 0.15
+          minimal_logging: 0.20
+      - given_parent_option: no_llm
+        then_probabilities:
+          langfuse_plus_platform: 0.10
+          grafana_stack: 0.30
+          datadog: 0.20
+          minimal_logging: 0.40
+
+archetype_weights:
+  engineer_heavy_startup:
+    probability_overrides:
+      langfuse_plus_platform: 0.25
+      grafana_stack: 0.40
+      datadog: 0.15
+      minimal_logging: 0.20
+    rationale: "Engineers build Grafana dashboards and appreciate open-source stack."
+
+  musician_first_team:
+    probability_overrides:
+      langfuse_plus_platform: 0.30
+      grafana_stack: 0.10
+      datadog: 0.10
+      minimal_logging: 0.50
+    rationale: "Minimal logging until there's a real need. Langfuse if using LLMs."
+
+  solo_hacker:
+    probability_overrides:
+      langfuse_plus_platform: 0.25
+      grafana_stack: 0.05
+      datadog: 0.05
+      minimal_logging: 0.65
+    rationale: "Structured logging to stdout. Langfuse free tier for LLM tracing."
+
+  well_funded_startup:
+    probability_overrides:
+      langfuse_plus_platform: 0.25
+      grafana_stack: 0.25
+      datadog: 0.35
+      minimal_logging: 0.15
+    rationale: "Datadog for enterprise SLAs and comprehensive visibility."
+
+volatility:
+  classification: stable
+  last_assessed: 2026-02-10
+  next_review: 2026-05-10
+  change_drivers:
+    - "Langfuse feature expansion"
+    - "OpenTelemetry ecosystem maturity"
+    - "Datadog pricing changes"
+
+domain_applicability:
+  music_attribution: 1.0
+  dpp_traceability: 1.0
+  generic_graph_rag: 1.0
+
+tags:
+  - operations
+  - observability
+  - monitoring
+
+references:
+  - "../observability/toc-observability.md"
+  - "../observability/langfuse.md"
+  - "../defaults.yaml"

@@ -1,0 +1,165 @@
+# Auth Strategy
+#
+# Authentication and authorization approach. Affects security posture,
+# user experience, and multi-tenancy implementation.
+
+decision_id: auth_strategy
+title: "Authentication & Authorization Strategy"
+description: >
+  Determines how the system handles user authentication (who are you?)
+  and authorization (what can you access?). In attribution/traceability
+  systems, auth is critical for multi-tenancy (isolating label/org data),
+  permission management (AI training consent), and audit trails.
+
+decision_level: L3_implementation
+status: active
+last_updated: 2026-02-10
+
+options:
+  - option_id: managed_auth_service
+    title: "Managed Auth Service (Clerk/Auth0)"
+    description: >
+      Third-party auth service handling signup, login, MFA, SSO, and
+      session management. Fastest to implement, covers edge cases.
+      Monthly cost scales with MAU.
+    prior_probability: 0.30
+    status: recommended
+
+  - option_id: supabase_auth
+    title: "Supabase Auth"
+    description: >
+      Auth built into Supabase. Row-level security, social logins,
+      magic links. Tightly coupled to Supabase database. Free tier
+      available.
+    prior_probability: 0.25
+    status: viable
+    complements:
+      - "primary_database.supabase"
+
+  - option_id: custom_jwt
+    title: "Custom JWT Implementation"
+    description: >
+      Build auth from scratch with JWT tokens, bcrypt/argon2 hashing,
+      refresh token rotation. Maximum control, requires security
+      expertise to implement correctly.
+    prior_probability: 0.20
+    status: viable
+    constraints:
+      - "Security expertise on team"
+      - "Regular security audits"
+
+  - option_id: api_key_only
+    title: "API Key Only"
+    description: >
+      Simple API key authentication for machine-to-machine access.
+      No user accounts, no sessions. Suitable for API-only systems
+      where consumers are other services.
+    prior_probability: 0.25
+    status: viable
+
+conditional_on:
+  - parent_decision_id: target_market_segment
+    influence_strength: strong
+    conditional_table:
+      - given_parent_option: independent_creators
+        then_probabilities:
+          managed_auth_service: 0.35
+          supabase_auth: 0.30
+          custom_jwt: 0.10
+          api_key_only: 0.25
+      - given_parent_option: mid_tier_labels
+        then_probabilities:
+          managed_auth_service: 0.40
+          supabase_auth: 0.20
+          custom_jwt: 0.25
+          api_key_only: 0.15
+      - given_parent_option: enterprise_rights_orgs
+        then_probabilities:
+          managed_auth_service: 0.35
+          supabase_auth: 0.10
+          custom_jwt: 0.40
+          api_key_only: 0.15
+      - given_parent_option: ai_platform_consumers
+        then_probabilities:
+          managed_auth_service: 0.15
+          supabase_auth: 0.10
+          custom_jwt: 0.15
+          api_key_only: 0.60
+
+  - parent_decision_id: build_vs_buy_posture
+    influence_strength: moderate
+    conditional_table:
+      - given_parent_option: custom_build
+        then_probabilities:
+          managed_auth_service: 0.20
+          supabase_auth: 0.10
+          custom_jwt: 0.45
+          api_key_only: 0.25
+      - given_parent_option: managed_services
+        then_probabilities:
+          managed_auth_service: 0.40
+          supabase_auth: 0.25
+          custom_jwt: 0.15
+          api_key_only: 0.20
+      - given_parent_option: saas_maximalist
+        then_probabilities:
+          managed_auth_service: 0.30
+          supabase_auth: 0.45
+          custom_jwt: 0.05
+          api_key_only: 0.20
+
+archetype_weights:
+  engineer_heavy_startup:
+    probability_overrides:
+      managed_auth_service: 0.25
+      supabase_auth: 0.10
+      custom_jwt: 0.40
+      api_key_only: 0.25
+    rationale: "Engineers often prefer custom JWT for control, but pragmatically use managed."
+
+  musician_first_team:
+    probability_overrides:
+      managed_auth_service: 0.35
+      supabase_auth: 0.40
+      custom_jwt: 0.05
+      api_key_only: 0.20
+    rationale: "Supabase auth is the simplest if already using Supabase."
+
+  solo_hacker:
+    probability_overrides:
+      managed_auth_service: 0.25
+      supabase_auth: 0.25
+      custom_jwt: 0.10
+      api_key_only: 0.40
+    rationale: "API key for MVP, managed auth when adding user accounts."
+
+  well_funded_startup:
+    probability_overrides:
+      managed_auth_service: 0.35
+      supabase_auth: 0.10
+      custom_jwt: 0.35
+      api_key_only: 0.20
+    rationale: "Managed for speed, custom for enterprise SSO requirements."
+
+volatility:
+  classification: stable
+  last_assessed: 2026-02-10
+  next_review: 2026-05-10
+  change_drivers:
+    - "Passkey/WebAuthn adoption rates"
+    - "Auth service pricing changes"
+    - "Enterprise SSO requirements from customers"
+
+domain_applicability:
+  music_attribution: 1.0
+  dpp_traceability: 1.0
+  generic_graph_rag: 0.9
+
+tags:
+  - implementation
+  - security
+  - auth
+
+references:
+  - "../security/toc-security.md"
+  - "../security/multi-tenancy.md"

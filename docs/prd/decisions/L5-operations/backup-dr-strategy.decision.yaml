@@ -1,0 +1,153 @@
+# Backup & Disaster Recovery Strategy
+#
+# How data is protected against loss and how the system recovers
+# from failures.
+
+decision_id: backup_dr_strategy
+title: "Backup & Disaster Recovery Strategy"
+description: >
+  Determines how data is protected and how quickly the system can
+  recover from failures. For attribution/traceability systems, data
+  integrity is critical — losing attribution records or permission
+  states could have legal and financial consequences.
+
+decision_level: L5_operations
+status: active
+last_updated: 2026-02-10
+
+options:
+  - option_id: managed_provider_backups
+    title: "Managed Provider Backups"
+    description: >
+      Rely on database hosting provider's built-in backup features
+      (Neon PITR, Supabase daily backups, RDS automated snapshots).
+      Zero configuration, provider-managed retention.
+    prior_probability: 0.40
+    status: recommended
+
+  - option_id: automated_snapshots
+    title: "Automated Snapshots + Offsite"
+    description: >
+      Scheduled database dumps or filesystem snapshots stored in
+      separate cloud storage (S3/R2). Custom retention policy.
+      Requires scripting but provides independence from provider.
+    prior_probability: 0.25
+    status: viable
+
+  - option_id: continuous_replication
+    title: "Continuous Replication + Failover"
+    description: >
+      Streaming replication to standby instances with automatic
+      failover. Near-zero RPO (recovery point objective). Required
+      for enterprise SLAs.
+    prior_probability: 0.15
+    status: viable
+    constraints:
+      - "Standby instance costs"
+      - "Replication monitoring"
+      - "Failover testing procedures"
+
+  - option_id: minimal_git_based
+    title: "Minimal (Git-Based Config + Manual DB)"
+    description: >
+      Code and configuration in git. Database backed up manually
+      or via cron job. Acceptable for pre-revenue MVPs with
+      small data volumes.
+    prior_probability: 0.20
+    status: viable
+
+conditional_on:
+  - parent_decision_id: database_hosting
+    influence_strength: strong
+    conditional_table:
+      - given_parent_option: neon
+        then_probabilities:
+          managed_provider_backups: 0.55
+          automated_snapshots: 0.20
+          continuous_replication: 0.10
+          minimal_git_based: 0.15
+      - given_parent_option: supabase_hosted
+        then_probabilities:
+          managed_provider_backups: 0.55
+          automated_snapshots: 0.15
+          continuous_replication: 0.10
+          minimal_git_based: 0.20
+      - given_parent_option: aws_rds
+        then_probabilities:
+          managed_provider_backups: 0.35
+          automated_snapshots: 0.25
+          continuous_replication: 0.30
+          minimal_git_based: 0.10
+      - given_parent_option: self_managed
+        then_probabilities:
+          managed_provider_backups: 0.05
+          automated_snapshots: 0.40
+          continuous_replication: 0.25
+          minimal_git_based: 0.30
+      - given_parent_option: turso
+        then_probabilities:
+          managed_provider_backups: 0.50
+          automated_snapshots: 0.15
+          continuous_replication: 0.10
+          minimal_git_based: 0.25
+      - given_parent_option: cockroach_cloud
+        then_probabilities:
+          managed_provider_backups: 0.40
+          automated_snapshots: 0.20
+          continuous_replication: 0.30
+          minimal_git_based: 0.10
+
+archetype_weights:
+  engineer_heavy_startup:
+    probability_overrides:
+      managed_provider_backups: 0.30
+      automated_snapshots: 0.30
+      continuous_replication: 0.25
+      minimal_git_based: 0.15
+    rationale: "Engineers implement proper backup strategies early."
+
+  musician_first_team:
+    probability_overrides:
+      managed_provider_backups: 0.55
+      automated_snapshots: 0.15
+      continuous_replication: 0.05
+      minimal_git_based: 0.25
+    rationale: "Rely on managed backups. Minimize operational burden."
+
+  solo_hacker:
+    probability_overrides:
+      managed_provider_backups: 0.45
+      automated_snapshots: 0.10
+      continuous_replication: 0.05
+      minimal_git_based: 0.40
+    rationale: "Managed backups or minimal. No capacity for DR infrastructure."
+
+  well_funded_startup:
+    probability_overrides:
+      managed_provider_backups: 0.25
+      automated_snapshots: 0.25
+      continuous_replication: 0.40
+      minimal_git_based: 0.10
+    rationale: "Continuous replication for enterprise SLAs."
+
+volatility:
+  classification: stable
+  last_assessed: 2026-02-10
+  next_review: 2026-05-10
+  change_drivers:
+    - "Data volume growth requiring strategy revision"
+    - "Customer SLA requirements"
+    - "Regulatory data retention requirements"
+
+domain_applicability:
+  music_attribution: 1.0
+  dpp_traceability: 1.0
+  generic_graph_rag: 0.9
+
+tags:
+  - operations
+  - backup
+  - disaster-recovery
+
+references:
+  - "../infrastructure/toc-infrastructure.md"

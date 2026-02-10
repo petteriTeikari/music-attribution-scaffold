@@ -82,6 +82,59 @@ properties:
       Path to detailed evaluation doc for substantive rejections.
       Example: "knowledge-base/technical/databases/neo4j-evaluation.md"
 
+  # Probabilistic PRD extension (optional)
+  # Links this PRD to the Bayesian decision network in decisions/
+  probabilistic:
+    type: object
+    description: |
+      Optional block connecting this PRD to the probabilistic decision network.
+      Enables cross-referencing between traditional narrative PRDs and
+      the Bayesian decision DAG.
+    properties:
+      decision_level:
+        type: string
+        enum:
+          - L1_business
+          - L2_architecture
+          - L3_implementation
+          - L4_deployment
+          - L5_operations
+        description: Which decision hierarchy level this PRD primarily addresses.
+      relevant_decisions:
+        type: array
+        items:
+          type: string
+        description: |
+          List of decision_ids from decisions/*.decision.yaml that
+          this PRD informs or is informed by.
+          Example: ["primary_database", "graph_strategy"]
+      volatility:
+        type: object
+        properties:
+          classification:
+            type: string
+            enum: [stable, shifting, volatile]
+          last_assessed:
+            type: string
+            format: date
+          next_review:
+            type: string
+            format: date
+          change_drivers:
+            type: array
+            items:
+              type: string
+        description: Temporal stability of this PRD's recommendations.
+      domain_applicability:
+        type: object
+        additionalProperties:
+          type: number
+          minimum: 0.0
+          maximum: 1.0
+        description: |
+          Relevance score per domain (0.0 = irrelevant, 1.0 = fully applicable).
+          Example: { music_attribution: 1.0, dpp_traceability: 0.8, generic_graph_rag: 0.9 }
+
   # Discovery and organization
   tags:
     type: array

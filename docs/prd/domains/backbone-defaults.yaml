@@ -1,0 +1,108 @@
+# Backbone Defaults
+#
+# Domain-agnostic defaults shared across all domains.
+# Domain overlays extend these; they don't replace them.
+#
+# These represent the architectural invariants that hold
+# regardless of whether you're building for music, DPP, or Graph RAG.
+
+backbone:
+  version: "1.0.0"
+  last_updated: 2026-02-10
+
+# --- Core Pipeline (Domain-Invariant) ---
+
+pipeline:
+  description: >
+    All domains follow the same fundamental pipeline. The vocabulary
+    changes but the architecture remains constant.
+  stages:
+    - id: ingestion
+      generic_name: "Source Ingestion"
+      description: "Collect data from multiple fragmented sources"
+
+    - id: resolution
+      generic_name: "Entity Resolution"
+      description: "Match and merge entities across sources"
+
+    - id: enrichment
+      generic_name: "Record Enrichment"
+      description: "Add confidence scores, fill gaps, verify claims"
+
+    - id: storage
+      generic_name: "Unified Storage"
+      description: "Persist resolved entities with provenance"
+
+    - id: api
+      generic_name: "Permissioned API"
+      description: "Expose data with access control and consent"
+
+    - id: consumption
+      generic_name: "Agentic Consumption"
+      description: "AI agents and platforms query the API"
+
+# --- Shared Architectural Principles ---
+
+principles:
+  - id: confidence_first
+    description: >
+      Every data point carries a confidence score. No data is presented
+      without explicit uncertainty quantification.
+
+  - id: provenance_always
+    description: >
+      Every fact is traceable to its source(s). Provenance is stored
+      alongside data, not as a separate system.
+
+  - id: permission_by_default
+    description: >
+      All data access is permission-checked. Default is deny.
+      Permissions are machine-readable and queryable.
+
+  - id: oracle_problem_awareness
+    description: >
+      Digital systems cannot fully verify physical/training reality.
+      Design for deterrence and detection, not perfection.
+
+  - id: graceful_degradation
+    description: >
+      System operates with partial data. Missing fields reduce confidence
+      but don't block functionality. Abstain when uncertainty is too high.
+
+# --- Generic Assurance Levels ---
+
+assurance_levels:
+  description: >
+    All domains define tiered assurance levels. The generic model
+    has 4 tiers (0-3). Domains customize names and criteria.
+  tiers:
+    - level: 0
+      generic_name: "Unverified"
+      description: "Data present but no verification applied"
+
+    - level: 1
+      generic_name: "Algorithmically Verified"
+      description: "Automated cross-source consistency check passed"
+
+    - level: 2
+      generic_name: "Community Verified"
+      description: "Multiple independent sources agree OR community review"
+
+    - level: 3
+      generic_name: "Authority Verified"
+      description: "Verified by authoritative entity (person, org, registry)"
+
+# --- Default Technology Preferences ---
+
+technology_defaults:
+  description: >
+    Technology preferences that apply when no domain overlay
+    modifies them. These are the "backbone" choices.
+
+  database: postgresql
+  graph_extension: apache_age
+  vector_extension: pgvector
+  api_protocol: mcp
+  confidence_method: conformal_prediction
+  serialization: json
+  schema_validation: pydantic

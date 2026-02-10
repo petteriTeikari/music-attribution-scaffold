@@ -1,0 +1,238 @@
+# Artifact Decoupling Strategy
+#
+# How the system separates and independently versions its four core
+# artifact types: Code, Config, Data, and Prompts. Determines
+# reproducibility posture and architectural coupling.
+
+decision_id: artifact_decoupling_strategy
+title: "Artifact Decoupling Strategy"
+description: >
+  Determines how the system separates and independently versions its four
+  core artifact types for reproducibility:
+
+  1. **Code** — Application logic, pipeline definitions, schemas (git)
+  2. **Config** — Hyperparameters, feature flags, environment settings
+  3. **Data** — Training sets, calibration data, embeddings, evaluation gold sets
+  4. **Prompts** — LLM prompt templates, system instructions, few-shot examples
+
+  The core principle: each artifact type has a different iteration cadence,
+  different stakeholders, and different storage requirements. Coupling them
+  forces synchronized deployments and hinders reproducibility. Decoupling
+  enables independent versioning, role specialization, and experiment replay.
+
+  This decision cascades to implementation choices (DVC, Langfuse, Hydra)
+  and operational practices (CI/CD, schema governance, observability).
+
+  Cross-cutting: applies to ALL PRD permutations — any system with
+  configuration, data dependencies, or LLM integration benefits from
+  explicit artifact separation.
+
+decision_level: L2_architecture
+status: active
+last_updated: 2026-02-10
+
+options:
+  - option_id: minimal_git_only
+    title: "Minimal (All in Git)"
+    description: >
+      Everything lives in the git repository. Config as Python constants
+      or YAML files. Data as committed fixtures or external URLs. Prompts
+      as string literals in code. No additional versioning infrastructure.
+      Reproducibility via git SHA alone. Sufficient for prototypes and
+      single-developer projects with small data.
+    prior_probability: 0.15
+    status: viable
+    constraints:
+      - "Data artifacts < 50MB total"
+      - "No prompt iteration by non-engineers"
+      - "Single developer or very small team"
+
+  - option_id: structured_git
+    title: "Structured Git Separation"
+    description: >
+      All artifacts in git but explicitly separated by directory and format.
+      Code in src/, config in config/ (YAML/TOML), data references as DVC
+      .dvc pointer files (actual data in remote storage), prompts in
+      prompts/ directory as versioned YAML/Jinja2 templates. Reproducibility
+      via git SHA + DVC tag. 12-Factor compliant with pydantic-settings.
+    prior_probability: 0.35
+    status: recommended
+    complements:
+      - "schema_governance.git_schema_versioning"
+      - "schema_governance.dvc_plus_json_schema"
+
+  - option_id: registry_per_artifact
+    title: "Registry Per Artifact Type"
+    description: >
+      Each artifact type has its own versioned registry with independent
+      lifecycle. Code in git. Config in pydantic-settings with Hydra
+      overrides. Data in DVC with remote storage (S3/GCS). Prompts in
+      Langfuse (or PromptLayer) with label-based deployment. Experiment
+      tracking (MLflow/W&B) links all four versions per run. Enables
+      independent iteration cadences and role-based access.
+    prior_probability: 0.35
+    status: recommended
+    complements:
+      - "ai_framework_strategy.direct_api_pydantic"
+      - "schema_governance.dvc_plus_json_schema"
+      - "observability_stack.langfuse_plus_platform"
+
+  - option_id: full_mlops_platform
+    title: "Full MLOps Platform"
+    description: >
+      Dedicated platforms for each artifact type plus unified experiment
+      tracking. Git for code, Hydra + MLflow for config, DVC + lakeFS
+      for data (with branching), Langfuse + evaluation suite for prompts,
+      W&B or MLflow for experiment linking. Feature flags (Unleash) for
+      runtime config. OpenLineage for cross-artifact lineage. Maximum
+      reproducibility and auditability, highest operational overhead.
+    prior_probability: 0.15
+    status: experimental
+    constraints:
+      - "Team of 3+ engineers"
+      - "Budget for platform hosting"
+      - "Dedicated MLOps/platform engineer"
+
+conditional_on:
+  - parent_decision_id: build_vs_buy_posture
+    influence_strength: strong
+    conditional_table:
+      - given_parent_option: custom_build
+        then_probabilities:
+          minimal_git_only: 0.05
+          structured_git: 0.25
+          registry_per_artifact: 0.40
+          full_mlops_platform: 0.30
+      - given_parent_option: managed_services
+        then_probabilities:
+          minimal_git_only: 0.10
+          structured_git: 0.35
+          registry_per_artifact: 0.40
+          full_mlops_platform: 0.15
+      - given_parent_option: saas_maximalist
+        then_probabilities:
+          minimal_git_only: 0.25
+          structured_git: 0.40
+          registry_per_artifact: 0.25
+          full_mlops_platform: 0.10
+
+  - parent_decision_id: ai_framework_strategy
+    influence_strength: moderate
+    conditional_table:
+      - given_parent_option: direct_api_pydantic
+        then_probabilities:
+          minimal_git_only: 0.10
+          structured_git: 0.30
+          registry_per_artifact: 0.40
+          full_mlops_platform: 0.20
+      - given_parent_option: lightweight_sdk
+        then_probabilities:
+          minimal_git_only: 0.10
+          structured_git: 0.35
+          registry_per_artifact: 0.35
+          full_mlops_platform: 0.20
+      - given_parent_option: orchestration_framework
+        then_probabilities:
+          minimal_git_only: 0.05
+          structured_git: 0.20
+          registry_per_artifact: 0.35
+          full_mlops_platform: 0.40
+      - given_parent_option: no_llm
+        then_probabilities:
+          minimal_git_only: 0.30
+          structured_git: 0.40
+          registry_per_artifact: 0.20
+          full_mlops_platform: 0.10
+
+archetype_weights:
+  engineer_heavy_startup:
+    probability_overrides:
+      minimal_git_only: 0.05
+      structured_git: 0.25
+      registry_per_artifact: 0.40
+      full_mlops_platform: 0.30
+    rationale: >
+      Engineers appreciate the clean separation and can manage the
+      infrastructure overhead. Registry-per-artifact is the sweet spot;
+      full platform if team includes a dedicated MLOps engineer.
+
+  musician_first_team:
+    probability_overrides:
+      minimal_git_only: 0.20
+      structured_git: 0.45
+      registry_per_artifact: 0.25
+      full_mlops_platform: 0.10
+    rationale: >
+      Structured git is the maximum complexity a musician-first team
+      will maintain. DVC pointer files are learnable; Langfuse is too
+      much overhead without a dedicated engineer.
+
+  solo_hacker:
+    probability_overrides:
+      minimal_git_only: 0.15
+      structured_git: 0.40
+      registry_per_artifact: 0.35
+      full_mlops_platform: 0.10
+    rationale: >
+      Solo developers benefit from structured separation (DVC for
+      reproducibility, prompts as YAML). Registry-per-artifact viable
+      if Langfuse free tier and DVC with local remote are used.
+      Portfolio projects benefit from demonstrating this discipline.
+
+  well_funded_startup:
+    probability_overrides:
+      minimal_git_only: 0.05
+      structured_git: 0.15
+      registry_per_artifact: 0.35
+      full_mlops_platform: 0.45
+    rationale: >
+      Can invest in full platform. Investor-facing reproducibility
+      story. Multi-team collaboration requires clear artifact ownership.
+
+volatility:
+  classification: shifting
+  last_assessed: 2026-02-10
+  next_review: 2026-04-10
+  change_drivers:
+    - "Langfuse MCP integration maturity (agents managing own prompts)"
+    - "DVC vs lakeFS ecosystem consolidation"
+    - "MLflow 3.x unified artifact registry"
+    - "Hydra adoption in production (beyond research)"
+    - "Prompt versioning tool ecosystem consolidation"
+    - "MCP protocol standardization for prompt exchange"
+
+domain_applicability:
+  music_attribution: 1.0
+  dpp_traceability: 1.0
+  generic_graph_rag: 1.0
+
+tags:
+  - architecture
+  - reproducibility
+  - decoupling
+  - versioning
+  - mlops
+  - prompts
+
+rationale: >
+  The 4-artifact decoupling principle comes from MLOps reproducibility
+  research: a model's behavior is determined by the intersection of
+  code, config, data, and (for LLM systems) prompts. Coupling any two
+  forces synchronized releases and makes experiment replay impossible.
+
+  The structured_git and registry_per_artifact options get the highest
+  combined probability because they represent the practical sweet spot:
+  enough separation for reproducibility without the operational overhead
+  of a full MLOps platform.
+
+  For the music attribution scaffold specifically, the four artifact
+  types map directly to the architecture:
+  - Code: Pipeline implementations (ETL, resolution, attribution)
+  - Config: Source weights, confidence thresholds, assurance level rules
+  - Data: MusicBrainz/Discogs snapshots, calibration sets, embeddings
+  - Prompts: LLM disambiguation templates, MCP query patterns
+
+references:
+  - "../../planning/artifact-decoupling-contextualization.md"
+  - "https://ckaestne.medium.com/versioning-provenance-and-reproducibility-in-production-machine-learning-355c48665005"
+  - "https://12factor.net/config"

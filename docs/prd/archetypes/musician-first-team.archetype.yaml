@@ -1,0 +1,126 @@
+# Musician-First Team Archetype
+#
+# A small team led by musicians/creators with 1-2 developers.
+# Values simplicity, low operational burden, and creator experience.
+
+archetype_id: musician_first_team
+title: "Musician-First Team"
+description: >
+  A team where domain expertise (music industry, artist workflows,
+  rights management) outweighs engineering capacity. Typically 1-3 people
+  total with at most 1-2 part-time or junior developers. The team
+  understands the attribution problem deeply but cannot sustain complex
+  infrastructure.
+
+  This archetype represents the "Imogen & Andy" scenario from the
+  manuscript — domain experts who need a system that works without
+  requiring a DevOps engineer on staff.
+
+team_profile:
+  size: "1-3"
+  composition:
+    engineers: "0-2"
+    product: "1 (often the founder/musician)"
+    design: "0-1"
+    devops: "0"
+  technical_experience:
+    backend: beginner_to_intermediate
+    frontend: beginner
+    infrastructure: minimal
+    ml_ai: minimal
+  budget_range:
+    monthly_infrastructure: "$0-200"
+    annual_saas_tools: "$0-2000"
+
+hard_constraints:
+  - "Zero DevOps burden — everything must be managed"
+  - "Must work with free or very low-cost tiers"
+  - "No command-line-only workflows for non-technical team members"
+  - "Must have visual admin interface, not just API"
+
+soft_preferences:
+  - "Prefer all-in-one platforms (Supabase, Vercel) over assembling services"
+  - "Prefer no-code/low-code tools where possible"
+  - "Prefer visual dashboards over log files"
+  - "Prefer established ecosystems with good documentation and tutorials"
+  - "Prefer monthly billing over annual contracts"
+
+decision_overrides:
+  # L1 Business
+  build_vs_buy_posture:
+    preferred: saas_maximalist
+    rationale: "Cannot sustain infrastructure operations"
+  target_market_segment:
+    preferred: independent_creators
+    rationale: "Serving creators like themselves"
+  revenue_model:
+    preferred: freemium_saas
+    rationale: "Simple PLG model for creator audience"
+  regulatory_posture:
+    preferred: best_effort
+    rationale: "Focus on product, not compliance"
+
+  # L2 Architecture
+  data_model_complexity:
+    preferred: simple_relational
+    rationale: "Simplest viable data model"
+  api_protocol:
+    preferred: rest_openapi
+    rationale: "Most accessible, best documentation"
+  service_decomposition:
+    preferred: monolith
+    rationale: "Single deployable, minimum ops"
+  ai_framework_strategy:
+    preferred: lightweight_sdk
+    rationale: "SDK convenience over raw API"
+
+  # L3 Implementation
+  primary_database:
+    preferred: supabase
+    rationale: "All-in-one with auth, real-time, storage"
+  graph_strategy:
+    preferred: sql_joins_only
+    rationale: "No graph infrastructure to manage"
+  vector_strategy:
+    preferred: no_vector_search
+    rationale: "Fuzzy matching sufficient for small catalogs"
+  llm_provider:
+    preferred: openai_primary
+    rationale: "Broadest ecosystem and tutorial support"
+  frontend_framework:
+    preferred: nextjs
+    rationale: "Most tutorials and templates available"
+  auth_strategy:
+    preferred: supabase_auth
+    rationale: "Bundled with Supabase, zero additional setup"
+
+  # L4 Deployment
+  compute_platform:
+    preferred: render
+    rationale: "Simple PaaS with good free tier"
+  database_hosting:
+    preferred: supabase_hosted
+    rationale: "Bundled Supabase experience"
+  ci_cd_pipeline:
+    preferred: platform_native_autodeploy
+    rationale: "Git push to deploy, nothing else"
+  iac_tooling:
+    preferred: none_manual
+    rationale: "Manual via dashboards is fine at this scale"
+  container_strategy:
+    preferred: buildpacks
+    rationale: "Auto-detect, no Docker knowledge needed"
+
+  # L5 Operations
+  observability_stack:
+    preferred: minimal_logging
+    rationale: "Platform dashboards sufficient"
+  scaling_strategy:
+    preferred: vertical_only
+    rationale: "Small user base, vertical scaling more than enough"
+  backup_dr_strategy:
+    preferred: managed_provider_backups
+    rationale: "Rely entirely on Supabase/Neon backups"
+  secrets_management:
+    preferred: environment_variables
+    rationale: "Platform environment variables, nothing more"

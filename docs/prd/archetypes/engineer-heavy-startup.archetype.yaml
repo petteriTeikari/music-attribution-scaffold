@@ -1,0 +1,130 @@
+# Engineer-Heavy Startup Archetype
+#
+# A team of 5-15 engineers building a differentiated product.
+# Values control, debuggability, and infrastructure ownership.
+
+archetype_id: engineer_heavy_startup
+title: "Engineer-Heavy Startup"
+description: >
+  A venture-backed or bootstrapped startup with a strong engineering team
+  (5-15 people, mostly developers). The team has experience with databases,
+  cloud infrastructure, and production systems. They prefer to understand
+  and control their stack, building custom solutions for core differentiators
+  while using managed services for non-core concerns.
+
+  This archetype represents the "default" startup team in most technical
+  discussions — experienced enough to evaluate trade-offs, resourced enough
+  to build custom infrastructure when it matters.
+
+team_profile:
+  size: "5-15"
+  composition:
+    engineers: "4-12"
+    product: "1-2"
+    design: "0-1"
+    devops: "1-2"
+  technical_experience:
+    backend: advanced
+    frontend: intermediate
+    infrastructure: intermediate_to_advanced
+    ml_ai: intermediate
+  budget_range:
+    monthly_infrastructure: "$500-5000"
+    annual_saas_tools: "$5000-25000"
+
+hard_constraints:
+  - "Must have source code access for core components"
+  - "Cannot depend on single vendor for critical path"
+  - "Must support local development without cloud dependencies"
+  - "Production data must be encrypted at rest and in transit"
+
+soft_preferences:
+  - "Prefer open-source over proprietary where quality is comparable"
+  - "Prefer PostgreSQL ecosystem for database needs"
+  - "Prefer Python for backend services"
+  - "Prefer infrastructure-as-code over manual configuration"
+  - "Prefer modular monolith over premature microservices"
+  - "Value debuggability over abstraction convenience"
+
+decision_overrides:
+  # These reference the archetype_weights in each decision node.
+  # Provided here as a summary/index for quick reference.
+
+  # L1 Business
+  build_vs_buy_posture:
+    preferred: custom_build
+    rationale: "Team has capacity for infrastructure ownership"
+  target_market_segment:
+    preferred: mid_tier_labels
+    rationale: "Technical integration valued by mid-tier customers"
+  revenue_model:
+    preferred: open_core
+    rationale: "Engineers understand open-core model dynamics"
+  regulatory_posture:
+    preferred: compliance_aware
+    rationale: "Can implement compliance features but defer full investment"
+
+  # L2 Architecture
+  data_model_complexity:
+    preferred: graph_enriched_relational
+    rationale: "Team can handle AGE complexity"
+  api_protocol:
+    preferred: mcp_primary
+    rationale: "Forward-looking AI-native protocol choice"
+  service_decomposition:
+    preferred: modular_monolith
+    rationale: "Pragmatic choice — decompose when needed, not before"
+  ai_framework_strategy:
+    preferred: direct_api_pydantic
+    rationale: "Direct API for debuggability and control"
+
+  # L3 Implementation
+  primary_database:
+    preferred: postgresql_unified
+    rationale: "Full PostgreSQL extension ecosystem"
+  graph_strategy:
+    preferred: apache_age
+    rationale: "Graph queries without separate database"
+  vector_strategy:
+    preferred: pgvector
+    rationale: "Unified data store reduces ops burden"
+  llm_provider:
+    preferred: anthropic_primary
+    rationale: "MCP-native, strong structured output"
+  frontend_framework:
+    preferred: nextjs
+    rationale: "Largest ecosystem, easiest to hire for"
+  auth_strategy:
+    preferred: custom_jwt
+    rationale: "Full control over auth flow"
+
+  # L4 Deployment
+  compute_platform:
+    preferred: aws_ecs
+    rationale: "Enterprise credibility, scaling headroom"
+  database_hosting:
+    preferred: neon
+    rationale: "Serverless PostgreSQL with good DX"
+  ci_cd_pipeline:
+    preferred: github_actions
+    rationale: "Standard, well-integrated with GitHub flow"
+  iac_tooling:
+    preferred: terraform
+    rationale: "Industry standard, largest ecosystem"
+  container_strategy:
+    preferred: docker_compose
+    rationale: "Docker standard, Kubernetes when scaling"
+
+  # L5 Operations
+  observability_stack:
+    preferred: grafana_stack
+    rationale: "Open-source, customizable dashboards"
+  scaling_strategy:
+    preferred: vertical_only
+    rationale: "Start simple, scale when data demands it"
+  backup_dr_strategy:
+    preferred: automated_snapshots
+    rationale: "Control over backup strategy"
+  secrets_management:
+    preferred: environment_variables
+    rationale: "Simple start, graduate to Vault/AWS SM later"

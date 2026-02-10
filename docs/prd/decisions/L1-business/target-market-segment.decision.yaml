@@ -1,0 +1,142 @@
+# Target Market Segment
+#
+# Who is the primary user of this system? The answer shapes UX complexity,
+# compliance requirements, pricing strategy, and technical architecture.
+
+decision_id: target_market_segment
+title: "Target Market Segment"
+description: >
+  Defines the primary user persona and market segment the system serves.
+  This decision influences API design (simple vs. enterprise), compliance
+  requirements (self-service vs. SOC2), and UX complexity (wizard vs.
+  power-user interface). Secondary segments can be served later, but the
+  primary segment drives MVP priorities.
+
+decision_level: L1_business
+status: active
+last_updated: 2026-02-10
+
+options:
+  - option_id: independent_creators
+    title: "Independent Creators"
+    description: >
+      Individual artists, small labels, self-managed musicians.
+      Need simple onboarding, low cost, and immediate value from
+      attribution correction. Catalog size: 1-500 tracks.
+    prior_probability: 0.35
+    status: recommended
+    constraints:
+      - "Low price sensitivity (free tier or < $20/month)"
+      - "Self-service onboarding required"
+
+  - option_id: mid_tier_labels
+    title: "Mid-tier Labels & Publishers"
+    description: >
+      Labels with 10-100 artists and 1K-50K tracks. Need bulk
+      operations, team access, and integration with existing
+      royalty systems. Willing to pay $100-500/month.
+    prior_probability: 0.30
+    status: viable
+    constraints:
+      - "Multi-user access required"
+      - "Bulk import/export capabilities"
+      - "API integration with royalty platforms"
+
+  - option_id: enterprise_rights_orgs
+    title: "Enterprise / Rights Organizations"
+    description: >
+      Major labels, PROs (ASCAP, BMI, PRS), CMOs. Need enterprise
+      security, SLAs, custom integrations, and regulatory compliance.
+      Catalog size: 100K+ tracks. Budget: $5K+/month.
+    prior_probability: 0.15
+    status: viable
+    constraints:
+      - "SOC2 or ISO 27001 compliance"
+      - "SLA guarantees (99.9%+ uptime)"
+      - "On-premise or private cloud deployment option"
+      - "Dedicated support"
+
+  - option_id: ai_platform_consumers
+    title: "AI Platform Consumers"
+    description: >
+      AI companies (training data licensing), streaming services
+      (metadata enrichment), music tech startups (API consumers).
+      Primary interaction via MCP/API, not UI. Need high throughput
+      and machine-readable permissions.
+    prior_probability: 0.20
+    status: viable
+    constraints:
+      - "High-throughput API required (1000+ req/min)"
+      - "Machine-readable permission responses"
+      - "Bulk query capabilities"
+
+archetype_weights:
+  engineer_heavy_startup:
+    probability_overrides:
+      independent_creators: 0.25
+      mid_tier_labels: 0.30
+      enterprise_rights_orgs: 0.20
+      ai_platform_consumers: 0.25
+    rationale: >
+      Engineer-heavy teams often target the API consumer and mid-tier
+      segments where technical integration is valued.
+
+  musician_first_team:
+    probability_overrides:
+      independent_creators: 0.60
+      mid_tier_labels: 0.25
+      enterprise_rights_orgs: 0.05
+      ai_platform_consumers: 0.10
+    rationale: >
+      Musician-first teams naturally serve creators like themselves.
+      Strong affinity for independent creator segment.
+
+  solo_hacker:
+    probability_overrides:
+      independent_creators: 0.55
+      mid_tier_labels: 0.15
+      enterprise_rights_orgs: 0.00
+      ai_platform_consumers: 0.30
+    rationale: >
+      Solo hackers serve either creators or build API-first products.
+      Enterprise is impossible without a team.
+
+  well_funded_startup:
+    probability_overrides:
+      independent_creators: 0.20
+      mid_tier_labels: 0.30
+      enterprise_rights_orgs: 0.30
+      ai_platform_consumers: 0.20
+    rationale: >
+      Well-funded teams can target enterprise and mid-tier segments
+      that have higher revenue potential and willingness to pay.
+
+volatility:
+  classification: shifting
+  last_assessed: 2026-02-10
+  next_review: 2026-04-10
+  change_drivers:
+    - "EU AI Act enforcement timeline and scope"
+    - "Major label adoption of attribution systems"
+    - "AI platform willingness to pay for training consent"
+    - "Competitive landscape changes"
+
+domain_applicability:
+  music_attribution: 1.0
+  dpp_traceability: 0.8
+  generic_graph_rag: 0.7
+
+tags:
+  - strategic
+  - market
+  - user-persona
+
+rationale: >
+  Prior probabilities reflect the addressable market for attribution systems.
+  Independent creators are the largest group but hardest to monetize.
+  Mid-tier labels are the sweet spot for early traction. Enterprise and
+  AI consumers represent high-value but harder-to-reach segments.
+
+references:
+  - "../vision-v1.md#market-opportunity"
+  - "../UNKNOWNS-FOR-DOMAIN-EXPERTS.md"

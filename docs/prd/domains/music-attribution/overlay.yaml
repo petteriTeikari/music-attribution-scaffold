@@ -1,0 +1,180 @@
+# Music Attribution Domain Overlay
+#
+# Customizes the domain-agnostic scaffold for music metadata
+# attribution with transparent confidence scoring.
+
+domain_id: music_attribution
+title: "Music Attribution"
+status: active
+last_updated: 2026-02-10
+
+description: >
+  Music metadata attribution — resolving, verifying, and exposing
+  accurate credit information with confidence scores. Primary use case
+  for the scaffold, companion to the SSRN preprint on transparent
+  confidence in music attribution.
+
+# --- Core Entities ---
+
+entities:
+  - entity_type: artist
+    description: "Individual or group creating music"
+    identifiers: [ISNI, IPI, Discogs ID, MusicBrainz ID]
+    resolution_difficulty: high
+    notes: "Pseudonyms, aliases, and collaborative projects make resolution hard"
+
+  - entity_type: track
+    description: "Individual recorded work"
+    identifiers: [ISRC, MusicBrainz Recording ID]
+    resolution_difficulty: medium
+    notes: "Remixes, live versions, and re-recordings create duplicates"
+
+  - entity_type: release
+    description: "Collection of tracks (album, EP, single)"
+    identifiers: [UPC/EAN, MusicBrainz Release ID, Discogs Release ID]
+    resolution_difficulty: medium
+    notes: "Regional variants and reissues"
+
+  - entity_type: credit
+    description: "Relationship between artist and track/release with role"
+    identifiers: [compound key: artist_id + track_id + role]
+    resolution_difficulty: high
+    notes: "The core attribution unit. Often missing or incorrect."
+
+  - entity_type: permission
+    description: "Consent grant for specific data uses (AI training, etc.)"
+    identifiers: [compound key: artist_id + permission_type + grantee]
+    resolution_difficulty: low
+    notes: "Binary consent with optional conditions and expiry"
+
+# --- Data Sources ---
+
+data_sources:
+  - source_id: discogs
+    name: "Discogs"
+    type: community_database
+    reliability: 0.7
+    coverage: "Comprehensive for physical releases, weaker for digital-only"
+    api_available: true
+    rate_limits: "60 requests/minute (authenticated)"
+
+  - source_id: musicbrainz
+    name: "MusicBrainz"
+    type: community_database
+    reliability: 0.8
+    coverage: "Strong for popular music, weaker for niche genres"
+    api_available: true
+    rate_limits: "1 request/second"
+
+  - source_id: artist_input
+    name: "Artist Direct Input"
+    type: authoritative
+    reliability: 1.0
+    coverage: "Limited to engaged artists, highest authority"
+    api_available: false
+    notes: "Via chat interface or bulk upload"
+
+  - source_id: streaming_apis
+    name: "Streaming Platform APIs"
+    type: commercial
+    reliability: 0.6
+    coverage: "Platform-dependent, often incomplete credits"
+    api_available: true
+    notes: "Spotify, Apple Music, Tidal metadata APIs"
+
+# --- Assurance Levels (A0-A3) ---
+
+assurance_levels:
+  model_name: "A0-A3"
+  description: >
+    Tiered provenance assurance for music attribution records.
+    Maps to the manuscript's assurance stack framework.
+  tiers:
+    - level: 0
+      code: A0
+      name: "No Provenance"
+      description: "Data exists but source and verification status unknown"
+      criteria: "Raw import, no cross-referencing applied"
+      confidence_range: [0.0, 0.3]
+
+    - level: 1
+      code: A1
+      name: "Source-Tagged"
+      description: "Data tagged with origin source and import timestamp"
+      criteria: "Source identified, basic deduplication applied"
+      confidence_range: [0.3, 0.6]
+
+    - level: 2
+      code: A2
+      name: "Cross-Referenced"
+      description: "Multiple independent sources agree on attribution"
+      criteria: "2+ sources match, consistency score above threshold"
+      confidence_range: [0.6, 0.85]
+
+    - level: 3
+      code: A3
+      name: "Identity-Verified"
+      description: "Artist or authorized representative has confirmed"
+      criteria: "Direct artist verification via chat or signed confirmation"
+      confidence_range: [0.85, 1.0]
+
+# --- Compliance Requirements ---
+
+compliance:
+  - regulation: EU AI Act
+    relevance: high
+    impact: >
+      AI training consent and transparency requirements. MCP permission
+      patchbay must support machine-readable consent queries.
+    affected_decisions:
+      - regulatory_posture
+      - api_protocol
+
+  - regulation: GDPR
+    relevance: medium
+    impact: >
+      Artist personal data protection. Right to erasure, data portability.
+      Affects database design and audit logging.
+    affected_decisions:
+      - regulatory_posture
+      - backup_dr_strategy
+
+  - regulation: Collective Management Directive (EU)
+    relevance: medium
+    impact: >
+      CMO interoperability requirements. May affect data exchange formats
+      and API protocols.
+    affected_decisions:
+      - api_protocol
+
+# --- Vocabulary Mapping ---
+
+vocabulary:
+  # Maps generic scaffold terms to music-domain terms
+  source_entity: "track"
+  primary_entity: "artist"
+  relationship_entity: "credit"
+  confidence_score: "attribution confidence"
+  assurance_level: "A0-A3 level"
+  permission_grant: "AI training consent"
+  consumer_agent: "AI platform"
+  authoritative_verifier: "artist"
+
+# --- PRD Prior Adjustments ---
+
+prd_prior_adjustments:
+  description: >
+    Domain-specific probability adjustments for music attribution.
+    These shift priors from backbone defaults.
+  adjustments:
+    - decision_id: api_protocol
+      adjustment: "Increase mcp_primary by +0.10 (AI training consent is core)"
+      rationale: "MCP is central to the music attribution value proposition"
+
+    - decision_id: data_model_complexity
+      adjustment: "Increase graph_enriched_relational by +0.05"
+      rationale: "Artist→credit→track→release graph is the core data structure"
+
+    - decision_id: vector_strategy
+      adjustment: "Increase pgvector by +0.05"
+      rationale: "Entity resolution benefits significantly from embedding similarity"

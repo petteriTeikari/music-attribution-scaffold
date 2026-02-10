@@ -1,0 +1,86 @@
+# DPP Enterprise Scenario
+#
+# Well-funded team building a Digital Product Passport system for
+# EU ESPR compliance. Enterprise customers, SOC2, multi-region.
+
+scenario_id: dpp_enterprise
+title: "DPP Enterprise"
+description: >
+  A well-funded startup building a Digital Product Passport (DPP) system
+  for fashion/electronics supply chains. Targeting EU ESPR compliance,
+  enterprise brands, and supply chain visibility. The scaffold's
+  domain-agnostic patterns are instantiated for physical goods traceability
+  rather than music attribution.
+
+  This scenario demonstrates that the same decision network produces
+  dramatically different configurations when domain and archetype change.
+
+archetype: well_funded_startup
+domain: dpp_traceability
+
+resolved_decisions:
+  # L1 Business
+  build_vs_buy_posture: custom_build           # Competitive differentiation
+  target_market_segment: enterprise_rights_orgs # Enterprise brands and supply chains
+  revenue_model: enterprise_licensing          # Annual contracts with brands
+  regulatory_posture: compliance_first         # EU ESPR mandates compliance
+
+  # L2 Architecture
+  data_model_complexity: graph_enriched_relational  # Product → Component → Material graph
+  api_protocol: rest_openapi                        # Enterprise integration standard
+  service_decomposition: modular_monolith            # Ready for microservices decomposition
+  ai_framework_strategy: direct_api_pydantic         # Production-grade AI integration
+
+  # L3 Implementation
+  primary_database: postgresql_unified         # PostgreSQL with full extensions
+  graph_strategy: apache_age                   # Supply chain graph traversal
+  vector_strategy: pgvector                    # Product similarity and deduplication
+  llm_provider: multi_provider                 # Claude + GPT-4 router for resilience
+  frontend_framework: nextjs                   # Enterprise dashboard
+  auth_strategy: managed_auth_service          # SSO-ready for enterprise customers
+
+  # L4 Deployment
+  compute_platform: aws_ecs                    # Enterprise cloud infrastructure
+  database_hosting: aws_rds                    # Multi-AZ PostgreSQL
+  ci_cd_pipeline: github_actions               # Standard CI/CD
+  iac_tooling: terraform                       # Infrastructure-as-code for compliance
+  container_strategy: docker_compose           # Docker with Kubernetes path
+
+  # L5 Operations
+  observability_stack: datadog                 # Enterprise APM with SLA dashboards
+  scaling_strategy: horizontal_stateless       # Multi-region capability
+  backup_dr_strategy: continuous_replication   # Enterprise RPO/RTO guarantees
+  secrets_management: cloud_secrets_manager    # AWS Secrets Manager + rotation
+
+joint_probability: 0.0008
+# Lower joint probability reflects more distributed archetype preferences
+# across many viable options.
+
+rationale: >
+  This scenario demonstrates the scaffold's domain portability. The same
+  architectural patterns (graph-enriched relational, confidence scoring,
+  permissioned API) apply to DPP traceability with different entities
+  (products vs. artists), sources (GS1/EPCIS vs. Discogs/MusicBrainz),
+  and regulations (EU ESPR vs. EU AI Act).
+
+  The well-funded archetype enables enterprise-grade infrastructure that
+  would be impossible for smaller teams: AWS multi-region, Datadog APM,
+  continuous replication, and Terraform-managed infrastructure.
+
+trade_offs:
+  gains:
+    - "SOC2 compliance-ready infrastructure"
+    - "Multi-region deployment capability"
+    - "Enterprise SLA guarantees (99.9%+)"
+    - "Comprehensive observability and audit trails"
+    - "SSO for enterprise customers"
+    - "Infrastructure-as-code for reproducibility"
+  sacrifices:
+    - "Highest infrastructure cost ($5K-50K/month)"
+    - "Slowest development velocity (compliance overhead)"
+    - "AWS vendor coupling"
+    - "Kubernetes migration required for full multi-region"
+    - "Complex local development environment"
+
+references:
+  - "../domains/dpp-traceability/overlay.yaml"

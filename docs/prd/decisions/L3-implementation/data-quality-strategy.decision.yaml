@@ -1,0 +1,204 @@
+# Data Quality Strategy
+#
+# What validation tooling the system uses beyond Pydantic runtime checks
+# for batch-level, statistical, and adversarial input validation.
+
+decision_id: data_quality_strategy
+title: "Data Quality & Validation Strategy"
+description: >
+  Determines the validation tooling stack beyond Pydantic's per-object runtime
+  checks. Pydantic validates the shape of individual objects; this decision
+  covers aggregate/statistical validation (distribution drift, completeness),
+  adversarial testing (fuzz, property-based), and label noise detection.
+  The core question: when does Pydantic alone stop being sufficient, and
+  what tools complement it at each maturity stage?
+
+decision_level: L3_implementation
+status: active
+last_updated: 2026-02-10
+
+options:
+  - option_id: pydantic_only
+    title: "Pydantic Only (Schema Validators)"
+    description: >
+      Rely entirely on Pydantic v2 validators for data quality.
+      Custom validators handle field-level constraints, cross-field
+      consistency, and basic business rules. No additional frameworks.
+      Sufficient for < 3 data sources with stable schemas.
+    prior_probability: 0.20
+    status: viable
+    constraints:
+      - "Fewer than 3 external data sources"
+      - "No batch-level statistical monitoring needs"
+
+  - option_id: pandera_statistical
+    title: "Pandera Statistical Validation"
+    description: >
+      Pandera (12 dependencies) on top of Pydantic for DataFrame-level
+      statistical assertions. Validates batch distributions, completeness,
+      uniqueness, and cross-column relationships. Direct Pydantic integration
+      via PydanticModel dtype. Already in project dependencies (>=0.22).
+      Lightweight alternative to Great Expectations for projects that
+      don't need 100+ check types or data docs.
+    prior_probability: 0.40
+    status: recommended
+    complements:
+      - "ai_framework_strategy.direct_api_pydantic"
+      - "primary_database.postgresql_unified"
+
+  - option_id: great_expectations_full
+    title: "Great Expectations Suite"
+    description: >
+      Full Great Expectations (107+ dependencies) for enterprise-grade
+      data quality: expectation suites, data docs, profiling, distribution
+      drift detection, checkpoint-based validation pipeline. Justified
+      when processing 3+ external sources with drift risk, or when
+      stakeholders need human-readable data quality reports.
+    prior_probability: 0.15
+    status: deferred
+    constraints:
+      - "3+ external data sources with drift risk"
+      - "Stakeholder-facing data quality reports needed"
+      - "Team can manage 107+ transitive dependencies"
+
+  - option_id: composite_validation
+    title: "Composite (Pandera + Hypothesis + Schemathesis)"
+    description: >
+      Layered validation stack: Pandera for batch statistics (runtime),
+      Hypothesis for property-based testing (build-time), Schemathesis
+      for API fuzzing from OpenAPI spec (build-time). Covers the full
+      validation spectrum from design-time to production. Best for
+      research/portfolio projects that demonstrate comprehensive quality.
+    prior_probability: 0.25
+    status: recommended
+    complements:
+      - "ai_framework_strategy.direct_api_pydantic"
+      - "data_quality_strategy.pandera_statistical"
+
+conditional_on:
+  - parent_decision_id: build_vs_buy_posture
+    influence_strength: moderate
+    conditional_table:
+      - given_parent_option: custom_build
+        then_probabilities:
+          pydantic_only: 0.10
+          pandera_statistical: 0.35
+          great_expectations_full: 0.20
+          composite_validation: 0.35
+      - given_parent_option: managed_services
+        then_probabilities:
+          pydantic_only: 0.20
+          pandera_statistical: 0.40
+          great_expectations_full: 0.15
+          composite_validation: 0.25
+      - given_parent_option: saas_maximalist
+        then_probabilities:
+          pydantic_only: 0.35
+          pandera_statistical: 0.30
+          great_expectations_full: 0.10
+          composite_validation: 0.25
+
+  - parent_decision_id: data_model_complexity
+    influence_strength: moderate
+    conditional_table:
+      - given_parent_option: simple_relational
+        then_probabilities:
+          pydantic_only: 0.40
+          pandera_statistical: 0.30
+          great_expectations_full: 0.05
+          composite_validation: 0.25
+      - given_parent_option: graph_enriched_relational
+        then_probabilities:
+          pydantic_only: 0.10
+          pandera_statistical: 0.40
+          great_expectations_full: 0.20
+          composite_validation: 0.30
+      - given_parent_option: full_knowledge_graph
+        then_probabilities:
+          pydantic_only: 0.05
+          pandera_statistical: 0.30
+          great_expectations_full: 0.35
+          composite_validation: 0.30
+      - given_parent_option: document_centric
+        then_probabilities:
+          pydantic_only: 0.30
+          pandera_statistical: 0.35
+          great_expectations_full: 0.10
+          composite_validation: 0.25
+
+archetype_weights:
+  engineer_heavy_startup:
+    probability_overrides:
+      pydantic_only: 0.10
+      pandera_statistical: 0.30
+      great_expectations_full: 0.20
+      composite_validation: 0.40
+    rationale: >
+      Engineers appreciate the layered validation spectrum and can manage
+      the complexity of Hypothesis strategies + Schemathesis integration.
+
+  musician_first_team:
+    probability_overrides:
+      pydantic_only: 0.35
+      pandera_statistical: 0.40
+      great_expectations_full: 0.05
+      composite_validation: 0.20
+    rationale: >
+      Pandera is the sweet spot — lightweight statistical checks without
+      the complexity of GX or property-based testing frameworks.
+
+  solo_hacker:
+    probability_overrides:
+      pydantic_only: 0.25
+      pandera_statistical: 0.35
+      great_expectations_full: 0.05
+      composite_validation: 0.35
+    rationale: >
+      Solo developers benefit from automated quality checks (Hypothesis
+      catches what manual tests miss). Pandera for batch, Hypothesis for
+      properties. GX is overkill for a solo project.
+
+  well_funded_startup:
+    probability_overrides:
+      pydantic_only: 0.05
+      pandera_statistical: 0.25
+      great_expectations_full: 0.35
+      composite_validation: 0.35
+    rationale: >
+      Can afford GX operational overhead. Data docs provide stakeholder
+      visibility. Composite stack demonstrates engineering rigor.
+
+volatility:
+  classification: shifting
+  last_assessed: 2026-02-10
+  next_review: 2026-04-10
+  change_drivers:
+    - "Pandera v1.0 release and Pydantic v2 integration maturity"
+    - "Great Expectations 1.0 simplification (reduced dependency count?)"
+    - "Hypothesis + Pydantic v2 strategy improvements"
+    - "pydantic-logfire adding runtime validation analytics"
+    - "LLM-powered data quality tools (agentic quality scoring)"
+
+domain_applicability:
+  music_attribution: 1.0
+  dpp_traceability: 1.0
+  generic_graph_rag: 0.8
+
+tags:
+  - implementation
+  - data-quality
+  - validation
+  - testing
+
+rationale: >
+  Empirical finding from 27-task TDD execution: well-typed Pydantic boundary
+  objects yielded ~70% first-pass success rate. The remaining 30% of failures
+  were dominated by schema mismatches and missing field validators — exactly
+  the class of bugs that statistical validation (Pandera) and property-based
+  testing (Hypothesis) catch automatically. The question is not IF to add
+  validation beyond Pydantic, but WHEN the project complexity justifies
+  each layer.
+
+references:
+  - "../../planning/quality-tooling-contextualization.md"
+  - "../L2-architecture/data-model-complexity.decision.yaml"

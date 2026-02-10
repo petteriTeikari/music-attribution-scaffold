@@ -1,0 +1,46 @@
+# Domain Registry
+#
+# Master list of available domain overlays for the probabilistic PRD.
+# Each domain represents a specific application area that shares the
+# scaffold's core architecture but customizes vocabulary, entities,
+# compliance requirements, and probability priors.
+
+registry:
+  version: "1.0.0"
+  last_updated: 2026-02-10
+
+domains:
+  - domain_id: music_attribution
+    title: "Music Attribution"
+    status: active
+    overlay_path: music-attribution/overlay.yaml
+    description: >
+      Music metadata attribution with transparent confidence scoring.
+      Primary use case for the scaffold. Entities: Artist, Track, Release,
+      Credit, Permission. Regulatory: EU AI Act, collective management.
+    primary_manuscript: "music-generative-transition-ssrn.tex"
+    assurance_model: "A0-A3"
+
+  - domain_id: dpp_traceability
+    title: "Digital Product Passport (DPP) Traceability"
+    status: active
+    overlay_path: dpp-traceability/overlay.yaml
+    description: >
+      Physical goods traceability for EU ESPR compliance. Supply chain
+      visibility, component tracking, material certification. Entities:
+      Product, Component, Material, Supplier, Event. Regulatory: EU ESPR,
+      REACH, conflict minerals.
+    primary_manuscript: "ai-passport-v2-8-3-SSRN.tex"
+    assurance_model: "T0-T3"
+
+  - domain_id: generic_graph_rag
+    title: "Generic Graph RAG"
+    status: planned
+    overlay_path: null
+    description: >
+      General-purpose knowledge graph construction and retrieval-augmented
+      generation. Entities: Concept, Relation, Document, Chunk. No
+      domain-specific compliance requirements. Uses backbone-defaults.yaml
+      without customization.
+    primary_manuscript: null
+    assurance_model: "C0-C3"

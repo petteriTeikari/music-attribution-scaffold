@@ -1,0 +1,149 @@
+# API Protocol
+#
+# How external consumers interact with the system. Influences
+# developer experience, ecosystem integration, and client generation.
+
+decision_id: api_protocol
+title: "API Protocol"
+description: >
+  Defines the primary protocol for external API consumers. This decision
+  affects developer experience, SDK generation, real-time capabilities,
+  and integration with AI platforms. In the attribution/traceability domain,
+  MCP (Model Context Protocol) is emerging as the AI-native standard,
+  but REST and GraphQL remain viable for non-AI consumers.
+
+decision_level: L2_architecture
+status: active
+last_updated: 2026-02-10
+
+options:
+  - option_id: rest_openapi
+    title: "REST + OpenAPI"
+    description: >
+      Traditional REST API with OpenAPI specification. Broad tooling
+      support, client generation, and developer familiarity. Well-suited
+      for CRUD operations and simple query patterns.
+    prior_probability: 0.30
+    status: viable
+
+  - option_id: mcp_primary
+    title: "MCP Primary"
+    description: >
+      Model Context Protocol as the primary external API. AI-native
+      protocol for tool/resource exposure. Ideal for AI platform
+      consumers. Can coexist with a REST API for non-AI consumers.
+    prior_probability: 0.35
+    status: recommended
+    complements:
+      - "target_market_segment.ai_platform_consumers"
+
+  - option_id: graphql
+    title: "GraphQL"
+    description: >
+      GraphQL API with schema-first design. Excellent for complex,
+      nested queries (e.g., "all credits for this artist across
+      releases with confidence scores"). Higher implementation
+      complexity than REST.
+    prior_probability: 0.20
+    status: viable
+    constraints:
+      - "GraphQL schema design expertise"
+      - "N+1 query prevention strategy"
+
+  - option_id: grpc
+    title: "gRPC"
+    description: >
+      Protocol Buffers + gRPC for high-performance internal/external
+      APIs. Strong typing, code generation, streaming support.
+      Less browser-friendly, more suited for service-to-service.
+    prior_probability: 0.15
+    status: viable
+    constraints:
+      - "Protobuf schema management"
+      - "Client complexity for web consumers"
+
+conditional_on:
+  - parent_decision_id: target_market_segment
+    influence_strength: strong
+    conditional_table:
+      - given_parent_option: independent_creators
+        then_probabilities:
+          rest_openapi: 0.45
+          mcp_primary: 0.25
+          graphql: 0.20
+          grpc: 0.10
+      - given_parent_option: mid_tier_labels
+        then_probabilities:
+          rest_openapi: 0.35
+          mcp_primary: 0.30
+          graphql: 0.25
+          grpc: 0.10
+      - given_parent_option: enterprise_rights_orgs
+        then_probabilities:
+          rest_openapi: 0.30
+          mcp_primary: 0.20
+          graphql: 0.25
+          grpc: 0.25
+      - given_parent_option: ai_platform_consumers
+        then_probabilities:
+          rest_openapi: 0.15
+          mcp_primary: 0.55
+          graphql: 0.15
+          grpc: 0.15
+
+archetype_weights:
+  engineer_heavy_startup:
+    probability_overrides:
+      rest_openapi: 0.25
+      mcp_primary: 0.35
+      graphql: 0.25
+      grpc: 0.15
+    rationale: "Engineers appreciate MCP's AI-native design and GraphQL's query flexibility."
+
+  musician_first_team:
+    probability_overrides:
+      rest_openapi: 0.50
+      mcp_primary: 0.25
+      graphql: 0.15
+      grpc: 0.10
+    rationale: "REST is the most accessible. MCP only if serving AI consumers."
+
+  solo_hacker:
+    probability_overrides:
+      rest_openapi: 0.40
+      mcp_primary: 0.35
+      graphql: 0.15
+      grpc: 0.10
+    rationale: "REST for speed, MCP for AI differentiation. Both are viable solo."
+
+  well_funded_startup:
+    probability_overrides:
+      rest_openapi: 0.25
+      mcp_primary: 0.30
+      graphql: 0.25
+      grpc: 0.20
+    rationale: "Well-funded teams can support multiple protocols. gRPC viable for internal."
+
+volatility:
+  classification: shifting
+  last_assessed: 2026-02-10
+  next_review: 2026-04-10
+  change_drivers:
+    - "MCP protocol specification stability (AAIF governance)"
+    - "AI platform adoption of MCP vs alternatives (A2A, ACP)"
+    - "GraphQL federation maturity"
+
+domain_applicability:
+  music_attribution: 1.0
+  dpp_traceability: 0.9
+  generic_graph_rag: 1.0
+
+tags:
+  - architecture
+  - api
+  - protocol
+  - mcp
+
+references:
+  - "../mcp-server/toc-mcp-server.md"
+  - "../mcp-server/permissions-api.md"

@@ -6,8 +6,6 @@
 [![Type checked: mypy](https://img.shields.io/badge/type%20checked-mypy-blue.svg)](https://mypy-lang.org/)
 [![Package manager: uv](https://img.shields.io/badge/package%20manager-uv-blueviolet.svg)](https://docs.astral.sh/uv/)
 
-![Hero Banner](docs/figures/assets/fig-hero-auracles-banner.jpg)
-
 **Open-source research scaffold for music attribution with transparent confidence scoring.**
 
 Companion code to: **Teikari, P. (2026). *Music Attribution with Transparent Confidence*. SSRN No. 6109087.**
@@ -281,12 +279,18 @@ make ci-docker
 If you use this scaffold in your research, please cite:
 
 ```bibtex
-@article{teikari2026music,
-  title={Music Attribution with Transparent Confidence},
-  author={Teikari, Petteri},
-  journal={SSRN},
-  number={6109087},
-  year={2026}
+@article{teikariGoverningGenerativeMusic2026,
+	type = {{SSRN} {Scholarly} {Paper}},
+	title = {Governing {Generative} {Music}: {Attribution} {Limits}, {Platform} {Incentives}, and the {Future} of {Creator} {Income}},
+	shorttitle = {Governing {Generative} {Music}},
+	url = {https://doi.org/10.2139/ssrn.6109087},
+	doi = {10.2139/ssrn.6109087},
+	urldate = {2026-02-03},
+	publisher = {Social Science Research Network},
+	author = {Teikari, Petteri},
+	month = jan,
+	year = {2026},
+	keywords = {Generative AI, Attribution Infrastructure, Agentic Commerce, Hedonic Consumption, Market Design, Music Industry, Platform Economics, Provenance Verification, Transaction Costs, Voice Cloning}
 }
 ```
 
