@@ -6,8 +6,6 @@
 [![Type checked: mypy](https://img.shields.io/badge/type%20checked-mypy-blue.svg)](https://mypy-lang.org/)
 [![Package manager: uv](https://img.shields.io/badge/package%20manager-uv-blueviolet.svg)](https://docs.astral.sh/uv/)
 
-![Hero Banner](docs/figures/assets/fig-hero-auracles-banner.jpg)
-
 **Open-source research scaffold for music attribution with transparent confidence scoring.**
 
 Companion code to: **Teikari, P. (2026). *Music Attribution with Transparent Confidence*. SSRN No. 6109087.**
