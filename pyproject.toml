@@ -24,6 +24,7 @@ dependencies = [
     "polars>=1.0",
     "pydantic>=2.0",
     "pydantic-settings>=2.0",
+    "python3-discogs-client>=2.8",
     "sqlalchemy[asyncio]>=2.0",
     "valkey>=6.0",
 ]
@@ -114,7 +115,7 @@ exclude = [
 ]
 
 [[tool.mypy.overrides]]
-module = ["musicbrainzngs", "musicbrainzngs.*"]
+module = ["musicbrainzngs", "musicbrainzngs.*", "discogs_client", "discogs_client.*"]
 ignore_missing_imports = true
 follow_untyped_imports = true
 
