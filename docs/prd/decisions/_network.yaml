@@ -12,7 +12,7 @@
 
 network:
   name: "Probabilistic PRD Decision Network"
-  version: "1.0.0"
+  version: "1.1.0"
   last_updated: 2026-02-10
   description: >
     Bayesian decision network for the Music Attribution Scaffold.
@@ -95,6 +95,11 @@ nodes:
     file: L3-implementation/auth-strategy.decision.yaml
     title: "Authentication & Authorization Strategy"
 
+  - id: data_quality_strategy
+    level: L3_implementation
+    file: L3-implementation/data-quality-strategy.decision.yaml
+    title: "Data Quality & Validation Strategy"
+
   # L4: Deployment Decisions
   - id: compute_platform
     level: L4_deployment
@@ -141,6 +146,11 @@ nodes:
     level: L5_operations
     file: L5-operations/secrets-management.decision.yaml
     title: "Secrets Management"
+
+  - id: schema_governance
+    level: L5_operations
+    file: L5-operations/schema-governance.decision.yaml
+    title: "Schema Governance & Data Lineage"
 
 # --- Edge Declarations ---
 
@@ -329,6 +339,35 @@ edges:
     to: scaling_strategy
     influence: moderate
     rationale: "Enterprise segments need horizontal scaling readiness"
+
+  # L1 → L3 skip-connections (data quality)
+  - from: build_vs_buy_posture
+    to: data_quality_strategy
+    influence: moderate
+    rationale: "Custom builders invest in comprehensive validation, SaaS teams keep it simple"
+
+  # L2 → L3 edges (data quality)
+  - from: data_model_complexity
+    to: data_quality_strategy
+    influence: moderate
+    rationale: "Complex data models need statistical validation beyond Pydantic"
+
+  # L3 → L5 edges (data quality → schema governance)
+  - from: data_quality_strategy
+    to: schema_governance
+    influence: moderate
+    rationale: "Advanced validation tools drive need for schema governance infrastructure"
+
+  # L1 → L5 skip-connections (schema governance)
+  - from: build_vs_buy_posture
+    to: schema_governance
+    influence: moderate
+    rationale: "Custom builders need schema governance, SaaS teams use platform catalogs"
+
+  - from: regulatory_posture
+    to: schema_governance
+    influence: moderate
+    rationale: "Compliance requirements drive data lineage and schema governance needs"
 
   # L2 → L5 skip-connections
   - from: ai_framework_strategy

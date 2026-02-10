@@ -1,0 +1,203 @@
+# Schema Governance & Data Lineage
+#
+# How the system manages schema evolution, metadata discovery,
+# data versioning, and pipeline lineage in production.
+
+decision_id: schema_governance
+title: "Schema Governance & Data Lineage"
+description: >
+  Determines how schema evolution, metadata discovery, data artifact
+  versioning, and pipeline lineage are managed across the system lifecycle.
+  Covers four concerns: (1) schema registry/catalog for discoverability,
+  (2) data artifact versioning for reproducibility, (3) pipeline lineage
+  for provenance tracking, and (4) probabilistic schema extensions for
+  uncertainty-aware analytics. The core question: what level of schema
+  governance is justified given the project's maturity and team size?
+
+decision_level: L5_operations
+status: active
+last_updated: 2026-02-10
+
+options:
+  - option_id: minimal_manual
+    title: "Minimal (Git + Pydantic JSON Schema Export)"
+    description: >
+      Schema governance via git-versioned Pydantic models with
+      `model_json_schema()` export. Schema changes tracked through
+      git history and Alembic migrations. No dedicated catalog or
+      lineage system. Sufficient for single-team projects with < 5
+      boundary objects and clear ownership.
+    prior_probability: 0.30
+    status: viable
+
+  - option_id: git_schema_versioning
+    title: "Git Schema Versioning + CI Validation"
+    description: >
+      Structured schema governance: Pydantic JSON Schema exports committed
+      to a `schemas/` directory, CI checks for backward compatibility
+      (field additions OK, removals require migration), semver on
+      __schema_version__ fields. No external catalog, but enforced
+      versioning discipline. Good balance for small teams.
+    prior_probability: 0.30
+    status: recommended
+    complements:
+      - "ci_cd_pipeline.github_actions"
+
+  - option_id: dvc_plus_json_schema
+    title: "DVC + JSON Schema Registry"
+    description: >
+      DVC for data artifact versioning (embeddings, training sets,
+      calibration datasets) alongside a JSON Schema registry directory.
+      Schema files exported with `uq.*` extension properties for
+      uncertainty-aware analytics. Enables reproducible experiments
+      with `dvc repro` and data lineage via DVC DAG. Medium complexity.
+    prior_probability: 0.25
+    status: recommended
+    complements:
+      - "data_quality_strategy.pandera_statistical"
+      - "data_quality_strategy.composite_validation"
+    constraints:
+      - "Data artifacts > 100MB (embeddings, calibration sets)"
+      - "Reproducibility requirements for experiments"
+
+  - option_id: openmetadata_catalog
+    title: "OpenMetadata Catalog + DVC"
+    description: >
+      Full metadata catalog (OpenMetadata) for schema discovery,
+      data profiling, lineage visualization, and team collaboration.
+      Combined with DVC for artifact versioning. Push Pydantic JSON
+      Schemas with `uq.*` properties as custom schema definitions.
+      Justified for multi-team projects or when stakeholders need
+      self-service data discovery.
+    prior_probability: 0.15
+    status: deferred
+    constraints:
+      - "Multi-team collaboration needs"
+      - "Stakeholder self-service data discovery"
+      - "Infrastructure for OpenMetadata (Docker, Airflow optional)"
+      - "Team of 3+ engineers"
+
+conditional_on:
+  - parent_decision_id: build_vs_buy_posture
+    influence_strength: moderate
+    conditional_table:
+      - given_parent_option: custom_build
+        then_probabilities:
+          minimal_manual: 0.15
+          git_schema_versioning: 0.30
+          dvc_plus_json_schema: 0.30
+          openmetadata_catalog: 0.25
+      - given_parent_option: managed_services
+        then_probabilities:
+          minimal_manual: 0.25
+          git_schema_versioning: 0.35
+          dvc_plus_json_schema: 0.25
+          openmetadata_catalog: 0.15
+      - given_parent_option: saas_maximalist
+        then_probabilities:
+          minimal_manual: 0.40
+          git_schema_versioning: 0.30
+          dvc_plus_json_schema: 0.20
+          openmetadata_catalog: 0.10
+
+  - parent_decision_id: regulatory_posture
+    influence_strength: moderate
+    conditional_table:
+      - given_parent_option: compliance_first
+        then_probabilities:
+          minimal_manual: 0.05
+          git_schema_versioning: 0.25
+          dvc_plus_json_schema: 0.30
+          openmetadata_catalog: 0.40
+      - given_parent_option: compliance_aware
+        then_probabilities:
+          minimal_manual: 0.20
+          git_schema_versioning: 0.30
+          dvc_plus_json_schema: 0.30
+          openmetadata_catalog: 0.20
+      - given_parent_option: best_effort
+        then_probabilities:
+          minimal_manual: 0.40
+          git_schema_versioning: 0.30
+          dvc_plus_json_schema: 0.20
+          openmetadata_catalog: 0.10
+
+archetype_weights:
+  engineer_heavy_startup:
+    probability_overrides:
+      minimal_manual: 0.10
+      git_schema_versioning: 0.25
+      dvc_plus_json_schema: 0.35
+      openmetadata_catalog: 0.30
+    rationale: >
+      Engineers value reproducibility (DVC) and will invest in schema
+      governance. OpenMetadata is viable if team grows beyond 3.
+
+  musician_first_team:
+    probability_overrides:
+      minimal_manual: 0.40
+      git_schema_versioning: 0.35
+      dvc_plus_json_schema: 0.15
+      openmetadata_catalog: 0.10
+    rationale: >
+      Keep it simple. Git schema versioning with CI checks is the
+      maximum governance overhead a musician-first team will maintain.
+
+  solo_hacker:
+    probability_overrides:
+      minimal_manual: 0.30
+      git_schema_versioning: 0.35
+      dvc_plus_json_schema: 0.30
+      openmetadata_catalog: 0.05
+    rationale: >
+      DVC is valuable for solo projects with ML components (reproducible
+      experiments). OpenMetadata is overkill without a team.
+
+  well_funded_startup:
+    probability_overrides:
+      minimal_manual: 0.05
+      git_schema_versioning: 0.20
+      dvc_plus_json_schema: 0.30
+      openmetadata_catalog: 0.45
+    rationale: >
+      Can afford OpenMetadata infrastructure. Investor-facing data
+      governance story. Multi-team collaboration benefits.
+
+volatility:
+  classification: shifting
+  last_assessed: 2026-02-10
+  next_review: 2026-04-10
+  change_drivers:
+    - "OpenMetadata 1.x release cadence and feature maturity"
+    - "DVC 4.x integration with cloud storage providers"
+    - "Pydantic v2 JSON Schema export improvements"
+    - "OpenLineage/Marquez adoption for pipeline lineage"
+    - "EU AI Act data governance requirements timeline"
+
+domain_applicability:
+  music_attribution: 1.0
+  dpp_traceability: 1.0
+  generic_graph_rag: 0.7
+
+tags:
+  - operations
+  - schema-governance
+  - lineage
+  - data-versioning
+  - reproducibility
+
+rationale: >
+  Schema governance becomes critical when: (1) multiple pipelines produce
+  data that downstream consumers depend on (schema contracts), (2) data
+  artifacts exceed what git handles well (DVC threshold ~100MB), (3)
+  experiments need reproducibility beyond code versioning (calibration
+  datasets, embedding models), (4) regulatory requirements demand audit
+  trails for data lineage. For the music attribution scaffold, the
+  probabilistic schema concept (uq.* extension properties on every
+  confidence-bearing field) makes governance particularly important —
+  consumers need to know which fields carry uncertainty metadata and
+  what the uncertainty semantics mean.
+
+references:
+  - "../../planning/quality-tooling-contextualization.md"
+  - "../L3-implementation/data-quality-strategy.decision.yaml"

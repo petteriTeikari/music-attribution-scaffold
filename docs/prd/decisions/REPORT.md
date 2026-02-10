@@ -6,7 +6,7 @@ Human-readable synthesis of the Bayesian decision network with mermaid visualiza
 
 ## Network Topology
 
-The complete decision network: 23 nodes across 5 levels with conditional probability edges.
+The complete decision network: 25 nodes across 5 levels with conditional probability edges.
 
 ```mermaid
 %%{init: {'theme': 'base', 'themeVariables': {'background': '#fcfaf5', 'primaryColor': '#1E3A5F', 'lineColor': '#5C5C5C'}}}%%
@@ -32,6 +32,7 @@ flowchart TB
         LLM[LLM<br/>Provider]
         FF[Frontend<br/>Framework]
         AS[Auth<br/>Strategy]
+        DQS[Data Quality<br/>Strategy]
     end
 
     subgraph L4["L4: Deployment Decisions"]
@@ -47,6 +48,7 @@ flowchart TB
         SS[Scaling<br/>Strategy]
         BDR[Backup &<br/>DR Strategy]
         SM[Secrets<br/>Management]
+        SG[Schema<br/>Governance]
     end
 
     %% L1 → L1
@@ -64,11 +66,13 @@ flowchart TB
     BVB --> PD
     BVB --> AS
     BVB --> LLM
+    BVB --> DQS
     TMS --> AS
 
     %% L2 → L3
     DMC --> PD
     DMC --> GS
+    DMC --> DQS
     PD --> GS
     PD --> VS
     AFS --> LLM
@@ -99,9 +103,14 @@ flowchart TB
     CP --> SM
     DH --> BDR
 
+    %% L3 → L5
+    DQS --> SG
+
     %% L1 → L5 skip
     BVB --> OS
+    BVB --> SG
     RP --> SM
+    RP --> SG
     TMS --> SS
 
     %% L2 → L5 skip
@@ -121,6 +130,7 @@ flowchart TB
     style LLM fill:#D4A03C,color:#000
     style FF fill:#D4A03C,color:#000
     style AS fill:#D4A03C,color:#000
+    style DQS fill:#D4A03C,color:#000
     style CP fill:#4A7C59,color:#fff
     style DH fill:#4A7C59,color:#fff
     style CI fill:#4A7C59,color:#fff
@@ -130,6 +140,7 @@ flowchart TB
     style SS fill:#C75050,color:#fff
     style BDR fill:#C75050,color:#fff
     style SM fill:#C75050,color:#fff
+    style SG fill:#C75050,color:#fff
 ```
 
 **Reading the graph**: Arrows indicate conditional probability dependencies. An arrow from A to B means "the choice made at A shifts the probability distribution at B." Thick conceptual clusters exist within levels, but skip-connections (e.g., L1 Build-vs-Buy directly to L3 Primary Database) represent strong cross-level influences.
@@ -347,6 +358,8 @@ mindmap
       Frontend Framework
       Compute Platform
       Database Hosting
+      Data Quality Strategy
+      Schema Governance
     Volatile
       Regulatory Posture
       AI Framework Strategy
@@ -355,7 +368,7 @@ mindmap
 
 **Interpretation**:
 - **Stable** (12 decisions): Core architectural choices unlikely to change within 6 months. Review quarterly.
-- **Shifting** (8 decisions): Actively evolving areas where market or technology changes may shift probabilities. Review monthly.
+- **Shifting** (10 decisions): Actively evolving areas where market or technology changes may shift probabilities. Review monthly. Includes the new data quality strategy and schema governance nodes.
 - **Volatile** (3 decisions): High uncertainty zones — regulatory posture (EU AI Act timeline), AI framework strategy (ecosystem consolidation), and LLM provider (model capability leaps). Review biweekly.
 
 ---
@@ -425,6 +438,7 @@ Given **Neon** hosting (P=0.40):
 | LLM | Anthropic (0.30) | OpenAI (0.40) | Anthropic (0.35) | Multi-Provider (0.25) |
 | Frontend | Next.js (0.35) | Next.js (0.45) | No Frontend (0.35) | Next.js (0.45) |
 | Auth | Custom JWT (0.40) | Supabase Auth (0.40) | API Key (0.40) | Managed Service (0.35) |
+| Data Quality | Composite (0.40) | Pandera (0.40) | Composite (0.35) | GX/Composite (0.35) |
 
 ### L4-L5 Decisions (Infrastructure)
 
@@ -436,6 +450,7 @@ Given **Neon** hosting (P=0.40):
 | IaC | Terraform (0.40) | None (0.45) | Platform Native (0.35) | Terraform (0.40) |
 | Observability | Grafana (0.40) | Minimal (0.50) | Minimal (0.65) | Datadog (0.35) |
 | Scaling | Vertical (0.30) | Vertical (0.60) | Vertical (0.70) | Horizontal (0.30) |
+| Schema Gov. | DVC+JSON (0.35) | Minimal (0.40) | Git Versioning (0.35) | OpenMetadata (0.45) |
 
 ---
 
@@ -443,22 +458,22 @@ Given **Neon** hosting (P=0.40):
 
 | Metric | Value |
 |--------|-------|
-| Total nodes | 23 |
+| Total nodes | 25 |
 | L1 Business nodes | 4 |
 | L2 Architecture nodes | 4 |
-| L3 Implementation nodes | 6 |
+| L3 Implementation nodes | 7 |
 | L4 Deployment nodes | 5 |
-| L5 Operations nodes | 4 |
-| Total edges | 38 |
+| L5 Operations nodes | 5 |
+| Total edges | 43 |
 | Same-level edges | 3 |
-| Adjacent-level edges | 20 |
-| Skip-connection edges | 15 |
+| Adjacent-level edges | 22 |
+| Skip-connection edges | 18 |
 | Team archetypes | 4 |
 | Domain overlays | 2 (+ 1 planned) |
 | Scenario compositions | 3 |
-| Stable decisions | 12 (52%) |
-| Shifting decisions | 8 (35%) |
-| Volatile decisions | 3 (13%) |
+| Stable decisions | 12 (48%) |
+| Shifting decisions | 10 (40%) |
+| Volatile decisions | 3 (12%) |
 
 ---
 
@@ -470,3 +485,4 @@ Given **Neon** hosting (P=0.40):
 - [`../scenarios/`](../scenarios/) — Composed decision paths
 - [`../domains/`](../domains/) — Domain overlay system
 - [`../../planning/probabilistic-prd-design.md`](../../planning/probabilistic-prd-design.md) — Design rationale
+- [`../../planning/quality-tooling-contextualization.md`](../../planning/quality-tooling-contextualization.md) — Quality tooling analysis with conditional probabilities
