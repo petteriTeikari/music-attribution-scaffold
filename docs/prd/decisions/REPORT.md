@@ -6,7 +6,7 @@ Human-readable synthesis of the Bayesian decision network with mermaid visualiza
 
 ## Network Topology
 
-The complete decision network: 25 nodes across 5 levels with conditional probability edges.
+The complete decision network: 26 nodes across 5 levels with conditional probability edges.
 
 ```mermaid
 %%{init: {'theme': 'base', 'themeVariables': {'background': '#fcfaf5', 'primaryColor': '#1E3A5F', 'lineColor': '#5C5C5C'}}}%%
@@ -23,6 +23,7 @@ flowchart TB
         AP[API<br/>Protocol]
         SD[Service<br/>Decomposition]
         AFS[AI Framework<br/>Strategy]
+        ADS[Artifact<br/>Decoupling]
     end
 
     subgraph L3["L3: Implementation Decisions"]
@@ -67,12 +68,15 @@ flowchart TB
     BVB --> AS
     BVB --> LLM
     BVB --> DQS
+    BVB --> ADS
+    AFS --> ADS
     TMS --> AS
 
     %% L2 → L3
     DMC --> PD
     DMC --> GS
     DMC --> DQS
+    ADS --> DQS
     PD --> GS
     PD --> VS
     AFS --> LLM
@@ -103,11 +107,16 @@ flowchart TB
     CP --> SM
     DH --> BDR
 
+    %% L2 → L4
+    ADS --> CI
+
     %% L3 → L5
     DQS --> SG
 
     %% L1 → L5 skip
     BVB --> OS
+    ADS --> SG
+    ADS --> OS
     BVB --> SG
     RP --> SM
     RP --> SG
@@ -124,6 +133,7 @@ flowchart TB
     style AP fill:#2E7D7B,color:#fff
     style SD fill:#2E7D7B,color:#fff
     style AFS fill:#2E7D7B,color:#fff
+    style ADS fill:#2E7D7B,color:#fff
     style PD fill:#D4A03C,color:#000
     style GS fill:#D4A03C,color:#000
     style VS fill:#D4A03C,color:#000
@@ -360,6 +370,7 @@ mindmap
       Database Hosting
       Data Quality Strategy
       Schema Governance
+      Artifact Decoupling
     Volatile
       Regulatory Posture
       AI Framework Strategy
@@ -368,7 +379,7 @@ mindmap
 
 **Interpretation**:
 - **Stable** (12 decisions): Core architectural choices unlikely to change within 6 months. Review quarterly.
-- **Shifting** (10 decisions): Actively evolving areas where market or technology changes may shift probabilities. Review monthly. Includes the new data quality strategy and schema governance nodes.
+- **Shifting** (11 decisions): Actively evolving areas where market or technology changes may shift probabilities. Review monthly. Includes data quality strategy, schema governance, and artifact decoupling nodes.
 - **Volatile** (3 decisions): High uncertainty zones — regulatory posture (EU AI Act timeline), AI framework strategy (ecosystem consolidation), and LLM provider (model capability leaps). Review biweekly.
 
 ---
@@ -458,21 +469,21 @@ Given **Neon** hosting (P=0.40):
 
 | Metric | Value |
 |--------|-------|
-| Total nodes | 25 |
+| Total nodes | 26 |
 | L1 Business nodes | 4 |
-| L2 Architecture nodes | 4 |
+| L2 Architecture nodes | 5 |
 | L3 Implementation nodes | 7 |
 | L4 Deployment nodes | 5 |
 | L5 Operations nodes | 5 |
-| Total edges | 43 |
+| Total edges | 49 |
 | Same-level edges | 3 |
-| Adjacent-level edges | 22 |
-| Skip-connection edges | 18 |
+| Adjacent-level edges | 26 |
+| Skip-connection edges | 20 |
 | Team archetypes | 4 |
 | Domain overlays | 2 (+ 1 planned) |
 | Scenario compositions | 3 |
-| Stable decisions | 12 (48%) |
-| Shifting decisions | 10 (40%) |
+| Stable decisions | 12 (46%) |
+| Shifting decisions | 11 (42%) |
 | Volatile decisions | 3 (12%) |
 
 ---
@@ -486,3 +497,4 @@ Given **Neon** hosting (P=0.40):
 - [`../domains/`](../domains/) — Domain overlay system
 - [`../../planning/probabilistic-prd-design.md`](../../planning/probabilistic-prd-design.md) — Design rationale
 - [`../../planning/quality-tooling-contextualization.md`](../../planning/quality-tooling-contextualization.md) — Quality tooling analysis with conditional probabilities
+- [`../../planning/artifact-decoupling-contextualization.md`](../../planning/artifact-decoupling-contextualization.md) — 4-artifact decoupling (code/config/data/prompts) for reproducibility

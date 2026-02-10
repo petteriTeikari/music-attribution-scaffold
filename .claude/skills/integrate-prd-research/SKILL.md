@@ -229,8 +229,9 @@ Action:
 L1 Business (4 nodes):
   build_vs_buy_posture, target_market_segment, revenue_model, regulatory_posture
 
-L2 Architecture (4 nodes):
-  data_model_complexity, api_protocol, service_decomposition, ai_framework_strategy
+L2 Architecture (5 nodes):
+  data_model_complexity, api_protocol, service_decomposition, ai_framework_strategy,
+  artifact_decoupling_strategy
 
 L3 Implementation (7 nodes):
   primary_database, graph_strategy, vector_strategy, llm_provider,

@@ -12,7 +12,7 @@
 
 network:
   name: "Probabilistic PRD Decision Network"
-  version: "1.1.0"
+  version: "1.2.0"
   last_updated: 2026-02-10
   description: >
     Bayesian decision network for the Music Attribution Scaffold.
@@ -63,6 +63,11 @@ nodes:
     level: L2_architecture
     file: L2-architecture/ai-framework-strategy.decision.yaml
     title: "AI Framework Strategy"
+
+  - id: artifact_decoupling_strategy
+    level: L2_architecture
+    file: L2-architecture/artifact-decoupling-strategy.decision.yaml
+    title: "Artifact Decoupling Strategy"
 
   # L3: Implementation Decisions
   - id: primary_database
@@ -191,6 +196,16 @@ edges:
     to: frontend_framework
     influence: moderate
     rationale: "API consumers don't need frontend, creators do"
+
+  - from: build_vs_buy_posture
+    to: artifact_decoupling_strategy
+    influence: strong
+    rationale: "Custom builders invest in full artifact separation, SaaS teams accept coupling"
+
+  - from: ai_framework_strategy
+    to: artifact_decoupling_strategy
+    influence: moderate
+    rationale: "LLM-heavy projects need prompt decoupling; no-LLM projects skip it"
 
   # L1 → L3 skip-connections
   - from: build_vs_buy_posture
@@ -339,6 +354,29 @@ edges:
     to: scaling_strategy
     influence: moderate
     rationale: "Enterprise segments need horizontal scaling readiness"
+
+  # L2 → L3 edges (artifact decoupling)
+  - from: artifact_decoupling_strategy
+    to: data_quality_strategy
+    influence: moderate
+    rationale: "Decoupled data artifacts need versioned quality checks"
+
+  # L2 → L4 edges (artifact decoupling)
+  - from: artifact_decoupling_strategy
+    to: ci_cd_pipeline
+    influence: moderate
+    rationale: "Decoupled artifacts need CI/CD support for each type"
+
+  # L2 → L5 edges (artifact decoupling)
+  - from: artifact_decoupling_strategy
+    to: schema_governance
+    influence: strong
+    rationale: "Artifact decoupling is the architectural driver for schema governance"
+
+  - from: artifact_decoupling_strategy
+    to: observability_stack
+    influence: moderate
+    rationale: "More independently versioned artifacts require more observability"
 
   # L1 → L3 skip-connections (data quality)
   - from: build_vs_buy_posture
