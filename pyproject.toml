@@ -15,9 +15,16 @@ classifiers = [
     "Programming Language :: Python :: 3.13",
 ]
 dependencies = [
+    "alembic>=1.14",
+    "asyncpg>=0.30",
+    "httpx>=0.28",
     "loguru>=0.7.0",
+    "pgvector>=0.4",
+    "polars>=1.0",
     "pydantic>=2.0",
     "pydantic-settings>=2.0",
+    "sqlalchemy[asyncio]>=2.0",
+    "valkey>=6.0",
 ]
 
 [project.urls]
@@ -30,6 +37,8 @@ dev = [
     "ruff>=0.8.0",
     "mypy>=1.15.0",
     "pillow>=12.1.0",
+    "testcontainers[postgres]>=4.0",
+    "hypothesis>=6.0",
 ]
 test = [
     "pytest>=8.3.0",
