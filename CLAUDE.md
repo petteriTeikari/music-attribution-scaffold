@@ -111,4 +111,5 @@ The knowledge base, PRDs, and architecture docs showcase the ability to synthesi
 - [docs/prd/archetypes/](docs/prd/archetypes/) - Team archetype profiles
 - [docs/prd/domains/](docs/prd/domains/) - Domain overlay system (music attribution + DPP traceability)
 - [docs/planning/probabilistic-prd-design.md](docs/planning/probabilistic-prd-design.md) - Probabilistic PRD design rationale
+- [.claude/skills/self-learning-iterative-coder/SKILL.md](.claude/skills/self-learning-iterative-coder/SKILL.md) - Self-correcting TDD loop skill
 - [SSRN Preprint](https://papers.ssrn.com/sol3/papers.cfm?abstract_id=6109087) - Research paper
