@@ -8,6 +8,7 @@ This directory contains skill definitions for common development tasks.
 |-------|-------------|----------|
 | commit | Create well-formatted git commits | `commit/SKILL.md` |
 | code-review | Review code changes | `code-review/SKILL.md` |
+| self-learning-iterative-coder | Self-correcting TDD loop for plan-driven code implementation | `self-learning-iterative-coder/SKILL.md` |
 
 ## Skill Structure
 
