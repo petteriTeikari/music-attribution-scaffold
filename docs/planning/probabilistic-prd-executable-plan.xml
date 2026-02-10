@@ -1,0 +1,2195 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  EXECUTABLE ACTION PLAN — Music Attribution Scaffold
+  ====================================================
+  Generated: 2026-02-10
+  Branch: feat/expansion-of-probabilistic-prd
+  Repository: music-attribution-scaffold
+
+  PURPOSE: Crash-resistant, full-context action plan with progress tracking.
+  This plan converts the probabilistic PRD research into TDD/Evals-driven
+  CODE implementation, organized as decoupled Prefect-style pipelines with
+  explicit boundary objects (handover schemas) between them.
+
+  BASED ON:
+    - docs/planning/music-tech-landscape/ (11 files, 5000+ lines)
+    - docs/planning/probabilistic-prd-tool-landscape.md (1441 lines)
+    - docs/planning/ai-tooling-landscape-2026-02.md (601 lines)
+    - docs/planning/frontend-auth-landscape-2026.md (647 lines)
+    - docs/planning/probabilistic-prd-design.md (218 lines)
+    - docs/planning/probablistic-prd.md (initial prompt)
+    - docs/prd/UNKNOWNS-FOR-DOMAIN-EXPERTS.md (981 lines)
+    - docs/sources/soundverse-2025-ethical-framework-ai-music-infrastructure.md
+    - Kim et al. 2025 "From Generation to Attribution" (arXiv:2510.20276)
+    - Morreale et al. 2025 "Attribution-by-Design" (arXiv:2510.08062)
+    - Mollick's organizational theory for agentic AI
+    - Anthropic Agent Swarms (HN: 46743908)
+    - Klaassen gist: Claude Code Swarm Orchestration patterns
+
+  KEY ACADEMIC INSPIRATION:
+    Kim et al.: BlockDB + Attribution Layer + MCP extensions.
+      - Music organized into granular "Blocks" stored in BlockDB
+      - Each block use triggers Attribution Layer event
+      - MCP provides extensibility for third-party integrations
+    Morreale et al.: Attribution-by-Design.
+      - Embed provenance at creation, not post-hoc
+      - Inference-time conditioning for traceable generation
+      - A0-A3 assurance levels for tiered confidence
+
+  ORGANIZATIONAL DESIGN (per Mollick):
+    - Span of control: Max 5-7 direct reports per orchestrator
+    - Boundary objects: Pydantic schemas at every pipeline handoff
+    - Coupling: Loose between pipelines, tight within pipeline stages
+    - Middle management: Pipeline Lead agents coordinate Worker agents
+    - Quality gates: Dedicated Reviewer agents (not same as implementers)
+
+  HOW TO USE THIS PLAN:
+    1. Tasks are organized into PHASES (sequential) containing PIPELINES (parallel)
+    2. Each task has: id, status, dependencies, TDD spec, acceptance criteria
+    3. Status values: NOT_STARTED | IN_PROGRESS | BLOCKED | DONE | DEFERRED
+    4. A task is DONE only when ALL acceptance criteria pass
+    5. Update status in-place as work progresses (crash-resistant tracking)
+    6. When resuming after context loss, read this file to restore state
+
+  v2.0 TDD CONVENTIONS (per TDD reviewer cross-cutting issues):
+    - pytest markers: Auto-applied via conftest.py in each test subdirectory
+      (tests/unit/conftest.py applies @pytest.mark.unit automatically, etc.)
+    - Test subdirectories: Create __init__.py in each new test subdir
+    - Async tests: Tasks with async then-implement methods use `async def test_*`
+      (pytest-asyncio with asyncio_mode="auto" handles this)
+    - Fixtures: Shared fixtures in tests/conftest.py, per-module in per-directory conftest.py
+      JSON fixtures in tests/fixtures/. Eval gold datasets in tests/eval/fixtures/
+    - Dependencies: pyproject.toml uses [dependency-groups] not [project.optional-dependencies].
+      Each task's pyproject-deps are added via `uv add` at task start.
+    - musicbrainzngs is SYNC — wrap in asyncio.to_thread() in async connectors.
+    - Integration tests hitting live APIs: marked @pytest.mark.integration,
+      skipped in CI by default (run with `pytest -m integration`)
+    - Performance tests: marked @pytest.mark.slow, generous CI thresholds
+    - Embedding model: Pin specific model name + revision hash in config
+      (e.g., all-MiniLM-L6-v2@abc123) for reproducibility
+-->
+
+<executable-plan version="2.1" created="2026-02-10" last-updated="2026-02-10"
+    revision-note="v2.1: Round 2 convergence review (3 reviewers: internal consistency, schema completeness, DAG validation). Fixes: circular dependency 2.3c→2.5→2.4→2.3c broken, task count corrected (36 not 39), assurance-level test names fixed, 9 phantom types defined, validators added to BO-2–BO-5, schema_version propagated to all BOs, CreditRoleEnum fully enumerated, pgmpy moved to deferred, dependency-groups syntax fixed. v2.0: Incorporates feedback from 5 parallel reviewer agents (completeness, TDD feasibility, schema design, organizational coherence, cross-domain/reproducibility).">
+
+  <!-- ================================================================== -->
+  <!-- SECTION 1: ORGANIZATIONAL STRUCTURE                                -->
+  <!-- Multi-agentic division of labor following org theory principles    -->
+  <!-- ================================================================== -->
+
+  <organizational-structure>
+    <design-principles>
+      <principle id="ORG-1" name="Bounded Span of Control">
+        No orchestrator manages more than 7 sub-agents directly.
+        Use pipeline-lead agents as middle management.
+        Ref: Mollick — "A human tops out at less than 10 direct reports.
+        I am pretty sure that 100 subagents is too much for an orchestrator."
+      </principle>
+      <principle id="ORG-2" name="Structured Boundary Objects">
+        Every handoff between pipelines uses a typed Pydantic schema.
+        No raw text or untyped dicts cross pipeline boundaries.
+        Ref: Mollick — "Structured boundary objects that multiple agents
+        of different ability levels can read and write to would solve
+        a huge number of coordination failures and reduce token use."
+      </principle>
+      <principle id="ORG-3" name="Appropriate Coupling">
+        Pipelines are LOOSELY coupled (communicate via boundary objects only).
+        Stages within a pipeline are TIGHTLY coupled (share context).
+        Ref: Mollick — "Most agentic systems are either too tightly coupled
+        (every step needs approval) or too loose."
+      </principle>
+      <principle id="ORG-4" name="Context Minimization">
+        Each agent/task receives ONLY the context it needs.
+        Boundary objects carry structured data, not conversation history.
+        Ref: Anthropic Swarms HN — "if an agent only has to be concerned
+        with one task, its context can be massively reduced."
+      </principle>
+      <principle id="ORG-5" name="Quality Gates as Separate Agents">
+        Reviewer agents are distinct from implementer agents.
+        Quality gates operate at pipeline boundaries, not within stages.
+        Ref: Klaassen gist — CAB (Change Advisory Board) pattern.
+      </principle>
+    </design-principles>
+
+    <!-- Agent hierarchy for human engineers (not AI agents) -->
+    <team-structure>
+      <role id="ORCHESTRATOR" name="Project Lead">
+        <responsibility>Phase sequencing, cross-pipeline coordination</responsibility>
+        <span-of-control max="5">Pipeline Lead roles</span-of-control>
+      </role>
+      <role id="PIPELINE-DE" name="Data Engineering Lead">
+        <responsibility>ETL pipelines, data quality, source integrations</responsibility>
+        <pipeline-ref>data-engineering</pipeline-ref>
+      </role>
+      <role id="PIPELINE-ER" name="Entity Resolution Lead">
+        <responsibility>Record linkage, disambiguation, confidence scoring</responsibility>
+        <pipeline-ref>entity-resolution</pipeline-ref>
+      </role>
+      <role id="PIPELINE-AE" name="Attribution Engine Lead">
+        <responsibility>Multi-source aggregation, A0-A3 assurance, calibration</responsibility>
+        <pipeline-ref>attribution-engine</pipeline-ref>
+      </role>
+      <role id="PIPELINE-API" name="API/MCP Lead">
+        <responsibility>REST API, MCP server, permission patchbay</responsibility>
+        <pipeline-ref>api-mcp-server</pipeline-ref>
+      </role>
+      <role id="PIPELINE-UI" name="Frontend/Chat Lead">
+        <responsibility>Chat interface, gap-filling UX, feedback collection</responsibility>
+        <pipeline-ref>chat-interface</pipeline-ref>
+      </role>
+      <role id="REVIEWER" name="Quality Gate Reviewer">
+        <responsibility>Schema validation, test coverage, integration testing</responsibility>
+        <reviews>All pipeline outputs at boundary crossings</reviews>
+      </role>
+    </team-structure>
+  </organizational-structure>
+
+  <!-- ================================================================== -->
+  <!-- SECTION 2: PIPELINE ARCHITECTURE                                   -->
+  <!-- Prefect-style decoupled pipelines with boundary objects            -->
+  <!-- ================================================================== -->
+
+  <pipeline-architecture>
+    <!--
+      Data flow (left to right):
+
+      [External Sources]
+            |
+            v
+      +-DATA-ENGINEERING-+    +--ENTITY-RESOLUTION--+    +--ATTRIBUTION-ENGINE--+
+      | MusicBrainz ETL  | -> | String matching     | -> | Multi-source aggr.   |
+      | Discogs ETL      |    | Embedding similarity|    | A0-A3 assurance      |
+      | AcoustID lookup   |    | Graph resolution    |    | Conformal prediction |
+      | Audio analysis    |    | LLM disambiguation  |    | Calibration loop     |
+      +-----------------+    +--------------------+    +---------------------+
+            |                         |                         |
+            v                         v                         v
+      [NormalizedRecord]       [ResolvedEntity]          [AttributionRecord]
+      (Boundary Object)       (Boundary Object)         (Boundary Object)
+                                                               |
+                                                    +----------+----------+
+                                                    |                     |
+                                              +--API/MCP--+      +--CHAT-UI--+
+                                              | REST API   |      | Gap-fill  |
+                                              | MCP server |      | Feedback  |
+                                              | Permissions|      | Review    |
+                                              +-----------+      +----------+
+    -->
+
+    <pipeline id="data-engineering" name="Data Engineering Pipeline">
+      <description>
+        ETL pipeline that fetches, transforms, and loads music metadata from
+        external sources (MusicBrainz, Discogs, AcoustID) into normalized
+        Pydantic records. Runs with configurable periodicity (daily/weekly).
+        The person developing analysis code does NOT need to care how data
+        is processed — they only need to know the handover schema.
+      </description>
+      <owner>PIPELINE-DE</owner>
+      <technology>
+        <tool>Prefect 3.x (orchestration) OR TaskIQ/ARQ (lightweight alternative)</tool>
+        <tool>musicbrainzngs (MusicBrainz API client)</tool>
+        <tool>python3-discogs-client (Discogs API client)</tool>
+        <tool>pyacoustid + chromaprint (audio fingerprinting)</tool>
+        <tool>librosa + essentia (audio feature extraction)</tool>
+        <tool>mutagen (file metadata reading)</tool>
+        <tool>Pydantic v2 (schema validation)</tool>
+        <tool>Pandera (DataFrame validation for batch imports)</tool>
+        <tool>Valkey/Redis (rate limit compliance caching)</tool>
+        <tool>Polars (batch data processing)</tool>
+      </technology>
+      <output-boundary-object>NormalizedRecord</output-boundary-object>
+      <periodicity>Configurable: on-demand, daily, weekly</periodicity>
+    </pipeline>
+
+    <pipeline id="entity-resolution" name="Entity Resolution Pipeline">
+      <description>
+        Takes NormalizedRecords from multiple sources and resolves entities
+        (artists, works, recordings) across sources. Produces ResolvedEntity
+        records with confidence scores. This is the core "cross-reference"
+        capability: "take all data sets, cross reference them and present
+        to the artist most likely data that is 90 to 100% confident is correct."
+      </description>
+      <owner>PIPELINE-ER</owner>
+      <technology>
+        <tool>Splink (probabilistic record linkage at scale)</tool>
+        <tool>sentence-transformers + pgvector (embedding similarity)</tool>
+        <tool>Apache AGE (graph-based resolution via relationships)</tool>
+        <tool>jellyfish/thefuzz (string similarity)</tool>
+        <tool>PydanticAI or Instructor (LLM-assisted disambiguation)</tool>
+        <tool>MAPIE (conformal prediction for confidence sets)</tool>
+      </technology>
+      <input-boundary-object>NormalizedRecord</input-boundary-object>
+      <output-boundary-object>ResolvedEntity</output-boundary-object>
+    </pipeline>
+
+    <pipeline id="attribution-engine" name="Attribution Engine Pipeline">
+      <description>
+        Multi-source attribution aggregation with A0-A3 assurance levels.
+        Takes ResolvedEntities and produces AttributionRecords with
+        calibrated confidence scores. Implements the conformal prediction
+        framework from the manuscript (SConU calibration).
+        Ref: Morreale et al. — Attribution-by-Design.
+        Ref: Kim et al. — Attribution Layer events per block usage.
+      </description>
+      <owner>PIPELINE-AE</owner>
+      <technology>
+        <tool>MAPIE (conformal prediction sets)</tool>
+        <!-- REVISED v2.1: pgmpy moved to Phase 6 deferred scope. Weighted voting in task 3.1 is sufficient for MVP.
+             TorchCP also deferred — MAPIE handles conformal prediction without deep learning dependency. -->
+        <tool>pgmpy (DEFERRED to Phase 6 — Bayesian network upgrade from weighted voting)</tool>
+        <tool>NetworkX (confidence propagation through graph)</tool>
+        <tool>Pydantic v2 (AttributionRecord schema)</tool>
+      </technology>
+      <input-boundary-object>ResolvedEntity</input-boundary-object>
+      <!-- ADDED v2.0: FeedbackCard as input for calibration loop per org reviewer -->
+      <input-boundary-object>FeedbackCard (reverse-flow from chat-interface, Phase 5)</input-boundary-object>
+      <input-boundary-object>PipelineFeedback (reverse-flow from api-mcp-server, cross-cutting)</input-boundary-object>
+      <output-boundary-object>AttributionRecord</output-boundary-object>
+    </pipeline>
+
+    <pipeline id="api-mcp-server" name="API and MCP Server Pipeline">
+      <description>
+        REST API for human consumers + MCP server for AI platform
+        consumers. Implements the Permission Patchbay (machine-readable
+        consent) from the manuscript. Serves AttributionRecords and
+        handles consent queries.
+        Ref: Manuscript — "MCP as consent infrastructure."
+      </description>
+      <owner>PIPELINE-API</owner>
+      <technology>
+        <tool>FastAPI (REST API)</tool>
+        <tool>mcp Python SDK (MCP server)</tool>
+        <tool>Pydantic v2 (request/response models)</tool>
+        <tool>Alembic (database migrations)</tool>
+        <tool>SQLAlchemy 2.0 (ORM)</tool>
+      </technology>
+      <input-boundary-object>AttributionRecord</input-boundary-object>
+      <output>REST endpoints + MCP tools</output>
+    </pipeline>
+
+    <pipeline id="chat-interface" name="Chat Interface Pipeline">
+      <description>
+        Conversational gap-filling interface for artists to review and
+        correct attribution data. Implements FeedbackCards (Zhou et al.)
+        and active learning priority queues.
+      </description>
+      <owner>PIPELINE-UI</owner>
+      <technology>
+        <tool>Next.js 16 OR FastAPI + HTMX (archetype-dependent)</tool>
+        <tool>Vercel AI SDK 6 OR Django Channels (chat streaming)</tool>
+        <tool>PydanticAI (agent for gap-filling conversation)</tool>
+        <tool>shadcn/ui OR DaisyUI (components)</tool>
+      </technology>
+      <input-boundary-object>AttributionRecord</input-boundary-object>
+      <output>FeedbackCard (corrections from domain experts)</output>
+    </pipeline>
+  </pipeline-architecture>
+
+  <!-- ================================================================== -->
+  <!-- SECTION 3: BOUNDARY OBJECTS (Handover Schemas)                    -->
+  <!-- Pydantic models that cross pipeline boundaries                    -->
+  <!-- ================================================================== -->
+
+  <boundary-objects>
+    <description>
+      These are the structured boundary objects (per Mollick) that flow
+      between pipelines. Each is a Pydantic BaseModel with full type
+      annotations, validators, and serialization support. They serve as
+      the "contract" between pipeline teams — as long as you produce/consume
+      these schemas correctly, you can change pipeline internals freely.
+
+      File location: src/music_attribution/schemas/
+
+      Tools for schema governance:
+      - Pydantic v2: Runtime validation, JSON Schema generation
+      - Great Expectations / Pandera: Statistical data quality assertions
+      - DVC: Version control for data artifacts (training data, embeddings)
+      - OpenMetadata: Optional metadata catalog (deferred to post-MVP)
+    </description>
+
+    <schema id="BO-1" name="NormalizedRecord" file="src/music_attribution/schemas/normalized.py">
+      <description>
+        Output of Data Engineering pipeline. A single music entity
+        (recording, work, or person) normalized from one external source.
+        Multiple NormalizedRecords for the same entity (from different
+        sources) feed into Entity Resolution.
+      </description>
+      <fields>
+        <field name="record_id" type="uuid.UUID" description="UUIDv7, auto-generated"/>
+        <field name="source" type="SourceEnum" description="MUSICBRAINZ | DISCOGS | ACOUSTID | ARTIST_INPUT | FILE_METADATA"/>
+        <field name="source_id" type="str" description="ID in the source system (e.g. MusicBrainz MBID)"/>
+        <field name="entity_type" type="EntityTypeEnum" description="RECORDING | WORK | ARTIST | RELEASE | LABEL | CREDIT"/>
+        <field name="canonical_name" type="str" description="Normalized name (Unicode NFC, stripped whitespace)"/>
+        <field name="alternative_names" type="list[str]" description="Aliases, transliterations, stage names"/>
+        <field name="identifiers" type="IdentifierBundle" description="ISRC, ISWC, ISNI, IPI if available"/>
+        <field name="metadata" type="SourceMetadata" description="Structured source-specific metadata (replaces dict[str,Any] per ORG-2 review)"/>
+        <!-- ADDED v2.0: Typed SourceMetadata replaces untyped dict per reviewer feedback -->
+        <field name="relationships" type="list[Relationship]" description="Links to other entities (artist-recorded-track, etc.)"/>
+        <field name="fetch_timestamp" type="datetime" description="When this record was fetched (UTC)"/>
+        <field name="source_confidence" type="float" description="How reliable is this source? 0.0-1.0"/>
+        <field name="raw_payload" type="dict[str, Any] | None" description="Original API response for audit trail"/>
+      </fields>
+      <!-- ADDED v2.0: schema_version field on all boundary objects per RC-2 -->
+      <schema-version>schema_version: str = "1.0.0" (class-level field, semver, required on all 5 BOs)</schema-version>
+
+      <!-- ADDED v2.0: domain_extensibility note -->
+      <domain-extensibility-note>
+        EntityTypeEnum, RelationshipTypeEnum, and IdentifierBundle are domain-extensible.
+        For music: RECORDING, WORK, ARTIST, RELEASE, LABEL, CREDIT + ISRC, ISWC, ISNI, etc.
+        For DPP: PRODUCT, COMPONENT, MATERIAL, SUPPLIER, FACILITY, EVENT + GTIN, GLN, EPCIS, etc.
+        Extension mechanism: StrEnum with config-driven registry loaded from active domain overlay YAML.
+        The enum module exports a `load_domain_enums(overlay_path: Path)` function that extends base enums.
+      </domain-extensibility-note>
+
+      <sub-schemas>
+        <schema name="SourceMetadata">
+          <!-- ADDED v2.0: Replaces dict[str, Any] per ORG-2 review -->
+          <field name="roles" type="list[str]" description="Credit roles found in source (raw strings before enum mapping)"/>
+          <field name="release_date" type="date | None" description="Release date if available"/>
+          <field name="release_country" type="str | None" description="ISO 3166 alpha-2 country code"/>
+          <field name="genres" type="list[str]" description="Genre tags from source"/>
+          <field name="duration_ms" type="int | None" description="Track duration in milliseconds"/>
+          <field name="track_number" type="int | None" description="Track position on release"/>
+          <field name="medium_format" type="str | None" description="CD, vinyl, digital, etc."/>
+          <field name="language" type="str | None" description="ISO 639-1 language code of the work"/>
+          <field name="extras" type="dict[str, str]" description="Truly source-specific fields, but string-typed values only"/>
+        </schema>
+        <schema name="IdentifierBundle">
+          <field name="isrc" type="str | None" description="International Standard Recording Code"/>
+          <field name="iswc" type="str | None" description="International Standard Musical Work Code"/>
+          <field name="isni" type="str | None" description="International Standard Name Identifier"/>
+          <field name="ipi" type="str | None" description="Interested Parties Information number"/>
+          <field name="mbid" type="str | None" description="MusicBrainz Identifier"/>
+          <field name="discogs_id" type="int | None" description="Discogs database ID"/>
+          <field name="acoustid" type="str | None" description="AcoustID fingerprint hash"/>
+        </schema>
+        <schema name="Relationship">
+          <field name="relationship_type" type="RelationshipTypeEnum" description="PERFORMED | WROTE | PRODUCED | ENGINEERED | ARRANGED | MASTERED | MIXED | FEATURED | SAMPLED | REMIXED (domain-extensible)"/>
+          <field name="target_source" type="SourceEnum" description="ADDED v2.0: Which source system target_source_id refers to (prevents cross-source ID collision)"/>
+          <field name="target_source_id" type="str" description="ID in the source system"/>
+          <field name="target_entity_type" type="EntityTypeEnum"/>
+          <field name="attributes" type="dict[str, str]" description="Role-specific attributes (instrument, credited_as, time_period)"/>
+        </schema>
+      </sub-schemas>
+      <validators>
+        <validator>canonical_name must be non-empty after stripping</validator>
+        <validator>source_confidence must be in [0.0, 1.0]</validator>
+        <validator>fetch_timestamp must be timezone-aware (UTC)</validator>
+        <!-- REVISED v2.0: Conditional on source — ARTIST_INPUT may have no standard IDs yet -->
+        <validator>For machine sources (MUSICBRAINZ, DISCOGS, ACOUSTID): identifiers must have at least one non-None field. For ARTIST_INPUT and FILE_METADATA: warn but allow empty identifiers.</validator>
+        <validator>If entity_type is RECORDING, ISRC should be present (warning if not)</validator>
+        <validator>fetch_timestamp must not be more than 60 seconds in the future (clock skew tolerance)</validator>
+      </validators>
+    </schema>
+
+    <schema id="BO-2" name="ResolvedEntity" file="src/music_attribution/schemas/resolved.py">
+      <description>
+        Output of Entity Resolution pipeline. A unified entity that
+        merges multiple NormalizedRecords from different sources into
+        a single canonical entity with resolution confidence.
+      </description>
+      <fields>
+        <field name="entity_id" type="uuid.UUID" description="UUIDv7, canonical entity ID"/>
+        <field name="entity_type" type="EntityTypeEnum"/>
+        <field name="canonical_name" type="str" description="Best available name"/>
+        <field name="alternative_names" type="list[str]" description="All names from all sources"/>
+        <field name="identifiers" type="IdentifierBundle" description="Merged identifiers from all sources"/>
+        <field name="source_records" type="list[SourceReference]" description="References to contributing NormalizedRecords"/>
+        <field name="resolution_method" type="ResolutionMethodEnum" description="EXACT_ID | FUZZY_STRING | EMBEDDING | GRAPH | LLM | MANUAL"/>
+        <field name="resolution_confidence" type="float" description="Overall resolution confidence 0.0-1.0"/>
+        <field name="resolution_details" type="ResolutionDetails" description="Per-method confidence breakdown"/>
+        <field name="assurance_level" type="AssuranceLevelEnum" description="A0 | A1 | A2 | A3 (from manuscript)"/>
+        <field name="relationships" type="list[ResolvedRelationship]" description="Resolved cross-entity links"/>
+        <field name="conflicts" type="list[Conflict]" description="Unresolved disagreements between sources"/>
+        <!-- ADDED v2.0: needs_review flag per reviewer feedback — entity resolution is where low-confidence entities are first identified -->
+        <field name="needs_review" type="bool" description="Flagged for human review if resolution confidence is below threshold"/>
+        <field name="review_reason" type="str | None" description="Why this entity needs review (e.g., 'low confidence', 'conflicting sources')"/>
+        <field name="merged_from" type="list[uuid.UUID] | None" description="ADDED v2.0: If this entity was created by merging previously separate entities, track which ones"/>
+        <field name="resolved_at" type="datetime" description="When resolution was performed (UTC)"/>
+      </fields>
+      <sub-schemas>
+        <schema name="SourceReference">
+          <field name="record_id" type="uuid.UUID"/>
+          <field name="source" type="SourceEnum"/>
+          <field name="source_id" type="str"/>
+          <field name="agreement_score" type="float" description="How well this source agrees with canonical"/>
+        </schema>
+        <schema name="ResolutionDetails">
+          <field name="string_similarity" type="float | None"/>
+          <field name="embedding_similarity" type="float | None"/>
+          <field name="graph_path_confidence" type="float | None"/>
+          <field name="llm_confidence" type="float | None"/>
+          <!-- REVISED v2.0: bool -> list to indicate WHICH identifiers matched, not just whether any did -->
+          <field name="matched_identifiers" type="list[str]" description="Which identifiers matched exactly (e.g. ['isrc', 'mbid'])"/>
+        </schema>
+        <schema name="ResolvedRelationship">
+          <!-- ADDED v2.0: Was referenced but never defined in v1.0 -->
+          <field name="target_entity_id" type="uuid.UUID" description="Resolved entity ID of the target"/>
+          <field name="relationship_type" type="RelationshipTypeEnum"/>
+          <field name="confidence" type="float" description="Confidence in this resolved relationship 0.0-1.0"/>
+          <field name="supporting_sources" type="list[SourceEnum]" description="Which sources attest this relationship"/>
+        </schema>
+        <schema name="Conflict">
+          <field name="field" type="str" description="Which field disagrees"/>
+          <!-- REVISED v2.0: Typed dict instead of dict[str, Any] per ORG-2 review -->
+          <field name="values" type="dict[SourceEnum, str]" description="Source -> conflicting value (string representation)"/>
+          <field name="severity" type="ConflictSeverityEnum" description="LOW | MEDIUM | HIGH | CRITICAL"/>
+        </schema>
+        <schema name="AssuranceLevelEnum">
+          <!-- REVISED v2.0: Assurance levels reflect VERIFICATION DEPTH, not identifier type.
+               A recording verified by ISRC in both MusicBrainz AND Discogs AND confirmed
+               by the artist is A3, not A1. The identifier used is orthogonal to the
+               assurance level. Domain-specific display codes (A0-A3 for music, T0-T3 for
+               DPP) are loaded from domain overlay YAML, not hardcoded. -->
+          <value name="LEVEL_0" display_code="A0" description="Self-declared only — no external verification. Entity exists only because a user claimed it."/>
+          <value name="LEVEL_1" display_code="A1" description="Single-source verified — at least one standard identifier (ISRC/ISWC/ISNI/MBID) matched in one authoritative registry."/>
+          <value name="LEVEL_2" display_code="A2" description="Multi-source cross-referenced — identifier confirmed across 2+ independent sources with no conflicts."/>
+          <value name="LEVEL_3" display_code="A3" description="Identity-verified — creator identity confirmed via ISNI or equivalent, with cross-registry validation and no unresolved conflicts."/>
+        </schema>
+      </sub-schemas>
+      <!-- ADDED v2.1: schema_version (was only on BO-1) -->
+      <schema-version>schema_version: str = "1.0.0" (semver, required)</schema-version>
+      <!-- ADDED v2.1: validators (were missing on BO-2) -->
+      <validators>
+        <validator>resolution_confidence must be in [0.0, 1.0]</validator>
+        <validator>resolved_at must be timezone-aware (UTC)</validator>
+        <validator>If needs_review is True, review_reason must be non-None</validator>
+        <validator>assurance_level must be consistent with resolution_confidence (A3 requires confidence >= 0.85)</validator>
+        <validator>source_records must be non-empty (a resolved entity must have at least one source)</validator>
+        <validator>All entity_ids in source_records must be valid UUIDs</validator>
+      </validators>
+    </schema>
+
+    <schema id="BO-3" name="AttributionRecord" file="src/music_attribution/schemas/attribution.py">
+      <description>
+        Output of Attribution Engine pipeline. A complete attribution
+        record for a musical work/recording with calibrated confidence
+        scores and conformal prediction sets.
+      </description>
+      <fields>
+        <field name="attribution_id" type="uuid.UUID"/>
+        <field name="work_entity_id" type="uuid.UUID" description="ResolvedEntity for the work/recording"/>
+        <field name="credits" type="list[Credit]" description="All attributed credits with confidence"/>
+        <field name="assurance_level" type="AssuranceLevelEnum" description="Overall assurance for this attribution"/>
+        <field name="confidence_score" type="float" description="Overall confidence 0.0-1.0"/>
+        <field name="conformal_set" type="ConformalSet" description="Conformal prediction set at 90% coverage"/>
+        <field name="source_agreement" type="float" description="Inter-source agreement score"/>
+        <field name="provenance_chain" type="list[ProvenanceEvent]" description="Audit trail of how attribution was derived"/>
+        <field name="needs_review" type="bool" description="Flagged for human review?"/>
+        <field name="review_priority" type="float" description="Active learning priority score"/>
+        <field name="created_at" type="datetime"/>
+        <field name="updated_at" type="datetime"/>
+        <field name="version" type="int" description="Attribution version (increments on update)"/>
+      </fields>
+      <sub-schemas>
+        <schema name="Credit">
+          <field name="entity_id" type="uuid.UUID" description="ResolvedEntity for the credited person/org"/>
+          <!-- REVISED v2.1: CreditRoleEnum fully enumerated (was "etc.") -->
+          <field name="role" type="CreditRoleEnum" description="PERFORMER | SONGWRITER | COMPOSER | LYRICIST | PRODUCER | ENGINEER | MIXING_ENGINEER | MASTERING_ENGINEER | ARRANGER | SESSION_MUSICIAN | FEATURED_ARTIST | CONDUCTOR | DJ | REMIXER"/>
+          <field name="role_detail" type="str | None" description="E.g. 'lead vocals', 'bass guitar'"/>
+          <field name="confidence" type="float" description="Per-credit confidence 0.0-1.0"/>
+          <field name="sources" type="list[SourceEnum]" description="Which sources attest this credit"/>
+          <field name="assurance_level" type="AssuranceLevelEnum"/>
+        </schema>
+        <schema name="ConformalSet">
+          <!-- REVISED v2.0: Redesigned to match MAPIE's actual output format.
+               Per-entity prediction sets, not opaque string lists. calibration_score
+               renamed to calibration_error (ECE is an error metric, lower=better). -->
+          <field name="coverage_level" type="float" description="Target coverage (e.g. 0.90)"/>
+          <field name="prediction_sets" type="dict[uuid.UUID, list[CreditRoleEnum]]" description="Per-entity: which roles are in the conformal prediction set"/>
+          <field name="set_sizes" type="dict[uuid.UUID, int]" description="Per-entity set size (smaller = more certain about this entity's role)"/>
+          <field name="marginal_coverage" type="float" description="Actual observed coverage on calibration set"/>
+          <field name="calibration_error" type="float" description="ECE (Expected Calibration Error) — lower is better, target &lt; 0.05"/>
+          <field name="calibration_method" type="str" description="APS | RAPS | LAC — which MAPIE method was used"/>
+          <field name="calibration_set_size" type="int" description="How many examples the calibration was based on"/>
+        </schema>
+        <schema name="ProvenanceEvent">
+          <!-- REVISED v2.0: event_type is now an enum, details is a discriminated union -->
+          <field name="event_type" type="ProvenanceEventTypeEnum" description="FETCH | RESOLVE | SCORE | REVIEW | UPDATE | FEEDBACK"/>
+          <field name="timestamp" type="datetime"/>
+          <field name="agent" type="str" description="Which pipeline/agent performed this"/>
+          <!-- REVISED v2.1: All 6 event types now have corresponding detail types -->
+          <field name="details" type="FetchEventDetails | ResolveEventDetails | ScoreEventDetails | ReviewEventDetails | UpdateEventDetails | FeedbackEventDetails" description="Discriminated union typed per event_type (replaces dict[str,Any])"/>
+          <field name="feedback_card_id" type="uuid.UUID | None" description="ADDED v2.0: If event_type=REVIEW, link to the FeedbackCard that caused this update"/>
+        </schema>
+        <!-- ADDED v2.1: Event detail sub-schemas (were phantom types in v2.0) -->
+        <schema name="FetchEventDetails">
+          <field name="source" type="SourceEnum" description="Which source was fetched"/>
+          <field name="source_id" type="str" description="ID in the source system"/>
+          <field name="records_fetched" type="int" description="Number of records returned"/>
+          <field name="rate_limited" type="bool" description="Whether rate limiting was hit"/>
+        </schema>
+        <schema name="ResolveEventDetails">
+          <field name="method" type="ResolutionMethodEnum" description="Which resolution method was used"/>
+          <field name="records_input" type="int" description="Number of NormalizedRecords input"/>
+          <field name="entities_output" type="int" description="Number of ResolvedEntities produced"/>
+          <field name="confidence_range" type="tuple[float, float]" description="(min, max) confidence in output"/>
+        </schema>
+        <schema name="ScoreEventDetails">
+          <field name="previous_confidence" type="float | None" description="Confidence before rescoring"/>
+          <field name="new_confidence" type="float" description="Confidence after rescoring"/>
+          <field name="scoring_method" type="str" description="What triggered rescoring (conformal, recalibration, etc.)"/>
+        </schema>
+        <schema name="ReviewEventDetails">
+          <field name="reviewer_id" type="str" description="Who performed the review"/>
+          <field name="feedback_card_id" type="uuid.UUID" description="The FeedbackCard that triggered this"/>
+          <field name="corrections_applied" type="int" description="Number of corrections from the card"/>
+        </schema>
+        <schema name="UpdateEventDetails">
+          <!-- ADDED v2.1: Was missing from discriminated union -->
+          <field name="previous_version" type="int" description="Version before update"/>
+          <field name="new_version" type="int" description="Version after update"/>
+          <field name="fields_changed" type="list[str]" description="Which fields were modified"/>
+          <field name="trigger" type="str" description="What caused the update (feedback, re-resolution, manual)"/>
+        </schema>
+        <schema name="FeedbackEventDetails">
+          <!-- ADDED v2.1: Was missing from discriminated union -->
+          <field name="feedback_card_id" type="uuid.UUID" description="The FeedbackCard received"/>
+          <field name="overall_assessment" type="float" description="VAS score from the feedback"/>
+          <field name="corrections_count" type="int" description="Number of corrections submitted"/>
+          <field name="accepted" type="bool" description="Whether the feedback was accepted into the attribution"/>
+        </schema>
+      </sub-schemas>
+      <!-- ADDED v2.1: schema_version and validators -->
+      <schema-version>schema_version: str = "1.0.0" (semver, required)</schema-version>
+      <validators>
+        <validator>confidence_score must be in [0.0, 1.0]</validator>
+        <validator>source_agreement must be in [0.0, 1.0]</validator>
+        <validator>review_priority must be in [0.0, 1.0]</validator>
+        <validator>version must be >= 1</validator>
+        <validator>created_at and updated_at must be timezone-aware (UTC)</validator>
+        <validator>updated_at >= created_at</validator>
+        <validator>credits must be non-empty</validator>
+        <validator>conformal_set.coverage_level must be in (0.0, 1.0)</validator>
+        <validator>conformal_set.calibration_error must be >= 0.0</validator>
+        <validator>Per-credit confidence must be in [0.0, 1.0]</validator>
+      </validators>
+    </schema>
+
+    <schema id="BO-4" name="FeedbackCard" file="src/music_attribution/schemas/feedback.py">
+      <description>
+        Structured feedback from domain experts (artists, managers,
+        musicologists, producers). Flows from Chat Interface back
+        into Attribution Engine for calibration updates.
+        Ref: Zhou et al., 2023 — FeedbackCards.
+      </description>
+      <fields>
+        <field name="feedback_id" type="uuid.UUID"/>
+        <field name="attribution_id" type="uuid.UUID" description="Which AttributionRecord this corrects"/>
+        <field name="reviewer_id" type="str" description="Who provided this feedback"/>
+        <field name="reviewer_role" type="ReviewerRoleEnum" description="ARTIST | MANAGER | MUSICOLOGIST | PRODUCER | FAN"/>
+        <!-- ADDED v2.0: Lock correction to specific attribution version to prevent stale corrections -->
+        <field name="attribution_version" type="int" description="Which version of the AttributionRecord this corrects"/>
+        <field name="corrections" type="list[Correction]"/>
+        <field name="overall_assessment" type="float" description="VAS 0.0-1.0 (with 'unsure' escape at 0.5)"/>
+        <field name="center_bias_flag" type="bool" description="ADDED v2.0: True if overall_assessment in [0.45, 0.55] — may indicate 'unsure' rather than 'neutral'"/>
+        <field name="free_text" type="str | None" description="Unstructured comments"/>
+        <field name="evidence_type" type="EvidenceTypeEnum" description="LINER_NOTES | MEMORY | DOCUMENT | SESSION_NOTES | OTHER"/>
+        <field name="submitted_at" type="datetime"/>
+      </fields>
+      <sub-schemas>
+        <schema name="Correction">
+          <!-- REVISED v2.0: Typed values instead of Any per ORG-2 review -->
+          <field name="field" type="str" description="Which attribution field to correct"/>
+          <field name="current_value" type="str" description="String representation of current value"/>
+          <field name="corrected_value" type="str" description="String representation of corrected value"/>
+          <field name="entity_id" type="uuid.UUID | None" description="ADDED v2.0: If correcting a specific credit, which entity"/>
+          <field name="confidence_in_correction" type="float" description="How sure is the reviewer? 0.0-1.0"/>
+          <field name="evidence" type="str | None" description="Supporting evidence for the correction"/>
+        </schema>
+      </sub-schemas>
+      <!-- ADDED v2.1: schema_version and validators -->
+      <schema-version>schema_version: str = "1.0.0" (semver, required)</schema-version>
+      <validators>
+        <validator>overall_assessment must be in [0.0, 1.0]</validator>
+        <validator>Per-correction confidence_in_correction must be in [0.0, 1.0]</validator>
+        <validator>submitted_at must be timezone-aware (UTC)</validator>
+        <validator>center_bias_flag must be True if overall_assessment in [0.45, 0.55]</validator>
+        <validator>attribution_version must be >= 1</validator>
+        <validator>corrections must be non-empty OR free_text must be non-None (a completely empty feedback card is rejected)</validator>
+      </validators>
+    </schema>
+
+    <schema id="BO-5" name="PermissionBundle" file="src/music_attribution/schemas/permissions.py">
+      <description>
+        Machine-readable permission specification for MCP consent queries.
+        Implements the Permission Patchbay from the manuscript.
+      </description>
+      <fields>
+        <!-- REVISED v2.0: Major redesign per reviewer feedback — scope, conditions, proper typing -->
+        <field name="permission_id" type="uuid.UUID" description="ADDED v2.0: Unique ID for referencing in audit logs and MCP responses"/>
+        <field name="entity_id" type="uuid.UUID" description="Who sets these permissions"/>
+        <field name="scope" type="PermissionScopeEnum" description="ADDED v2.0: CATALOG | RELEASE | RECORDING | WORK"/>
+        <field name="scope_entity_id" type="uuid.UUID | None" description="ADDED v2.0: If RECORDING/WORK/RELEASE, which specific one (None = entire catalog)"/>
+        <field name="permissions" type="list[PermissionEntry]" description="REVISED v2.0: Structured entries with conditions, not flat dict"/>
+        <field name="effective_from" type="datetime"/>
+        <field name="effective_until" type="datetime | None" description="None = perpetual (explicitly documented, not ambiguous)"/>
+        <field name="delegation_chain" type="list[DelegationEntry]" description="REVISED v2.0: Typed entries instead of list[str]"/>
+        <field name="default_permission" type="PermissionValueEnum" description="ADDED v2.0: Default for unspecified permission types (recommended: ASK)"/>
+        <field name="created_by" type="uuid.UUID" description="ADDED v2.0: Who set these permissions"/>
+        <field name="updated_at" type="datetime" description="ADDED v2.0: Last modification timestamp"/>
+        <field name="version" type="int" description="ADDED v2.0: Permission version (increments on change)"/>
+      </fields>
+      <sub-schemas>
+        <schema name="PermissionEntry">
+          <!-- ADDED v2.0: Structured permission entry with conditions -->
+          <field name="permission_type" type="PermissionTypeEnum"/>
+          <field name="value" type="PermissionValueEnum"/>
+          <field name="conditions" type="list[PermissionCondition]" description="Optional conditions (non_commercial, research_only, max_duration, etc.)"/>
+          <field name="royalty_rate" type="Decimal | None" description="For ALLOW_WITH_ROYALTY: rate as decimal"/>
+          <field name="attribution_requirement" type="str | None" description="For ALLOW_WITH_ATTRIBUTION: required attribution text"/>
+          <field name="territory" type="list[str] | None" description="ISO 3166 alpha-2 codes; None = worldwide"/>
+        </schema>
+        <schema name="PermissionCondition">
+          <field name="condition_type" type="str" description="non_commercial | research_only | max_duration | platform_specific | etc."/>
+          <field name="value" type="str" description="Condition parameter value"/>
+        </schema>
+        <schema name="DelegationEntry">
+          <!-- ADDED v2.0: Replaces list[str] with typed entries -->
+          <field name="entity_id" type="uuid.UUID" description="Delegated entity (artist, manager, label)"/>
+          <field name="role" type="DelegationRoleEnum" description="OWNER | MANAGER | LABEL | DISTRIBUTOR"/>
+          <field name="can_modify" type="bool" description="Can this delegate change permissions?"/>
+          <field name="can_delegate" type="bool" description="Can this delegate further delegate?"/>
+        </schema>
+        <schema name="PermissionTypeEnum">
+          <!-- REVISED v2.0: Expanded with missing types from UNKNOWNS Q4.3/Q5.2 and Soundverse whitepaper -->
+          <value name="STREAM"/>
+          <value name="DOWNLOAD"/>
+          <value name="SYNC_LICENSE"/>
+          <value name="AI_TRAINING"/>
+          <value name="VOICE_CLONING"/>
+          <value name="STYLE_LEARNING"/>
+          <value name="LYRICS_IN_CHATBOTS"/>
+          <value name="COVER_VERSIONS"/>
+          <value name="REMIX"/>
+          <value name="SAMPLE"/>
+          <value name="DERIVATIVE_WORK"/>
+          <!-- Domain-extensible: DPP would add DATA_SHARING, AUDIT_ACCESS, COMPLIANCE_DISCLOSURE -->
+        </schema>
+        <schema name="PermissionValueEnum">
+          <value name="ALLOW"/>
+          <value name="DENY"/>
+          <value name="ASK"/>
+          <value name="ALLOW_WITH_ATTRIBUTION"/>
+          <value name="ALLOW_WITH_ROYALTY"/>
+        </schema>
+      </sub-schemas>
+      <!-- ADDED v2.1: schema_version and validators -->
+      <schema-version>schema_version: str = "1.0.0" (semver, required)</schema-version>
+      <validators>
+        <validator>effective_from must be timezone-aware (UTC)</validator>
+        <validator>effective_until must be timezone-aware (UTC) when not None</validator>
+        <validator>If effective_until is not None, effective_from must be before effective_until</validator>
+        <validator>version must be >= 1</validator>
+        <validator>permissions must be non-empty</validator>
+        <validator>scope_entity_id must be None when scope is CATALOG, non-None for RELEASE/RECORDING/WORK</validator>
+        <validator>Per-entry: royalty_rate must be > 0 when value is ALLOW_WITH_ROYALTY</validator>
+        <validator>Per-entry: attribution_requirement must be non-None when value is ALLOW_WITH_ATTRIBUTION</validator>
+        <validator>delegation_chain should include at least one OWNER entry</validator>
+      </validators>
+    </schema>
+  </boundary-objects>
+
+  <!-- ================================================================== -->
+  <!-- SECTION 4: REPRODUCIBILITY INFRASTRUCTURE                         -->
+  <!-- Internal Reproducibility and Lineage Cards                        -->
+  <!-- ================================================================== -->
+
+  <reproducibility-infrastructure>
+    <description>
+      Ensures every artifact in the system is reproducible and traceable.
+      Software engineers get excellent DevEx because:
+      1. Every data artifact has a version (DVC tag or git SHA)
+      2. Every schema change is tracked (Pydantic diff)
+      3. Every prompt template is versioned (git)
+      4. Every deployment maps to exact code + data + config
+      5. Every experiment is reproducible (seed, config, test harness)
+    </description>
+
+    <card id="RC-1" name="Environment Card" file="docs/reproducibility/environment-card.yaml">
+      <description>Pin all versions: Python, uv lock, Docker base image, system deps</description>
+      <implementation>
+        - pyproject.toml: Python version constraint
+        - uv.lock: Exact dependency versions (already in repo)
+        - Dockerfile: Pinned base image (python:3.13-slim with digest)
+        - docker-compose.yml: Service versions (PostgreSQL, Valkey)
+      </implementation>
+      <phase>0</phase>
+    </card>
+
+    <card id="RC-2" name="Schema Evolution Card" file="docs/reproducibility/schema-evolution-card.yaml">
+      <description>Track Pydantic schema changes with semantic versioning</description>
+      <implementation>
+        - Each boundary object schema has a __schema_version__ field
+        - Alembic migrations for database schema changes
+        - pytest fixtures validate schema backward compatibility
+        - CI check: new schema version required if fields change
+      </implementation>
+      <phase>1</phase>
+    </card>
+
+    <card id="RC-3" name="Prompt Card" file="docs/reproducibility/prompt-card.yaml">
+      <description>Version control for prompt templates used in LLM calls</description>
+      <implementation>
+        - Prompt templates stored in src/music_attribution/prompts/
+        - Each template is a Jinja2 file with YAML frontmatter (version, model, temperature)
+        - Langfuse traces link to prompt version
+        - Eval datasets test prompt regressions
+      </implementation>
+      <phase>3</phase>
+    </card>
+
+    <card id="RC-4" name="Deployment Lineage Card" file="docs/reproducibility/deployment-lineage-card.yaml">
+      <description>Map every deployment to exact code + data + config</description>
+      <implementation>
+        - Git SHA in every API response header (X-Git-SHA)
+        - DVC tag for data artifacts used in entity resolution models
+        - CI/CD metadata: GitHub Actions run ID, Docker image digest
+        - Health endpoint returns: git_sha, schema_version, data_version, model_version
+      </implementation>
+      <phase>4</phase>
+    </card>
+
+    <card id="RC-5" name="Reproducibility Checklist Card" file="docs/reproducibility/reproducibility-checklist.yaml">
+      <description>Seed settings, configs, test harness for reproducible experiments</description>
+      <implementation>
+        - Random seeds configurable via environment variable (ATTRIBUTION_SEED)
+        - Config via Pydantic Settings (env vars + .env files)
+        - Test harness: Hypothesis for property-based testing with fixed seeds
+        - Testcontainers for deterministic database state
+        - Makefile targets: make reproduce-eval SEED=42
+      </implementation>
+      <phase>2</phase>
+    </card>
+  </reproducibility-infrastructure>
+
+  <!-- ================================================================== -->
+  <!-- SECTION 5: IMPLEMENTATION PHASES                                   -->
+  <!-- Sequential phases, parallel pipelines within each phase            -->
+  <!-- ================================================================== -->
+
+  <!-- ================================================================== -->
+  <!-- PHASE 0: FOUNDATION INFRASTRUCTURE                                -->
+  <!-- Lowest-hanging fruit: schemas, database, Docker, CI               -->
+  <!-- Everything else depends on this                                   -->
+  <!-- ================================================================== -->
+
+  <phase id="0" name="Foundation Infrastructure" status="NOT_STARTED"
+         estimated-effort="Week 1-2" priority="CRITICAL">
+    <description>
+      Core infrastructure that ALL pipelines depend on. This is the
+      lowest-hanging fruit — no domain logic, just plumbing. TDD-first:
+      write schema validation tests before implementing schemas.
+    </description>
+
+    <task id="0.1" status="NOT_STARTED" pipeline="foundation">
+      <name>Create boundary object Pydantic schemas</name>
+      <description>
+        Implement the 5 boundary object schemas defined in Section 3.
+        These are the contracts between all pipelines. TDD: write
+        validation tests FIRST, then implement models.
+      </description>
+      <dependencies>None (first task)</dependencies>
+      <tdd-spec>
+        <test-first>
+          File: tests/unit/schemas/test_normalized.py
+          Tests:
+            - test_normalized_record_valid_creation
+            - test_normalized_record_rejects_empty_name
+            - test_normalized_record_rejects_future_timestamp
+            - test_normalized_record_requires_timezone_aware_datetime
+            - test_normalized_record_source_confidence_bounds
+            - test_normalized_record_requires_at_least_one_identifier
+            - test_normalized_record_serializes_to_json
+            - test_normalized_record_roundtrip_json
+
+          File: tests/unit/schemas/test_resolved.py
+          Tests:
+            - test_resolved_entity_valid_creation
+            - test_resolved_entity_assurance_level_ordering (A0 &lt; A1 &lt; A2 &lt; A3)
+            - test_resolved_entity_conflict_severity_levels
+            - test_resolved_entity_resolution_confidence_bounds
+
+          File: tests/unit/schemas/test_attribution.py
+          Tests:
+            - test_attribution_record_valid_creation
+            - test_attribution_record_conformal_set_coverage
+            - test_attribution_record_version_increments
+            - test_attribution_record_provenance_chain_ordering
+
+          File: tests/unit/schemas/test_feedback.py
+          Tests:
+            - test_feedback_card_valid_creation
+            - test_feedback_card_vas_center_bias_warning (score == 0.5 triggers flag)
+            - test_feedback_card_correction_types
+
+          File: tests/unit/schemas/test_permissions.py
+          Tests:
+            - test_permission_bundle_valid_creation
+            - test_permission_bundle_all_types_covered
+            - test_permission_bundle_serializes_for_mcp
+        </test-first>
+        <then-implement>
+          File: src/music_attribution/schemas/__init__.py
+          File: src/music_attribution/schemas/enums.py (all shared enums)
+          File: src/music_attribution/schemas/normalized.py (NormalizedRecord + sub-schemas)
+          File: src/music_attribution/schemas/resolved.py (ResolvedEntity + sub-schemas)
+          File: src/music_attribution/schemas/attribution.py (AttributionRecord + sub-schemas)
+          File: src/music_attribution/schemas/feedback.py (FeedbackCard + sub-schemas)
+          File: src/music_attribution/schemas/permissions.py (PermissionBundle + sub-schemas)
+        </then-implement>
+      </tdd-spec>
+      <acceptance-criteria>
+        <criterion>All 5 boundary object schemas implemented as Pydantic v2 BaseModels</criterion>
+        <criterion>All fields have type annotations and docstrings</criterion>
+        <criterion>All validators enforce constraints listed in Section 3</criterion>
+        <criterion>JSON Schema auto-generated: `python -c "from music_attribution.schemas import NormalizedRecord; print(NormalizedRecord.model_json_schema())"` works</criterion>
+        <criterion>All tests pass: `make test-unit`</criterion>
+        <criterion>`make lint` passes (ruff + mypy)</criterion>
+        <criterion>100% test coverage on schemas module</criterion>
+      </acceptance-criteria>
+    </task>
+
+    <task id="0.2" status="NOT_STARTED" pipeline="foundation">
+      <name>Set up PostgreSQL + pgvector + Apache AGE Docker Compose</name>
+      <description>
+        Local development environment with PostgreSQL 17 (or 18 when
+        available), pgvector extension, and Apache AGE extension.
+        Use Testcontainers in tests for deterministic state.
+      </description>
+      <dependencies>None (parallel with 0.1)</dependencies>
+      <tdd-spec>
+        <test-first>
+          File: tests/integration/test_database_setup.py
+          Tests:
+            - test_postgresql_connection
+            - test_pgvector_extension_available
+            - test_apache_age_extension_available
+            - test_create_vector_index
+            - test_create_graph_schema
+            - test_uuidv7_generation (if PG18)
+        </test-first>
+        <then-implement>
+          File: docker-compose.dev.yml
+            Services: postgres (with pgvector + AGE), valkey, app
+          File: scripts/init-extensions.sql
+            CREATE EXTENSION IF NOT EXISTS vector;
+            CREATE EXTENSION IF NOT EXISTS age;
+            SET search_path = ag_catalog, "$user", public;
+        </then-implement>
+      </tdd-spec>
+      <acceptance-criteria>
+        <criterion>`docker compose -f docker-compose.dev.yml up -d` starts all services</criterion>
+        <criterion>PostgreSQL accepts connections with pgvector and AGE loaded</criterion>
+        <criterion>Testcontainers-based tests pass in CI (GitHub Actions)</criterion>
+        <criterion>Valkey accepts connections for caching</criterion>
+      </acceptance-criteria>
+    </task>
+
+    <task id="0.3" status="NOT_STARTED" pipeline="foundation">
+      <name>Set up Alembic migrations with SQLAlchemy 2.0</name>
+      <description>
+        Database migration infrastructure. Initial migration creates
+        base tables matching the boundary object schemas. Separate
+        migration files for AGE graph schema and pgvector indexes.
+      </description>
+      <dependencies>0.1, 0.2</dependencies>
+      <tdd-spec>
+        <test-first>
+          File: tests/integration/test_migrations.py
+          Tests:
+            - test_alembic_upgrade_head
+            - test_alembic_downgrade_base
+            - test_alembic_heads_single (no branching)
+            - test_tables_match_pydantic_schemas
+        </test-first>
+        <then-implement>
+          File: src/music_attribution/db/__init__.py
+          File: src/music_attribution/db/engine.py (async SQLAlchemy engine factory)
+          File: src/music_attribution/db/models.py (SQLAlchemy ORM models mapping to schemas)
+          File: alembic.ini
+          File: alembic/env.py
+          File: alembic/versions/001_initial_schema.py
+          File: alembic/versions/002_pgvector_indexes.py
+          File: alembic/versions/003_age_graph_schema.py
+        </then-implement>
+      </tdd-spec>
+      <acceptance-criteria>
+        <criterion>`alembic upgrade head` succeeds on clean database</criterion>
+        <criterion>`alembic downgrade base` succeeds</criterion>
+        <criterion>Tables match Pydantic schema field names and types</criterion>
+        <criterion>pgvector HNSW index created on embedding columns</criterion>
+        <criterion>AGE graph "music_attribution" created with vertex/edge labels</criterion>
+      </acceptance-criteria>
+    </task>
+
+    <task id="0.4" status="NOT_STARTED" pipeline="foundation">
+      <name>Create Pydantic Settings configuration</name>
+      <description>
+        Centralized configuration using Pydantic Settings. All
+        config from environment variables with sensible defaults.
+        Supports .env files for local development.
+      </description>
+      <dependencies>0.1</dependencies>
+      <tdd-spec>
+        <test-first>
+          File: tests/unit/test_config.py
+          Tests:
+            - test_default_config_valid
+            - test_config_from_env_vars
+            - test_config_database_url_construction
+            - test_config_seed_deterministic
+            - test_config_sensitive_fields_excluded_from_repr
+        </test-first>
+        <then-implement>
+          File: src/music_attribution/config.py
+            class Settings(BaseSettings):
+                database_url: PostgresDsn
+                valkey_url: str = "redis://localhost:6379"
+                musicbrainz_user_agent: str
+                discogs_token: SecretStr | None = None
+                llm_provider: str = "anthropic"
+                llm_model: str = "claude-haiku-4-5"
+                attribution_seed: int = 42
+                log_level: str = "INFO"
+                environment: str = "development"
+                # ... etc
+        </then-implement>
+      </tdd-spec>
+      <acceptance-criteria>
+        <criterion>Settings loads from environment variables</criterion>
+        <criterion>Settings loads from .env file</criterion>
+        <criterion>Sensitive fields (tokens, secrets) excluded from repr/logging</criterion>
+        <criterion>All settings have type validation</criterion>
+        <criterion>.env.example file created with all variables documented</criterion>
+      </acceptance-criteria>
+    </task>
+
+    <task id="0.5" status="NOT_STARTED" pipeline="foundation">
+      <name>Add production dependencies to pyproject.toml</name>
+      <description>
+        Add core dependencies needed for Phase 0. Keep minimal —
+        only add what's needed for current phase. Per-task deps for
+        Phase 1+ are added via `uv add` at task start (see TDD conventions).
+        Use uv ONLY.
+      </description>
+      <dependencies>None (parallel with 0.1)</dependencies>
+      <implementation>
+        Add to pyproject.toml [project.dependencies]:
+          - pydantic >= 2.10
+          - pydantic-settings >= 2.0
+          - sqlalchemy[asyncio] >= 2.0
+          - alembic >= 1.14
+          - asyncpg >= 0.30  (async PostgreSQL driver)
+          - pgvector >= 0.4  (pgvector SQLAlchemy integration)
+          - valkey >= 6.0     (Valkey/Redis client)
+          - httpx >= 0.28    (async HTTP client for API calls)
+          - polars >= 1.0    (batch data processing)
+
+        <!-- REVISED v2.1: Use [dependency-groups] per PEP 735 / uv best practice,
+             not [project.optional-dependencies] per v2.0 TDD conventions -->
+        Add to pyproject.toml [dependency-groups] dev group:
+          - testcontainers[postgres] >= 4.0
+          - hypothesis >= 6.0
+
+        Run: uv sync
+      </implementation>
+      <acceptance-criteria>
+        <criterion>`uv sync` succeeds</criterion>
+        <criterion>`make lint` passes with new imports</criterion>
+        <criterion>`make test` passes</criterion>
+        <criterion>No pip/conda/requirements.txt usage</criterion>
+      </acceptance-criteria>
+    </task>
+  </phase>
+
+  <!-- ================================================================== -->
+  <!-- PHASE 1: DATA ENGINEERING PIPELINE                                -->
+  <!-- ETL from external sources into NormalizedRecords                   -->
+  <!-- ================================================================== -->
+
+  <phase id="1" name="Data Engineering Pipeline" status="NOT_STARTED"
+         estimated-effort="Week 2-4" priority="HIGH">
+    <description>
+      Build the ETL pipeline that fetches music metadata from external
+      sources and produces NormalizedRecords. This pipeline runs
+      independently — the entity resolution developer only needs to
+      know the NormalizedRecord schema.
+
+      Key design: Rate-limit compliance is handled HERE so downstream
+      consumers never worry about it. MusicBrainz: 1 req/s.
+      Discogs: 60 req/min authenticated.
+    </description>
+
+    <task id="1.1" status="NOT_STARTED" pipeline="data-engineering">
+      <name>MusicBrainz ETL connector</name>
+      <description>
+        Fetch recordings, works, artists, and relationships from
+        MusicBrainz API. Transform into NormalizedRecords.
+        Handle rate limiting (1 req/s), pagination, and retries.
+      </description>
+      <dependencies>0.1, 0.4, 0.5</dependencies>
+      <tdd-spec>
+        <test-first>
+          File: tests/unit/etl/test_musicbrainz.py
+          Tests:
+            - test_fetch_recording_by_mbid (mock HTTP)
+            - test_fetch_artist_by_mbid (mock HTTP)
+            - test_transform_recording_to_normalized_record
+            - test_transform_artist_to_normalized_record
+            - test_extract_relationships_from_recording
+            - test_extract_isrc_from_recording
+            - test_rate_limiter_enforces_one_per_second
+            - test_retry_on_503_with_backoff
+            - test_handles_missing_fields_gracefully
+
+          File: tests/integration/etl/test_musicbrainz_live.py (marked @pytest.mark.integration)
+          Tests:
+            - test_fetch_known_recording_abbey_road (live API, known MBID)
+            - test_fetch_known_artist_beatles (live API, known MBID)
+        </test-first>
+        <then-implement>
+          File: src/music_attribution/etl/__init__.py
+          File: src/music_attribution/etl/musicbrainz.py
+            class MusicBrainzConnector:
+                async def fetch_recording(self, mbid: str) -> NormalizedRecord
+                async def fetch_artist(self, mbid: str) -> NormalizedRecord
+                async def fetch_work(self, mbid: str) -> NormalizedRecord
+                async def search_recordings(self, query: str, limit: int) -> list[NormalizedRecord]
+                async def fetch_recording_relationships(self, mbid: str) -> list[Relationship]
+          File: src/music_attribution/etl/rate_limiter.py
+            class TokenBucketRateLimiter (async, configurable rate)
+        </then-implement>
+      </tdd-spec>
+      <acceptance-criteria>
+        <criterion>Produces valid NormalizedRecords from MusicBrainz API responses</criterion>
+        <criterion>Rate limiting enforced (no more than 1 req/s)</criterion>
+        <criterion>Retries on transient errors (503, timeout)</criterion>
+        <criterion>Extracts ISRC, ISWC, ISNI identifiers when available</criterion>
+        <criterion>Extracts artist-recording relationships (performer, songwriter, producer)</criterion>
+        <criterion>All unit tests pass with mocked HTTP responses</criterion>
+        <criterion>Integration test passes against live MusicBrainz API</criterion>
+      </acceptance-criteria>
+      <pyproject-deps>musicbrainzngs >= 0.7</pyproject-deps>
+    </task>
+
+    <task id="1.2" status="NOT_STARTED" pipeline="data-engineering">
+      <name>Discogs ETL connector</name>
+      <description>
+        Fetch release credits, artist profiles, and label info from
+        Discogs API. Transform into NormalizedRecords. Discogs excels
+        at liner-notes-style credits (session musicians, engineers).
+      </description>
+      <dependencies>0.1, 0.4, 0.5</dependencies>
+      <tdd-spec>
+        <test-first>
+          File: tests/unit/etl/test_discogs.py
+          Tests:
+            - test_fetch_release_by_id (mock HTTP)
+            - test_transform_release_credits_to_normalized_records
+            - test_extract_role_details (e.g. "Guitar", "Bass", "Vocals")
+            - test_handles_multiple_artists_per_credit
+            - test_rate_limiter_enforces_sixty_per_minute
+            - test_authenticated_vs_unauthenticated_limits
+        </test-first>
+        <then-implement>
+          File: src/music_attribution/etl/discogs.py
+            class DiscogsConnector:
+                async def fetch_release(self, release_id: int) -> list[NormalizedRecord]
+                async def fetch_artist(self, artist_id: int) -> NormalizedRecord
+                async def search_releases(self, query: str) -> list[NormalizedRecord]
+        </then-implement>
+      </tdd-spec>
+      <acceptance-criteria>
+        <criterion>Produces valid NormalizedRecords from Discogs API responses</criterion>
+        <criterion>Extracts detailed credit roles (performer, engineer, producer, etc.)</criterion>
+        <criterion>Rate limiting: 60 req/min authenticated, 25 req/min unauthenticated</criterion>
+        <criterion>All unit tests pass</criterion>
+      </acceptance-criteria>
+      <pyproject-deps>python3-discogs-client >= 2.8</pyproject-deps>
+    </task>
+
+    <task id="1.3" status="NOT_STARTED" pipeline="data-engineering">
+      <name>AcoustID fingerprint connector</name>
+      <description>
+        Audio fingerprinting via AcoustID/Chromaprint. Given an audio
+        file, generate fingerprint and lookup against AcoustID database
+        to find MusicBrainz recording IDs. This is the "what recording
+        is this?" step.
+      </description>
+      <dependencies>0.1, 0.4, 0.5</dependencies>
+      <tdd-spec>
+        <test-first>
+          File: tests/unit/etl/test_acoustid.py
+          Tests:
+            - test_generate_fingerprint_from_audio_file
+            - test_lookup_fingerprint_returns_mbids
+            - test_handles_no_match_gracefully
+            - test_rate_limiter_three_per_second
+            - test_transform_lookup_result_to_normalized_record
+
+          File: tests/integration/etl/test_acoustid_live.py
+          Tests:
+            - test_lookup_known_recording (requires test audio file fixture)
+        </test-first>
+        <then-implement>
+          File: src/music_attribution/etl/acoustid.py
+            class AcoustIDConnector:
+                async def fingerprint_file(self, file_path: Path) -> str
+                async def lookup(self, fingerprint: str, duration: int) -> list[NormalizedRecord]
+        </then-implement>
+      </tdd-spec>
+      <acceptance-criteria>
+        <criterion>Generates Chromaprint fingerprint from audio file</criterion>
+        <criterion>Looks up fingerprint against AcoustID web service</criterion>
+        <criterion>Returns MusicBrainz recording IDs with match scores</criterion>
+        <criterion>Rate limiting: 3 req/s</criterion>
+      </acceptance-criteria>
+      <pyproject-deps>pyacoustid >= 1.3</pyproject-deps>
+    </task>
+
+    <task id="1.4" status="NOT_STARTED" pipeline="data-engineering">
+      <name>File metadata reader (mutagen)</name>
+      <description>
+        Read ID3/Vorbis/FLAC metadata from audio files. Extract ISRC,
+        credits, and other embedded metadata into NormalizedRecords.
+      </description>
+      <dependencies>0.1</dependencies>
+      <tdd-spec>
+        <test-first>
+          File: tests/unit/etl/test_file_metadata.py
+          Tests:
+            - test_read_mp3_id3_tags
+            - test_read_flac_vorbis_comments
+            - test_extract_isrc_from_tsrc_frame
+            - test_extract_credits_from_tipl_frame
+            - test_handles_missing_tags_gracefully
+            - test_handles_corrupt_file_gracefully
+            - test_transform_to_normalized_record
+        </test-first>
+        <then-implement>
+          File: src/music_attribution/etl/file_metadata.py
+            class FileMetadataReader:
+                def read(self, file_path: Path) -> NormalizedRecord
+        </then-implement>
+      </tdd-spec>
+      <acceptance-criteria>
+        <criterion>Reads ID3v2.3/v2.4, Vorbis, FLAC, MP4 metadata</criterion>
+        <criterion>Extracts ISRC from TSRC frame</criterion>
+        <criterion>Extracts credits from TIPL/TMCL frames</criterion>
+        <criterion>Produces valid NormalizedRecord</criterion>
+      </acceptance-criteria>
+      <pyproject-deps>mutagen >= 1.47</pyproject-deps>
+    </task>
+
+    <task id="1.5" status="NOT_STARTED" pipeline="data-engineering">
+      <name>Data quality gate (Pandera validation)</name>
+      <description>
+        Validation layer that runs on batches of NormalizedRecords
+        before they're passed to Entity Resolution. Checks statistical
+        properties (distribution of sources, completeness of identifiers,
+        etc.) beyond what Pydantic validators cover.
+      </description>
+      <!-- REVISED v2.0: Removed unnecessary deps on 1.1, 1.2 per TDD reviewer — quality gate validates records regardless of source -->
+      <dependencies>0.1</dependencies>
+      <tdd-spec>
+        <test-first>
+          File: tests/unit/etl/test_data_quality.py
+          Tests:
+            - test_rejects_batch_with_zero_identifiers
+            - test_warns_on_low_identifier_coverage
+            - test_rejects_duplicate_source_ids
+            - test_validates_source_distribution (not all from one source)
+            - test_generates_quality_report
+        </test-first>
+        <then-implement>
+          File: src/music_attribution/etl/quality_gate.py
+            <!-- ADDED v2.1: QualityReport defined (was phantom type) -->
+            class QualityCheckResult(BaseModel):
+                check_name: str
+                status: Literal["pass", "warn", "fail"]
+                message: str
+                metric_value: float | None = None
+            class QualityReport(BaseModel):
+                batch_id: uuid.UUID
+                checks: list[QualityCheckResult]
+                overall_status: Literal["pass", "warn", "fail"]
+                records_in: int
+                records_passed: int
+                timestamp: datetime
+            class DataQualityGate:
+                def validate_batch(self, records: list[NormalizedRecord]) -> QualityReport
+                def enforce(self, records: list[NormalizedRecord]) -> list[NormalizedRecord]  # raises on failure
+        </then-implement>
+      </tdd-spec>
+      <acceptance-criteria>
+        <criterion>Validates batches of NormalizedRecords</criterion>
+        <criterion>Produces QualityReport with pass/warn/fail per check</criterion>
+        <criterion>Rejects batches that fail critical quality checks</criterion>
+        <criterion>Warns on non-critical quality issues</criterion>
+      </acceptance-criteria>
+      <pyproject-deps>pandera >= 0.22</pyproject-deps>
+    </task>
+
+    <task id="1.6" status="NOT_STARTED" pipeline="data-engineering">
+      <name>NormalizedRecord persistence layer</name>
+      <description>
+        Store validated NormalizedRecords in PostgreSQL. Handles
+        upsert logic (same source + source_id = update, not duplicate).
+        This is the handover point to Entity Resolution.
+      </description>
+      <dependencies>0.3, 1.5</dependencies>
+      <tdd-spec>
+        <test-first>
+          File: tests/integration/etl/test_persistence.py
+          Tests:
+            - test_insert_normalized_record
+            - test_upsert_same_source_id_updates
+            - test_query_by_source
+            - test_query_by_entity_type
+            - test_query_by_identifier (ISRC, MBID, etc.)
+            - test_batch_insert_performance (1000 records in &lt; 5s)
+        </test-first>
+        <then-implement>
+          File: src/music_attribution/etl/persistence.py
+            class NormalizedRecordRepository:
+                async def upsert(self, record: NormalizedRecord) -> uuid.UUID
+                async def upsert_batch(self, records: list[NormalizedRecord]) -> list[uuid.UUID]
+                async def find_by_source(self, source: SourceEnum) -> list[NormalizedRecord]
+                async def find_by_identifier(self, **kwargs) -> list[NormalizedRecord]
+        </then-implement>
+      </tdd-spec>
+      <acceptance-criteria>
+        <criterion>NormalizedRecords stored in PostgreSQL with Testcontainers</criterion>
+        <criterion>Upsert prevents duplicates from same source</criterion>
+        <criterion>Efficient batch insert (&gt;= 200 records/s)</criterion>
+        <criterion>Query by source, entity type, identifiers works</criterion>
+      </acceptance-criteria>
+    </task>
+  </phase>
+
+  <!-- ================================================================== -->
+  <!-- PHASE 2: ENTITY RESOLUTION PIPELINE                               -->
+  <!-- Cross-reference sources, produce ResolvedEntities                  -->
+  <!-- ================================================================== -->
+
+  <phase id="2" name="Entity Resolution Pipeline" status="NOT_STARTED"
+         estimated-effort="Week 4-6" priority="HIGH">
+    <description>
+      The core "cross-reference" capability. Takes NormalizedRecords from
+      multiple sources and resolves them into ResolvedEntities. This is
+      where "90 to 100% confident is correct" happens.
+
+      Multi-signal approach (per tool landscape research):
+      1. Exact identifier match (ISRC/ISWC/ISNI) — highest confidence
+      2. String similarity (fuzzy matching) — fast filter
+      3. Embedding similarity (semantic) — handles name variations
+      4. Graph-based resolution (AGE) — relationship evidence
+      5. LLM-assisted disambiguation — complex cases only
+      Each signal's confidence scored via MAPIE conformal prediction.
+    </description>
+
+    <task id="2.1" status="NOT_STARTED" pipeline="entity-resolution">
+      <name>Identifier-based exact matching</name>
+      <description>
+        The simplest and highest-confidence resolution: if two records
+        share the same ISRC, ISWC, or ISNI, they refer to the same entity.
+        This handles the majority of high-confidence matches.
+      </description>
+      <dependencies>1.6</dependencies>
+      <tdd-spec>
+        <test-first>
+          File: tests/unit/resolution/test_identifier_match.py
+          Tests:
+            - test_exact_isrc_match_resolves
+            - test_exact_iswc_match_resolves
+            - test_exact_isni_match_resolves
+            - test_mbid_match_resolves
+            - test_no_shared_identifiers_returns_none
+            - test_conflicting_other_fields_still_resolves_on_id_match
+            <!-- REVISED v2.1: Test names reflect verification DEPTH, not identifier type (per v2.0 AssuranceLevelEnum semantics) -->
+            - test_assurance_level_A1_for_single_source_id_match (one ISRC in one registry = single-source verified)
+            - test_assurance_level_A2_for_multi_source_cross_reference (same ISRC in MusicBrainz + Discogs = cross-referenced)
+            - test_assurance_level_A3_for_identity_verified_isni (ISNI confirmed + cross-registry + no conflicts = identity-verified)
+        </test-first>
+        <then-implement>
+          File: src/music_attribution/resolution/__init__.py
+          File: src/music_attribution/resolution/identifier_match.py
+            class IdentifierMatcher:
+                def match(self, records: list[NormalizedRecord]) -> list[ResolvedEntity]
+        </then-implement>
+      </tdd-spec>
+      <acceptance-criteria>
+        <criterion>Exact ID matches produce ResolvedEntity with A1/A2/A3 assurance</criterion>
+        <criterion>Multiple records merged correctly when IDs match</criterion>
+        <criterion>Conflicts in non-ID fields recorded in Conflict list</criterion>
+      </acceptance-criteria>
+    </task>
+
+    <task id="2.2" status="NOT_STARTED" pipeline="entity-resolution">
+      <name>String similarity matching</name>
+      <description>
+        Fast fuzzy matching for entity names using jellyfish/thefuzz.
+        Handles common variations: "The Beatles" vs "Beatles, The",
+        accented characters, abbreviations.
+      </description>
+      <!-- REVISED v2.0: Removed 0.1 dep per TDD reviewer — pure string utility, no schema import needed -->
+      <dependencies>None (standalone utility)</dependencies>
+      <tdd-spec>
+        <test-first>
+          File: tests/unit/resolution/test_string_similarity.py
+          Tests:
+            - test_exact_match_score_1_0
+            - test_the_prefix_handling ("The Beatles" ~ "Beatles, The")
+            - test_unicode_normalization ("Björk" ~ "Bjork")
+            - test_abbreviation_handling ("feat." ~ "featuring")
+            - test_low_similarity_below_threshold_rejected
+            - test_configurable_threshold
+        </test-first>
+        <then-implement>
+          File: src/music_attribution/resolution/string_similarity.py
+            class StringSimilarityMatcher:
+                def score(self, name_a: str, name_b: str) -> float
+                def find_candidates(self, name: str, corpus: list[str], threshold: float) -> list[tuple[str, float]]
+        </then-implement>
+      </tdd-spec>
+      <acceptance-criteria>
+        <criterion>Handles common music name variations (The prefix, accents, feat.)</criterion>
+        <criterion>Configurable threshold (default 0.85)</criterion>
+        <criterion>Fast: &gt;10K comparisons/second</criterion>
+      </acceptance-criteria>
+      <pyproject-deps>jellyfish >= 1.1, thefuzz >= 0.22</pyproject-deps>
+    </task>
+
+    <task id="2.3" status="NOT_STARTED" pipeline="entity-resolution">
+      <name>Embedding-based semantic matching</name>
+      <description>
+        Use sentence-transformers to embed entity names/metadata
+        and find semantically similar entities via pgvector.
+        Handles cases string matching misses: translations, very
+        different spellings of same entity.
+      </description>
+      <dependencies>0.2, 0.3</dependencies>
+      <tdd-spec>
+        <test-first>
+          File: tests/unit/resolution/test_embedding_match.py
+          Tests:
+            - test_embed_entity_name
+            - test_similar_entities_high_cosine_similarity
+            - test_different_entities_low_cosine_similarity
+            - test_pgvector_nearest_neighbor_query
+            - test_batch_embedding_performance
+
+          File: tests/integration/resolution/test_embedding_pgvector.py
+          Tests:
+            - test_store_and_retrieve_embeddings_pgvector
+            - test_nearest_neighbor_search_returns_correct_matches
+        </test-first>
+        <then-implement>
+          File: src/music_attribution/resolution/embedding_match.py
+            class EmbeddingMatcher:
+                async def embed(self, text: str) -> list[float]
+                async def find_similar(self, embedding: list[float], top_k: int) -> list[tuple[uuid.UUID, float]]
+                async def store_embedding(self, entity_id: uuid.UUID, embedding: list[float])
+        </then-implement>
+      </tdd-spec>
+      <acceptance-criteria>
+        <criterion>Embeds entity names using sentence-transformers</criterion>
+        <criterion>Stores embeddings in pgvector</criterion>
+        <criterion>HNSW index for fast nearest-neighbor search</criterion>
+        <criterion>Cosine similarity scores returned with matches</criterion>
+      </acceptance-criteria>
+      <pyproject-deps>sentence-transformers >= 3.0</pyproject-deps>
+    </task>
+
+    <!-- ADDED v2.0: Tasks 2.3b, 2.3c, 2.3d per completeness reviewer — Splink, graph resolution, LLM disambiguation -->
+
+    <task id="2.3b" status="NOT_STARTED" pipeline="entity-resolution">
+      <name>Splink probabilistic record linkage</name>
+      <description>
+        ADDED v2.0 per reviewer FAIL-1. Splink implements Fellegi-Sunter
+        probabilistic record linkage at scale. This is fundamentally different
+        from the simple matchers in 2.1-2.3 — it estimates match/non-match
+        probability distributions and produces calibrated linkage scores.
+      </description>
+      <dependencies>0.1, 1.6</dependencies>
+      <tdd-spec>
+        <test-first>
+          File: tests/unit/resolution/test_splink_linkage.py
+          Tests:
+            - test_fellegi_sunter_parameter_estimation
+            - test_blocking_strategy_reduces_comparisons
+            - test_linkage_score_calibrated
+            - test_cluster_threshold_configurable
+            - test_handles_missing_fields_in_comparison
+        </test-first>
+        <then-implement>
+          File: src/music_attribution/resolution/splink_linkage.py
+            class SplinkMatcher:
+                def configure_model(self, comparison_columns: list[str]) -> None
+                def estimate_parameters(self, records: DataFrame) -> None
+                def predict(self, records: DataFrame) -> DataFrame  # with match_probability column
+                def cluster(self, predictions: DataFrame, threshold: float = 0.85) -> list[list[int]]
+        </then-implement>
+      </tdd-spec>
+      <acceptance-criteria>
+        <criterion>Fellegi-Sunter m/u parameters estimated from data</criterion>
+        <criterion>Blocking strategy configured to reduce O(n^2) comparisons</criterion>
+        <criterion>Match probabilities calibrated (not just similarity scores)</criterion>
+        <criterion>Clustering produces entity groups from pairwise predictions</criterion>
+      </acceptance-criteria>
+      <pyproject-deps>splink >= 4.0</pyproject-deps>
+    </task>
+
+    <task id="2.3c" status="NOT_STARTED" pipeline="entity-resolution">
+      <name>Graph-based entity resolution via relationship evidence</name>
+      <description>
+        ADDED v2.0 per reviewer FAIL-2. Use Apache AGE graph traversals
+        to resolve entities based on relationship evidence. Example: two
+        artist records that share 3+ album relationships are likely the
+        same artist, even if names differ slightly.
+      </description>
+      <!-- REVISED v2.1: Removed 2.5 dependency to break cycle 2.3c→2.5→2.4→2.3c.
+           Graph resolution algorithm is developed against AGE schema from 0.3,
+           tested with seeded test data in integration tests, independent of
+           full persistence layer. -->
+      <dependencies>0.3</dependencies>
+      <tdd-spec>
+        <test-first>
+          File: tests/unit/resolution/test_graph_resolution.py
+          Tests:
+            - test_resolve_artist_via_shared_album_relationships
+            - test_graph_path_confidence_scoring
+            - test_shared_collaborator_evidence
+            - test_minimum_shared_relationships_threshold
+            - test_path_length_affects_confidence (closer = higher)
+        </test-first>
+        <then-implement>
+          File: src/music_attribution/resolution/graph_resolution.py
+            class GraphResolver:
+                async def find_candidate_matches(self, entity_id: uuid.UUID, min_shared: int = 2) -> list[tuple[uuid.UUID, float]]
+                async def score_graph_evidence(self, entity_a: uuid.UUID, entity_b: uuid.UUID) -> float
+        </then-implement>
+      </tdd-spec>
+      <acceptance-criteria>
+        <criterion>Identifies candidate matches via shared relationships in AGE graph</criterion>
+        <criterion>Graph path confidence decreases with path length</criterion>
+        <criterion>Minimum shared relationship threshold prevents false positives</criterion>
+      </acceptance-criteria>
+    </task>
+
+    <task id="2.3d" status="NOT_STARTED" pipeline="entity-resolution">
+      <name>LLM-assisted disambiguation</name>
+      <description>
+        ADDED v2.0 per reviewer FAIL-3. For complex disambiguation cases
+        (e.g., "John Williams the composer vs the guitarist"), use PydanticAI
+        with structured output to make a reasoned decision. LLM is ONLY
+        called when other signals are ambiguous (cost control).
+      </description>
+      <dependencies>0.4</dependencies>
+      <tdd-spec>
+        <test-first>
+          File: tests/unit/resolution/test_llm_disambiguation.py
+          Tests:
+            - test_llm_disambiguation_john_williams (mock LLM)
+            - test_llm_only_called_when_other_signals_ambiguous
+            - test_llm_structured_output_via_pydanticai
+            - test_llm_response_cached_to_reduce_cost
+            - test_llm_timeout_returns_uncertain_not_error
+        </test-first>
+        <then-implement>
+          File: src/music_attribution/resolution/llm_disambiguation.py
+            <!-- ADDED v2.1: DisambiguationResult defined (was phantom type) -->
+            class DisambiguationResult(BaseModel):
+                chosen_index: int | None  # index in candidates list, None if uncertain
+                confidence: float  # LLM's self-reported confidence 0.0-1.0
+                reasoning: str  # LLM's explanation (structured via PydanticAI)
+                alternatives_considered: int
+                cached: bool = False  # whether this result came from cache
+            class LLMDisambiguator:
+                async def disambiguate(self, candidates: list[NormalizedRecord], context: str) -> DisambiguationResult
+                async def should_invoke(self, existing_scores: ResolutionDetails) -> bool
+        </then-implement>
+      </tdd-spec>
+      <acceptance-criteria>
+        <criterion>Produces structured disambiguation result via PydanticAI</criterion>
+        <criterion>Only invoked when confidence from other methods is in ambiguous range (0.4-0.7)</criterion>
+        <criterion>LLM responses cached by input hash</criterion>
+        <criterion>Graceful degradation on LLM timeout/error (returns uncertain, doesn't block pipeline)</criterion>
+      </acceptance-criteria>
+      <pyproject-deps>pydantic-ai >= 1.0</pyproject-deps>
+    </task>
+
+    <task id="2.4" status="NOT_STARTED" pipeline="entity-resolution">
+      <name>Multi-signal resolution orchestrator</name>
+      <description>
+        Combines all resolution methods (identifier, string, embedding,
+        Splink, graph, and LLM) into a single pipeline. Produces
+        ResolvedEntities with per-method confidence breakdown.
+        Uses MAPIE for calibrated confidence scores.
+        REVISED v2.0: Now includes all 6 resolution signals, not just 3.
+        Score combination uses weighted average with configurable weights
+        per method. Weights default to: identifier=1.0, splink=0.8,
+        string=0.6, embedding=0.7, graph=0.75, llm=0.85.
+      </description>
+      <!-- REVISED v2.0: Updated dependencies to include new tasks -->
+      <dependencies>2.1, 2.2, 2.3, 2.3b, 2.3c, 2.3d</dependencies>
+      <tdd-spec>
+        <test-first>
+          File: tests/unit/resolution/test_orchestrator.py
+          Tests:
+            - test_exact_id_match_bypasses_other_methods
+            - test_string_and_embedding_combined_score
+            - test_low_confidence_flagged_for_review
+            - test_assurance_level_computed_correctly
+            - test_conflicts_collected_across_sources
+            - test_resolution_details_populated
+
+          File: tests/integration/resolution/test_full_resolution.py
+          Tests:
+            - test_resolve_beatles_across_musicbrainz_and_discogs
+            - test_resolve_unknown_artist_flags_for_review
+        </test-first>
+        <then-implement>
+          File: src/music_attribution/resolution/orchestrator.py
+            class ResolutionOrchestrator:
+                async def resolve(self, records: list[NormalizedRecord]) -> list[ResolvedEntity]
+                # REVISED v2.0: renamed from resolve_single per TDD reviewer — "single" taking a list was confusing
+                async def resolve_group(self, records: list[NormalizedRecord]) -> ResolvedEntity  # pre-clustered group believed to be same entity
+        </then-implement>
+      </tdd-spec>
+      <acceptance-criteria>
+        <criterion>Combines identifier, string, and embedding matching</criterion>
+        <criterion>Produces ResolvedEntity with resolution_details breakdown</criterion>
+        <criterion>Assurance level computed from available evidence</criterion>
+        <criterion>Low-confidence entities flagged for review (needs_review=True equivalent)</criterion>
+        <criterion>Conflicts between sources recorded</criterion>
+      </acceptance-criteria>
+      <pyproject-deps>mapie >= 1.3</pyproject-deps>
+    </task>
+
+    <task id="2.5" status="NOT_STARTED" pipeline="entity-resolution">
+      <name>ResolvedEntity persistence and graph storage</name>
+      <description>
+        Store ResolvedEntities in PostgreSQL (relational) and Apache AGE
+        (graph). The graph enables relationship-based resolution queries
+        like "find all entities that share an album with this artist."
+      </description>
+      <dependencies>0.3, 2.4</dependencies>
+      <tdd-spec>
+        <test-first>
+          File: tests/integration/resolution/test_graph_storage.py
+          Tests:
+            - test_store_resolved_entity_in_relational
+            - test_store_resolved_entity_in_graph
+            - test_query_artist_credits_via_graph_traversal
+            - test_find_related_artists_via_shared_recordings
+            - test_graph_and_relational_consistent
+        </test-first>
+        <then-implement>
+          File: src/music_attribution/resolution/persistence.py
+          File: src/music_attribution/resolution/graph_store.py
+            class GraphStore:
+                async def add_entity(self, entity: ResolvedEntity)
+                async def add_relationship(self, from_id, to_id, rel_type, attrs)
+                async def find_related(self, entity_id, rel_type, depth) -> list[ResolvedEntity]
+                async def shortest_path(self, from_id, to_id) -> list[ResolvedEntity]
+        </then-implement>
+      </tdd-spec>
+      <acceptance-criteria>
+        <criterion>ResolvedEntities stored in both relational and graph databases</criterion>
+        <criterion>Graph traversal queries work (find related entities)</criterion>
+        <criterion>Consistency between relational and graph representations</criterion>
+      </acceptance-criteria>
+    </task>
+  </phase>
+
+  <!-- ================================================================== -->
+  <!-- PHASE 3: ATTRIBUTION ENGINE PIPELINE                              -->
+  <!-- Multi-source aggregation with calibrated confidence                -->
+  <!-- ================================================================== -->
+
+  <phase id="3" name="Attribution Engine Pipeline" status="NOT_STARTED"
+         estimated-effort="Week 6-8" priority="HIGH">
+    <description>
+      Produces AttributionRecords with A0-A3 assurance levels and
+      conformal prediction sets. This is where the manuscript's
+      theoretical framework (SConU, conformal prediction, calibration
+      loops) becomes code.
+    </description>
+
+    <task id="3.1" status="NOT_STARTED" pipeline="attribution-engine">
+      <name>Multi-source credit aggregation</name>
+      <description>
+        Aggregate credits from multiple ResolvedEntities into a single
+        AttributionRecord. Handle disagreements between sources using
+        weighted voting based on source reliability.
+      </description>
+      <dependencies>2.4</dependencies>
+      <tdd-spec>
+        <test-first>
+          File: tests/unit/attribution/test_aggregation.py
+          Tests:
+            - test_single_source_credit_passes_through
+            - test_multiple_sources_agree_high_confidence
+            - test_sources_disagree_weighted_resolution
+            - test_source_reliability_weights_applied
+            - test_provenance_chain_populated
+        </test-first>
+        <then-implement>
+          File: src/music_attribution/attribution/__init__.py (expand existing)
+          File: src/music_attribution/attribution/aggregator.py
+            class CreditAggregator:
+                async def aggregate(self, entities: list[ResolvedEntity]) -> AttributionRecord
+        </then-implement>
+      </tdd-spec>
+    </task>
+
+    <task id="3.2" status="NOT_STARTED" pipeline="attribution-engine">
+      <name>Conformal prediction confidence scoring</name>
+      <description>
+        Wrap attribution confidence in conformal prediction sets
+        using MAPIE. "90% confident" must actually mean 90% coverage.
+        Target ECE (Expected Calibration Error) &lt; 0.05.
+      </description>
+      <dependencies>3.1</dependencies>
+      <tdd-spec>
+        <test-first>
+          File: tests/unit/attribution/test_conformal.py
+          Tests:
+            - test_conformal_set_at_90_coverage
+            - test_conformal_set_size_decreases_with_more_evidence
+            - test_calibration_error_below_threshold
+            - test_empty_evidence_produces_wide_set
+            - test_high_agreement_produces_narrow_set
+        </test-first>
+        <then-implement>
+          File: src/music_attribution/attribution/conformal.py (expand existing confidence/)
+            <!-- ADDED v2.1: CalibrationReport defined (was phantom type) -->
+            class CalibrationReport(BaseModel):
+                ece: float  # Expected Calibration Error
+                marginal_coverage: float  # actual coverage achieved
+                target_coverage: float  # requested coverage level
+                calibration_method: str  # APS | RAPS | LAC
+                calibration_set_size: int
+                bin_accuracies: list[float]  # per-bin accuracy for calibration curve
+                bin_confidences: list[float]  # per-bin mean confidence
+                timestamp: datetime
+            class ConformalScorer:
+                def score(self, attribution: AttributionRecord, coverage: float = 0.90) -> ConformalSet
+                def calibrate(self, predictions: list, actuals: list) -> CalibrationReport
+        </then-implement>
+      </tdd-spec>
+    </task>
+
+    <task id="3.3" status="NOT_STARTED" pipeline="attribution-engine">
+      <name>Active learning priority queue</name>
+      <description>
+        Rank AttributionRecords by review priority for human experts.
+        Priority formula:
+          priority = w1*boundary + w2*disagreement + w3*ambiguity + w4*never_reviewed + w5*staleness
+        where boundary = proximity to decision boundary,
+        disagreement = source disagreement, ambiguity = entity ambiguity.
+      </description>
+      <dependencies>3.2</dependencies>
+      <tdd-spec>
+        <test-first>
+          File: tests/unit/attribution/test_priority_queue.py
+          Tests:
+            - test_low_confidence_gets_high_priority
+            - test_source_disagreement_increases_priority
+            - test_never_reviewed_increases_priority
+            - test_recently_reviewed_decreases_priority
+            - test_priority_queue_ordering
+        </test-first>
+        <then-implement>
+          File: src/music_attribution/attribution/priority_queue.py
+            class ReviewPriorityQueue:
+                def compute_priority(self, attribution: AttributionRecord) -> float
+                def next_for_review(self, limit: int = 10) -> list[AttributionRecord]
+        </then-implement>
+      </tdd-spec>
+    </task>
+
+    <task id="3.4" status="NOT_STARTED" pipeline="attribution-engine">
+      <name>AttributionRecord persistence</name>
+      <dependencies>0.3, 3.2</dependencies>
+      <tdd-spec>
+        <test-first>
+          File: tests/integration/attribution/test_persistence.py
+          Tests:
+            - test_store_attribution_record
+            - test_version_increments_on_update
+            - test_query_by_work_entity_id
+            - test_query_needs_review
+            - test_provenance_chain_appended_on_update
+        </test-first>
+        <then-implement>
+          <!-- REVISED v2.0: Added missing signatures per TDD reviewer -->
+          File: src/music_attribution/attribution/persistence.py
+            class AttributionRecordRepository:
+                async def store(self, record: AttributionRecord) -> uuid.UUID
+                async def update(self, record: AttributionRecord) -> uuid.UUID  # increments version
+                async def find_by_work_entity_id(self, work_entity_id: uuid.UUID) -> AttributionRecord | None
+                async def find_needs_review(self, limit: int = 50) -> list[AttributionRecord]
+                async def find_by_id(self, attribution_id: uuid.UUID) -> AttributionRecord | None
+        </then-implement>
+      </tdd-spec>
+    </task>
+  </phase>
+
+  <!-- ================================================================== -->
+  <!-- PHASE 4: API AND MCP SERVER                                       -->
+  <!-- REST API + MCP consent infrastructure                              -->
+  <!-- ================================================================== -->
+
+  <phase id="4" name="API and MCP Server" status="NOT_STARTED"
+         estimated-effort="Week 8-10" priority="MEDIUM">
+
+    <task id="4.1" status="NOT_STARTED" pipeline="api-mcp-server">
+      <name>FastAPI REST API for attribution queries</name>
+      <dependencies>3.4</dependencies>
+      <tdd-spec>
+        <test-first>
+          File: tests/unit/api/test_attribution_endpoints.py
+          Tests:
+            - test_get_attribution_by_isrc
+            - test_get_attribution_by_work_id
+            - test_search_attributions_by_artist_name
+            - test_attribution_response_includes_confidence
+            - test_attribution_response_includes_assurance_level
+            - test_pagination_works
+            - test_invalid_isrc_returns_400
+            - test_not_found_returns_404
+        </test-first>
+        <then-implement>
+          File: src/music_attribution/api/__init__.py
+          File: src/music_attribution/api/app.py (FastAPI app factory)
+          File: src/music_attribution/api/routes/attribution.py
+          File: src/music_attribution/api/routes/health.py
+        </then-implement>
+      </tdd-spec>
+      <!-- ADDED v2.1: Missing pyproject-deps per DAG reviewer -->
+      <pyproject-deps>fastapi >= 0.115, uvicorn >= 0.34</pyproject-deps>
+    </task>
+
+    <task id="4.2" status="NOT_STARTED" pipeline="api-mcp-server">
+      <name>MCP server for AI platform consent queries</name>
+      <description>
+        Implement MCP server that AI platforms can query to check
+        attribution and consent. This is the "Permission Patchbay"
+        from the manuscript. MCP tools:
+        - query_attribution(isrc) -> AttributionRecord
+        - check_permission(entity_id, permission_type) -> PermissionValue
+        - list_permissions(entity_id) -> PermissionBundle
+
+        Ref: Kim et al. 2025 — "Attribution Layer extensions via MCP"
+      </description>
+      <dependencies>4.1</dependencies>
+      <tdd-spec>
+        <test-first>
+          File: tests/unit/mcp/test_mcp_server.py
+          Tests:
+            - test_mcp_tool_query_attribution
+            - test_mcp_tool_check_permission_allowed
+            - test_mcp_tool_check_permission_denied
+            - test_mcp_tool_check_permission_ask
+            - test_mcp_tool_list_permissions
+            - test_mcp_resource_attribution_by_isrc
+        </test-first>
+        <then-implement>
+          File: src/music_attribution/mcp/__init__.py (expand existing)
+          File: src/music_attribution/mcp/server.py
+          File: src/music_attribution/mcp/tools.py
+          File: src/music_attribution/mcp/resources.py
+        </then-implement>
+      </tdd-spec>
+      <pyproject-deps>mcp >= 1.0</pyproject-deps>
+    </task>
+  </phase>
+
+  <!-- ================================================================== -->
+  <!-- PHASE 5: CHAT INTERFACE (Deferred — architecture-dependent)       -->
+  <!-- ================================================================== -->
+
+  <phase id="5" name="Chat Interface" status="DEFERRED"
+         estimated-effort="Week 10-12" priority="MEDIUM">
+    <description>
+      Conversational gap-filling interface. DEFERRED because:
+      1. Depends on archetype choice (Next.js vs HTMX vs API-only)
+      2. Attribution engine must be functional first
+      3. Can be built by a separate team in parallel with Phase 4
+
+      When ready, implement:
+      - AI-assisted gap-filling conversation (PydanticAI agent)
+      - FeedbackCard collection from domain experts
+      - VAS (Visual Analogue Scale) with center-bias mitigation
+      - Active learning: present highest-priority records first
+    </description>
+
+    <task id="5.1" status="DEFERRED" pipeline="chat-interface">
+      <name>Gap-filling conversation agent (PydanticAI)</name>
+      <dependencies>3.3, 4.1</dependencies>
+    </task>
+
+    <task id="5.2" status="DEFERRED" pipeline="chat-interface">
+      <name>FeedbackCard collection and persistence</name>
+      <dependencies>5.1</dependencies>
+    </task>
+
+    <task id="5.3" status="DEFERRED" pipeline="chat-interface">
+      <name>Calibration loop (feedback -> confidence update)</name>
+      <dependencies>5.2, 3.2</dependencies>
+    </task>
+  </phase>
+
+  <!-- ================================================================== -->
+  <!-- v2.0 ADDITIONS: FEEDBACK LOOPS AND ERROR PROPAGATION              -->
+  <!-- Per organizational coherence reviewer (FAIL-6, FAIL-9)           -->
+  <!-- ================================================================== -->
+
+  <cross-cutting-tasks>
+    <description>
+      ADDED v2.0: These tasks address the two FAILs from organizational
+      review: (1) no feedback loops between pipelines, and (2) no error
+      propagation handling. These are not in a specific phase — they are
+      added incrementally as the relevant pipelines are built.
+    </description>
+
+    <task id="X.1" status="NOT_STARTED" pipeline="cross-cutting">
+      <name>Batch metadata envelope and drift detection</name>
+      <description>
+        ADDED v2.0 per error propagation review. Wrap boundary object
+        collections in a BatchMetadata envelope with statistical summary.
+        Detect drift from historical baselines at pipeline boundaries.
+      </description>
+      <dependencies>0.1</dependencies>
+      <tdd-spec>
+        <test-first>
+          File: tests/unit/schemas/test_batch_metadata.py
+          Tests:
+            - test_batch_metadata_computes_statistics (mean/std of confidence, source distribution)
+            - test_drift_detection_flags_anomalous_batch
+            - test_batch_id_enables_downstream_tracing
+            - test_poisoned_batch_invalidation_cascades
+        </test-first>
+        <then-implement>
+          File: src/music_attribution/schemas/batch.py
+            <!-- ADDED v2.1: ConfidenceStats and DriftReport defined (were phantom types) -->
+            class ConfidenceStats(BaseModel):
+                mean: float
+                std: float
+                min: float
+                max: float
+                median: float
+                count: int
+            class BatchMetadata(BaseModel):
+                batch_id: uuid.UUID
+                record_count: int
+                source_distribution: dict[SourceEnum, int]
+                confidence_stats: ConfidenceStats
+                identifier_coverage: float  # % of records with at least one ID
+                created_at: datetime
+            class BatchEnvelope(BaseModel, Generic[T]):
+                metadata: BatchMetadata
+                records: list[T]
+          File: src/music_attribution/quality/drift_detector.py
+            class DriftReport(BaseModel):
+                is_drifted: bool
+                confidence_shift: float  # difference in mean confidence
+                source_distribution_changed: bool
+                identifier_coverage_delta: float
+                details: str  # human-readable summary
+                timestamp: datetime
+            class DriftDetector:
+                def check(self, current: BatchMetadata, baseline: BatchMetadata) -> DriftReport
+        </then-implement>
+      </tdd-spec>
+      <acceptance-criteria>
+        <criterion>Every pipeline boundary crossing is wrapped in BatchEnvelope</criterion>
+        <criterion>Statistical drift detected when confidence distribution shifts by > 2 std</criterion>
+        <criterion>Batch IDs enable full provenance tracing through pipeline chain</criterion>
+      </acceptance-criteria>
+    </task>
+
+    <task id="X.2" status="NOT_STARTED" pipeline="cross-cutting">
+      <name>Pipeline feedback channels</name>
+      <description>
+        ADDED v2.0 per feedback loop review (FAIL-6). Define reverse-flow
+        channels between pipelines:
+        - ER -> DE: "source X data is consistently wrong, re-fetch"
+        - AE -> ER: "resolution confidence was miscalibrated"
+        - API -> AE: "dispute received, re-evaluate this attribution"
+      </description>
+      <dependencies>0.1</dependencies>
+      <tdd-spec>
+        <test-first>
+          File: tests/unit/schemas/test_pipeline_feedback.py
+          Tests:
+            - test_refetch_signal_targets_specific_source_and_entity
+            - test_recalibrate_signal_includes_actual_vs_predicted
+            - test_dispute_signal_links_to_attribution_id
+            - test_stale_signal_triggers_re_processing
+        </test-first>
+        <then-implement>
+          File: src/music_attribution/schemas/pipeline_feedback.py
+            class PipelineFeedback(BaseModel):
+                feedback_id: uuid.UUID
+                source_pipeline: str  # which pipeline sends this
+                target_pipeline: str  # which pipeline should act on it
+                feedback_type: PipelineFeedbackTypeEnum  # REFETCH | RECALIBRATE | DISPUTE | STALE
+                entity_ids: list[uuid.UUID]
+                details: str
+                created_at: datetime
+        </then-implement>
+      </tdd-spec>
+    </task>
+  </cross-cutting-tasks>
+
+  <!-- ================================================================== -->
+  <!-- PHASE 6: DEFERRED SCOPE (explicitly documented, not forgotten)    -->
+  <!-- Per completeness reviewer: UNKNOWNS Sections 6, 7, 8             -->
+  <!-- ================================================================== -->
+
+  <phase id="6" name="Deferred Scope" status="DEFERRED"
+         estimated-effort="Post-MVP" priority="LOW">
+    <description>
+      ADDED v2.0: Explicitly deferred items that reviewers flagged as missing.
+      These address UNKNOWNS document sections 6 (voice/likeness), 7 (platform
+      power), and 8 (attribution limits), plus C2PA provenance and DDEX integration.
+    </description>
+
+    <task id="6.1" status="DEFERRED" pipeline="deferred">
+      <name>Voice/likeness protection pipeline (UNKNOWNS Q6.1-Q6.4)</name>
+      <description>Voice fingerprinting, ELVIS Act compliance, personality rights API.
+        Ref: UNKNOWNS Section 6, tool landscape voice/audio pipeline section.</description>
+    </task>
+
+    <task id="6.2" status="DEFERRED" pipeline="deferred">
+      <name>Platform power and discovery friction metrics (UNKNOWNS Q7.1-Q7.4)</name>
+      <description>Discoverability index, discovery friction measurement, anti-platform-entrenchment safeguards.
+        Ref: UNKNOWNS Section 7.</description>
+    </task>
+
+    <task id="6.3" status="DEFERRED" pipeline="deferred">
+      <name>Attribution failure graceful degradation (UNKNOWNS Q8.1-Q8.3)</name>
+      <description>Handle fundamentally unattributable contributions, fallback strategies,
+        "good enough" threshold calibration. Ref: UNKNOWNS Section 8, Oracle Problem.</description>
+    </task>
+
+    <task id="6.4" status="DEFERRED" pipeline="deferred">
+      <name>C2PA manifest generation for AttributionRecords</name>
+      <description>Embed C2PA content provenance manifests in attribution records.
+        Novel application: C2PA for music attribution. High CV value per tool landscape.</description>
+    </task>
+
+    <task id="6.5" status="DEFERRED" pipeline="deferred">
+      <name>DDEX ERN connector for label/distributor metadata exchange</name>
+      <description>Import/export metadata in DDEX ERN 4.3.2 format.
+        Ref: tool landscape "ddex-suite when v1.0 ships Q1 2026".</description>
+    </task>
+
+    <task id="6.6" status="DEFERRED" pipeline="deferred">
+      <name>ETL orchestration layer (ARQ or Prefect)</name>
+      <description>Scheduled/triggered batch processing of ETL connectors with
+        rate-limit-aware scheduling. Ref: tool landscape lines 1165-1178.</description>
+    </task>
+
+    <task id="6.7" status="DEFERRED" pipeline="deferred">
+      <!-- ADDED v2.1: pgmpy moved from attribution-engine active tech to deferred scope.
+           Weighted voting in task 3.1 is sufficient for MVP. Bayesian network integration
+           is an upgrade path for better multi-signal fusion when sufficient training data exists. -->
+      <name>Bayesian network signal integration (pgmpy upgrade from weighted voting)</name>
+      <description>Replace weighted voting in CreditAggregator (task 3.1) with pgmpy Bayesian
+        network for multi-signal integration. Enables learned conditional dependencies between
+        resolution signals. Requires sufficient labeled data from FeedbackCards (Phase 5).</description>
+    </task>
+  </phase>
+
+  <!-- ================================================================== -->
+  <!-- SECTION 6: EVAL-DRIVEN DEVELOPMENT STRATEGY                      -->
+  <!-- How TDD and LLM evals work together                               -->
+  <!-- ================================================================== -->
+
+  <eval-strategy>
+    <description>
+      Beyond unit/integration tests, the attribution system needs
+      LLM-specific evaluation (evals) for:
+      1. Entity resolution accuracy (does it match the right entities?)
+      2. Confidence calibration (is "90% confident" actually 90% correct?)
+      3. Gap-filling conversation quality (does the AI ask the right questions?)
+      4. MCP response correctness (does consent checking work?)
+
+      Tools: DeepEval (pytest-style LLM evals), Langfuse (tracing),
+      custom eval datasets.
+    </description>
+
+    <eval id="EVAL-1" name="Entity Resolution Accuracy">
+      <dataset>
+        Curated dataset of 100+ known artist/recording pairs from
+        MusicBrainz + Discogs with ground-truth entity mapping.
+        Stored in tests/eval/fixtures/entity_resolution_gold.json
+      </dataset>
+      <metrics>
+        <metric>Precision@1 (top match is correct)</metric>
+        <metric>Recall@5 (correct match in top 5)</metric>
+        <metric>Mean Reciprocal Rank (MRR)</metric>
+      </metrics>
+      <target>Precision@1 >= 0.85, Recall@5 >= 0.95</target>
+      <phase>2</phase>
+    </eval>
+
+    <eval id="EVAL-2" name="Confidence Calibration">
+      <description>
+        Verify that stated confidence matches actual accuracy.
+        Plot calibration curve; compute Expected Calibration Error.
+      </description>
+      <metrics>
+        <metric>ECE (Expected Calibration Error) &lt; 0.05</metric>
+        <metric>Conformal coverage >= stated coverage level</metric>
+      </metrics>
+      <phase>3</phase>
+    </eval>
+
+    <eval id="EVAL-3" name="MCP Consent Response Correctness">
+      <dataset>
+        Curated permission scenarios: 50 entities with known permissions,
+        100 queries with expected responses.
+      </dataset>
+      <metrics>
+        <metric>Permission response accuracy: 100% (no false allows)</metric>
+        <metric>Latency p99 &lt; 200ms</metric>
+      </metrics>
+      <phase>4</phase>
+    </eval>
+    <!-- ADDED v2.0: Per completeness reviewer FAIL-6 -->
+    <eval id="EVAL-4" name="Attribution Failure Graceful Degradation">
+      <description>
+        Test how the system handles fundamentally unattributable contributions.
+        Ref: UNKNOWNS Q8.1-Q8.3, Oracle Problem.
+      </description>
+      <dataset>
+        Curated scenarios: entities with sub-threshold confidence,
+        conflicting sources with no resolution, orphan records.
+      </dataset>
+      <metrics>
+        <metric>System does not crash on unresolvable entities</metric>
+        <metric>Unresolvable entities surfaced to UI with clear "cannot attribute" status</metric>
+        <metric>Partial attributions (some credits known, some unknown) handled gracefully</metric>
+      </metrics>
+      <phase>3</phase>
+    </eval>
+  </eval-strategy>
+
+  <!-- ================================================================== -->
+  <!-- SECTION 7: CROSS-DOMAIN APPLICABILITY                             -->
+  <!-- How this architecture serves music AND DPP AND generic Graph RAG   -->
+  <!-- ================================================================== -->
+
+  <cross-domain-applicability>
+    <isomorphism>
+      <!--
+        The key insight from probabilistic-prd-design.md:
+
+        FRAGMENTED SOURCES -> ENTITY RESOLUTION -> UNIFIED RECORD + CONFIDENCE -> PERMISSIONED API -> AGENTIC CONSUMERS
+
+        Music:  Discogs+MB -> resolver -> artist/credit+A0-A3 -> MCP -> AI platforms
+        DPP:    GS1+EPCIS  -> resolver -> product/passport+T0-T3 -> Digital Link -> supply chain agents
+        Generic: Any sources -> resolver -> entity/graph+confidence -> API -> any agents
+      -->
+      <domain name="music-attribution">
+        <sources>MusicBrainz, Discogs, AcoustID, Artist Input, File Metadata</sources>
+        <entities>Recording, Work, Artist, Credit, Release, Label</entities>
+        <assurance-levels>A0 (self-declared) through A3 (ISNI verified)</assurance-levels>
+        <compliance>ELVIS Act, EU AI Act Art. 50</compliance>
+      </domain>
+      <domain name="dpp-traceability">
+        <sources>GS1 GTIN, EPCIS events, Manufacturer declarations</sources>
+        <entities>Product, Component, Material, Event, Facility</entities>
+        <assurance-levels>T0 (unverified) through T3 (third-party audited)</assurance-levels>
+        <compliance>EU ESPR, REACH, RoHS</compliance>
+      </domain>
+      <domain name="generic-graph-rag">
+        <sources>Any structured/unstructured data sources</sources>
+        <entities>Configurable via domain overlay</entities>
+        <assurance-levels>Configurable tiers</assurance-levels>
+        <compliance>Domain-dependent</compliance>
+      </domain>
+    </isomorphism>
+    <design-note>
+      The boundary object schemas (NormalizedRecord, ResolvedEntity,
+      AttributionRecord) are DOMAIN-AGNOSTIC by design. Domain-specific
+      behavior is injected via:
+      1. ETL connectors (music: MusicBrainz, DPP: GS1)
+      2. Entity type enums (music: RECORDING, DPP: PRODUCT)
+      3. Assurance level definitions (music: A0-A3, DPP: T0-T3)
+      4. Domain overlay YAML files (docs/prd/domains/)
+    </design-note>
+  </cross-domain-applicability>
+
+  <!-- ================================================================== -->
+  <!-- SECTION 8: TECHNOLOGY DECISIONS (from probabilistic PRD)          -->
+  <!-- Collapsed path for this plan — the "recommended" options           -->
+  <!-- ================================================================== -->
+
+  <technology-decisions archetype="engineer-heavy-startup">
+    <decision level="L1" id="build_vs_buy" chosen="custom_build" probability="0.40"/>
+    <decision level="L1" id="target_market" chosen="independent_artists" probability="0.35"/>
+    <decision level="L2" id="data_model" chosen="graph_enriched_relational" probability="0.45"/>
+    <decision level="L2" id="api_protocol" chosen="rest_plus_mcp" probability="0.30"/>
+    <decision level="L2" id="service_decomposition" chosen="modular_monolith" probability="0.45"/>
+    <decision level="L2" id="ai_framework" chosen="pydantic_ai" probability="0.35"/>
+    <decision level="L3" id="primary_database" chosen="postgresql_unified" probability="0.55"/>
+    <decision level="L3" id="graph_strategy" chosen="apache_age" probability="0.45"/>
+    <decision level="L3" id="vector_strategy" chosen="pgvector" probability="0.55"/>
+    <decision level="L3" id="llm_provider" chosen="anthropic_claude" probability="0.40"/>
+    <decision level="L3" id="frontend_framework" chosen="next_js" probability="0.40" note="DEFERRED to Phase 5"/>
+    <decision level="L3" id="auth_strategy" chosen="clerk_or_workos" probability="0.35" note="DEFERRED to Phase 5"/>
+    <decision level="L4" id="compute_platform" chosen="render_then_hetzner" probability="0.35"/>
+    <decision level="L4" id="database_hosting" chosen="neon" probability="0.35"/>
+    <decision level="L4" id="ci_cd" chosen="github_actions" probability="0.60"/>
+    <decision level="L4" id="iac" chosen="none_then_pulumi" probability="0.35"/>
+    <decision level="L4" id="container_strategy" chosen="docker_compose" probability="0.50"/>
+    <decision level="L5" id="observability" chosen="langfuse_plus_grafana" probability="0.40"/>
+    <decision level="L5" id="scaling" chosen="vertical" probability="0.50"/>
+    <decision level="L5" id="backup_dr" chosen="provider_managed" probability="0.45"/>
+    <decision level="L5" id="secrets" chosen="env_vars_then_infisical" probability="0.40"/>
+  </technology-decisions>
+
+  <!-- ================================================================== -->
+  <!-- SECTION 9: PROGRESS TRACKING                                      -->
+  <!-- Update this section as tasks complete                              -->
+  <!-- ================================================================== -->
+
+  <progress-tracker>
+    <!-- REVISED v2.1: Corrected counts. Phase 0-4 + X = 27 NOT_STARTED, Phase 5-6 = 10 DEFERRED, total = 37.
+         v2.0 incorrectly claimed 39 — cross-cutting was double-counted and 6.7 was not yet added. -->
+    <summary>
+      <total-tasks>37</total-tasks>
+      <done>0</done>
+      <in-progress>0</in-progress>
+      <not-started>27</not-started>
+      <deferred>10</deferred>
+      <blocked>0</blocked>
+    </summary>
+
+    <phase-status>
+      <phase id="0" name="Foundation" status="NOT_STARTED" tasks-done="0" tasks-total="5"/>
+      <phase id="1" name="Data Engineering" status="NOT_STARTED" tasks-done="0" tasks-total="6"/>
+      <phase id="2" name="Entity Resolution" status="NOT_STARTED" tasks-done="0" tasks-total="8" note="v2.0: +3 tasks (Splink, graph, LLM)"/>
+      <phase id="3" name="Attribution Engine" status="NOT_STARTED" tasks-done="0" tasks-total="4"/>
+      <phase id="4" name="API/MCP Server" status="NOT_STARTED" tasks-done="0" tasks-total="2"/>
+      <phase id="5" name="Chat Interface" status="DEFERRED" tasks-done="0" tasks-total="3"/>
+      <phase id="6" name="Deferred Scope" status="DEFERRED" tasks-done="0" tasks-total="7" note="v2.1: +1 (pgmpy Bayesian network upgrade). voice/likeness, platform power, attribution limits, C2PA, DDEX, orchestration, pgmpy"/>
+      <phase id="X" name="Cross-Cutting" status="NOT_STARTED" tasks-done="0" tasks-total="2" note="v2.0: batch metadata, feedback loops"/>
+    </phase-status>
+
+    <last-checkpoint>
+      <date>2026-02-10</date>
+      <completed-task-ids/>
+      <next-action>Begin Phase 0, Task 0.1: Create boundary object Pydantic schemas (with domain-extensible enums per v2.0, validators per v2.1, schema_version on all BOs per v2.1)</next-action>
+      <blockers/>
+    </last-checkpoint>
+  </progress-tracker>
+
+</executable-plan>
