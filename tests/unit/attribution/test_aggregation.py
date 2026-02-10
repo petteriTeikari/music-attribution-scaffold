@@ -111,7 +111,9 @@ class TestCreditAggregator:
         work = _make_entity("Test Track", EntityTypeEnum.RECORDING)
         # MusicBrainz = higher reliability by default
         mb_artist = _make_entity(
-            "Artist MB", sources=[SourceEnum.MUSICBRAINZ], confidence=0.9,
+            "Artist MB",
+            sources=[SourceEnum.MUSICBRAINZ],
+            confidence=0.9,
         )
         record = await aggregator.aggregate(
             work_entity=work,

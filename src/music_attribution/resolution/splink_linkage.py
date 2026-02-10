@@ -100,7 +100,9 @@ class SplinkMatcher:
         return self._fallback_predict(records)
 
     def cluster(
-        self, predictions: pd.DataFrame, threshold: float = 0.85,
+        self,
+        predictions: pd.DataFrame,
+        threshold: float = 0.85,
     ) -> list[list[int]]:
         """Cluster records based on match predictions.
 
@@ -165,9 +167,11 @@ class SplinkMatcher:
                     if val_i is not None and val_j is not None and val_i == val_j:
                         matches += 1
                 prob = matches / total if total > 0 else 0.0
-                pairs.append({
-                    "unique_id_l": records.iloc[i]["unique_id"],
-                    "unique_id_r": records.iloc[j]["unique_id"],
-                    "match_probability": prob,
-                })
+                pairs.append(
+                    {
+                        "unique_id_l": records.iloc[i]["unique_id"],
+                        "unique_id_r": records.iloc[j]["unique_id"],
+                        "match_probability": prob,
+                    }
+                )
         return pd.DataFrame(pairs)

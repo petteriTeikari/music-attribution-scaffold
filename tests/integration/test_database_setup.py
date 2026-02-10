@@ -74,7 +74,9 @@ class TestDatabaseSetup:
         with pg_connection.cursor() as cur:
             cur.execute("CREATE EXTENSION IF NOT EXISTS vector")
             cur.execute("CREATE TABLE IF NOT EXISTS test_embeddings (id serial PRIMARY KEY, embedding vector(384))")
-            cur.execute("CREATE INDEX IF NOT EXISTS test_embedding_idx ON test_embeddings USING hnsw (embedding vector_cosine_ops)")
+            cur.execute(
+                "CREATE INDEX IF NOT EXISTS test_embedding_idx ON test_embeddings USING hnsw (embedding vector_cosine_ops)"
+            )
             pg_connection.commit()
             cur.execute("SELECT indexname FROM pg_indexes WHERE indexname = 'test_embedding_idx'")
             result = cur.fetchone()

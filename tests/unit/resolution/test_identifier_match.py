@@ -128,7 +128,13 @@ class TestIdentifierMatcher:
         """Test that records with matching IDs but different names still resolve."""
         records = [
             _make_record(source=SourceEnum.MUSICBRAINZ, source_id="mb-1", name="Come Together", isrc="GBAYE0601690"),
-            _make_record(source=SourceEnum.DISCOGS, source_id="dg-1", name="Come Together (Remastered)", isrc="GBAYE0601690", mbid=None),
+            _make_record(
+                source=SourceEnum.DISCOGS,
+                source_id="dg-1",
+                name="Come Together (Remastered)",
+                isrc="GBAYE0601690",
+                mbid=None,
+            ),
         ]
         entities = matcher.match(records)
         assert len(entities) == 1

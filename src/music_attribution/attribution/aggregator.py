@@ -124,17 +124,21 @@ class CreditAggregator:
             role = roles.get(entity.entity_id, CreditRoleEnum.PERFORMER)
             sources = list({sr.source for sr in entity.source_records})
             credit_confidence = self._weighted_confidence(entity, sources)
-            credits.append(Credit(
-                entity_id=entity.entity_id,
-                role=role,
-                confidence=credit_confidence,
-                sources=sources,
-                assurance_level=entity.assurance_level,
-            ))
+            credits.append(
+                Credit(
+                    entity_id=entity.entity_id,
+                    role=role,
+                    confidence=credit_confidence,
+                    sources=sources,
+                    assurance_level=entity.assurance_level,
+                )
+            )
         return credits
 
     def _weighted_confidence(
-        self, entity: ResolvedEntity, sources: list[SourceEnum],
+        self,
+        entity: ResolvedEntity,
+        sources: list[SourceEnum],
     ) -> float:
         """Compute weighted confidence from source reliabilities."""
         if not sources:

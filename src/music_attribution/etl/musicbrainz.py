@@ -226,7 +226,13 @@ class MusicBrainzConnector:
             except musicbrainzngs.WebServiceError as e:
                 if attempt < self._max_retries - 1:
                     wait = 2**attempt
-                    logger.warning("MusicBrainz API error (attempt %d/%d): %s. Retrying in %ds.", attempt + 1, self._max_retries, e, wait)
+                    logger.warning(
+                        "MusicBrainz API error (attempt %d/%d): %s. Retrying in %ds.",
+                        attempt + 1,
+                        self._max_retries,
+                        e,
+                        wait,
+                    )
                     await asyncio.sleep(wait)
                 else:
                     raise

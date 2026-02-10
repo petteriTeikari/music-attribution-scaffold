@@ -109,9 +109,7 @@ class TestDiscogsConnector:
             assert all(isinstance(r, NormalizedRecord) for r in records)
             assert records[0].source == "DISCOGS"
 
-    def test_transform_release_credits_to_normalized_records(
-        self, connector, sample_release_data
-    ) -> None:
+    def test_transform_release_credits_to_normalized_records(self, connector, sample_release_data) -> None:
         """Test transformation of release data into NormalizedRecords."""
         records = connector.transform_release(sample_release_data)
         assert isinstance(records, list)
@@ -173,9 +171,7 @@ class TestDiscogsConnector:
 
         assert auth_conn._rate_limiter._rate >= unauth_conn._rate_limiter._rate
 
-    def test_transform_artist_to_normalized_record(
-        self, connector, sample_artist_data
-    ) -> None:
+    def test_transform_artist_to_normalized_record(self, connector, sample_artist_data) -> None:
         """Test transformation of artist data into a NormalizedRecord."""
         record = connector.transform_artist(sample_artist_data)
         assert isinstance(record, NormalizedRecord)

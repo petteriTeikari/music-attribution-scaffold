@@ -170,9 +170,7 @@ class DiscogsConnector:
         release_country = data.get("country")
 
         # Release-level relationships from extraartists
-        release_relationships = self._extract_relationships(
-            data.get("extraartists", [])
-        )
+        release_relationships = self._extract_relationships(data.get("extraartists", []))
 
         # Release-level record
         primary_artists = data.get("artists", [])
@@ -199,9 +197,7 @@ class DiscogsConnector:
         # Per-track records
         for track in data.get("tracklist", []):
             track_title = track.get("title", "")
-            track_relationships = self._extract_relationships(
-                track.get("extraartists", [])
-            )
+            track_relationships = self._extract_relationships(track.get("extraartists", []))
 
             # Parse duration string like "4:19" to milliseconds
             duration_ms = self._parse_duration(track.get("duration", ""))
@@ -252,7 +248,8 @@ class DiscogsConnector:
         )
 
     def _extract_relationships(
-        self, extraartists: list[dict],
+        self,
+        extraartists: list[dict],
     ) -> list[Relationship]:
         """Extract relationships from Discogs extraartists list."""
         relationships = []

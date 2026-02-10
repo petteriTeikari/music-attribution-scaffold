@@ -65,7 +65,10 @@ class GraphStore:
         self._edges[to_id].append((from_id, rel_type, attrs))
 
     async def find_related(
-        self, entity_id: uuid.UUID, rel_type: str, depth: int = 1,
+        self,
+        entity_id: uuid.UUID,
+        rel_type: str,
+        depth: int = 1,
     ) -> list[ResolvedEntity]:
         """Find entities related by a specific relationship type.
 
@@ -96,7 +99,9 @@ class GraphStore:
         return results
 
     async def shortest_path(
-        self, from_id: uuid.UUID, to_id: uuid.UUID,
+        self,
+        from_id: uuid.UUID,
+        to_id: uuid.UUID,
     ) -> list[ResolvedEntity]:
         """Find the shortest path between two entities.
 
@@ -128,10 +133,7 @@ class GraphStore:
                 new_path = [*path, neighbor_id]
                 if neighbor_id == to_id:
                     # Convert IDs to entities
-                    return [
-                        e for uid in new_path
-                        if (e := self._entities.get(uid)) is not None
-                    ]
+                    return [e for uid in new_path if (e := self._entities.get(uid)) is not None]
                 visited.add(neighbor_id)
                 queue.append(new_path)
 

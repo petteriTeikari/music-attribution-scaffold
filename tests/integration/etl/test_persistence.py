@@ -153,9 +153,7 @@ class TestNormalizedRecordPersistence:
     def test_query_by_identifier(self, repo) -> None:
         """Test querying records by identifier (ISRC, MBID, etc.)."""
         unique_isrc = f"USRC{uuid.uuid4().hex[:8].upper()}"
-        repo.upsert(
-            _make_record(source_id="qbi-1", isrc=unique_isrc, mbid="qbi-mbid-1")
-        )
+        repo.upsert(_make_record(source_id="qbi-1", isrc=unique_isrc, mbid="qbi-mbid-1"))
 
         results = repo.find_by_identifier(isrc=unique_isrc)
         assert len(results) >= 1

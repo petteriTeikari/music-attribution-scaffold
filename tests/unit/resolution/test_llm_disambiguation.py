@@ -56,16 +56,12 @@ class TestLLMDisambiguation:
         )
 
         with patch.object(disambiguator, "_call_llm", new_callable=AsyncMock, return_value=mock_result):
-            result = await disambiguator.disambiguate(
-                candidates, context="Film music attribution"
-            )
+            result = await disambiguator.disambiguate(candidates, context="Film music attribution")
             assert isinstance(result, DisambiguationResult)
             assert result.chosen_index == 0
             assert result.confidence >= 0.5
 
-    async def test_llm_only_called_when_other_signals_ambiguous(
-        self, disambiguator
-    ) -> None:
+    async def test_llm_only_called_when_other_signals_ambiguous(self, disambiguator) -> None:
         """Test that LLM is only invoked when other scores are ambiguous."""
         # High confidence — LLM should NOT be needed
         high_confidence = ResolutionDetails(
@@ -122,9 +118,7 @@ class TestLLMDisambiguation:
             assert call_count == 1
             assert result2.cached
 
-    async def test_llm_timeout_returns_uncertain_not_error(
-        self, disambiguator
-    ) -> None:
+    async def test_llm_timeout_returns_uncertain_not_error(self, disambiguator) -> None:
         """Test that LLM timeout returns uncertain result, not error."""
         candidates = [_make_record("Timeout Test A"), _make_record("Timeout Test B")]
 

@@ -65,8 +65,8 @@ class TestEmbeddingMatcher:
         # Mock stored embeddings with known similarities
         stored = {
             "id-1": [0.85, 0.15, 0.0] + [0.0] * 381,  # High similarity
-            "id-2": [0.0, 0.1, 0.9] + [0.0] * 381,     # Low similarity
-            "id-3": [0.7, 0.3, 0.0] + [0.0] * 381,     # Medium similarity
+            "id-2": [0.0, 0.1, 0.9] + [0.0] * 381,  # Low similarity
+            "id-3": [0.7, 0.3, 0.0] + [0.0] * 381,  # Medium similarity
         }
         matcher._embeddings = stored
 

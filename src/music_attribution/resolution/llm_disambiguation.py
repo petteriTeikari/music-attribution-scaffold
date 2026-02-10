@@ -96,7 +96,8 @@ class LLMDisambiguator:
             True if LLM should be invoked.
         """
         scores = [
-            s for s in [
+            s
+            for s in [
                 existing_scores.string_similarity,
                 existing_scores.embedding_similarity,
                 existing_scores.graph_path_confidence,

@@ -55,9 +55,7 @@ class AcoustIDConnector:
         Returns:
             Tuple of (fingerprint_string, duration_in_seconds).
         """
-        duration, fingerprint = await asyncio.to_thread(
-            acoustid.fingerprint_file, str(file_path)
-        )
+        duration, fingerprint = await asyncio.to_thread(acoustid.fingerprint_file, str(file_path))
         return fingerprint, duration
 
     async def lookup(self, fingerprint: str, duration: int) -> list[NormalizedRecord]:

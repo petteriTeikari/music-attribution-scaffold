@@ -92,7 +92,7 @@ class StringSimilarityMatcher:
         token_score = fuzz.token_sort_ratio(norm_a, norm_b) / 100.0
 
         # Take the max of both scores
-        return max(jw_score, token_score)
+        return float(max(jw_score, token_score))
 
     def find_candidates(
         self,

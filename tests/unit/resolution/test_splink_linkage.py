@@ -20,12 +20,14 @@ class TestSplinkMatcher:
         """Test that parameters are estimated from data."""
         import pandas as pd
 
-        records = pd.DataFrame({
-            "unique_id": [1, 2, 3, 4],
-            "canonical_name": ["The Beatles", "Beatles", "The Rolling Stones", "Rolling Stones"],
-            "source": ["MUSICBRAINZ", "DISCOGS", "MUSICBRAINZ", "DISCOGS"],
-            "isrc": ["GBAYE0601690", "GBAYE0601690", "GBAYE0601691", "GBAYE0601691"],
-        })
+        records = pd.DataFrame(
+            {
+                "unique_id": [1, 2, 3, 4],
+                "canonical_name": ["The Beatles", "Beatles", "The Rolling Stones", "Rolling Stones"],
+                "source": ["MUSICBRAINZ", "DISCOGS", "MUSICBRAINZ", "DISCOGS"],
+                "isrc": ["GBAYE0601690", "GBAYE0601690", "GBAYE0601691", "GBAYE0601691"],
+            }
+        )
         matcher.configure_model(["canonical_name", "isrc"])
         matcher.estimate_parameters(records)
         assert matcher._model_configured
@@ -34,12 +36,14 @@ class TestSplinkMatcher:
         """Test that predict returns valid pair comparisons with correct columns."""
         import pandas as pd
 
-        records = pd.DataFrame({
-            "unique_id": range(20),
-            "canonical_name": [f"Artist {i % 5}" for i in range(20)],
-            "source": ["MUSICBRAINZ"] * 10 + ["DISCOGS"] * 10,
-            "isrc": [f"ISRC{i % 5:04d}" for i in range(20)],
-        })
+        records = pd.DataFrame(
+            {
+                "unique_id": range(20),
+                "canonical_name": [f"Artist {i % 5}" for i in range(20)],
+                "source": ["MUSICBRAINZ"] * 10 + ["DISCOGS"] * 10,
+                "isrc": [f"ISRC{i % 5:04d}" for i in range(20)],
+            }
+        )
         matcher.configure_model(["canonical_name", "isrc"])
         matcher.estimate_parameters(records)
         predictions = matcher.predict(records)
@@ -54,12 +58,14 @@ class TestSplinkMatcher:
         """Test that match probabilities are between 0 and 1."""
         import pandas as pd
 
-        records = pd.DataFrame({
-            "unique_id": [1, 2],
-            "canonical_name": ["The Beatles", "The Beatles"],
-            "source": ["MUSICBRAINZ", "DISCOGS"],
-            "isrc": ["GBAYE0601690", "GBAYE0601690"],
-        })
+        records = pd.DataFrame(
+            {
+                "unique_id": [1, 2],
+                "canonical_name": ["The Beatles", "The Beatles"],
+                "source": ["MUSICBRAINZ", "DISCOGS"],
+                "isrc": ["GBAYE0601690", "GBAYE0601690"],
+            }
+        )
         matcher.configure_model(["canonical_name", "isrc"])
         matcher.estimate_parameters(records)
         predictions = matcher.predict(records)
@@ -70,11 +76,13 @@ class TestSplinkMatcher:
         """Test that clustering threshold can be configured."""
         import pandas as pd
 
-        predictions = pd.DataFrame({
-            "unique_id_l": [1, 1],
-            "unique_id_r": [2, 3],
-            "match_probability": [0.95, 0.50],
-        })
+        predictions = pd.DataFrame(
+            {
+                "unique_id_l": [1, 1],
+                "unique_id_r": [2, 3],
+                "match_probability": [0.95, 0.50],
+            }
+        )
         clusters_high = matcher.cluster(predictions, threshold=0.9)
         clusters_low = matcher.cluster(predictions, threshold=0.3)
         # Lower threshold should produce fewer but larger clusters
@@ -84,12 +92,14 @@ class TestSplinkMatcher:
         """Test that missing fields don't cause errors."""
         import pandas as pd
 
-        records = pd.DataFrame({
-            "unique_id": [1, 2],
-            "canonical_name": ["Artist A", "Artist A"],
-            "source": ["MUSICBRAINZ", "DISCOGS"],
-            "isrc": [None, "GBAYE0601690"],
-        })
+        records = pd.DataFrame(
+            {
+                "unique_id": [1, 2],
+                "canonical_name": ["Artist A", "Artist A"],
+                "source": ["MUSICBRAINZ", "DISCOGS"],
+                "isrc": [None, "GBAYE0601690"],
+            }
+        )
         matcher.configure_model(["canonical_name", "isrc"])
         matcher.estimate_parameters(records)
         # Should not raise

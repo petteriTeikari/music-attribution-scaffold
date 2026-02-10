@@ -74,9 +74,7 @@ class TestAcoustIDConnector:
             assert fp == "AQAA..."
             assert duration == 259
 
-    async def test_lookup_fingerprint_returns_mbids(
-        self, connector, sample_lookup_response
-    ) -> None:
+    async def test_lookup_fingerprint_returns_mbids(self, connector, sample_lookup_response) -> None:
         """Test that fingerprint lookup returns MusicBrainz IDs as NormalizedRecords."""
         with patch("acoustid.lookup", return_value=sample_lookup_response):
             records = await connector.lookup("AQAA...", 259)
@@ -100,9 +98,7 @@ class TestAcoustIDConnector:
         limiter = connector._rate_limiter
         assert limiter._rate == 3.0
 
-    def test_transform_lookup_result_to_normalized_record(
-        self, connector, sample_lookup_response
-    ) -> None:
+    def test_transform_lookup_result_to_normalized_record(self, connector, sample_lookup_response) -> None:
         """Test transformation of lookup results to NormalizedRecords."""
         records = connector.transform_lookup_results(sample_lookup_response)
         assert len(records) >= 1

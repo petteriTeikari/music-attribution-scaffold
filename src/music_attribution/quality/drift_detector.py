@@ -61,9 +61,7 @@ class DriftDetector:
             DriftReport with drift assessment.
         """
         # Confidence drift
-        conf_shift = abs(
-            current.confidence_stats.mean - baseline.confidence_stats.mean
-        )
+        conf_shift = abs(current.confidence_stats.mean - baseline.confidence_stats.mean)
         baseline_std = max(baseline.confidence_stats.std, 0.01)
         conf_drifted = conf_shift > self._confidence_threshold * baseline_std
 
@@ -78,16 +76,11 @@ class DriftDetector:
 
         details_parts: list[str] = []
         if conf_drifted:
-            details_parts.append(
-                f"Confidence shifted by {conf_shift:.3f} "
-                f"({conf_shift / baseline_std:.1f} std)"
-            )
+            details_parts.append(f"Confidence shifted by {conf_shift:.3f} ({conf_shift / baseline_std:.1f} std)")
         if source_changed:
             details_parts.append("Source distribution changed significantly")
         if coverage_drifted:
-            details_parts.append(
-                f"Identifier coverage changed by {coverage_delta:+.3f}"
-            )
+            details_parts.append(f"Identifier coverage changed by {coverage_delta:+.3f}")
         details = "; ".join(details_parts) if details_parts else "No drift detected"
 
         return DriftReport(
@@ -99,7 +92,9 @@ class DriftDetector:
         )
 
     def _check_source_drift(
-        self, current: BatchMetadata, baseline: BatchMetadata,
+        self,
+        current: BatchMetadata,
+        baseline: BatchMetadata,
     ) -> bool:
         """Check if source distribution has changed significantly."""
         all_sources = set(current.source_distribution) | set(baseline.source_distribution)

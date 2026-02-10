@@ -94,10 +94,12 @@ class TestReviewPriorityQueue:
     def test_recently_reviewed_decreases_priority(self, queue) -> None:
         """Test that recently reviewed records get lower priority."""
         old_update = _make_attribution(
-            confidence=0.7, updated_at=datetime.now(UTC) - timedelta(days=30),
+            confidence=0.7,
+            updated_at=datetime.now(UTC) - timedelta(days=30),
         )
         recent_update = _make_attribution(
-            confidence=0.7, updated_at=datetime.now(UTC),
+            confidence=0.7,
+            updated_at=datetime.now(UTC),
         )
         p_old = queue.compute_priority(old_update)
         p_recent = queue.compute_priority(recent_update)
@@ -107,8 +109,8 @@ class TestReviewPriorityQueue:
         """Test that next_for_review returns items in priority order."""
         records = [
             _make_attribution(confidence=0.95),  # Low priority
-            _make_attribution(confidence=0.3),   # High priority
-            _make_attribution(confidence=0.6),   # Medium priority
+            _make_attribution(confidence=0.3),  # High priority
+            _make_attribution(confidence=0.6),  # Medium priority
         ]
         result = queue.next_for_review(records, limit=3)
         assert len(result) == 3

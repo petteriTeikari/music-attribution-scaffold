@@ -52,8 +52,16 @@ class TestConformalScorer:
     def test_calibration_error_below_threshold(self, scorer) -> None:
         """Test that calibration error is computed and below threshold."""
         # Perfect calibration: predicted probabilities match actual frequencies
-        predictions = [(0.9, True), (0.9, True), (0.9, True), (0.9, False),
-                       (0.5, True), (0.5, False), (0.5, True), (0.5, False)]
+        predictions = [
+            (0.9, True),
+            (0.9, True),
+            (0.9, True),
+            (0.9, False),
+            (0.5, True),
+            (0.5, False),
+            (0.5, True),
+            (0.5, False),
+        ]
         report = scorer.calibrate(predictions)
         assert isinstance(report, CalibrationReport)
         assert report.ece >= 0.0

@@ -96,7 +96,8 @@ class AttributionRecordRepository:
         return copy.deepcopy(record) if record is not None else None
 
     async def find_by_work_entity_id(
-        self, work_entity_id: uuid.UUID,
+        self,
+        work_entity_id: uuid.UUID,
     ) -> AttributionRecord | None:
         """Find an attribution record by work entity ID.
 
@@ -120,10 +121,6 @@ class AttributionRecordRepository:
         Returns:
             List of records needing review, highest priority first.
         """
-        needs_review = [
-            copy.deepcopy(r)
-            for r in self._records.values()
-            if r.needs_review
-        ]
+        needs_review = [copy.deepcopy(r) for r in self._records.values() if r.needs_review]
         needs_review.sort(key=lambda r: r.review_priority, reverse=True)
         return needs_review[:limit]

@@ -132,9 +132,7 @@ class NormalizedRecordRepository:
             List of matching NormalizedRecords.
         """
         with Session(self._engine) as session:
-            stmt = select(NormalizedRecordModel).where(
-                NormalizedRecordModel.source == source.value
-            )
+            stmt = select(NormalizedRecordModel).where(NormalizedRecordModel.source == source.value)
             results = session.execute(stmt).scalars().all()
             return [self._to_domain(r) for r in results]
 
@@ -148,9 +146,7 @@ class NormalizedRecordRepository:
             List of matching NormalizedRecords.
         """
         with Session(self._engine) as session:
-            stmt = select(NormalizedRecordModel).where(
-                NormalizedRecordModel.entity_type == entity_type.value
-            )
+            stmt = select(NormalizedRecordModel).where(NormalizedRecordModel.entity_type == entity_type.value)
             results = session.execute(stmt).scalars().all()
             return [self._to_domain(r) for r in results]
 
@@ -168,9 +164,7 @@ class NormalizedRecordRepository:
 
             # Build JSONB containment query for each identifier
             for key, value in kwargs.items():
-                stmt = stmt.where(
-                    NormalizedRecordModel.identifiers[key].as_string() == value
-                )
+                stmt = stmt.where(NormalizedRecordModel.identifiers[key].as_string() == value)
 
             results = session.execute(stmt).scalars().all()
             return [self._to_domain(r) for r in results]

@@ -112,7 +112,8 @@ class TestMCPServer:
         server._permissions[entity_id] = bundle
 
         result = await server._check_permission(
-            str(entity_id), "STREAM",
+            str(entity_id),
+            "STREAM",
         )
         assert result["value"] == "ALLOW"
 
@@ -124,7 +125,8 @@ class TestMCPServer:
         server._permissions[entity_id] = bundle
 
         result = await server._check_permission(
-            str(entity_id), "AI_TRAINING",
+            str(entity_id),
+            "AI_TRAINING",
         )
         assert result["value"] == "DENY"
 
@@ -136,7 +138,8 @@ class TestMCPServer:
         server._permissions[entity_id] = bundle
 
         result = await server._check_permission(
-            str(entity_id), "SYNC_LICENSE",
+            str(entity_id),
+            "SYNC_LICENSE",
         )
         assert result["value"] == "ASK"
 

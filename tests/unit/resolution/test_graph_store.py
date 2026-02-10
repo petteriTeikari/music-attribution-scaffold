@@ -68,7 +68,10 @@ class TestGraphStore:
         await store.add_entity(artist)
         await store.add_entity(recording)
         await store.add_relationship(
-            artist.entity_id, recording.entity_id, "PERFORMED", {"role": "performer"},
+            artist.entity_id,
+            recording.entity_id,
+            "PERFORMED",
+            {"role": "performer"},
         )
         related = await store.find_related(artist.entity_id, "PERFORMED", depth=1)
         assert len(related) == 1

@@ -16,11 +16,11 @@ logger = logging.getLogger(__name__)
 
 # Priority formula weights
 _WEIGHTS = {
-    "boundary": 0.30,      # Proximity to decision boundary
+    "boundary": 0.30,  # Proximity to decision boundary
     "disagreement": 0.25,  # Source disagreement
-    "ambiguity": 0.15,     # Entity ambiguity (conformal set size)
+    "ambiguity": 0.15,  # Entity ambiguity (conformal set size)
     "never_reviewed": 0.15,  # Never reviewed penalty
-    "staleness": 0.15,     # Time since last review
+    "staleness": 0.15,  # Time since last review
 }
 
 
@@ -62,7 +62,9 @@ class ReviewPriorityQueue:
         return min(max(priority, 0.0), 1.0)
 
     def next_for_review(
-        self, records: list[AttributionRecord], limit: int = 10,
+        self,
+        records: list[AttributionRecord],
+        limit: int = 10,
     ) -> list[AttributionRecord]:
         """Return top records needing review, sorted by priority.
 

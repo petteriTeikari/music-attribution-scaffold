@@ -60,7 +60,8 @@ class IdentifierMatcher:
         return entities
 
     def _group_by_identifiers(
-        self, records: list[NormalizedRecord],
+        self,
+        records: list[NormalizedRecord],
     ) -> list[list[NormalizedRecord]]:
         """Group records that share any identifier using union-find."""
         # Map each identifier value to the set of record indices that have it

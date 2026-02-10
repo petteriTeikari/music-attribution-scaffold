@@ -129,7 +129,8 @@ class DataQualityGate:
         return unique
 
     def _check_identifier_coverage(
-        self, records: list[NormalizedRecord],
+        self,
+        records: list[NormalizedRecord],
     ) -> QualityCheckResult:
         """Check what fraction of records have at least one identifier."""
         if not records:
@@ -165,7 +166,8 @@ class DataQualityGate:
         )
 
     def _check_no_duplicates(
-        self, records: list[NormalizedRecord],
+        self,
+        records: list[NormalizedRecord],
     ) -> QualityCheckResult:
         """Check for duplicate source+source_id combinations."""
         seen: Counter[tuple] = Counter()
@@ -189,7 +191,8 @@ class DataQualityGate:
         )
 
     def _check_source_distribution(
-        self, records: list[NormalizedRecord],
+        self,
+        records: list[NormalizedRecord],
     ) -> QualityCheckResult:
         """Check that records aren't all from a single source."""
         if not records:

@@ -37,7 +37,9 @@ class GraphResolver:
         self._graph[to_id].add((from_id, rel_type))
 
     async def find_candidate_matches(
-        self, entity_id: str, min_shared: int = 2,
+        self,
+        entity_id: str,
+        min_shared: int = 2,
     ) -> list[tuple[str, float]]:
         """Find candidate entity matches based on shared relationships.
 

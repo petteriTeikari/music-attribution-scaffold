@@ -97,7 +97,8 @@ class ConformalScorer:
         )
 
     def calibrate(
-        self, predictions: list[tuple[float, bool]],
+        self,
+        predictions: list[tuple[float, bool]],
     ) -> CalibrationReport:
         """Compute calibration metrics from predictions vs actuals.
 

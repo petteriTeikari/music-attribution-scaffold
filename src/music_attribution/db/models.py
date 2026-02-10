@@ -30,9 +30,7 @@ class NormalizedRecordModel(Base):
     """SQLAlchemy model for NormalizedRecord boundary object."""
 
     __tablename__ = "normalized_records"
-    __table_args__ = (
-        UniqueConstraint("source", "source_id", name="uq_normalized_records_source_source_id"),
-    )
+    __table_args__ = (UniqueConstraint("source", "source_id", name="uq_normalized_records_source_source_id"),)
 
     record_id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
     schema_version: Mapped[str] = mapped_column(String(20), default="1.0.0")

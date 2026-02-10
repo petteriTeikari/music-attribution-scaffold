@@ -74,7 +74,9 @@ class EmbeddingMatcher:
         self._embeddings[entity_id] = embedding
 
     async def find_similar(
-        self, query_embedding: list[float], top_k: int = 5,
+        self,
+        query_embedding: list[float],
+        top_k: int = 5,
     ) -> list[tuple[str, float]]:
         """Find the most similar stored embeddings.
 

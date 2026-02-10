@@ -193,7 +193,9 @@ class ResolutionOrchestrator:
         return [sorted(set(v)) for v in groups_map.values()]
 
     def _group_by_string_similarity(
-        self, records: list[NormalizedRecord], indices: list[int],
+        self,
+        records: list[NormalizedRecord],
+        indices: list[int],
     ) -> list[list[int]]:
         """Group records by string similarity."""
         parent: dict[int, int] = {}
@@ -215,7 +217,8 @@ class ResolutionOrchestrator:
             for j_idx in range(i_idx + 1, len(indices)):
                 i, j = indices[i_idx], indices[j_idx]
                 score = self._string_matcher.score(
-                    records[i].canonical_name, records[j].canonical_name,
+                    records[i].canonical_name,
+                    records[j].canonical_name,
                 )
                 if score >= self._string_matcher._threshold:
                     union(i, j)
@@ -246,7 +249,8 @@ class ResolutionOrchestrator:
             for i in range(len(records)):
                 for j in range(i + 1, len(records)):
                     score = self._string_matcher.score(
-                        records[i].canonical_name, records[j].canonical_name,
+                        records[i].canonical_name,
+                        records[j].canonical_name,
                     )
                     max_sim = max(max_sim, score)
             string_sim = max_sim
@@ -257,7 +261,9 @@ class ResolutionOrchestrator:
         )
 
     def _determine_method(
-        self, records: list[NormalizedRecord], details: ResolutionDetails,
+        self,
+        records: list[NormalizedRecord],
+        details: ResolutionDetails,
     ) -> ResolutionMethodEnum:
         """Determine the primary resolution method used."""
         if details.matched_identifiers:
@@ -296,10 +302,7 @@ class ResolutionOrchestrator:
         """Compute assurance level from available evidence."""
         sources = {r.source for r in records}
         has_isni = any(r.identifiers.isni for r in records)
-        has_any_id = any(
-            r.identifiers.isrc or r.identifiers.iswc or r.identifiers.mbid
-            for r in records
-        )
+        has_any_id = any(r.identifiers.isrc or r.identifiers.iswc or r.identifiers.mbid for r in records)
 
         if has_isni and len(sources) > 1:
             return AssuranceLevelEnum.LEVEL_3
@@ -317,11 +320,13 @@ class ResolutionOrchestrator:
         names = {r.canonical_name for r in records}
         if len(names) > 1:
             name_by_source = {r.source.value: r.canonical_name for r in records}
-            conflicts.append(Conflict(
-                field="canonical_name",
-                values=name_by_source,
-                severity=ConflictSeverityEnum.LOW,
-            ))
+            conflicts.append(
+                Conflict(
+                    field="canonical_name",
+                    values=name_by_source,
+                    severity=ConflictSeverityEnum.LOW,
+                )
+            )
 
         return conflicts
 

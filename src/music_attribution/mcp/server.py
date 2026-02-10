@@ -74,7 +74,9 @@ class MCPAttributionServer:
         return record.model_dump(mode="json")
 
     async def _check_permission(
-        self, entity_id: str, permission_type: str,
+        self,
+        entity_id: str,
+        permission_type: str,
     ) -> dict:
         """Check a specific permission for an entity.
 
