@@ -1,0 +1,144 @@
+# AI Framework Strategy
+#
+# How the system integrates LLMs and AI capabilities. Ranges from
+# no-framework (direct API calls) to heavy orchestration frameworks.
+
+decision_id: ai_framework_strategy
+title: "AI Framework Strategy"
+description: >
+  Determines how the system integrates LLM capabilities for tasks like
+  entity resolution, confidence assessment, conversational gap-filling,
+  and permission reasoning. The spectrum runs from direct API calls
+  (maximum control, minimum abstraction) to full orchestration frameworks
+  (faster prototyping, more vendor lock-in).
+
+  The music attribution manuscript explicitly cautions against over-abstraction
+  (LangChain/LlamaIndex) in favor of debuggable, direct integrations.
+
+decision_level: L2_architecture
+status: active
+last_updated: 2026-02-10
+
+options:
+  - option_id: direct_api_pydantic
+    title: "Direct API + Pydantic"
+    description: >
+      Direct LLM API calls with Pydantic models for structured output.
+      No orchestration framework. Maximum debuggability and control.
+      Requires more boilerplate but avoids abstraction leakage.
+    prior_probability: 0.40
+    status: recommended
+
+  - option_id: lightweight_sdk
+    title: "Lightweight SDK (instructor/mirascope)"
+    description: >
+      Thin wrapper libraries like instructor or mirascope that add
+      structured output extraction on top of direct API calls.
+      Minimal abstraction overhead, strong typing support.
+    prior_probability: 0.30
+    status: viable
+    complements:
+      - "llm_provider.anthropic_primary"
+
+  - option_id: orchestration_framework
+    title: "Orchestration Framework (LangGraph/CrewAI)"
+    description: >
+      Full agent orchestration framework for complex multi-step
+      workflows. Useful for agentic attribution pipelines but
+      adds significant abstraction layers and debugging complexity.
+    prior_probability: 0.15
+    status: experimental
+    constraints:
+      - "Team familiarity with chosen framework"
+      - "Debugging strategy for multi-step agent flows"
+
+  - option_id: no_llm
+    title: "No LLM Integration"
+    description: >
+      Pure algorithmic approach without LLM components. Entity
+      resolution via fuzzy matching, confidence via statistical
+      methods only. Viable for MVP but limits conversational
+      capabilities.
+    prior_probability: 0.15
+    status: viable
+
+conditional_on:
+  - parent_decision_id: build_vs_buy_posture
+    influence_strength: moderate
+    conditional_table:
+      - given_parent_option: custom_build
+        then_probabilities:
+          direct_api_pydantic: 0.50
+          lightweight_sdk: 0.25
+          orchestration_framework: 0.15
+          no_llm: 0.10
+      - given_parent_option: managed_services
+        then_probabilities:
+          direct_api_pydantic: 0.35
+          lightweight_sdk: 0.35
+          orchestration_framework: 0.15
+          no_llm: 0.15
+      - given_parent_option: saas_maximalist
+        then_probabilities:
+          direct_api_pydantic: 0.20
+          lightweight_sdk: 0.30
+          orchestration_framework: 0.25
+          no_llm: 0.25
+
+archetype_weights:
+  engineer_heavy_startup:
+    probability_overrides:
+      direct_api_pydantic: 0.45
+      lightweight_sdk: 0.30
+      orchestration_framework: 0.15
+      no_llm: 0.10
+    rationale: "Engineers prefer debuggable, direct integrations over framework magic."
+
+  musician_first_team:
+    probability_overrides:
+      direct_api_pydantic: 0.20
+      lightweight_sdk: 0.30
+      orchestration_framework: 0.20
+      no_llm: 0.30
+    rationale: "May prefer no-LLM simplicity or framework convenience over raw API."
+
+  solo_hacker:
+    probability_overrides:
+      direct_api_pydantic: 0.30
+      lightweight_sdk: 0.35
+      orchestration_framework: 0.15
+      no_llm: 0.20
+    rationale: "Lightweight SDK maximizes velocity for solo developers."
+
+  well_funded_startup:
+    probability_overrides:
+      direct_api_pydantic: 0.40
+      lightweight_sdk: 0.30
+      orchestration_framework: 0.20
+      no_llm: 0.10
+    rationale: "Can afford engineering time for direct integration and framework evaluation."
+
+volatility:
+  classification: volatile
+  last_assessed: 2026-02-10
+  next_review: 2026-03-10
+  change_drivers:
+    - "AI framework ecosystem consolidation (LangChain vs LangGraph vs CrewAI)"
+    - "Structured output support in LLM APIs (reducing framework value)"
+    - "MCP-native agent frameworks emerging"
+    - "Cost reduction in LLM inference (changing no-LLM calculus)"
+
+domain_applicability:
+  music_attribution: 1.0
+  dpp_traceability: 0.8
+  generic_graph_rag: 1.0
+
+tags:
+  - architecture
+  - ai
+  - llm
+  - framework
+
+references:
+  - "../REJECTED.md"
+  - "../attribution-engine/toc-attribution-engine.md"

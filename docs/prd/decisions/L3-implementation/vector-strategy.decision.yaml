@@ -1,0 +1,173 @@
+# Vector Strategy
+#
+# How the system handles embedding storage and similarity search
+# for entity resolution and semantic matching.
+
+decision_id: vector_strategy
+title: "Vector Search Strategy"
+description: >
+  Determines how the system stores and queries vector embeddings for
+  tasks like entity resolution (matching "John Lennon" across sources),
+  semantic search (finding similar artists/tracks), and RAG retrieval.
+
+decision_level: L3_implementation
+status: active
+last_updated: 2026-02-10
+
+options:
+  - option_id: pgvector
+    title: "pgvector (PostgreSQL Extension)"
+    description: >
+      Vector similarity search as a PostgreSQL extension. Stores
+      embeddings alongside relational data. HNSW and IVFFlat indexes.
+      Single database for all data types.
+    prior_probability: 0.45
+    status: recommended
+    complements:
+      - "primary_database.postgresql_unified"
+
+  - option_id: dedicated_vdb
+    title: "Dedicated Vector DB (Qdrant/Weaviate)"
+    description: >
+      Specialized vector database optimized for similarity search.
+      Better performance at scale (1M+ vectors), more sophisticated
+      filtering. Adds operational complexity.
+    prior_probability: 0.20
+    status: viable
+    constraints:
+      - "Additional infrastructure to manage"
+      - "Data synchronization between primary DB and vector DB"
+
+  - option_id: sqlite_vec
+    title: "sqlite-vec"
+    description: >
+      SQLite extension for vector search. Pairs with SQLite/Turso
+      primary database. Simple, embedded, limited scale.
+    prior_probability: 0.10
+    status: viable
+    constraints:
+      - "Requires SQLite/Turso as primary database"
+      - "Limited to smaller vector collections"
+
+  - option_id: no_vector_search
+    title: "No Vector Search"
+    description: >
+      Use fuzzy string matching (Levenshtein, Jaro-Winkler) instead
+      of embedding-based similarity. Simpler, cheaper, no embedding
+      model dependency. Sufficient for exact and near-exact matching.
+    prior_probability: 0.25
+    status: viable
+
+conditional_on:
+  - parent_decision_id: primary_database
+    influence_strength: strong
+    conditional_table:
+      - given_parent_option: postgresql_unified
+        then_probabilities:
+          pgvector: 0.70
+          dedicated_vdb: 0.15
+          sqlite_vec: 0.00
+          no_vector_search: 0.15
+      - given_parent_option: supabase
+        then_probabilities:
+          pgvector: 0.55
+          dedicated_vdb: 0.15
+          sqlite_vec: 0.00
+          no_vector_search: 0.30
+      - given_parent_option: sqlite_turso
+        then_probabilities:
+          pgvector: 0.00
+          dedicated_vdb: 0.25
+          sqlite_vec: 0.40
+          no_vector_search: 0.35
+      - given_parent_option: cockroachdb
+        then_probabilities:
+          pgvector: 0.30
+          dedicated_vdb: 0.35
+          sqlite_vec: 0.00
+          no_vector_search: 0.35
+
+  - parent_decision_id: ai_framework_strategy
+    influence_strength: moderate
+    conditional_table:
+      - given_parent_option: direct_api_pydantic
+        then_probabilities:
+          pgvector: 0.45
+          dedicated_vdb: 0.25
+          sqlite_vec: 0.10
+          no_vector_search: 0.20
+      - given_parent_option: lightweight_sdk
+        then_probabilities:
+          pgvector: 0.45
+          dedicated_vdb: 0.25
+          sqlite_vec: 0.10
+          no_vector_search: 0.20
+      - given_parent_option: orchestration_framework
+        then_probabilities:
+          pgvector: 0.35
+          dedicated_vdb: 0.40
+          sqlite_vec: 0.05
+          no_vector_search: 0.20
+      - given_parent_option: no_llm
+        then_probabilities:
+          pgvector: 0.20
+          dedicated_vdb: 0.05
+          sqlite_vec: 0.10
+          no_vector_search: 0.65
+
+archetype_weights:
+  engineer_heavy_startup:
+    probability_overrides:
+      pgvector: 0.45
+      dedicated_vdb: 0.30
+      sqlite_vec: 0.05
+      no_vector_search: 0.20
+    rationale: "Engineers can manage dedicated VDB if pgvector hits performance limits."
+
+  musician_first_team:
+    probability_overrides:
+      pgvector: 0.40
+      dedicated_vdb: 0.05
+      sqlite_vec: 0.15
+      no_vector_search: 0.40
+    rationale: "pgvector via Supabase or no vector search — minimize complexity."
+
+  solo_hacker:
+    probability_overrides:
+      pgvector: 0.30
+      dedicated_vdb: 0.05
+      sqlite_vec: 0.25
+      no_vector_search: 0.40
+    rationale: "sqlite-vec for development, no vector search is also viable."
+
+  well_funded_startup:
+    probability_overrides:
+      pgvector: 0.40
+      dedicated_vdb: 0.35
+      sqlite_vec: 0.05
+      no_vector_search: 0.20
+    rationale: "Start with pgvector, graduate to dedicated VDB at scale."
+
+volatility:
+  classification: shifting
+  last_assessed: 2026-02-10
+  next_review: 2026-04-10
+  change_drivers:
+    - "pgvector performance improvements (HNSW tuning)"
+    - "Embedding model cost reductions"
+    - "Managed vector DB pricing changes"
+
+domain_applicability:
+  music_attribution: 1.0
+  dpp_traceability: 0.8
+  generic_graph_rag: 1.0
+
+tags:
+  - implementation
+  - vector
+  - embeddings
+  - search
+
+references:
+  - "../data-layer/toc-data-layer.md"
+  - "../REJECTED.md"

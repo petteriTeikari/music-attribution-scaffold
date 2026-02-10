@@ -1,0 +1,176 @@
+# Graph Strategy
+#
+# How the system handles graph/relationship queries for
+# attribution network traversal.
+
+decision_id: graph_strategy
+title: "Graph Query Strategy"
+description: >
+  Determines how the system implements graph queries for traversing
+  attribution relationships (artist → credit → track → release → label).
+  Options range from no dedicated graph capability (SQL joins only)
+  to dedicated graph databases. The current scaffold default is
+  Apache AGE (PostgreSQL extension).
+
+decision_level: L3_implementation
+status: active
+last_updated: 2026-02-10
+
+options:
+  - option_id: apache_age
+    title: "Apache AGE (PostgreSQL Extension)"
+    description: >
+      Graph query capability as a PostgreSQL extension. Supports
+      openCypher queries on top of existing PostgreSQL tables.
+      Same ACID guarantees, same backup strategy, same connection.
+    prior_probability: 0.40
+    status: recommended
+    complements:
+      - "primary_database.postgresql_unified"
+
+  - option_id: sql_joins_only
+    title: "SQL Joins Only"
+    description: >
+      No dedicated graph capability. Use recursive CTEs and
+      multi-table joins for relationship traversal. Simplest
+      approach, works with any SQL database, but limited depth
+      and performance for complex graph queries.
+    prior_probability: 0.25
+    status: viable
+
+  - option_id: neo4j_dedicated
+    title: "Neo4j (Dedicated Graph DB)"
+    description: >
+      Dedicated Neo4j instance for graph queries alongside
+      the primary relational database. Maximum graph query
+      performance and Cypher maturity. Adds operational
+      complexity and data synchronization challenges.
+    prior_probability: 0.15
+    status: experimental
+    constraints:
+      - "Dual database synchronization strategy"
+      - "Additional infrastructure costs"
+      - "Neo4j operational expertise"
+
+  - option_id: application_layer_graph
+    title: "Application-Layer Graph (NetworkX)"
+    description: >
+      Load subgraphs into memory using NetworkX or similar Python
+      libraries. Good for analysis and visualization, poor for
+      real-time queries at scale. Useful for batch processing
+      and confidence propagation.
+    prior_probability: 0.20
+    status: viable
+
+conditional_on:
+  - parent_decision_id: data_model_complexity
+    influence_strength: strong
+    conditional_table:
+      - given_parent_option: simple_relational
+        then_probabilities:
+          apache_age: 0.10
+          sql_joins_only: 0.60
+          neo4j_dedicated: 0.05
+          application_layer_graph: 0.25
+      - given_parent_option: graph_enriched_relational
+        then_probabilities:
+          apache_age: 0.60
+          sql_joins_only: 0.10
+          neo4j_dedicated: 0.15
+          application_layer_graph: 0.15
+      - given_parent_option: full_knowledge_graph
+        then_probabilities:
+          apache_age: 0.25
+          sql_joins_only: 0.00
+          neo4j_dedicated: 0.55
+          application_layer_graph: 0.20
+      - given_parent_option: document_centric
+        then_probabilities:
+          apache_age: 0.10
+          sql_joins_only: 0.30
+          neo4j_dedicated: 0.10
+          application_layer_graph: 0.50
+
+  - parent_decision_id: primary_database
+    influence_strength: strong
+    conditional_table:
+      - given_parent_option: postgresql_unified
+        then_probabilities:
+          apache_age: 0.65
+          sql_joins_only: 0.15
+          neo4j_dedicated: 0.10
+          application_layer_graph: 0.10
+      - given_parent_option: supabase
+        then_probabilities:
+          apache_age: 0.15
+          sql_joins_only: 0.40
+          neo4j_dedicated: 0.10
+          application_layer_graph: 0.35
+      - given_parent_option: sqlite_turso
+        then_probabilities:
+          apache_age: 0.00
+          sql_joins_only: 0.50
+          neo4j_dedicated: 0.10
+          application_layer_graph: 0.40
+      - given_parent_option: cockroachdb
+        then_probabilities:
+          apache_age: 0.10
+          sql_joins_only: 0.40
+          neo4j_dedicated: 0.25
+          application_layer_graph: 0.25
+
+archetype_weights:
+  engineer_heavy_startup:
+    probability_overrides:
+      apache_age: 0.45
+      sql_joins_only: 0.10
+      neo4j_dedicated: 0.25
+      application_layer_graph: 0.20
+    rationale: "Engineers can manage AGE or Neo4j complexity."
+
+  musician_first_team:
+    probability_overrides:
+      apache_age: 0.20
+      sql_joins_only: 0.40
+      neo4j_dedicated: 0.05
+      application_layer_graph: 0.35
+    rationale: "SQL joins or application-layer — avoid graph DB ops."
+
+  solo_hacker:
+    probability_overrides:
+      apache_age: 0.15
+      sql_joins_only: 0.40
+      neo4j_dedicated: 0.05
+      application_layer_graph: 0.40
+    rationale: "NetworkX in-memory or simple SQL. No extra databases."
+
+  well_funded_startup:
+    probability_overrides:
+      apache_age: 0.40
+      sql_joins_only: 0.10
+      neo4j_dedicated: 0.30
+      application_layer_graph: 0.20
+    rationale: "Can invest in dedicated graph infrastructure if needed."
+
+volatility:
+  classification: shifting
+  last_assessed: 2026-02-10
+  next_review: 2026-04-10
+  change_drivers:
+    - "Apache AGE stability and feature completeness"
+    - "PostgreSQL native graph query improvements"
+    - "Neo4j pricing and managed service options"
+
+domain_applicability:
+  music_attribution: 1.0
+  dpp_traceability: 1.0
+  generic_graph_rag: 1.0
+
+tags:
+  - implementation
+  - graph
+  - database
+
+references:
+  - "../data-layer/toc-data-layer.md"
+  - "../REJECTED.md"

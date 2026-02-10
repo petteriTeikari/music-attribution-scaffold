@@ -1,0 +1,170 @@
+# Frontend Framework
+#
+# The UI technology stack for web-based interfaces: chat interface,
+# admin dashboards, attribution review workflows.
+
+decision_id: frontend_framework
+title: "Frontend Framework"
+description: >
+  Selects the primary frontend technology for building user-facing
+  web interfaces. In the attribution/traceability domain, the frontend
+  serves the chat-based gap-filling interface, admin dashboards for
+  attribution review, and potentially a public-facing attribution
+  explorer.
+
+decision_level: L3_implementation
+status: active
+last_updated: 2026-02-10
+
+options:
+  - option_id: nextjs
+    title: "Next.js (React)"
+    description: >
+      Full-stack React framework with SSR, API routes, and the App Router.
+      Largest ecosystem, broadest hiring pool, strong Vercel integration.
+      Can be heavyweight for simple interfaces.
+    prior_probability: 0.35
+    status: recommended
+
+  - option_id: sveltekit
+    title: "SvelteKit"
+    description: >
+      Svelte-based full-stack framework. Smaller bundle sizes, simpler
+      reactive model, less boilerplate than React. Growing ecosystem
+      but smaller talent pool.
+    prior_probability: 0.20
+    status: viable
+
+  - option_id: htmx_jinja
+    title: "HTMX + Jinja (Server-Rendered)"
+    description: >
+      Hypermedia-driven approach with server-rendered HTML. Minimal
+      JavaScript, works naturally with Python/FastAPI backends. Ideal
+      for CRUD-heavy admin interfaces, less suited for rich chat UIs.
+    prior_probability: 0.20
+    status: viable
+    complements:
+      - "service_decomposition.monolith"
+
+  - option_id: no_frontend
+    title: "API Only (No Frontend)"
+    description: >
+      No dedicated frontend. System is API-only with documentation
+      (OpenAPI/Swagger) or a minimal CLI. Frontend left to integrators
+      or built later.
+    prior_probability: 0.25
+    status: viable
+
+conditional_on:
+  - parent_decision_id: target_market_segment
+    influence_strength: moderate
+    conditional_table:
+      - given_parent_option: independent_creators
+        then_probabilities:
+          nextjs: 0.40
+          sveltekit: 0.25
+          htmx_jinja: 0.15
+          no_frontend: 0.20
+      - given_parent_option: mid_tier_labels
+        then_probabilities:
+          nextjs: 0.40
+          sveltekit: 0.20
+          htmx_jinja: 0.20
+          no_frontend: 0.20
+      - given_parent_option: enterprise_rights_orgs
+        then_probabilities:
+          nextjs: 0.40
+          sveltekit: 0.15
+          htmx_jinja: 0.20
+          no_frontend: 0.25
+      - given_parent_option: ai_platform_consumers
+        then_probabilities:
+          nextjs: 0.15
+          sveltekit: 0.10
+          htmx_jinja: 0.10
+          no_frontend: 0.65
+
+  - parent_decision_id: service_decomposition
+    influence_strength: moderate
+    conditional_table:
+      - given_parent_option: monolith
+        then_probabilities:
+          nextjs: 0.25
+          sveltekit: 0.15
+          htmx_jinja: 0.40
+          no_frontend: 0.20
+      - given_parent_option: modular_monolith
+        then_probabilities:
+          nextjs: 0.35
+          sveltekit: 0.25
+          htmx_jinja: 0.20
+          no_frontend: 0.20
+      - given_parent_option: microservices
+        then_probabilities:
+          nextjs: 0.45
+          sveltekit: 0.25
+          htmx_jinja: 0.10
+          no_frontend: 0.20
+      - given_parent_option: serverless_functions
+        then_probabilities:
+          nextjs: 0.50
+          sveltekit: 0.20
+          htmx_jinja: 0.05
+          no_frontend: 0.25
+
+archetype_weights:
+  engineer_heavy_startup:
+    probability_overrides:
+      nextjs: 0.35
+      sveltekit: 0.25
+      htmx_jinja: 0.15
+      no_frontend: 0.25
+    rationale: "Engineers may prefer API-first, or choose modern frameworks like SvelteKit."
+
+  musician_first_team:
+    probability_overrides:
+      nextjs: 0.45
+      sveltekit: 0.20
+      htmx_jinja: 0.10
+      no_frontend: 0.25
+    rationale: "Next.js has the most tutorials and low-code integrations."
+
+  solo_hacker:
+    probability_overrides:
+      nextjs: 0.30
+      sveltekit: 0.20
+      htmx_jinja: 0.15
+      no_frontend: 0.35
+    rationale: "API-only viable for solo. HTMX for quick admin UIs."
+
+  well_funded_startup:
+    probability_overrides:
+      nextjs: 0.45
+      sveltekit: 0.20
+      htmx_jinja: 0.10
+      no_frontend: 0.25
+    rationale: "Next.js for hiring pool and ecosystem. Dedicated frontend team."
+
+volatility:
+  classification: shifting
+  last_assessed: 2026-02-10
+  next_review: 2026-04-10
+  change_drivers:
+    - "React Server Components maturity"
+    - "Svelte 5 adoption trajectory"
+    - "HTMX ecosystem growth"
+    - "AI-generated UI tools reducing framework importance"
+
+domain_applicability:
+  music_attribution: 1.0
+  dpp_traceability: 0.9
+  generic_graph_rag: 0.8
+
+tags:
+  - implementation
+  - frontend
+  - ui
+  - web
+
+references:
+  - "../chat-interface/toc-chat-interface.md"
