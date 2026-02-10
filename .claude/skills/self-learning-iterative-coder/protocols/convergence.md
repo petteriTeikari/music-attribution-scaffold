@@ -80,10 +80,15 @@ plan_converged = all tasks with status in {DONE, DEFERRED, DONE_WITH_CAVEATS}
 ### Session Budget
 
 ```yaml
-max_tasks_per_session: 5
-reason: Context budget — LLMs degrade with very long conversations
-action: After 5 tasks, output summary and suggest new session
+max_inner_iterations_per_session: 20
+reason: >
+  Inner iterations correlate with context consumption.
+  Simple tasks (1 iteration) cost less than complex tasks (3+).
+  In practice, 70% of tasks complete in 1 iteration.
+action: After 20 cumulative inner iterations, save state and suggest new session.
 ```
+
+**v2.0 change:** Replaced `max_tasks_per_session: 5` with inner-iteration budget. During the 27-task execution, the task-count limit was too conservative by 5x. Inner iterations are the real context consumption metric.
 
 ### Force Stop Conditions
 
@@ -91,48 +96,41 @@ action: After 5 tasks, output summary and suggest new session
 force_stop_conditions:
   - all_eligible_tasks_stuck: true
     # Every remaining non-deferred task is STUCK
-  - session_task_count >= 5
+  - session_inner_iterations >= 20
     # Context budget exceeded
   - no_eligible_tasks:
     # All remaining tasks have unmet dependencies (blocked)
 ```
 
-## Convergence Report
+## Convergence Report (Compact)
 
-Generate after each task completes:
+**v2.0 change:** Simplified from verbose YAML to compact format. The state file carries the detailed data; the report is for human readability.
 
 ### Per-Task Report
 
-```yaml
-task_convergence_report:
-  task_id: "{id}"
-  task_name: "{name}"
-  status: DONE|STUCK|FORCE_STOP|DONE_WITH_CAVEATS
-  inner_iterations: N
-  test_trajectory:
-    - {iteration: 1, pass: 0, fail: 5, errors: 2}
-    - {iteration: 2, pass: 5, fail: 2, errors: 0}
-    - {iteration: 3, pass: 7, fail: 0, errors: 0}
-  lint_trajectory: [FAIL(3), PASS, PASS]
-  type_trajectory: [FAIL(1), PASS, PASS]
-  residual_issues: []
-  commit_hashes: ["abc123", "def456", "ghi789"]
-  started_at: "2026-02-10T14:00:00Z"
-  completed_at: "2026-02-10T14:30:00Z"
+```
+{task_id}: {DONE|STUCK|FORCE_STOP} in {N} iterations ({test_count} tests) [{commit_hash}]
+```
+
+Example:
+```
+2.3b: DONE in 3 iterations (5 tests) [ff73459]
+3.1:  DONE in 2 iterations (5 tests) [946d01e]
+3.2:  DONE in 1 iteration  (5 tests) [237a539]
 ```
 
 ### Session Summary
 
-```yaml
-session_summary:
-  tasks_attempted: N
-  tasks_done: D
-  tasks_stuck: S
-  tasks_remaining: R
-  total_inner_iterations: I
-  total_commits: C
-  convergence: {true|false}
-  next_action: "Continue in new session"|"Plan complete"|"Blocked — needs human review"
+```
+Session: {tasks_done}/{tasks_attempted} done, {total_iterations} inner iterations,
+         {total_tests} tests, {stuck_count} stuck
+Next: {continue|new_session|plan_complete|blocked}
+```
+
+Example:
+```
+Session: 13/13 done, 17 inner iterations, 75 tests, 0 stuck
+Next: continue (budget: 17/20 iterations used)
 ```
 
 ## Output
@@ -141,11 +139,11 @@ session_summary:
 CONVERGENCE CHECK — Task {task_id}
   Hard gates: {PASS|FAIL} ({details})
   Soft gates: {PASS|FAIL} ({details})
-  Inner iterations used: {N}/{max}
+  Inner iterations used: {N}/{max per task}
   Decision: {DONE|ANOTHER_ITERATION|FORCE_STOP}
 
   Plan progress: {done}/{total} tasks DONE
-  Session budget: {used}/{max} tasks this session
+  Session budget: {used}/{max} inner iterations this session
 ```
 
 ## Next Step

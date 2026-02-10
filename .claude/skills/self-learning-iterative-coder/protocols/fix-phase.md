@@ -46,18 +46,15 @@ Sort all failures into categories:
 - Make the minimum change to fix the failure
 
 #### Lint Errors
-- Try auto-fix first:
-  ```bash
-  ruff check --fix src/ tests/
-  ```
+- Try auto-fix first (e.g., `ruff check --fix` for Python, `eslint --fix` for TypeScript, `cargo clippy --fix` for Rust)
 - For non-auto-fixable issues, read the rule and fix manually
 - Common fixes: unused imports, missing docstrings, line length
 
 #### Type Errors
 - Read the mypy error message and the code it points to
 - Add type annotations where missing
-- Fix type mismatches (wrong return type, missing Optional, etc.)
-- Use `TYPE_CHECKING` blocks for import-only types
+- Fix type mismatches (wrong return type, nullable types, etc.)
+- For Python: use `TYPE_CHECKING` blocks for import-only types
 
 ### 3. Apply Fixes Incrementally
 
@@ -101,6 +98,25 @@ STUCK: {failure_description}
 
 Include STUCK items in the convergence report. The convergence protocol decides whether to FORCE_STOP or continue.
 
+## When Tests Should Adapt (Not Implementation)
+
+The general rule is "tests are the spec — implementation adapts." But there are legitimate exceptions discovered through execution:
+
+### 1. External library behavior mismatch
+If a test asserts behavior that the library doesn't actually exhibit, adapt the test to match real library behavior. Don't try to force the library to behave differently.
+
+**Example:** Splink's EM training doesn't converge with small synthetic datasets. The test was changed from "blocking reduces comparisons" to "predict returns valid pair DataFrame" — testing structure, not convergence.
+
+### 2. Plan spec errors
+If the TDD spec references enum values, field names, or method signatures that don't exist in the codebase, adapt the test to match the actual code. See [spec-adaptation.md](spec-adaptation.md).
+
+**Example:** `SourceEnum.USER_INPUT` doesn't exist — correct value is `SourceEnum.ARTIST_INPUT`.
+
+### 3. Integration environment assumptions
+If a test assumes a service is available (database, API endpoint) but it's not in the current environment, mark it as `@pytest.mark.integration` or mock the dependency.
+
+**In all cases:** Document WHY the test was adapted, not just what changed.
+
 ## Anti-Patterns
 
 | Anti-Pattern | Why It Fails | What To Do Instead |
@@ -108,7 +124,7 @@ Include STUCK items in the convergence report. The convergence protocol decides 
 | Shotgun fix | Changes too many things, can't tell what helped | One fix category at a time |
 | Same fix twice | Definition of insanity | Track attempted fixes, try different approach |
 | Suppressing errors | `# type: ignore`, `# noqa` without justification | Fix the actual issue |
-| Reverting tests | Tests are the spec — implementation must adapt | Fix implementation, not tests |
+| Reverting tests for convenience | Weakening tests to hide implementation bugs | Fix implementation, not tests |
 | Adding try/except broadly | Hides bugs, breaks debugging | Handle specific exceptions only |
 | Fixing symptoms not causes | Problem recurs in different form | Understand root cause first |
 

@@ -13,9 +13,11 @@ Write the MINIMUM code necessary to make the failing tests pass. This is not the
 
 ## Steps
 
-### 1. Install Dependencies
+### 1. Install Dependencies and Configure Tooling
 
-If the task specifies `pyproject-deps`, install them first:
+If the task specifies `pyproject-deps`, install and configure them:
+
+#### 1a. Install packages
 
 ```bash
 # For uv-managed Python projects:
@@ -27,6 +29,42 @@ uv add --group dev {package}
 
 **Do NOT skip this step.** Missing dependencies cause confusing import errors that waste fix iterations.
 
+#### 1b. Add mypy overrides for untyped packages
+
+**For Python projects using mypy:** Most third-party packages (musicbrainzngs, splink, pandas, jellyfish, thefuzz, sentence-transformers, etc.) don't ship type stubs. Without explicit overrides, mypy fails on every import from these packages. For TypeScript, equivalent issues arise with missing `@types/` packages; for Rust, type checking is built-in.
+
+After installing a new third-party package, check if mypy needs an override:
+
+```bash
+# Quick check: run mypy on a file that imports the package
+mypy {source_file_that_imports_package}
+# If mypy reports "Skipping analyzing" or "Library stubs not installed",
+# the package needs an override.
+```
+
+If the package is untyped (mypy errors on import), add to `pyproject.toml`:
+
+```toml
+[[tool.mypy.overrides]]
+module = ["{package}", "{package}.*"]
+follow_untyped_imports = true
+```
+
+**This is required** — without it, mypy produces false-positive type errors on every import from the package, wasting fix iterations on non-bugs.
+
+#### 1c. Handle slow installs
+
+Large packages (sentence-transformers + torch, splink + DuckDB) can take minutes to install. If the install takes more than 60 seconds:
+- Run it as a background task
+- Do NOT proceed to the smoke test (step 6) until the install completes
+- Verify the install succeeded before running any tests
+
+#### 1d. Verify installation
+
+```bash
+python3 -c "import {package}; print(f'{package} version: {package}.__version__')"
+```
+
 ### 2. Read the TDD Spec
 
 Extract the `then-implement` block. This contains:
@@ -37,12 +75,11 @@ Extract the `then-implement` block. This contains:
 
 ### 3. Create Source File(s)
 
-Follow project conventions:
-- Use the project's file template (from `CLAUDE.md`)
-- `from __future__ import annotations` at the top
-- Proper imports organized by stdlib / third-party / local
+Follow project conventions (from `CLAUDE.md` or equivalent):
+- Use the project's file template and header conventions
+- Organize imports per project style (e.g., stdlib / third-party / local for Python)
 - Type hints on all public functions
-- Docstrings on all modules, classes, and public functions
+- Documentation on all modules, classes, and public functions
 
 ### 4. Implement Per Spec
 

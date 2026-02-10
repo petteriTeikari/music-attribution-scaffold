@@ -2,141 +2,54 @@
   "plan_file": "docs/planning/probabilistic-prd-executable-plan.xml",
   "plan_version": "2.1",
   "execution_mode": "autonomous",
-  "current_task_id": "1.1",
-  "current_phase": "VERIFY",
+  "current_task_id": "2.3b",
+  "current_phase": "FIX",
   "inner_iteration": 2,
-  "session_task_count": 2,
-  "session_start": "2026-02-10T14:00:00Z",
+  "session_task_count": 4,
+  "session_inner_iterations": 7,
+  "session_start": "2026-02-10T20:00:00Z",
   "tasks": {
     "0.1": {
       "status": "DONE",
-      "inner_iterations": 3,
-      "current_phase": "DONE",
-      "commit_hashes": [
-        "a1b2c3d",
-        "e4f5g6h",
-        "i7j8k9l"
-      ],
-      "test_files": [
-        "tests/unit/test_schemas.py"
-      ],
-      "source_files": [
-        "src/music_attribution/schemas.py"
-      ],
-      "deps_added": [
-        "pydantic>=2.0"
-      ],
-      "red_commit": "a1b2c3d",
-      "test_count": 7,
-      "test_results": [
-        {
-          "iteration": 1,
-          "pass": 0,
-          "fail": 5,
-          "errors": 2,
-          "lint_issues": 0,
-          "type_errors": 0,
-          "overall": "FAILING"
-        },
-        {
-          "iteration": 2,
-          "pass": 5,
-          "fail": 2,
-          "errors": 0,
-          "lint_issues": 3,
-          "type_errors": 1,
-          "overall": "FAILING"
-        },
-        {
-          "iteration": 3,
-          "pass": 7,
-          "fail": 0,
-          "errors": 0,
-          "lint_issues": 0,
-          "type_errors": 0,
-          "overall": "ALL_GREEN"
-        }
-      ],
-      "fix_attempts": [
-        {
-          "iteration": 2,
-          "category": "test_failure",
-          "description": "Fixed validator for ISRC format — was missing hyphen handling",
-          "result": "resolved"
-        },
-        {
-          "iteration": 2,
-          "category": "lint",
-          "description": "Ran ruff --fix to auto-fix import ordering",
-          "result": "resolved"
-        },
-        {
-          "iteration": 3,
-          "category": "type_error",
-          "description": "Added Optional annotation to confidence_score field",
-          "result": "resolved"
-        }
-      ],
-      "residual_issues": [],
-      "started_at": "2026-02-10T14:00:00Z",
-      "completed_at": "2026-02-10T14:15:00Z"
+      "name": "Pydantic boundary object schemas",
+      "inner_iterations": 2,
+      "commit_hashes": ["5fdcefe", "053b4a8"],
+      "test_count": 34,
+      "completed_at": "2026-02-10T20:15:00Z"
     },
     "1.1": {
-      "status": "IN_PROGRESS",
+      "status": "DONE",
+      "name": "MusicBrainz connector",
       "inner_iterations": 2,
-      "current_phase": "VERIFY",
-      "commit_hashes": [
-        "m1n2o3p"
-      ],
-      "test_files": [
-        "tests/unit/test_connectors_musicbrainz.py"
-      ],
-      "source_files": [
-        "src/music_attribution/connectors/musicbrainz.py"
-      ],
-      "deps_added": [
-        "musicbrainzngs>=0.7"
-      ],
-      "red_commit": "m1n2o3p",
+      "commit_hashes": ["cd0543f", "0dd9593"],
+      "test_count": 9,
+      "completed_at": "2026-02-10T21:00:00Z"
+    },
+    "2.3": {
+      "status": "DONE",
+      "name": "Embedding-based semantic matching",
+      "inner_iterations": 1,
+      "commit_hashes": ["d4a01cd"],
       "test_count": 5,
-      "test_results": [
-        {
-          "iteration": 1,
-          "pass": 0,
-          "fail": 3,
-          "errors": 2,
-          "lint_issues": 0,
-          "type_errors": 0,
-          "overall": "FAILING"
-        },
-        {
-          "iteration": 2,
-          "pass": 3,
-          "fail": 2,
-          "errors": 0,
-          "lint_issues": 1,
-          "type_errors": 2,
-          "overall": "FAILING"
-        }
-      ],
-      "fix_attempts": [
-        {
-          "iteration": 2,
-          "category": "test_failure",
-          "description": "Fixed async wrapper for musicbrainzngs sync calls",
-          "result": "resolved"
-        }
-      ],
-      "residual_issues": [],
-      "started_at": "2026-02-10T14:15:00Z",
+      "completed_at": "2026-02-11T01:00:00Z"
+    },
+    "2.3b": {
+      "status": "IN_PROGRESS",
+      "name": "Splink probabilistic record linkage",
+      "inner_iterations": 2,
+      "commit_hashes": [],
+      "test_count": 5,
       "completed_at": null
     }
   },
+  "deferred_tasks": ["5.1", "5.2", "5.3", "6.1", "6.2", "6.3", "6.4", "6.5", "6.6", "6.7"],
   "convergence": {
     "reached": false,
-    "tasks_done": 1,
-    "tasks_total": 36,
+    "tasks_done": 3,
+    "tasks_total": 27,
     "tasks_stuck": 0,
-    "tasks_deferred": 0
+    "tasks_deferred": 10,
+    "total_tests": 48,
+    "all_non_deferred_complete": false
   }
 }

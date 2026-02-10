@@ -1,10 +1,17 @@
 ---
 name: self-learning-iterative-coder
-version: 1.0.0
+version: 2.0.0
 description: Self-correcting TDD loop for plan-driven code implementation
 last_updated: 2026-02-10
 activation: manual
 invocation: /tdd-iterate
+revision_notes: >
+  v2.0.0: Post-execution retrospective after 27 tasks (163 tests).
+  Replaced task-count budget with inner-iteration budget.
+  Added spec-adaptation protocol. Made RED commit optional.
+  Expanded dependency management. Scoped typecheck per-task.
+  Simplified state updates and convergence reports.
+  Added empirical data to self-correction principles.
 ---
 
 # Self-Learning Iterative Coder
@@ -41,9 +48,9 @@ OUTER LOOP (Plan Execution):
     If FORCE_STOP: Log residual failures, move to next task
 ```
 
-## Progress Visibility
+## Progress Visibility (Optional)
 
-Print this banner at the start of each inner iteration:
+In **interactive mode**, print a progress banner at the start of each inner iteration for developer awareness. In **autonomous mode**, skip the banner — the state file and `git log --oneline` are the progress signals.
 
 ```
 ITERATIVE TDD CODER - Task {task_id} - Inner Iteration {N}
@@ -66,7 +73,7 @@ Status values: `[CURRENT]`, `[DONE]`, `[PENDING]`, `[SKIPPED]`
 Never write implementation before tests. The RED phase is mandatory. Tests are the specification — they define what correct behavior looks like before any code exists.
 
 ### 2. VERIFY, DON'T ASSUME
-Run `make test`, `make lint`, `make typecheck` after every change. Never claim something works without running the verification suite. "Ghost completions" (claiming done without running tests) are the #1 failure mode of agentic coding.
+Run the project's test, lint, and typecheck commands (e.g., `make test`, `make lint`, `make typecheck`) after every change. Never claim something works without running the verification suite. "Ghost completions" (claiming done without running tests) are the #1 failure mode of agentic coding.
 
 ### 3. STATE IS TRUTH
 Load `state/tdd-state.json` at the start of every session. The state file is the crash-recovery mechanism. If context is lost, the state file tells you exactly where to resume. Update it after every checkpoint.
@@ -89,6 +96,7 @@ Before starting, run through the [ACTIVATION-CHECKLIST.md](ACTIVATION-CHECKLIST.
 | Protocol | Purpose | File |
 |----------|---------|------|
 | Task Selection | Parse plan, pick next eligible task | [protocols/task-selection.md](protocols/task-selection.md) |
+| Spec Adaptation | Handle plan-vs-reality divergence | [protocols/spec-adaptation.md](protocols/spec-adaptation.md) |
 | Red Phase | Write failing tests from TDD spec | [protocols/red-phase.md](protocols/red-phase.md) |
 | Green Phase | Implement minimum code to pass tests | [protocols/green-phase.md](protocols/green-phase.md) |
 | Verify Phase | Run tests + lint + typecheck | [protocols/verify-phase.md](protocols/verify-phase.md) |
@@ -114,16 +122,18 @@ See [prompts/self-correction-principles.md](prompts/self-correction-principles.m
 | Ghost completion | Claiming tests pass without running them | Always run verification suite |
 | Shotgun fix | Changing many things at once hoping something works | Analyze failure, make targeted fix |
 | Test-after | Writing implementation first, tests second | RED phase is always first |
-| Context hoarding | Trying to do too many tasks in one session | Max 5 tasks per session, then new session |
+| Context hoarding | Trying to do too much in one session | Max 20 inner iterations per session, then new session |
 | Skip the skip | Ignoring lint/type errors "because tests pass" | All three gates must be green |
 | Infinite loop | Retrying the same fix without analyzing why it fails | After 2 identical failures, escalate |
 | Convention ignorance | Using pip instead of uv, strings instead of Path | Read CLAUDE.md before starting |
 
 ## Session Budget
 
-- **Max tasks per session**: 5 (context budget — suggest new session after 5)
+- **Max inner iterations per session**: 20 (context budget — suggest new session after 20 cumulative iterations)
 - **Max inner iterations per task**: 5 (FORCE_STOP — likely a design issue)
 - **Max fix attempts per failure**: 3 (escalate if same failure persists)
+
+Note: Simple tasks consume 1 iteration; complex tasks consume 3-5. The inner-iteration budget reflects actual context consumption better than a flat task count. In practice (27-task execution), ~70% of tasks completed in 1 iteration.
 
 ## Mapping to iterated-llm-council
 

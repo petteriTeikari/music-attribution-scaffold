@@ -12,6 +12,16 @@ Write FAILING tests BEFORE any implementation code. This is the foundational TDD
 
 ## Steps
 
+### 0. Validate Spec Against Reality
+
+**Before writing any tests**, verify the plan's assumptions against the actual codebase:
+
+1. If the module being tested already exists, **read the source** to check enum values, field names, method signatures, and required Pydantic fields.
+2. If a third-party library is involved, check the **installed version** and verify the API matches the plan.
+3. If divergence is found, follow [spec-adaptation.md](spec-adaptation.md) to adapt the test to reality.
+
+This step prevents the most common failure mode: tests that fail not because the implementation is wrong, but because the plan spec was stale or inaccurate.
+
 ### 1. Read the TDD Spec
 
 Extract the `first-write-these-tests` block from the selected task. This contains:
@@ -72,14 +82,17 @@ If tests pass before implementation:
 
 **Action:** If tests pass unexpectedly, review each test to ensure it's actually testing the intended behavior. Add more specific assertions if needed.
 
-### 8. Commit Failing Tests
+### 8. Commit Failing Tests (Optional)
 
+The RED phase's value is in **running the tests and seeing them fail**, confirming that the tests actually test something. The separate commit is optional.
+
+**Autonomous mode:** Skip the RED commit. Proceed directly to [green-phase.md](green-phase.md). Tests and implementation will be committed together after verification.
+
+**Interactive mode:** Commit the failing tests if the developer wants a reviewable RED baseline:
 ```bash
 git add {test_files}
 git commit -m "test: add failing tests for task {task_id} — {task_name}"
 ```
-
-This commit establishes the RED baseline. It must be committed while tests are still failing.
 
 ## Anti-Patterns
 
@@ -87,7 +100,7 @@ This commit establishes the RED baseline. It must be committed while tests are s
 |--------------|---------------|-------------------|
 | Writing implementation alongside tests | Violates RED-GREEN separation | Complete RED phase first, then GREEN |
 | Writing tests that pass immediately | Testing nothing — no specification value | Ensure tests assert behavior that requires implementation |
-| Skipping the RED commit | Loses the RED baseline, can't verify GREEN actually changed something | Always commit while tests fail |
+| Skipping test execution | Must confirm tests fail before implementing | Always run tests in RED phase, even if not committing |
 | Copy-pasting tests without understanding | Tests won't catch real bugs | Understand what each test verifies |
 | Importing from wrong module | Tests pass against wrong code | Verify import paths match the plan |
 | Forgetting `__init__.py` | Import resolution fails in confusing ways | Create `__init__.py` in new test dirs |
@@ -100,7 +113,8 @@ RED PHASE COMPLETE — Task {task_id}
   Test file(s): {list of test files created}
   Test count: {N} tests written
   Status: ALL FAILING (expected)
-  Commit: {commit_hash}
+  Spec adaptations: {count or "none"}
+  Commit: {commit_hash or "deferred to GREEN"}
 ```
 
 ## State Update

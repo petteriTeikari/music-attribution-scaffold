@@ -58,6 +58,8 @@ The protocol expects plans with these elements. All formats (XML, YAML, JSON) mu
 
 ## XML Parsing Example
 
+This example matches the actual XML format used in `probabilistic-prd-executable-plan.xml`. Adapt as needed for other plan formats.
+
 ```python
 import xml.etree.ElementTree as ET
 
@@ -69,54 +71,52 @@ def parse_xml_plan(plan_path):
     for task_elem in root.iter('task'):
         task = {
             'id': task_elem.get('id'),
-            'name': task_elem.get('name', ''),
-            'status': 'NOT_STARTED',  # default
+            # Status is an ATTRIBUTE on <task>, not a child element
+            'status': task_elem.get('status', 'NOT_STARTED'),
+            'name': '',
             'dependencies': [],
             'tdd_spec': {},
             'acceptance_criteria': [],
             'pyproject_deps': [],
         }
 
-        # Extract status
-        status_elem = task_elem.find('status')
-        if status_elem is not None and status_elem.text:
-            task['status'] = status_elem.text.strip()
+        # Name is a child element: <name>Task Name</name>
+        name_elem = task_elem.find('name')
+        if name_elem is not None and name_elem.text:
+            task['name'] = name_elem.text.strip()
 
-        # Extract dependencies
+        # Dependencies are COMMA-SEPARATED text, not sub-elements
+        # Example: <dependencies>0.1, 0.2</dependencies>
         deps_elem = task_elem.find('dependencies')
-        if deps_elem is not None:
-            for dep in deps_elem.findall('dep'):
-                if dep.text:
-                    task['dependencies'].append(dep.text.strip())
+        if deps_elem is not None and deps_elem.text:
+            task['dependencies'] = [
+                d.strip() for d in deps_elem.text.split(',') if d.strip()
+            ]
 
-        # Extract TDD spec
+        # TDD spec has test-first and then-implement blocks
         tdd_elem = task_elem.find('tdd-spec')
         if tdd_elem is not None:
-            tests_elem = tdd_elem.find('first-write-these-tests')
+            tests_elem = tdd_elem.find('test-first')
             impl_elem = tdd_elem.find('then-implement')
             if tests_elem is not None and tests_elem.text:
                 task['tdd_spec']['tests'] = tests_elem.text.strip()
             if impl_elem is not None and impl_elem.text:
                 task['tdd_spec']['implement'] = impl_elem.text.strip()
 
-        # Extract acceptance criteria
-        ac_elem = task_elem.find('acceptance-criteria')
-        if ac_elem is not None:
-            for criterion in ac_elem.findall('criterion'):
-                if criterion.text:
-                    task['acceptance_criteria'].append(criterion.text.strip())
-
-        # Extract deps
+        # pyproject-deps is a single element with comma-separated text
+        # Example: <pyproject-deps>fastapi >= 0.115, uvicorn >= 0.34</pyproject-deps>
         deps_pkg_elem = task_elem.find('pyproject-deps')
-        if deps_pkg_elem is not None:
-            for dep in deps_pkg_elem.findall('dep'):
-                if dep.text:
-                    task['pyproject_deps'].append(dep.text.strip())
+        if deps_pkg_elem is not None and deps_pkg_elem.text:
+            task['pyproject_deps'] = [
+                d.strip() for d in deps_pkg_elem.text.split(',') if d.strip()
+            ]
 
         tasks.append(task)
 
     return tasks
 ```
+
+**Note:** Always verify the parser against the actual plan file structure. Different plans may use different XML conventions.
 
 ## Selection Output
 
@@ -135,7 +135,7 @@ Package deps: {list or "none"}
 - **No eligible tasks**: All remaining tasks are BLOCKED or DEFERRED. Report this and stop.
 - **Circular dependencies**: Log error and halt. This is a plan authoring bug.
 - **IN_PROGRESS task exists**: Resume that task instead of selecting a new one. Check which phase it was in from state file.
-- **Session budget exceeded**: If `session_task_count >= 5`, suggest starting a new session.
+- **Session budget exceeded**: If `session_inner_iterations >= 20`, output a session summary and stop. Do not begin a new task.
 
 ## Next Step
 

@@ -57,13 +57,23 @@ make lint
 
 Record: issue count, issue types.
 
-### 4. Run Type Checker
+### 4. Run Type Checker (Scoped)
 
+**Per-task:** Check only the new/modified source files for fast feedback:
 ```bash
-make typecheck
+# Python:     mypy {new_source_file1} {new_source_file2}
+# TypeScript: npx tsc --noEmit {new_source_file1}
+# Rust:       cargo check (always full-project)
+```
+
+**Per-session boundary (start and end):** Check the full project:
+```bash
+make typecheck  # or project-specific equivalent
 ```
 
 Record: error count, error types.
+
+**Rationale:** Full mypy runs are slow and can surface pre-existing issues unrelated to the current task. Scoping to new files gives fast, targeted feedback. Run full typecheck at session boundaries to catch regressions.
 
 ### 5. Compile Results
 
@@ -132,7 +142,7 @@ VERIFY PHASE COMPLETE — Task {task_id} — Iteration {N}
   "tasks": {
     "{task_id}": {
       "test_results": [
-        {"iteration": N, "pass": P, "fail": F, "errors": E, "lint": L, "types": T}
+        {"iteration": N, "pass": P, "fail": F, "errors": E, "lint_issues": L, "type_errors": T, "overall": "ALL_GREEN|FAILING"}
       ]
     }
   }

@@ -81,32 +81,45 @@ wip({scope}): task {id} STUCK after {N} iterations
 git commit -m "{commit message}"
 ```
 
-### 5. Update State File
+### 5. Update State File (Session Boundaries Only)
 
-Update `tdd-state.json` with:
+**v2.0 change:** The state file is updated at **session start** and **session end**, not after every checkpoint.
 
+**Per-task:** The git commit IS the checkpoint. `git log --oneline` provides crash recovery — it shows exactly what was implemented and when.
+
+**Per-session-start:**
+1. Load state file
+2. Verify state against `git log` (reconcile any discrepancies)
+3. Set `current_task_id` to the next eligible task
+
+**Per-session-end:**
+1. Bulk update all completed tasks in the state file
+2. Update convergence counters
+3. Record `session_inner_iterations`
+
+**Rationale:** In practice, per-checkpoint state updates fell behind immediately — the state file was at task 1.1 when execution had reached task 4.2. Git history is the ground truth for crash recovery; the state file provides higher-level progress tracking.
+
+State file schema:
 ```json
 {
   "current_task_id": "{task_id}",
   "current_phase": "CHECKPOINT",
-  "inner_iteration": N,
+  "session_inner_iterations": N,
   "tasks": {
     "{task_id}": {
-      "status": "{IN_PROGRESS|DONE|STUCK}",
+      "status": "{DONE|STUCK}",
+      "name": "{task_name}",
       "inner_iterations": N,
-      "commit_hashes": ["...", "{new_commit_hash}"],
-      "test_results": [
-        {"iteration": N, "pass": P, "fail": F, "lint": L, "types": T}
-      ],
-      "completed_at": "{timestamp if DONE, null otherwise}"
+      "commit_hashes": ["{hash}"],
+      "test_count": T,
+      "completed_at": "{timestamp}"
     }
   },
   "convergence": {
     "tasks_done": D,
     "tasks_total": T,
     "tasks_stuck": S
-  },
-  "session_task_count": C
+  }
 }
 ```
 
@@ -133,7 +146,7 @@ The state file lives at:
 .claude/skills/self-learning-iterative-coder/state/tdd-state.json
 ```
 
-This path is relative to the project root. The state file is NOT committed to git (add to `.gitignore`) — it's a local execution artifact.
+This path is relative to the project root. The state file can be committed to git for cross-session visibility, or kept local as an execution artifact — project preference.
 
 ## Recovery from Crash
 

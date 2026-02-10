@@ -11,14 +11,16 @@ Run through this checklist before starting the iterative TDD loop. Every item mu
 
 **How to check:**
 ```bash
-# For XML plans:
+# For XML plans (status is an attribute, not child element):
 python3 -c "
 import xml.etree.ElementTree as ET
 tree = ET.parse('path/to/plan.xml')
-tasks = tree.findall('.//task')
+tasks = list(tree.iter('task'))
 print(f'Found {len(tasks)} tasks')
 for t in tasks[:5]:
-    print(f'  {t.get(\"id\")}: {t.find(\"status\").text if t.find(\"status\") is not None else \"NO STATUS\"}')
+    name_elem = t.find('name')
+    name = name_elem.text.strip() if name_elem is not None and name_elem.text else 'unnamed'
+    print(f'  {t.get(\"id\")}: {t.get(\"status\", \"NOT_STARTED\")} — {name}')
 "
 ```
 
@@ -43,6 +45,13 @@ make typecheck && echo "TYPES: OK" || echo "TYPES: FAILING"
 - [ ] Package manager is available (e.g., `uv`, `npm`, `cargo`)
 - [ ] Lock file is up to date (`uv.lock`, `package-lock.json`)
 - [ ] Dev dependencies are installed (`uv sync`, `npm install`)
+- [ ] Type checker is configured for third-party dependencies (e.g., mypy overrides for Python, `skipLibCheck` for TypeScript)
+
+**How to check (Python/mypy):**
+```bash
+grep "follow_untyped_imports" pyproject.toml
+# If a package you import causes mypy errors, add an override
+```
 
 ## 4. State File
 
@@ -67,6 +76,7 @@ make typecheck && echo "TYPES: OK" || echo "TYPES: FAILING"
     "tasks_stuck": 0
   },
   "session_task_count": 0,
+  "session_inner_iterations": 0,
   "session_start": "2026-01-01T00:00:00Z"
 }
 ```
