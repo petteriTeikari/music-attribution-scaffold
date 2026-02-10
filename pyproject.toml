@@ -21,6 +21,7 @@ dependencies = [
     "loguru>=0.7.0",
     "musicbrainzngs>=0.7",
     "mutagen>=1.47",
+    "pandera>=0.22",
     "pgvector>=0.4",
     "polars>=1.0",
     "pyacoustid>=1.3",
