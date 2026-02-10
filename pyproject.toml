@@ -20,6 +20,7 @@ dependencies = [
     "httpx>=0.28",
     "loguru>=0.7.0",
     "musicbrainzngs>=0.7",
+    "mutagen>=1.47",
     "pgvector>=0.4",
     "polars>=1.0",
     "pyacoustid>=1.3",
