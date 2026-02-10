@@ -170,3 +170,12 @@ class DelegationRoleEnum(StrEnum):
     MANAGER = "MANAGER"
     LABEL = "LABEL"
     DISTRIBUTOR = "DISTRIBUTOR"
+
+
+class PipelineFeedbackTypeEnum(StrEnum):
+    """Pipeline feedback signal types for continuous improvement."""
+
+    REFETCH = "REFETCH"
+    RECALIBRATE = "RECALIBRATE"
+    DISPUTE = "DISPUTE"
+    STALE = "STALE"
