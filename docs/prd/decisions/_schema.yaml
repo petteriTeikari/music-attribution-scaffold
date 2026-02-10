@@ -1,0 +1,291 @@
+# Decision Node Schema
+# JSON Schema for .decision.yaml files in the probabilistic PRD network
+#
+# Each decision node represents a choice point in the architectural decision DAG.
+# Nodes contain options with prior probabilities, conditional dependencies on
+# parent decisions, archetype-specific overrides, volatility classification,
+# and domain applicability scores.
+
+$schema: "https://json-schema.org/draft/2020-12/schema"
+title: DecisionNode
+description: >
+  A node in the probabilistic PRD Bayesian decision network.
+  Represents a single architectural decision with options,
+  conditional dependencies, and team-archetype modulation.
+
+type: object
+required:
+  - decision_id
+  - title
+  - decision_level
+  - status
+  - options
+  - volatility
+  - domain_applicability
+
+properties:
+  decision_id:
+    type: string
+    pattern: "^[a-z][a-z0-9_]*$"
+    description: >
+      Unique snake_case identifier for this decision.
+      Must match across _network.yaml and all referencing conditional tables.
+
+  title:
+    type: string
+    maxLength: 120
+    description: Human-readable title for this decision point.
+
+  description:
+    type: string
+    description: >
+      Extended description of what this decision covers,
+      why it matters, and what trade-offs are involved.
+
+  decision_level:
+    type: string
+    enum:
+      - L1_business
+      - L2_architecture
+      - L3_implementation
+      - L4_deployment
+      - L5_operations
+    description: >
+      Hierarchy level. L1 is highest (business strategy),
+      L5 is lowest (runtime operations).
+
+  status:
+    type: string
+    enum:
+      - active        # Decision is currently relevant and maintained
+      - draft         # Under development, probabilities are estimates
+      - deprecated    # Superseded by another decision node
+      - archived      # Historical reference only
+    description: Lifecycle status of this decision node.
+
+  last_updated:
+    type: string
+    format: date
+    description: Last modification date (YYYY-MM-DD).
+
+  # --- Options ---
+
+  options:
+    type: array
+    minItems: 2
+    items:
+      $ref: "#/$defs/DecisionOption"
+    description: >
+      Available choices for this decision. Prior probabilities
+      across all options must sum to 1.0 (tolerance: 0.01).
+
+  # --- Conditional Dependencies (Bayesian edges) ---
+
+  conditional_on:
+    type: array
+    items:
+      $ref: "#/$defs/ConditionalDependency"
+    description: >
+      Parent decisions that influence this decision's probability
+      distribution. Each entry defines a conditional probability
+      table: P(this_option | parent_option).
+
+  # --- Archetype Modulation ---
+
+  archetype_weights:
+    type: object
+    additionalProperties:
+      $ref: "#/$defs/ArchetypeModifier"
+    description: >
+      Per-team-archetype probability overrides. Keys are archetype_id
+      strings matching files in ../archetypes/. Each modifier's
+      probability_overrides must sum to 1.0.
+
+  # --- Temporal Volatility ---
+
+  volatility:
+    $ref: "#/$defs/Volatility"
+    description: Temporal stability classification with review schedule.
+
+  # --- Domain Applicability ---
+
+  domain_applicability:
+    type: object
+    additionalProperties:
+      type: number
+      minimum: 0.0
+      maximum: 1.0
+    description: >
+      Relevance score per domain (0.0 = irrelevant, 1.0 = fully applicable).
+      Keys are domain identifiers matching entries in ../domains/registry.yaml.
+
+  # --- Metadata ---
+
+  tags:
+    type: array
+    items:
+      type: string
+    description: Freeform tags for discovery and filtering.
+
+  rationale:
+    type: string
+    description: >
+      Extended rationale for the prior probability assignments.
+      Why are these the default weights?
+
+  references:
+    type: array
+    items:
+      type: string
+    description: >
+      Links to PRD files, knowledge base articles, or external
+      resources that inform this decision.
+
+# --- Reusable definitions ---
+
+$defs:
+  DecisionOption:
+    type: object
+    required:
+      - option_id
+      - title
+      - prior_probability
+      - status
+    properties:
+      option_id:
+        type: string
+        pattern: "^[a-z][a-z0-9_]*$"
+        description: Unique snake_case identifier within this decision.
+      title:
+        type: string
+        description: Human-readable label for this option.
+      description:
+        type: string
+        description: What this option entails and its key trade-offs.
+      prior_probability:
+        type: number
+        minimum: 0.0
+        maximum: 1.0
+        description: >
+          Unconditional baseline probability before considering
+          parent decisions or archetype modulation.
+      status:
+        type: string
+        enum:
+          - recommended    # Actively recommended for most teams
+          - viable         # Reasonable choice under certain conditions
+          - experimental   # Under evaluation, not production-proven
+          - deferred       # Valid but not for current phase
+          - rejected       # Evaluated and explicitly not recommended
+        description: Recommendation status for this option.
+      constraints:
+        type: array
+        items:
+          type: string
+        description: >
+          Hard constraints that must be true for this option to be viable.
+          Example: "Team size >= 3", "Budget > $500/month".
+      complements:
+        type: array
+        items:
+          type: string
+        description: >
+          Other decision options (as decision_id.option_id) that
+          pair well with this choice.
+
+  ConditionalDependency:
+    type: object
+    required:
+      - parent_decision_id
+      - conditional_table
+    properties:
+      parent_decision_id:
+        type: string
+        description: >
+          The decision_id of the parent node. Must exist in _network.yaml.
+      influence_strength:
+        type: string
+        enum: [strong, moderate, weak]
+        default: moderate
+        description: >
+          Qualitative strength of this dependency.
+          Strong: parent choice nearly determines this decision.
+          Moderate: parent choice significantly shifts probabilities.
+          Weak: parent choice slightly adjusts probabilities.
+      conditional_table:
+        type: array
+        items:
+          $ref: "#/$defs/ConditionalTableRow"
+        description: >
+          P(this_option | parent_option) table. Must have one row
+          per option in the parent decision. Each row's
+          then_probabilities must sum to 1.0.
+
+  ConditionalTableRow:
+    type: object
+    required:
+      - given_parent_option
+      - then_probabilities
+    properties:
+      given_parent_option:
+        type: string
+        description: >
+          The option_id from the parent decision that conditions
+          this row's probability distribution.
+      then_probabilities:
+        type: object
+        additionalProperties:
+          type: number
+          minimum: 0.0
+          maximum: 1.0
+        description: >
+          Map of this decision's option_id → probability,
+          conditioned on the given parent option. Must sum to 1.0.
+
+  ArchetypeModifier:
+    type: object
+    required:
+      - probability_overrides
+    properties:
+      probability_overrides:
+        type: object
+        additionalProperties:
+          type: number
+          minimum: 0.0
+          maximum: 1.0
+        description: >
+          Per-option probability overrides for this archetype.
+          Keys must match the decision's option_ids. Must sum to 1.0.
+      rationale:
+        type: string
+        description: Why this archetype shifts probabilities this way.
+
+  Volatility:
+    type: object
+    required:
+      - classification
+      - last_assessed
+      - next_review
+    properties:
+      classification:
+        type: string
+        enum:
+          - stable     # Unlikely to change within 6 months
+          - shifting   # Actively evolving, may change within 3 months
+          - volatile   # High uncertainty, could change within weeks
+        description: Temporal stability classification.
+      last_assessed:
+        type: string
+        format: date
+        description: Date of last volatility assessment (YYYY-MM-DD).
+      next_review:
+        type: string
+        format: date
+        description: Scheduled date for next review (YYYY-MM-DD).
+      change_drivers:
+        type: array
+        items:
+          type: string
+        description: >
+          Factors that could trigger a reclassification.
+          Monitored during reviews.
