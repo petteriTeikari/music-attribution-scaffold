@@ -1,0 +1,304 @@
+# Agentic UI Framework
+#
+# Selects the framework for building AI-assisted, agentic
+# user interfaces with tool-calling, streaming, and
+# human-in-the-loop capabilities.
+
+decision_id: agentic_ui_framework
+title: "Agentic UI Framework"
+description: >
+  Determines the framework for building agentic user interfaces
+  where AI agents can render UI components, call tools, stream
+  responses, and interact with human-in-the-loop workflows.
+  Key consideration: AG-UI (Agent-User Interaction Protocol)
+  compatibility, MCP integration, and generative UI support.
+  Music attribution benefits from agentic UI for interactive
+  confidence exploration, provenance drill-down, and guided
+  dispute resolution.
+
+decision_level: L3_implementation
+status: active
+last_updated: 2026-02-11
+
+options:
+  - option_id: copilotkit_agui
+    title: "CopilotKit + AG-UI"
+    description: >
+      Open-source React framework (28.7k stars) for building
+      agentic UIs. Native AG-UI protocol support (31 event types),
+      MCP integration (shipped Jan 2026), CoAgents for LangGraph
+      interop, generative UI via tool-to-component mapping.
+      Requires Next.js. Strong community, rapid iteration.
+    prior_probability: 0.35
+    status: recommended
+    complements:
+      - "frontend_framework.nextjs"
+      - "api_protocol.mcp_primary"
+      - "ai_framework_strategy.direct_api_pydantic"
+
+  - option_id: vercel_ai_sdk
+    title: "Vercel AI SDK"
+    description: >
+      Vercel's TypeScript toolkit for AI-powered applications.
+      Strong streaming support, React Server Components integration,
+      multi-model support. Tightly coupled to Vercel ecosystem.
+      Less open-source community governance than CopilotKit.
+    prior_probability: 0.25
+    status: viable
+    complements:
+      - "frontend_framework.nextjs"
+
+  - option_id: custom_agent_ui
+    title: "Custom Agentic UI Layer"
+    description: >
+      Build agentic UI capabilities from scratch using raw
+      WebSocket/SSE connections, custom state management, and
+      hand-rolled tool-calling UI. Maximum control, maximum effort.
+      Viable if team has strong frontend expertise and unique
+      requirements not met by existing frameworks.
+    prior_probability: 0.15
+    status: experimental
+    constraints:
+      - "Significant frontend engineering investment"
+      - "Must implement AG-UI or similar protocol from scratch"
+      - "Ongoing maintenance burden for streaming, state sync"
+
+  - option_id: no_agentic_ui
+    title: "No Agentic UI"
+    description: >
+      Traditional form-based or dashboard UI without AI agent
+      integration. Users interact via search, filters, and
+      static displays. AI features (if any) are API-only.
+    prior_probability: 0.25
+    status: viable
+
+conditional_on:
+  - parent_decision_id: frontend_framework
+    influence_strength: strong
+    conditional_table:
+      - given_parent_option: nextjs
+        then_probabilities:
+          copilotkit_agui: 0.50
+          vercel_ai_sdk: 0.25
+          custom_agent_ui: 0.10
+          no_agentic_ui: 0.15
+      - given_parent_option: sveltekit
+        then_probabilities:
+          copilotkit_agui: 0.05
+          vercel_ai_sdk: 0.10
+          custom_agent_ui: 0.35
+          no_agentic_ui: 0.50
+      - given_parent_option: htmx_jinja
+        then_probabilities:
+          copilotkit_agui: 0.00
+          vercel_ai_sdk: 0.00
+          custom_agent_ui: 0.25
+          no_agentic_ui: 0.75
+      - given_parent_option: no_frontend
+        then_probabilities:
+          copilotkit_agui: 0.00
+          vercel_ai_sdk: 0.00
+          custom_agent_ui: 0.00
+          no_agentic_ui: 1.00
+
+  - parent_decision_id: ai_framework_strategy
+    influence_strength: moderate
+    conditional_table:
+      - given_parent_option: direct_api_pydantic
+        then_probabilities:
+          copilotkit_agui: 0.40
+          vercel_ai_sdk: 0.25
+          custom_agent_ui: 0.15
+          no_agentic_ui: 0.20
+      - given_parent_option: lightweight_sdk
+        then_probabilities:
+          copilotkit_agui: 0.35
+          vercel_ai_sdk: 0.30
+          custom_agent_ui: 0.10
+          no_agentic_ui: 0.25
+      - given_parent_option: orchestration_framework
+        then_probabilities:
+          copilotkit_agui: 0.40
+          vercel_ai_sdk: 0.20
+          custom_agent_ui: 0.20
+          no_agentic_ui: 0.20
+      - given_parent_option: no_llm
+        then_probabilities:
+          copilotkit_agui: 0.00
+          vercel_ai_sdk: 0.00
+          custom_agent_ui: 0.05
+          no_agentic_ui: 0.95
+
+  - parent_decision_id: api_protocol
+    influence_strength: moderate
+    conditional_table:
+      - given_parent_option: rest_openapi
+        then_probabilities:
+          copilotkit_agui: 0.20
+          vercel_ai_sdk: 0.30
+          custom_agent_ui: 0.20
+          no_agentic_ui: 0.30
+      - given_parent_option: mcp_primary
+        then_probabilities:
+          copilotkit_agui: 0.55
+          vercel_ai_sdk: 0.15
+          custom_agent_ui: 0.15
+          no_agentic_ui: 0.15
+      - given_parent_option: graphql
+        then_probabilities:
+          copilotkit_agui: 0.20
+          vercel_ai_sdk: 0.35
+          custom_agent_ui: 0.20
+          no_agentic_ui: 0.25
+      - given_parent_option: grpc
+        then_probabilities:
+          copilotkit_agui: 0.10
+          vercel_ai_sdk: 0.10
+          custom_agent_ui: 0.35
+          no_agentic_ui: 0.45
+
+  - parent_decision_id: ui_adaptation_strategy
+    influence_strength: moderate
+    conditional_table:
+      - given_parent_option: malleable_ai_driven
+        then_probabilities:
+          copilotkit_agui: 0.50
+          vercel_ai_sdk: 0.25
+          custom_agent_ui: 0.15
+          no_agentic_ui: 0.10
+      - given_parent_option: configurable_presets
+        then_probabilities:
+          copilotkit_agui: 0.30
+          vercel_ai_sdk: 0.25
+          custom_agent_ui: 0.15
+          no_agentic_ui: 0.30
+      - given_parent_option: progressive_disclosure
+        then_probabilities:
+          copilotkit_agui: 0.20
+          vercel_ai_sdk: 0.20
+          custom_agent_ui: 0.15
+          no_agentic_ui: 0.45
+      - given_parent_option: fixed_layout
+        then_probabilities:
+          copilotkit_agui: 0.10
+          vercel_ai_sdk: 0.10
+          custom_agent_ui: 0.10
+          no_agentic_ui: 0.70
+
+archetype_weights:
+  engineer_heavy_startup:
+    probability_overrides:
+      copilotkit_agui: 0.35
+      vercel_ai_sdk: 0.25
+      custom_agent_ui: 0.20
+      no_agentic_ui: 0.20
+    rationale: "Engineers can evaluate and adopt open-source frameworks. May consider custom build."
+
+  musician_first_team:
+    probability_overrides:
+      copilotkit_agui: 0.40
+      vercel_ai_sdk: 0.30
+      custom_agent_ui: 0.05
+      no_agentic_ui: 0.25
+    rationale: "Need turnkey solution. CopilotKit's React components are most accessible."
+
+  solo_hacker:
+    probability_overrides:
+      copilotkit_agui: 0.30
+      vercel_ai_sdk: 0.20
+      custom_agent_ui: 0.10
+      no_agentic_ui: 0.40
+    rationale: "Solo may skip agentic UI entirely or use CopilotKit for rapid prototyping."
+
+  well_funded_startup:
+    probability_overrides:
+      copilotkit_agui: 0.40
+      vercel_ai_sdk: 0.25
+      custom_agent_ui: 0.20
+      no_agentic_ui: 0.15
+    rationale: "Investment in agentic UI as differentiator. CopilotKit for speed, custom for uniqueness."
+
+research_influences:
+  - paper: "DuetUI: Human-AI Joint Interface Design"
+    arxiv: "2509.13444"
+    concept: bidirectional_context_loop
+    library_status: production_ready
+    library: "CopilotKit useCopilotReadable/useCopilotAction + AG-UI protocol"
+    prd_implication: >
+      Shared state between user and AI agent — both read/write UI context.
+      Attribution confidence state shared bidirectionally: agent updates
+      confidence scores, user corrections feed back into resolution pipeline.
+      Directly validates copilotkit_agui option's shared-state architecture.
+
+  - paper: "Deep Cognition: Interaction as Intelligence"
+    arxiv: "2507.15759"
+    concept: cognitive_oversight
+    library_status: production_ready
+    library: "LangGraph interrupt() + CopilotKit CoAgents"
+    prd_implication: >
+      Transparent reasoning chains and interruptible processes. Attribution
+      confidence exploration should expose reasoning, not just scores.
+      Dispute resolution requires human-in-the-loop checkpoints where users
+      can inspect, redirect, or override automated attribution.
+
+  - paper: "Deep Cognition: Interaction as Intelligence"
+    arxiv: "2507.15759"
+    concept: transparent_reasoning_chains
+    library_status: production_ready
+    library: "Vercel AI SDK <Reasoning> component + assistant-ui (8.4k stars)"
+    prd_implication: >
+      Reasoning-as-UI, not reasoning-as-backend. Attribution confidence
+      should show chain: ISRC match → MusicBrainz credit → string similarity
+      → Discogs conflict → final score. assistant-ui provides composable
+      Radix-style primitives (Thread, Message, Composer) that layer on top
+      of any framework choice.
+    note: >
+      assistant-ui (github.com/assistant-ui/assistant-ui) complements
+      copilotkit_agui — composable chat primitives that integrate with both
+      Vercel AI SDK and LangGraph. Consider as a complement, not a replacement.
+
+  - paper: "Orca: Malleable Browser Spaces for Agentic Tasks"
+    authors: "Jiang & Xia, UCSD"
+    concept: parallel_agent_monitoring
+    library_status: research_prototype
+    library: "github.com/peilingjiang/orca (code released)"
+    prd_implication: >
+      Spatial canvas pattern (tldraw-style) for parallel agent monitoring.
+      Multi-source attribution resolution could show one workspace per source
+      (MusicBrainz, Discogs, AcoustID) with agents resolving conflicts visually.
+      Validates custom_agent_ui option for teams wanting spatial interfaces.
+    watchlist:
+      - "tldraw SDK integration with CopilotKit"
+      - "Orca codebase maturity beyond research prototype"
+
+volatility:
+  classification: volatile
+  last_assessed: 2026-02-11
+  next_review: 2026-03-11
+  change_drivers:
+    - "AG-UI protocol stability (currently v0.1, rapid evolution)"
+    - "Google A2UI specification finalization (v0.9 → v1.0 timeline)"
+    - "CopilotKit vs Vercel AI SDK feature parity"
+    - "MCP-native UI framework emergence"
+    - "React Server Components maturity for streaming"
+    - "DuetUI bidirectional context loop patterns (arXiv:2509.13444)"
+    - "Deep Cognition cognitive oversight model (arXiv:2507.15759)"
+    - "assistant-ui ecosystem growth (8.4k stars, Radix-style composability)"
+
+domain_applicability:
+  music_attribution: 1.0
+  dpp_traceability: 0.9
+  generic_graph_rag: 0.8
+
+tags:
+  - implementation
+  - frontend
+  - agentic
+  - ai
+  - copilotkit
+  - ag-ui
+
+references:
+  - "https://docs.copilotkit.ai/"
+  - "https://github.com/ag-ui-protocol/ag-ui"
+  - "../../tmp/ux-vision.md"

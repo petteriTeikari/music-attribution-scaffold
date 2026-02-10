@@ -1,0 +1,230 @@
+# Voice Agent Stack
+#
+# Selects the technology stack for voice-based agent interaction,
+# including speech-to-text, LLM reasoning, and text-to-speech.
+
+decision_id: voice_agent_stack
+title: "Voice Agent Stack"
+description: >
+  Determines the technology stack for adding voice interaction
+  to the attribution interface. Voice agents allow musicians
+  and rights holders to query attribution data conversationally,
+  flag disputes, and receive confidence summaries hands-free.
+  Key for accessibility and the "studio workflow" use case where
+  musicians work with instruments in hand.
+
+decision_level: L3_implementation
+status: active
+last_updated: 2026-02-11
+
+options:
+  - option_id: vapi_managed
+    title: "Vapi.ai (Managed Voice Pipeline)"
+    description: >
+      Managed voice AI platform. Handles STT (Deepgram), LLM
+      routing, TTS (multiple providers including Inworld/ElevenLabs),
+      and telephony. ~$0.12/conversation. Rapid prototyping,
+      built-in conversation state management, webhook-based
+      tool calling. Less control over individual components.
+    prior_probability: 0.30
+    status: recommended
+    complements:
+      - "build_vs_buy_posture.managed_services"
+      - "llm_provider.anthropic_primary"
+
+  - option_id: livekit_agents
+    title: "LiveKit Agents"
+    description: >
+      Open-source real-time communication framework with an
+      Agents SDK for building voice AI pipelines. Bring-your-own
+      STT/LLM/TTS components. More control, self-hostable,
+      WebRTC-based for low latency. Requires more infrastructure
+      setup than managed alternatives.
+    prior_probability: 0.25
+    status: viable
+    complements:
+      - "build_vs_buy_posture.custom_build"
+
+  - option_id: custom_websocket
+    title: "Custom WebSocket Pipeline"
+    description: >
+      Build voice pipeline from individual components: Deepgram
+      SDK for STT, direct LLM API calls, and a TTS API (e.g.,
+      OpenAI TTS, ElevenLabs). Connect via WebSocket for
+      streaming. Maximum flexibility, maximum engineering effort.
+    prior_probability: 0.15
+    status: experimental
+    constraints:
+      - "Significant real-time audio engineering"
+      - "Latency optimization requires expertise"
+      - "Must handle interruption, silence detection, turn-taking"
+
+  - option_id: no_voice
+    title: "No Voice Agent"
+    description: >
+      Text-only interaction. Voice features deferred or deemed
+      unnecessary for the current target users. Simplest option,
+      no additional infrastructure or cost.
+    prior_probability: 0.30
+    status: viable
+
+conditional_on:
+  - parent_decision_id: agentic_ui_framework
+    influence_strength: moderate
+    conditional_table:
+      - given_parent_option: copilotkit_agui
+        then_probabilities:
+          vapi_managed: 0.35
+          livekit_agents: 0.25
+          custom_websocket: 0.15
+          no_voice: 0.25
+      - given_parent_option: vercel_ai_sdk
+        then_probabilities:
+          vapi_managed: 0.30
+          livekit_agents: 0.20
+          custom_websocket: 0.15
+          no_voice: 0.35
+      - given_parent_option: custom_agent_ui
+        then_probabilities:
+          vapi_managed: 0.20
+          livekit_agents: 0.30
+          custom_websocket: 0.30
+          no_voice: 0.20
+      - given_parent_option: no_agentic_ui
+        then_probabilities:
+          vapi_managed: 0.10
+          livekit_agents: 0.10
+          custom_websocket: 0.05
+          no_voice: 0.75
+
+  - parent_decision_id: target_market_segment
+    influence_strength: moderate
+    conditional_table:
+      - given_parent_option: independent_creators
+        then_probabilities:
+          vapi_managed: 0.35
+          livekit_agents: 0.20
+          custom_websocket: 0.10
+          no_voice: 0.35
+      - given_parent_option: mid_tier_labels
+        then_probabilities:
+          vapi_managed: 0.25
+          livekit_agents: 0.20
+          custom_websocket: 0.15
+          no_voice: 0.40
+      - given_parent_option: enterprise_rights_orgs
+        then_probabilities:
+          vapi_managed: 0.20
+          livekit_agents: 0.30
+          custom_websocket: 0.20
+          no_voice: 0.30
+      - given_parent_option: ai_platform_consumers
+        then_probabilities:
+          vapi_managed: 0.15
+          livekit_agents: 0.15
+          custom_websocket: 0.10
+          no_voice: 0.60
+
+  - parent_decision_id: build_vs_buy_posture
+    influence_strength: moderate
+    conditional_table:
+      - given_parent_option: custom_build
+        then_probabilities:
+          vapi_managed: 0.15
+          livekit_agents: 0.35
+          custom_websocket: 0.30
+          no_voice: 0.20
+      - given_parent_option: managed_services
+        then_probabilities:
+          vapi_managed: 0.45
+          livekit_agents: 0.20
+          custom_websocket: 0.05
+          no_voice: 0.30
+      - given_parent_option: saas_maximalist
+        then_probabilities:
+          vapi_managed: 0.50
+          livekit_agents: 0.10
+          custom_websocket: 0.00
+          no_voice: 0.40
+
+archetype_weights:
+  engineer_heavy_startup:
+    probability_overrides:
+      vapi_managed: 0.25
+      livekit_agents: 0.35
+      custom_websocket: 0.20
+      no_voice: 0.20
+    rationale: "Engineers prefer LiveKit for control and self-hosting capability."
+
+  musician_first_team:
+    probability_overrides:
+      vapi_managed: 0.40
+      livekit_agents: 0.10
+      custom_websocket: 0.05
+      no_voice: 0.45
+    rationale: "Voice is compelling for musicians but team needs managed solution. May defer."
+
+  solo_hacker:
+    probability_overrides:
+      vapi_managed: 0.25
+      livekit_agents: 0.10
+      custom_websocket: 0.05
+      no_voice: 0.60
+    rationale: "Voice adds significant complexity. Most solos skip it or use Vapi for quick demo."
+
+  well_funded_startup:
+    probability_overrides:
+      vapi_managed: 0.30
+      livekit_agents: 0.30
+      custom_websocket: 0.15
+      no_voice: 0.25
+    rationale: "Can invest in either managed or self-hosted. Voice as differentiator."
+
+research_influences:
+  - paper: "Real-Time Guidance Design for AI Assistants"
+    venue: "ICIS 2025"
+    authors: "Grau & Blohm"
+    concept: progressive_disclosure_voice
+    library_status: design_pattern
+    prd_implication: >
+      Three eye-tracking-validated design principles for real-time AI guidance:
+      (1) Progressive disclosure — voice responses should layer: summary first
+      ("3 credits found, 85% average confidence"), details on request.
+      (2) Attention-aware placement — confidence indicators at natural attention
+      anchors, not buried in verbose responses.
+      (3) Cognitive load management — based on Wickens' Multiple Resource Theory,
+      voice + visual channels should complement not compete. Voice summaries
+      paired with visual confidence dashboards reduce cognitive load vs.
+      voice-only or visual-only.
+    note: >
+      These are design principles, not a library. Applicable regardless of
+      whether Vapi, LiveKit, or custom WebSocket is chosen. Should inform
+      prompt design and TTS output structure.
+
+volatility:
+  classification: volatile
+  last_assessed: 2026-02-11
+  next_review: 2026-03-11
+  change_drivers:
+    - "Voice AI platform consolidation (Vapi, Retell, Bland)"
+    - "LiveKit Agents SDK maturity"
+    - "Browser-native speech API improvements"
+    - "Multimodal LLM voice capabilities (GPT-4o, Gemini)"
+    - "Cost reduction in STT/TTS services"
+    - "Real-Time Guidance Design principles (ICIS 2025, Grau & Blohm)"
+
+domain_applicability:
+  music_attribution: 0.9
+  dpp_traceability: 0.7
+  generic_graph_rag: 0.5
+
+tags:
+  - implementation
+  - voice
+  - agent
+  - accessibility
+  - real-time
+
+references:
+  - "https://vapi.ai/docs"
+  - "https://docs.livekit.io/agents/"

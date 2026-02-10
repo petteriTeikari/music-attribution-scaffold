@@ -1,0 +1,221 @@
+# UI Adaptation Strategy
+#
+# Architectural pattern for how the frontend adapts its layout,
+# complexity, and information density based on user context.
+
+decision_id: ui_adaptation_strategy
+title: "UI Adaptation Strategy"
+description: >
+  Defines the architectural approach for adapting the user interface
+  to different user proficiency levels, task contexts, and confidence
+  states. Ranges from fixed layouts to AI-driven malleable interfaces
+  that co-evolve with user behavior. Key for music attribution where
+  users span from solo artists to label administrators, each needing
+  different levels of detail and control.
+
+decision_level: L2_architecture
+status: active
+last_updated: 2026-02-11
+
+options:
+  - option_id: malleable_ai_driven
+    title: "Malleable AI-Driven UI"
+    description: >
+      AI adapts UI layout, field visibility, and information density
+      based on user proficiency signals, task context, and attribution
+      confidence levels. Co-evolutionary loop: explicit feedback
+      (thumbs up/down, field corrections) and implicit signals
+      (hover time, field expansion frequency) drive adaptation.
+      Red/Yellow/Green confidence-based field prioritization.
+    prior_probability: 0.30
+    status: recommended
+
+  - option_id: configurable_presets
+    title: "User-Configurable Presets"
+    description: >
+      Predefined UI modes (e.g., Simple/Standard/Expert/Admin)
+      that users select manually. Each preset shows/hides fields
+      and adjusts detail level. No AI-driven adaptation, but
+      users can switch between views.
+    prior_probability: 0.30
+    status: viable
+
+  - option_id: progressive_disclosure
+    title: "Progressive Disclosure"
+    description: >
+      Static progressive disclosure pattern. Summary view by
+      default, with expandable sections for details. No
+      personalization — same experience for all users. Simplest
+      to implement and test.
+    prior_probability: 0.25
+    status: viable
+
+  - option_id: fixed_layout
+    title: "Fixed Layout"
+    description: >
+      Single fixed layout for all users. Dashboard-style with
+      all information visible. May overwhelm new users but
+      ensures consistent experience and simplest maintenance.
+    prior_probability: 0.15
+    status: viable
+
+conditional_on:
+  - parent_decision_id: target_market_segment
+    influence_strength: moderate
+    conditional_table:
+      - given_parent_option: independent_creators
+        then_probabilities:
+          malleable_ai_driven: 0.35
+          configurable_presets: 0.30
+          progressive_disclosure: 0.25
+          fixed_layout: 0.10
+      - given_parent_option: mid_tier_labels
+        then_probabilities:
+          malleable_ai_driven: 0.30
+          configurable_presets: 0.35
+          progressive_disclosure: 0.20
+          fixed_layout: 0.15
+      - given_parent_option: enterprise_rights_orgs
+        then_probabilities:
+          malleable_ai_driven: 0.20
+          configurable_presets: 0.40
+          progressive_disclosure: 0.20
+          fixed_layout: 0.20
+      - given_parent_option: ai_platform_consumers
+        then_probabilities:
+          malleable_ai_driven: 0.40
+          configurable_presets: 0.15
+          progressive_disclosure: 0.20
+          fixed_layout: 0.25
+
+  - parent_decision_id: ai_framework_strategy
+    influence_strength: moderate
+    conditional_table:
+      - given_parent_option: direct_api_pydantic
+        then_probabilities:
+          malleable_ai_driven: 0.35
+          configurable_presets: 0.25
+          progressive_disclosure: 0.25
+          fixed_layout: 0.15
+      - given_parent_option: lightweight_sdk
+        then_probabilities:
+          malleable_ai_driven: 0.35
+          configurable_presets: 0.30
+          progressive_disclosure: 0.20
+          fixed_layout: 0.15
+      - given_parent_option: orchestration_framework
+        then_probabilities:
+          malleable_ai_driven: 0.40
+          configurable_presets: 0.25
+          progressive_disclosure: 0.20
+          fixed_layout: 0.15
+      - given_parent_option: no_llm
+        then_probabilities:
+          malleable_ai_driven: 0.05
+          configurable_presets: 0.35
+          progressive_disclosure: 0.35
+          fixed_layout: 0.25
+
+archetype_weights:
+  engineer_heavy_startup:
+    probability_overrides:
+      malleable_ai_driven: 0.35
+      configurable_presets: 0.25
+      progressive_disclosure: 0.20
+      fixed_layout: 0.20
+    rationale: "Engineers can build malleable UI but may prefer fixed for predictability."
+
+  musician_first_team:
+    probability_overrides:
+      malleable_ai_driven: 0.25
+      configurable_presets: 0.35
+      progressive_disclosure: 0.30
+      fixed_layout: 0.10
+    rationale: "Musicians benefit from adaptive UI but team may lack ML infrastructure skills."
+
+  solo_hacker:
+    probability_overrides:
+      malleable_ai_driven: 0.15
+      configurable_presets: 0.20
+      progressive_disclosure: 0.35
+      fixed_layout: 0.30
+    rationale: "Solo developers choose simplest viable option — progressive disclosure or fixed."
+
+  well_funded_startup:
+    probability_overrides:
+      malleable_ai_driven: 0.45
+      configurable_presets: 0.25
+      progressive_disclosure: 0.15
+      fixed_layout: 0.15
+    rationale: "Can invest in AI-driven adaptation as a differentiator."
+
+research_influences:
+  - paper: "AlignUI: Aligning LLM-Generated UIs with User Preferences"
+    arxiv: "2601.17614"
+    concept: preference_aligned_generation
+    library_status: research_frontier
+    prd_implication: >
+      Predictability/Efficiency/Explorability trichotomy maps to confidence-based
+      field prioritization. High-confidence attributions favor predictable controls;
+      uncertain multi-source results favor explorable controls.
+    watchlist:
+      - "CrowdGenUI (arXiv:2411.03477) — no OSS yet"
+      - "AlignX (github.com/JinaLeejnl/AlignX) — LLM alignment, not UI-specific"
+
+  - paper: "SpecifyUI: Structured Specifications and Generative AI"
+    arxiv: "2509.07334"
+    concept: specification_driven_ui
+    library_status: production_ready
+    library: "Google A2UI (github.com/google/A2UI, 11.2k stars, v0.9)"
+    prd_implication: >
+      SPEC's structured parameterized hierarchy (Global → Section → Component)
+      maps to A2UI's declarative JSON component catalog. Dynamic agency allocation
+      (more AI control early, more user control during refinement) maps to
+      Autonomous/Recommend/Escalate governance tiers.
+
+  - paper: "Poppins: Just-In-Time Objectives"
+    arxiv: "2510.14591"
+    concept: jit_objective_inference
+    library_status: research_frontier
+    prd_implication: >
+      Context-aware goal inference without explicit prompting. Attribution
+      system could infer user's current task (browsing vs. disputing vs.
+      verifying) from interaction patterns and adapt UI accordingly.
+    watchlist:
+      - "No OSS implementation found — monitor Stanford HCI group"
+
+  - paper: "Real-Time Guidance Design for AI Assistants"
+    venue: "ICIS 2025"
+    concept: progressive_disclosure_validated
+    library_status: design_pattern
+    prd_implication: >
+      Eye-tracking validated three design principles for real-time guidance:
+      progressive disclosure, attention-aware placement, cognitive load management.
+      Directly supports the progressive_disclosure option with empirical evidence.
+
+volatility:
+  classification: shifting
+  last_assessed: 2026-02-11
+  next_review: 2026-04-11
+  change_drivers:
+    - "Google A2UI specification maturity (v0.9, tracking v1.0)"
+    - "CopilotKit generative UI capabilities"
+    - "User research on attribution interface preferences"
+    - "Malleable software research (Ink & Switch, MIT)"
+    - "AlignUI preference alignment research (arXiv:2601.17614)"
+    - "SpecifyUI SPEC pattern + A2UI declarative catalogs (arXiv:2509.07334)"
+
+domain_applicability:
+  music_attribution: 1.0
+  dpp_traceability: 0.8
+  generic_graph_rag: 0.6
+
+tags:
+  - architecture
+  - ui
+  - adaptation
+  - ux
+
+references:
+  - "../chat-interface/toc-chat-interface.md"
+  - "../../tmp/ux-vision.md"
