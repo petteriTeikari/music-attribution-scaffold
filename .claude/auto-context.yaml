@@ -1,0 +1,74 @@
+# Auto-context configuration for Music Attribution Scaffold
+# This file defines what context gets loaded based on file patterns
+
+global:
+  project_name: "Music Attribution Scaffold"
+  project_type: "library"
+  python_version: "3.13"
+  critical_rules:
+    - "uv ONLY for Python package management"
+    - "AST ONLY for code analysis (no grep/sed/awk)"
+    - "Pre-commit must pass before commits"
+
+patterns:
+  # Python source files
+  "src/**/*.py":
+    inject_rules:
+      - ".claude/rules/00-project-context.md"
+      - ".claude/rules/01-code-analysis-ban.md"
+    context:
+      - "Use type hints for all function signatures"
+      - "Follow PEP 8 with ruff enforcement"
+
+  # Test files
+  "tests/**/*.py":
+    inject_rules:
+      - ".claude/domains/testing.md"
+    context:
+      - "Use pytest fixtures from conftest.py"
+      - "Follow Arrange-Act-Assert pattern"
+      - "Use appropriate markers (unit, integration, e2e)"
+
+  # Configuration files
+  "pyproject.toml":
+    inject_rules:
+      - ".claude/domains/configuration.md"
+    context:
+      - "uv manages dependencies"
+      - "ruff for linting and formatting"
+      - "mypy for type checking"
+
+branch_context:
+  main:
+    rules:
+      - "Production-ready code only"
+      - "All tests must pass"
+      - "Full documentation required"
+  dev:
+    rules:
+      - "Integration testing branch"
+      - "May have experimental code"
+  "feature/*":
+    rules:
+      - "New feature development"
+      - "Unit tests required"
+  "fix/*":
+    rules:
+      - "Bug fix branch"
+      - "Regression test required"
+
+dynamic_context:
+  - when: "test_failure_detected"
+    inject:
+      - ".claude/domains/testing.md"
+      - "Focus on fixing failing tests"
+
+  - when: "debugging_session"
+    inject:
+      - "Enable verbose logging"
+      - "Check recent changes first"
+
+  - when: "api_development"
+    inject:
+      - "Document all endpoints"
+      - "Add request/response examples"
