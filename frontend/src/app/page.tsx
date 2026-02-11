@@ -301,10 +301,10 @@ export default function HomePage() {
                   <h3 className="editorial-display text-[var(--text-3xl)] text-[var(--color-heading)]">
                     {feature.title}
                   </h3>
-                  <p className="mt-[var(--space-4)] text-[var(--text-lg)] text-[var(--color-body)] leading-[var(--leading-relaxed)] max-w-lg">
+                  <p className="mt-[var(--space-4)] text-[var(--text-xl)] lg:text-[var(--text-2xl)] text-[var(--color-heading)] leading-[var(--leading-snug)] max-w-lg">
                     {feature.description}
                   </p>
-                  <p className="mt-[var(--space-3)] text-[var(--text-sm)] text-[var(--color-muted)] leading-[var(--leading-relaxed)] max-w-lg">
+                  <p className="mt-[var(--space-4)] text-[var(--text-sm)] text-[var(--color-muted)] leading-[var(--leading-relaxed)] max-w-lg">
                     {feature.detail}
                   </p>
                 </div>
