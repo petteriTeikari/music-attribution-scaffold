@@ -17,7 +17,7 @@ function formatRole(role: string): string {
 export function CreditList({ credits, className = "" }: CreditListProps) {
   return (
     <div className={className}>
-      <h3 className="text-[var(--text-base)] font-semibold text-[var(--color-heading)] mb-[var(--space-4)]">
+      <h3 className="text-base font-semibold text-[var(--color-heading)] mb-[var(--space-4)]">
         Credits
       </h3>
       <ul className="space-y-[var(--space-3)]">
@@ -32,12 +32,12 @@ export function CreditList({ credits, className = "" }: CreditListProps) {
                   <span className="font-medium text-[var(--color-heading)]">
                     {credit.entity_name}
                   </span>
-                  <span className="text-[var(--text-sm)] text-[var(--color-label)]">
+                  <span className="text-sm text-[var(--color-label)]">
                     {formatRole(credit.role)}
                   </span>
                 </div>
                 {credit.role_detail && (
-                  <p className="mt-[var(--space-1)] text-[var(--text-sm)] text-[var(--color-muted)]">
+                  <p className="mt-[var(--space-1)] text-sm text-[var(--color-muted)]">
                     {credit.role_detail}
                   </p>
                 )}
@@ -50,7 +50,7 @@ export function CreditList({ credits, className = "" }: CreditListProps) {
               </div>
 
               <div className="text-right">
-                <span className="text-[var(--text-lg)] font-bold text-[var(--color-heading)]">
+                <span className="text-lg font-bold text-[var(--color-heading)]">
                   {Math.round(credit.confidence * 100)}%
                 </span>
               </div>

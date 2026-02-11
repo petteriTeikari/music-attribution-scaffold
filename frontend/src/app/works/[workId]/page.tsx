@@ -40,7 +40,7 @@ export default function WorkDetailPage() {
     return (
       <div className="px-[var(--space-8)] py-[var(--space-10)]">
         <div className="py-[var(--space-20)] text-center">
-          <h2 className="editorial-display text-[var(--text-2xl)] text-[var(--color-heading)]">
+          <h2 className="editorial-display text-2xl text-[var(--color-heading)]">
             Work Not Found
           </h2>
           <p className="mt-[var(--space-2)] text-[var(--color-label)]">
@@ -48,7 +48,7 @@ export default function WorkDetailPage() {
           </p>
           <Link
             href="/works"
-            className="mt-[var(--space-4)] inline-block text-[var(--text-sm)] text-[var(--color-accent)] underline underline-offset-2"
+            className="mt-[var(--space-4)] inline-block text-sm text-[var(--color-accent)] underline underline-offset-2"
           >
             Back to catalog
           </Link>
@@ -61,7 +61,7 @@ export default function WorkDetailPage() {
     <div className="px-[var(--space-8)] py-[var(--space-10)]">
       {/* Breadcrumb */}
       <nav className="mb-[var(--space-6)]" aria-label="Breadcrumb">
-        <ol className="flex items-center gap-[var(--space-2)] text-[var(--text-xs)] editorial-caps text-[var(--color-muted)]">
+        <ol className="flex items-center gap-[var(--space-2)] text-xs editorial-caps text-[var(--color-muted)]">
           <li>
             <Link
               href="/works"
@@ -84,31 +84,31 @@ export default function WorkDetailPage() {
 
         {/* Work info */}
         <div>
-          <h1 className="editorial-display text-[var(--text-4xl)] text-[var(--color-heading)]">
+          <h1 className="editorial-display text-4xl text-[var(--color-heading)]">
             {work.work_title}
           </h1>
-          <p className="mt-[var(--space-2)] text-[var(--text-lg)] text-[var(--color-label)]">
+          <p className="mt-[var(--space-2)] text-lg text-[var(--color-label)]">
             {work.artist_name}
           </p>
 
           <div className="mt-[var(--space-4)] flex flex-wrap items-center gap-[var(--space-3)]">
             <AssuranceBadge level={work.assurance_level} />
             <ConfidenceBadge score={work.confidence_score} />
-            <span className="text-[var(--text-sm)] text-[var(--color-muted)] data-mono">
+            <span className="text-sm text-[var(--color-muted)] data-mono">
               Source agreement: {Math.round(work.source_agreement * 100)}%
             </span>
           </div>
 
           {work.needs_review && (
             <div className="mt-[var(--space-4)] border-l-2 border-[var(--color-confidence-medium)] pl-[var(--space-4)] py-[var(--space-2)]">
-              <p className="text-[var(--text-sm)] font-medium" style={{ color: "var(--color-confidence-medium)" }}>
+              <p className="text-sm font-medium" style={{ color: "var(--color-confidence-medium)" }}>
                 This attribution needs review (priority: {Math.round(work.review_priority * 100)}%)
               </p>
             </div>
           )}
 
           {/* Conformal set info */}
-          <div className="mt-[var(--space-4)] text-[var(--text-sm)] text-[var(--color-muted)] data-mono">
+          <div className="mt-[var(--space-4)] text-sm text-[var(--color-muted)] data-mono">
             <span>
               Conformal coverage: {Math.round(work.conformal_set.marginal_coverage * 100)}%
               at {Math.round(work.conformal_set.coverage_level * 100)}% level
@@ -127,7 +127,7 @@ export default function WorkDetailPage() {
 
       {/* Credits section */}
       <div>
-        <span className="editorial-caps text-[var(--text-xs)] text-[var(--color-accent)] block mb-[var(--space-2)]">
+        <span className="editorial-caps text-xs text-[var(--color-accent)] block mb-[var(--space-2)]">
           Credits
         </span>
         <CreditList credits={work.credits} />
@@ -137,10 +137,10 @@ export default function WorkDetailPage() {
 
       {/* Provenance timeline */}
       <div>
-        <span className="editorial-caps text-[var(--text-xs)] text-[var(--color-accent)] block mb-[var(--space-2)]">
+        <span className="editorial-caps text-xs text-[var(--color-accent)] block mb-[var(--space-2)]">
           Provenance
         </span>
-        <h3 className="editorial-display text-[var(--text-xl)] text-[var(--color-heading)] mb-[var(--space-4)]">
+        <h3 className="editorial-display text-xl text-[var(--color-heading)] mb-[var(--space-4)]">
           Timeline
         </h3>
         <ProvenanceTimeline events={work.provenance_chain} />

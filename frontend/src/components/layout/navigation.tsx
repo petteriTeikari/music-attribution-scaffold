@@ -42,7 +42,7 @@ export function Navigation() {
         <div className="flex flex-col items-center pt-[var(--space-4)]">
           <Link
             href="/"
-            className="flex h-8 w-8 items-center justify-center text-[var(--text-sm)] font-bold text-[var(--color-heading)] hover:text-[var(--color-accent)] transition-colors duration-[var(--transition-fast)]"
+            className="flex h-8 w-8 items-center justify-center text-sm font-bold text-[var(--color-heading)] hover:text-[var(--color-accent)] transition-colors duration-[var(--transition-fast)]"
             aria-label="Home"
           >
             MA
@@ -59,7 +59,7 @@ export function Navigation() {
               <Link
                 key={item.href}
                 href={item.href}
-                className={`editorial-caps text-[var(--text-xs)] transition-colors duration-[var(--transition-fast)] ${
+                className={`editorial-caps text-xs transition-colors duration-[var(--transition-fast)] ${
                   isActive
                     ? "text-[var(--color-accent)]"
                     : "text-[var(--color-label)] hover:text-[var(--color-heading)]"
@@ -92,7 +92,7 @@ export function Navigation() {
       >
         <Link
           href="/"
-          className="text-[var(--text-sm)] font-bold text-[var(--color-heading)]"
+          className="text-sm font-bold text-[var(--color-heading)]"
         >
           MA
         </Link>
@@ -144,7 +144,7 @@ export function Navigation() {
                     key={item.href}
                     href={item.href}
                     onClick={() => setMobileOpen(false)}
-                    className={`editorial-caps text-[var(--text-sm)] py-[var(--space-2)] transition-colors duration-[var(--transition-fast)] ${
+                    className={`editorial-caps text-sm py-[var(--space-2)] transition-colors duration-[var(--transition-fast)] ${
                       isActive
                         ? "text-[var(--color-accent)]"
                         : "text-[var(--color-label)] hover:text-[var(--color-heading)]"

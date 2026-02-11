@@ -50,10 +50,10 @@ export function VoiceAgentBanner() {
           </div>
 
           <div className="flex-1">
-            <h3 className="text-[var(--text-base)] font-semibold text-[var(--color-heading)]">
+            <h3 className="text-base font-semibold text-[var(--color-heading)]">
               Voice Agent — Pro Feature
             </h3>
-            <p className="mt-[var(--space-1)] text-[var(--text-sm)] text-[var(--color-body)]">
+            <p className="mt-[var(--space-1)] text-sm text-[var(--color-body)]">
               Ask questions about your attributions by voice.{" "}
               <span className="italic text-[var(--color-muted)]">
                 &ldquo;Who produced Hide and Seek?&rdquo;
@@ -62,7 +62,7 @@ export function VoiceAgentBanner() {
           </div>
 
           <button
-            className="flex-shrink-0 rounded-[var(--radius-md)] px-[var(--space-4)] py-[var(--space-2)] text-[var(--text-sm)] font-medium transition-colors duration-[var(--transition-fast)]"
+            className="flex-shrink-0 rounded-[var(--radius-md)] px-[var(--space-4)] py-[var(--space-2)] text-sm font-medium transition-colors duration-[var(--transition-fast)]"
             style={{
               backgroundColor: "var(--color-accent)",
               color: "white",

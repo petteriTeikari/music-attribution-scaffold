@@ -173,7 +173,7 @@ export function ConfidenceBadge({
 
   return (
     <span
-      className={`inline-flex items-center gap-[var(--space-2)] editorial-caps text-[var(--text-xs)] ${className}`}
+      className={`inline-flex items-center gap-[var(--space-2)] editorial-caps text-xs ${className}`}
       style={{ color }}
     >
       <span

@@ -110,22 +110,15 @@
   --font-sans: "Plus Jakarta Sans", ui-sans-serif, system-ui, -apple-system, sans-serif;
   --font-mono: "IBM Plex Mono", ui-monospace, monospace;
 
-  --text-xs: 0.75rem;
-  --text-sm: 0.875rem;
-  --text-base: 1rem;
-  --text-lg: 1.125rem;
-  --text-xl: 1.25rem;
-  --text-2xl: 1.5rem;
-  --text-3xl: 1.875rem;
-  --text-4xl: 2.25rem;
-  --text-5xl: 3rem;
-  --text-6xl: 3.75rem;
-  --text-7xl: 4.5rem;
-
-  --leading-tight: 1.1;
-  --leading-snug: 1.2;
-  --leading-normal: 1.5;
-  --leading-relaxed: 1.625;
+  /*
+   * Font sizes: Use Tailwind v4 built-in text-xs through text-7xl utilities.
+   * DO NOT define --text-* here — they conflict with Tailwind's text-[] arbitrary
+   * value syntax which cannot disambiguate font-size from color.
+   * See: .claude/memory/css-tailwind-v4-pitfalls.md
+   *
+   * Custom line-heights are overridden in @theme block below since our
+   * --leading-tight (1.1) and --leading-snug (1.2) differ from Tailwind defaults.
+   */
 
   /* Transitions */
   --transition-fast: 150ms ease;
@@ -209,7 +202,7 @@ body {
   font-family: var(--font-sans);
   background-color: var(--color-surface);
   color: var(--color-body);
-  line-height: var(--leading-normal);
+  line-height: var(--line-height-normal, 1.5);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -243,7 +236,7 @@ body::before {
 .editorial-display {
   font-family: var(--font-display);
   font-weight: 400;
-  line-height: var(--leading-tight);
+  line-height: var(--line-height-tight, 1.1);
 }
 
 /* Display heading italic variant */
@@ -251,7 +244,7 @@ body::before {
   font-family: var(--font-display);
   font-style: italic;
   font-weight: 400;
-  line-height: var(--leading-tight);
+  line-height: var(--line-height-tight, 1.1);
 }
 
 /* Accent line — thin horizontal rule */
@@ -342,4 +335,9 @@ body::before {
   --color-border: var(--color-border);
   --color-border-strong: var(--color-border-strong);
   --color-divider: var(--color-divider);
+
+  /* Line-height overrides — our tight/snug differ from Tailwind defaults */
+  --line-height-tight: 1.1;   /* Tailwind default: 1.25 */
+  --line-height-snug: 1.2;    /* Tailwind default: 1.375 */
+  /* normal (1.5) and relaxed (1.625) match Tailwind defaults — no override needed */
 }

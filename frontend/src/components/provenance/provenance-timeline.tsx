@@ -71,7 +71,7 @@ export function ProvenanceTimeline({
 
   if (events.length === 0) {
     return (
-      <p className="text-[var(--text-sm)] text-[var(--color-muted)] italic">
+      <p className="text-sm text-[var(--color-muted)] italic">
         No provenance events recorded.
       </p>
     );
@@ -105,27 +105,27 @@ export function ProvenanceTimeline({
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-[var(--space-2)]">
                       <span
-                        className="editorial-caps text-[var(--text-xs)]"
+                        className="editorial-caps text-xs"
                         style={{ color }}
                       >
                         {event.event_type}
                       </span>
-                      <span className="text-[var(--text-xs)] text-[var(--color-muted)]">
+                      <span className="text-xs text-[var(--color-muted)]">
                         {event.agent}
                       </span>
                     </div>
-                    <p className="mt-[var(--space-1)] text-[var(--text-sm)] text-[var(--color-body)]">
+                    <p className="mt-[var(--space-1)] text-sm text-[var(--color-body)]">
                       {getEventDescription(event)}
                     </p>
                   </div>
 
                   <div className="flex flex-col items-end gap-[var(--space-1)]">
-                    <span className="text-[var(--text-xs)] text-[var(--color-muted)] whitespace-nowrap data-mono">
+                    <span className="text-xs text-[var(--color-muted)] whitespace-nowrap data-mono">
                       {formatTimestamp(event.timestamp)}
                     </span>
                     {confidence !== null && (
                       <span
-                        className="editorial-display text-[var(--text-base)]"
+                        className="editorial-display text-base"
                         style={{ color }}
                       >
                         {Math.round(confidence * 100)}%

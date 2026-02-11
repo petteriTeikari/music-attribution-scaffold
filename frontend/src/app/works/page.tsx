@@ -41,13 +41,13 @@ export default function WorksPage() {
     <div className="px-[var(--space-8)] py-[var(--space-10)]">
       {/* Header */}
       <div className="mb-[var(--space-8)]">
-        <span className="editorial-caps text-[var(--text-xs)] text-[var(--color-accent)] block mb-[var(--space-2)]">
+        <span className="editorial-caps text-xs text-[var(--color-accent)] block mb-[var(--space-2)]">
           Catalog
         </span>
-        <h1 className="editorial-display text-[var(--text-4xl)] text-[var(--color-heading)]">
+        <h1 className="editorial-display text-4xl text-[var(--color-heading)]">
           Work Catalog
         </h1>
-        <p className="mt-[var(--space-2)] text-[var(--text-base)] text-[var(--color-label)]">
+        <p className="mt-[var(--space-2)] text-base text-[var(--color-label)]">
           Attribution records with confidence scoring and provenance lineage.
         </p>
       </div>
@@ -59,14 +59,14 @@ export default function WorksPage() {
           placeholder="Search works or artists..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="border-b border-[var(--color-border)] bg-transparent px-0 py-[var(--space-2)] text-[var(--text-sm)] text-[var(--color-body)] placeholder:text-[var(--color-muted)] focus:border-[var(--color-accent)] focus:outline-none sm:max-w-xs"
+          className="border-b border-[var(--color-border)] bg-transparent px-0 py-[var(--space-2)] text-sm text-[var(--color-body)] placeholder:text-[var(--color-muted)] focus:border-[var(--color-accent)] focus:outline-none sm:max-w-xs"
           aria-label="Search works"
         />
 
         <div className="flex items-center gap-[var(--space-2)]">
           <label
             htmlFor="sort-select"
-            className="editorial-caps text-[var(--text-xs)] text-[var(--color-label)]"
+            className="editorial-caps text-xs text-[var(--color-label)]"
           >
             Sort:
           </label>
@@ -74,7 +74,7 @@ export default function WorksPage() {
             id="sort-select"
             value={sortField}
             onChange={(e) => setSortField(e.target.value as SortField)}
-            className="border-b border-[var(--color-border)] bg-transparent px-[var(--space-2)] py-[var(--space-2)] text-[var(--text-sm)] text-[var(--color-body)] focus:border-[var(--color-accent)] focus:outline-none"
+            className="border-b border-[var(--color-border)] bg-transparent px-[var(--space-2)] py-[var(--space-2)] text-sm text-[var(--color-body)] focus:border-[var(--color-accent)] focus:outline-none"
           >
             {SORT_OPTIONS.map((opt) => (
               <option key={opt.value} value={opt.value}>
@@ -86,7 +86,7 @@ export default function WorksPage() {
             onClick={() =>
               setSortDirection((d) => (d === "asc" ? "desc" : "asc"))
             }
-            className="border-b border-[var(--color-border)] px-[var(--space-2)] py-[var(--space-2)] text-[var(--text-sm)] text-[var(--color-body)] hover:border-[var(--color-accent)] transition-colors"
+            className="border-b border-[var(--color-border)] px-[var(--space-2)] py-[var(--space-2)] text-sm text-[var(--color-body)] hover:border-[var(--color-accent)] transition-colors"
             aria-label={`Sort ${sortDirection === "asc" ? "descending" : "ascending"}`}
           >
             {sortDirection === "asc" ? "↑" : "↓"}
@@ -108,13 +108,13 @@ export default function WorksPage() {
         </div>
       ) : filteredWorks.length === 0 ? (
         <div className="py-[var(--space-20)] text-center">
-          <p className="editorial-display text-[var(--text-2xl)] text-[var(--color-muted)]">
+          <p className="editorial-display text-2xl text-[var(--color-muted)]">
             {searchQuery ? "No works match your search." : "No works found."}
           </p>
           {searchQuery && (
             <button
               onClick={() => setSearchQuery("")}
-              className="mt-[var(--space-4)] text-[var(--text-sm)] text-[var(--color-accent)] underline underline-offset-2"
+              className="mt-[var(--space-4)] text-sm text-[var(--color-accent)] underline underline-offset-2"
             >
               Clear search
             </button>
@@ -130,7 +130,7 @@ export default function WorksPage() {
 
       {/* Result count */}
       {!loading && filteredWorks.length > 0 && (
-        <p className="mt-[var(--space-8)] text-[var(--text-xs)] text-[var(--color-muted)] editorial-caps">
+        <p className="mt-[var(--space-8)] text-xs text-[var(--color-muted)] editorial-caps">
           {filteredWorks.length} of {works.length} works
         </p>
       )}

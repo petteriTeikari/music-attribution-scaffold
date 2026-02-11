@@ -35,10 +35,10 @@ export default function PermissionsPage() {
     <div className="px-[var(--space-8)] py-[var(--space-10)]">
       {/* Header */}
       <div className="mb-[var(--space-8)]">
-        <span className="editorial-caps text-[var(--text-xs)] text-[var(--color-accent)] block mb-[var(--space-2)]">
+        <span className="editorial-caps text-xs text-[var(--color-accent)] block mb-[var(--space-2)]">
           Control
         </span>
-        <h1 className="editorial-display text-[var(--text-4xl)] text-[var(--color-heading)]">
+        <h1 className="editorial-display text-4xl text-[var(--color-heading)]">
           Your Music, Your Rules
         </h1>
         <p className="mt-[var(--space-2)] text-[var(--color-label)]">
@@ -77,7 +77,7 @@ export default function PermissionsPage() {
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`editorial-caps text-[var(--text-xs)] pb-[var(--space-2)] transition-colors duration-[var(--transition-fast)] border-b-2 ${
+              className={`editorial-caps text-xs pb-[var(--space-2)] transition-colors duration-[var(--transition-fast)] border-b-2 ${
                 activeTab === tab.id
                   ? "border-[var(--color-accent)] text-[var(--color-heading)]"
                   : "border-transparent text-[var(--color-label)] hover:text-[var(--color-heading)]"
@@ -100,10 +100,10 @@ export default function PermissionsPage() {
           {activeTab === "permissions" && permissions && (
             <div>
               <div className="mb-[var(--space-4)] flex items-center justify-between">
-                <h2 className="text-[var(--text-base)] font-semibold text-[var(--color-heading)]">
+                <h2 className="text-base font-semibold text-[var(--color-heading)]">
                   Catalog-Wide Permissions
                 </h2>
-                <span className="text-[var(--text-xs)] text-[var(--color-muted)] data-mono">
+                <span className="text-xs text-[var(--color-muted)] data-mono">
                   Default: {permissions.default_permission.replace(/_/g, " ")} | v{permissions.version}
                 </span>
               </div>
@@ -113,7 +113,7 @@ export default function PermissionsPage() {
 
           {activeTab === "mcp" && (
             <div>
-              <h2 className="mb-[var(--space-4)] text-[var(--text-base)] font-semibold text-[var(--color-heading)]">
+              <h2 className="mb-[var(--space-4)] text-base font-semibold text-[var(--color-heading)]">
                 MCP Permission Query Simulation
               </h2>
               <MCPQueryMockup />
@@ -122,7 +122,7 @@ export default function PermissionsPage() {
 
           {activeTab === "audit" && (
             <div>
-              <h2 className="mb-[var(--space-4)] text-[var(--text-base)] font-semibold text-[var(--color-heading)]">
+              <h2 className="mb-[var(--space-4)] text-base font-semibold text-[var(--color-heading)]">
                 Permission Audit Log
               </h2>
               <AuditLog entries={auditLog} />
@@ -135,10 +135,10 @@ export default function PermissionsPage() {
       {permissions && !loading && (
         <div className="mt-[var(--space-8)]">
           <div className="accent-line mb-[var(--space-6)]" style={{ opacity: 0.2 }} />
-          <span className="editorial-caps text-[var(--text-xs)] text-[var(--color-accent)] block mb-[var(--space-2)]">
+          <span className="editorial-caps text-xs text-[var(--color-accent)] block mb-[var(--space-2)]">
             Delegation
           </span>
-          <h2 className="text-[var(--text-base)] font-semibold text-[var(--color-heading)] mb-[var(--space-4)]">
+          <h2 className="text-base font-semibold text-[var(--color-heading)] mb-[var(--space-4)]">
             Delegation Chain
           </h2>
           <div className="flex items-center gap-[var(--space-4)]">
@@ -148,10 +148,10 @@ export default function PermissionsPage() {
                   <span className="text-[var(--color-accent)]">→</span>
                 )}
                 <div className="border-l-2 border-[var(--color-border)] pl-[var(--space-4)] py-[var(--space-2)]">
-                  <p className="font-medium text-[var(--color-heading)] text-[var(--text-sm)]">
+                  <p className="font-medium text-[var(--color-heading)] text-sm">
                     {entry.entity_name}
                   </p>
-                  <p className="text-[var(--text-xs)] text-[var(--color-label)]">
+                  <p className="text-xs text-[var(--color-label)]">
                     {entry.role} {entry.can_modify && "· Can modify"}{" "}
                     {entry.can_delegate && "· Can delegate"}
                   </p>
@@ -179,17 +179,17 @@ function CategoryCard({
   return (
     <div className="border-l-2 pl-[var(--space-4)] py-[var(--space-2)]" style={{ borderColor: colorVar }}>
       <div className="flex items-center justify-between">
-        <h3 className="text-[var(--text-sm)] font-semibold text-[var(--color-heading)]">
+        <h3 className="text-sm font-semibold text-[var(--color-heading)]">
           {title}
         </h3>
         <span
-          className="editorial-caps text-[var(--text-xs)]"
+          className="editorial-caps text-xs"
           style={{ color: colorVar }}
         >
           {enabled ? "ON" : "OFF"}
         </span>
       </div>
-      <p className="mt-[var(--space-1)] text-[var(--text-xs)] text-[var(--color-muted)]">
+      <p className="mt-[var(--space-1)] text-xs text-[var(--color-muted)]">
         {description}
       </p>
     </div>

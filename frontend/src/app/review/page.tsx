@@ -74,7 +74,7 @@ export default function ReviewPage() {
     return (
       <div className="px-[var(--space-8)] py-[var(--space-10)]">
         <div className="py-[var(--space-20)] text-center">
-          <h2 className="editorial-display text-[var(--text-2xl)] text-[var(--color-heading)]">
+          <h2 className="editorial-display text-2xl text-[var(--color-heading)]">
             Artist Mode Required
           </h2>
           <p className="mt-[var(--space-2)] text-[var(--color-label)]">
@@ -90,10 +90,10 @@ export default function ReviewPage() {
       {/* Header */}
       <div className="mb-[var(--space-8)] flex items-start justify-between">
         <div>
-          <span className="editorial-caps text-[var(--text-xs)] text-[var(--color-accent)] block mb-[var(--space-2)]">
+          <span className="editorial-caps text-xs text-[var(--color-accent)] block mb-[var(--space-2)]">
             Review
           </span>
-          <h1 className="editorial-display text-[var(--text-4xl)] text-[var(--color-heading)]">
+          <h1 className="editorial-display text-4xl text-[var(--color-heading)]">
             Review Queue
           </h1>
           <p className="mt-[var(--space-2)] text-[var(--color-label)]">
@@ -103,13 +103,13 @@ export default function ReviewPage() {
 
         {/* Progress + Approve All */}
         <div className="flex items-center gap-[var(--space-4)]">
-          <span className="text-[var(--text-sm)] text-[var(--color-label)] data-mono">
+          <span className="text-sm text-[var(--color-label)] data-mono">
             {approvedCount}/{works.length}
           </span>
           {pendingWorks.length > 0 && (
             <button
               onClick={handleApproveAll}
-              className="editorial-caps text-[var(--text-xs)] text-[var(--color-heading)] underline underline-offset-4 decoration-[var(--color-accent)] decoration-2 hover:text-[var(--color-accent)] transition-colors duration-[var(--transition-fast)]"
+              className="editorial-caps text-xs text-[var(--color-heading)] underline underline-offset-4 decoration-[var(--color-accent)] decoration-2 hover:text-[var(--color-accent)] transition-colors duration-[var(--transition-fast)]"
             >
               Approve All
             </button>
@@ -139,7 +139,7 @@ export default function ReviewPage() {
         </div>
       ) : pendingWorks.length === 0 ? (
         <div className="py-[var(--space-20)] text-center">
-          <p className="editorial-display text-[var(--text-2xl)] text-[var(--color-confidence-high)]">
+          <p className="editorial-display text-2xl text-[var(--color-confidence-high)]">
             All caught up
           </p>
           <p className="mt-[var(--space-2)] text-[var(--color-label)]">
@@ -167,12 +167,12 @@ export default function ReviewPage() {
 
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-[var(--space-3)]">
-                      <h3 className="text-[var(--text-base)] font-semibold text-[var(--color-heading)]">
+                      <h3 className="text-base font-semibold text-[var(--color-heading)]">
                         {work.work_title}
                       </h3>
                       <AssuranceBadge level={work.assurance_level} />
                     </div>
-                    <p className="mt-[var(--space-1)] text-[var(--text-sm)] text-[var(--color-label)]">
+                    <p className="mt-[var(--space-1)] text-sm text-[var(--color-label)]">
                       {work.artist_name} — Priority{" "}
                       {Math.round(work.review_priority * 100)}%
                     </p>
@@ -180,13 +180,13 @@ export default function ReviewPage() {
                     {/* Suggestion diffs */}
                     {suggestions.length > 0 && (
                       <div className="mt-[var(--space-4)] space-y-[var(--space-2)]">
-                        <p className="editorial-caps text-[var(--text-xs)] text-[var(--color-label)]">
+                        <p className="editorial-caps text-xs text-[var(--color-label)]">
                           Suggestions
                         </p>
                         {suggestions.map((s, i) => (
                           <div
                             key={i}
-                            className="flex items-center gap-[var(--space-3)] py-[var(--space-1)] text-[var(--text-sm)]"
+                            className="flex items-center gap-[var(--space-3)] py-[var(--space-1)] text-sm"
                           >
                             <span className="text-[var(--color-confidence-low)] line-through">
                               {s.current}
@@ -203,7 +203,7 @@ export default function ReviewPage() {
 
                   <button
                     onClick={() => handleApprove(work.attribution_id)}
-                    className="flex-shrink-0 editorial-caps text-[var(--text-xs)] border-b-2 border-[var(--color-confidence-high)] pb-[var(--space-1)] transition-colors duration-[var(--transition-fast)] hover:text-[var(--color-confidence-high)]"
+                    className="flex-shrink-0 editorial-caps text-xs border-b-2 border-[var(--color-confidence-high)] pb-[var(--space-1)] transition-colors duration-[var(--transition-fast)] hover:text-[var(--color-confidence-high)]"
                     style={{ color: "var(--color-confidence-high)" }}
                   >
                     Approve

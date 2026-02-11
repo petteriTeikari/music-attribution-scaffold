@@ -32,7 +32,7 @@ export function WorkCard({ work }: WorkCardProps) {
       {/* Large confidence number — editorial typography */}
       <div className="flex-shrink-0 w-16 text-right">
         <span
-          className="editorial-display text-[var(--text-3xl)]"
+          className="editorial-display text-3xl"
           style={{ color }}
         >
           {Math.round(work.confidence_score * 100)}
@@ -41,10 +41,10 @@ export function WorkCard({ work }: WorkCardProps) {
 
       {/* Work info */}
       <div className="min-w-0 flex-1">
-        <h3 className="text-[var(--text-base)] font-semibold text-[var(--color-heading)] group-hover:text-[var(--color-accent)] transition-colors duration-[var(--transition-fast)]">
+        <h3 className="text-base font-semibold text-[var(--color-heading)] group-hover:text-[var(--color-accent)] transition-colors duration-[var(--transition-fast)]">
           {work.work_title}
         </h3>
-        <p className="mt-[var(--space-1)] text-[var(--text-sm)] text-[var(--color-label)]">
+        <p className="mt-[var(--space-1)] text-sm text-[var(--color-label)]">
           {work.artist_name}
           {primaryCredit?.role && (
             <span className="text-[var(--color-muted)]">
@@ -66,11 +66,11 @@ export function WorkCard({ work }: WorkCardProps) {
       {/* Review indicator + version */}
       <div className="flex-shrink-0 text-right">
         {work.needs_review && (
-          <p className="text-[var(--text-xs)] text-[var(--color-confidence-medium)] mb-[var(--space-1)]">
+          <p className="text-xs text-[var(--color-confidence-medium)] mb-[var(--space-1)]">
             Review
           </p>
         )}
-        <span className="text-[var(--text-xs)] text-[var(--color-muted)] data-mono">
+        <span className="text-xs text-[var(--color-muted)] data-mono">
           v{work.version}
         </span>
       </div>

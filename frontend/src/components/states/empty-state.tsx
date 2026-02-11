@@ -15,17 +15,17 @@ export function EmptyState({ title, description, action }: EmptyStateProps) {
         <div className="accent-line" />
       </div>
 
-      <h3 className="editorial-display text-[var(--text-xl)] text-[var(--color-heading)]">
+      <h3 className="editorial-display text-xl text-[var(--color-heading)]">
         {title}
       </h3>
-      <p className="mt-[var(--space-2)] text-[var(--text-sm)] text-[var(--color-label)]">
+      <p className="mt-[var(--space-2)] text-sm text-[var(--color-label)]">
         {description}
       </p>
 
       {action && (
         <button
           onClick={action.onClick}
-          className="mt-[var(--space-6)] text-[var(--text-sm)] font-medium text-[var(--color-heading)] underline underline-offset-4 decoration-[var(--color-accent)] decoration-2 hover:text-[var(--color-accent)] transition-colors duration-[var(--transition-fast)]"
+          className="mt-[var(--space-6)] text-sm font-medium text-[var(--color-heading)] underline underline-offset-4 decoration-[var(--color-accent)] decoration-2 hover:text-[var(--color-accent)] transition-colors duration-[var(--transition-fast)]"
         >
           {action.label}
         </button>

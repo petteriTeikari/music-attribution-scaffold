@@ -15,7 +15,7 @@ export function AssuranceBadge({ level, className = "" }: AssuranceBadgeProps) {
 
   return (
     <span
-      className={`inline-flex items-center editorial-caps text-[var(--text-xs)] border-b-2 pb-[1px] ${className}`}
+      className={`inline-flex items-center editorial-caps text-xs border-b-2 pb-[1px] ${className}`}
       style={{
         borderColor: color,
         color,

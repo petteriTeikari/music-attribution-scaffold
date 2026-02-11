@@ -83,7 +83,7 @@ export function NotificationBadge() {
       {isOpen && (
         <div className="absolute left-full top-0 ml-[var(--space-2)] w-72 border border-[var(--color-border)] bg-[var(--color-surface-elevated)] shadow-[var(--shadow-lg)] z-50">
           <div className="p-[var(--space-3)] border-b border-[var(--color-divider)]">
-            <h3 className="editorial-caps text-[var(--text-xs)] text-[var(--color-heading)]">
+            <h3 className="editorial-caps text-xs text-[var(--color-heading)]">
               Notifications
             </h3>
           </div>
@@ -97,10 +97,10 @@ export function NotificationBadge() {
                     : ""
                 }`}
               >
-                <p className="text-[var(--text-sm)] font-medium text-[var(--color-heading)]">
+                <p className="text-sm font-medium text-[var(--color-heading)]">
                   {notif.title}
                 </p>
-                <p className="mt-[var(--space-1)] text-[var(--text-xs)] text-[var(--color-muted)]">
+                <p className="mt-[var(--space-1)] text-xs text-[var(--color-muted)]">
                   {notif.description}
                 </p>
               </div>

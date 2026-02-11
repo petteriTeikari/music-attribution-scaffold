@@ -33,15 +33,15 @@ export class ErrorBoundary extends Component<
 
       return (
         <div className="rounded-[var(--radius-lg)] border border-[var(--color-confidence-low)] bg-[var(--color-confidence-low-bg)] p-[var(--space-8)] text-center">
-          <h2 className="text-[var(--text-lg)] font-semibold text-[var(--color-heading)]">
+          <h2 className="text-lg font-semibold text-[var(--color-heading)]">
             Something went wrong
           </h2>
-          <p className="mt-[var(--space-2)] text-[var(--text-sm)] text-[var(--color-body)]">
+          <p className="mt-[var(--space-2)] text-sm text-[var(--color-body)]">
             {this.state.error?.message ?? "An unexpected error occurred."}
           </p>
           <button
             onClick={() => this.setState({ hasError: false, error: null })}
-            className="mt-[var(--space-4)] rounded-[var(--radius-md)] border border-[var(--color-border)] px-[var(--space-4)] py-[var(--space-2)] text-[var(--text-sm)] font-medium text-[var(--color-primary)] hover:bg-[var(--color-surface-secondary)]"
+            className="mt-[var(--space-4)] rounded-[var(--radius-md)] border border-[var(--color-border)] px-[var(--space-4)] py-[var(--space-2)] text-sm font-medium text-[var(--color-primary)] hover:bg-[var(--color-surface-secondary)]"
           >
             Try again
           </button>

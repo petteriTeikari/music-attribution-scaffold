@@ -23,7 +23,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       >
         <div className="flex items-center justify-between">
           <p
-            className="editorial-caps text-[var(--text-xs)] text-[var(--color-muted)]"
+            className="editorial-caps text-xs text-[var(--color-muted)]"
             style={{
               writingMode: "vertical-rl",
               transform: "rotate(180deg)",
@@ -35,7 +35,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <div className="flex-1 px-[var(--space-8)]">
             <div className="accent-line" />
           </div>
-          <p className="text-[var(--text-xs)] text-[var(--color-muted)]">
+          <p className="text-xs text-[var(--color-muted)]">
             Open-source research companion to{" "}
             <a
               href="https://papers.ssrn.com/sol3/papers.cfm?abstract_id=6109087"

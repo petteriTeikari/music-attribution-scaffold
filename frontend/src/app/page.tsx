@@ -137,13 +137,13 @@ export default function HomePage() {
               variants={fadeUp}
               transition={{ duration: 0.6, ease: "easeOut" }}
             >
-              <span className="editorial-caps text-[var(--text-xs)] text-[var(--color-accent)] mb-[var(--space-4)] block">
+              <span className="editorial-caps text-xs text-[var(--color-accent)] mb-[var(--space-4)] block">
                 Open-Source Research Scaffold
               </span>
             </motion.div>
 
             <motion.h1
-              className="editorial-display text-[var(--text-6xl)] lg:text-[var(--text-7xl)] text-[var(--color-heading)]"
+              className="editorial-display text-6xl lg:text-7xl text-[var(--color-heading)]"
               variants={fadeUp}
               transition={{ duration: 0.6, ease: "easeOut" }}
             >
@@ -158,7 +158,7 @@ export default function HomePage() {
             </motion.h1>
 
             <motion.p
-              className="mt-[var(--space-6)] max-w-lg text-[var(--text-lg)] leading-[var(--leading-relaxed)] text-[var(--color-body)]"
+              className="mt-[var(--space-6)] max-w-lg text-lg leading-relaxed text-[var(--color-body)]"
               variants={fadeUp}
               transition={{ duration: 0.6, ease: "easeOut" }}
             >
@@ -222,44 +222,65 @@ export default function HomePage() {
           whileInView="visible"
           viewport={{ once: true, margin: "-100px" }}
           variants={stagger}
+          className="grid gap-[var(--space-12)] lg:grid-cols-[1fr_auto] items-start"
         >
-          <motion.div variants={fadeUp} transition={{ duration: 0.5 }}>
-            <span className="editorial-caps text-[var(--text-xs)] text-[var(--color-accent)]">
-              Process
-            </span>
-            <h2 className="editorial-display text-[var(--text-4xl)] lg:text-[var(--text-5xl)] text-[var(--color-heading)] mt-[var(--space-3)]">
-              How It Works
-            </h2>
-          </motion.div>
+          <div>
+            <motion.div variants={fadeUp} transition={{ duration: 0.5 }}>
+              <span className="editorial-caps text-xs text-[var(--color-accent)]">
+                Process
+              </span>
+              <h2 className="editorial-display text-4xl lg:text-5xl text-[var(--color-heading)] mt-[var(--space-3)]">
+                How It Works
+              </h2>
+            </motion.div>
 
-          <div className="mt-[var(--space-12)] space-y-[var(--space-10)]">
-            {HOW_IT_WORKS.map((item, index) => (
-              <motion.div
-                key={item.label}
-                className="relative"
-                variants={fadeUp}
-                transition={{ duration: 0.5 }}
-              >
-                <div className="flex items-start gap-[var(--space-6)]">
-                  <div className="accent-square-sm mt-[var(--space-1)]" aria-hidden="true" />
-                  <div style={{ paddingLeft: index % 2 === 1 ? "var(--space-12)" : undefined }}>
-                    <h3 className="editorial-caps text-[var(--text-sm)] text-[var(--color-heading)]">
-                      {item.label}
-                    </h3>
-                    <p className="mt-[var(--space-2)] max-w-lg text-[var(--text-base)] text-[var(--color-body)] leading-[var(--leading-relaxed)]">
-                      {item.description}
-                    </p>
+          <div className="mt-[var(--space-12)]">
+            {/* Steps */}
+            <div className="space-y-[var(--space-10)]">
+              {HOW_IT_WORKS.map((item, index) => (
+                <motion.div
+                  key={item.label}
+                  className="relative"
+                  variants={fadeUp}
+                  transition={{ duration: 0.5 }}
+                >
+                  <div className="flex items-start gap-[var(--space-6)]">
+                    <div className="accent-square-sm mt-[var(--space-1)]" aria-hidden="true" />
+                    <div style={{ paddingLeft: index % 2 === 1 ? "var(--space-12)" : undefined }}>
+                      <h3 className="editorial-caps text-sm text-[var(--color-heading)]">
+                        {item.label}
+                      </h3>
+                      <p className="mt-[var(--space-2)] max-w-lg text-base text-[var(--color-body)] leading-relaxed">
+                        {item.description}
+                      </p>
+                    </div>
                   </div>
-                </div>
-                {index < HOW_IT_WORKS.length - 1 && (
-                  <div
-                    className="accent-line mt-[var(--space-10)]"
-                    style={{ opacity: 0.2 }}
-                  />
-                )}
-              </motion.div>
-            ))}
+                  {index < HOW_IT_WORKS.length - 1 && (
+                    <div
+                      className="accent-line mt-[var(--space-10)]"
+                      style={{ opacity: 0.2 }}
+                    />
+                  )}
+                </motion.div>
+              ))}
+            </div>
           </div>
+          </div>
+
+          {/* Process figure — portrait signal chain diagram, top-aligned with section */}
+          <motion.div
+            className="hidden lg:block max-w-[760px]"
+            variants={fadeUp}
+            transition={{ duration: 0.5 }}
+          >
+            <Image
+              src="/images/figures/fig-process-graph.webp"
+              alt="Portrait-mode constructivist diagram showing four stages of a music attribution pipeline as an audio signal chain, with five colored source dots converging through processing bands and a teal feedback arc"
+              width={900}
+              height={1200}
+              className="w-full h-auto"
+            />
+          </motion.div>
         </motion.div>
       </section>
 
@@ -273,10 +294,10 @@ export default function HomePage() {
           variants={stagger}
         >
           <motion.div variants={fadeUp} transition={{ duration: 0.5 }}>
-            <span className="editorial-caps text-[var(--text-xs)] text-[var(--color-accent)]">
+            <span className="editorial-caps text-xs text-[var(--color-accent)]">
               Capabilities
             </span>
-            <h2 className="editorial-display text-[var(--text-4xl)] lg:text-[var(--text-5xl)] text-[var(--color-heading)] mt-[var(--space-3)]">
+            <h2 className="editorial-display text-4xl lg:text-5xl text-[var(--color-heading)] mt-[var(--space-3)]">
               Key Features
             </h2>
           </motion.div>
@@ -294,17 +315,17 @@ export default function HomePage() {
                 <div className={index % 2 === 1 ? "lg:order-2" : ""}>
                   <div className="flex items-center gap-[var(--space-4)] mb-[var(--space-4)]">
                     <div className="accent-square" aria-hidden="true" />
-                    <span className="editorial-caps text-[var(--text-xs)] text-[var(--color-muted)]">
+                    <span className="editorial-caps text-xs text-[var(--color-muted)]">
                       {feature.marker}
                     </span>
                   </div>
-                  <h3 className="editorial-display text-[var(--text-3xl)] text-[var(--color-heading)]">
+                  <h3 className="editorial-display text-3xl text-[var(--color-heading)]">
                     {feature.title}
                   </h3>
-                  <p className="mt-[var(--space-4)] text-[var(--text-xl)] lg:text-[var(--text-2xl)] text-[var(--color-heading)] leading-[var(--leading-snug)] max-w-lg">
+                  <p className="mt-[var(--space-4)] text-xl lg:text-2xl text-[var(--color-heading)] leading-snug max-w-lg">
                     {feature.description}
                   </p>
-                  <p className="mt-[var(--space-4)] text-[var(--text-sm)] text-[var(--color-muted)] leading-[var(--leading-relaxed)] max-w-lg">
+                  <p className="mt-[var(--space-4)] text-sm text-[var(--color-muted)] leading-relaxed max-w-lg">
                     {feature.detail}
                   </p>
                 </div>
@@ -341,16 +362,16 @@ export default function HomePage() {
           className="max-w-2xl"
         >
           <motion.div variants={fadeUp} transition={{ duration: 0.5 }}>
-            <span className="editorial-caps text-[var(--text-xs)] text-[var(--color-accent)]">
+            <span className="editorial-caps text-xs text-[var(--color-accent)]">
               About
             </span>
-            <h2 className="editorial-display text-[var(--text-3xl)] text-[var(--color-heading)] mt-[var(--space-3)]">
+            <h2 className="editorial-display text-3xl text-[var(--color-heading)] mt-[var(--space-3)]">
               Research Scaffold
             </h2>
           </motion.div>
 
           <motion.div
-            className="mt-[var(--space-6)] space-y-[var(--space-4)] text-[var(--color-body)] leading-[var(--leading-relaxed)]"
+            className="mt-[var(--space-6)] space-y-[var(--space-4)] text-[var(--color-body)] leading-relaxed"
             variants={fadeUp}
             transition={{ duration: 0.5 }}
           >
@@ -364,15 +385,33 @@ export default function HomePage() {
               >
                 &ldquo;Governing Generative Music&rdquo;
               </a>{" "}
-              (SSRN No. 6109087). Transparent confidence scoring, provenance
-              lineage, and MCP permission infrastructure working together.
+              by Dr Petteri Teikari (SSRN No. 6109087). Transparent confidence
+              scoring, provenance lineage, and MCP permission infrastructure
+              working together.
             </p>
             <p>
               The demo uses Imogen Heap&apos;s discography as example data — she
-              pioneered music attribution through the Mycelia project. Eight
-              works showcase confidence ranging from 0% to 95%.
+              pioneered music attribution through the{" "}
+              <a
+                href="https://www.forbes.com/sites/georgehoward/2015/07/28/imogen-heap-gets-specific-about-mycelia-a-fair-trade-music-business-inspired-by-blockchain/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-[var(--color-heading)] underline underline-offset-4 decoration-[var(--color-accent)] decoration-1 hover:decoration-2 transition-all"
+              >
+                Mycelia project
+              </a>{" "}
+              in 2015, envisioning a fair-trade music ecosystem. That vision continues today with{" "}
+              <a
+                href="https://auracles.io/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-[var(--color-heading)] underline underline-offset-4 decoration-[var(--color-accent)] decoration-1 hover:decoration-2 transition-all"
+              >
+                Auracles.io
+              </a>
+              . Eight works showcase confidence ranging from 0% to 95%.
             </p>
-            <p className="text-[var(--text-sm)] text-[var(--color-muted)]">
+            <p className="text-sm text-[var(--color-muted)]">
               A0–A3 assurance levels map to ISRC/ISWC/ISNI standards.
               Conformal prediction provides calibrated uncertainty.
               Attribution-by-design embeds provenance at creation.
