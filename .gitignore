@@ -12,7 +12,8 @@ dist/
 downloads/
 eggs/
 .eggs/
-lib/
+# lib/ and lib64/ excluded — too broad, catches frontend/src/lib/
+# Python build artifacts in these dirs are covered by build/, dist/, eggs/
 lib64/
 parts/
 sdist/
