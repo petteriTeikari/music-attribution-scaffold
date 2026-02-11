@@ -39,9 +39,11 @@ COPY pyproject.toml uv.lock* README.md ./
 # This must match .github/workflows/ci.yml exactly
 RUN uv sync --frozen --group dev --group test
 
-# Copy source code and tests
+# Copy source code, tests, and alembic migrations
 COPY src/ ./src/
 COPY tests/ ./tests/
+COPY alembic/ ./alembic/
+COPY alembic.ini ./
 
 # Default command matches CI test step
 CMD ["uv", "run", "pytest", "tests/", "-v", "--cov=src/music_attribution", "--cov-report=term-missing"]
