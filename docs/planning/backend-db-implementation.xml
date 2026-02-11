@@ -55,8 +55,8 @@
     6. Tasks reference existing files where possible to minimize new file creation
 -->
 
-<executable-plan version="1.0" created="2026-02-11" last-updated="2026-02-11"
-    revision-note="v1.0: Initial plan. 5 phases, 19 tasks. Reviewed by 4 parallel reviewer agents for completeness, TDD feasibility, schema consistency, and cross-domain coherence.">
+<executable-plan version="1.1" created="2026-02-11" last-updated="2026-02-11"
+    revision-note="v1.1: Added Task 0.0 (setup script + dev UX) and enhanced Task 0.1 with connection pool hardening (pool_pre_ping, pool_size, pool_recycle, statement_timeout) from uad-copilot stochastic delay lessons. No SQLite fallback — PostgreSQL+pgvector only, all free local services via Docker. TigerData as drop-in managed upgrade path. 5 phases, 20 tasks.">
 
   <!-- ================================================================== -->
   <!-- SECTION 1: TECHNOLOGY CHOICES                                       -->
@@ -214,13 +214,66 @@
     <description>
       Set up the async database infrastructure. Extend Docker Compose,
       create async engine factory, add PgBouncer for connection pooling.
+      Add one-command setup script for excellent developer UX.
       This phase has zero business logic — pure infrastructure.
     </description>
+
+    <task id="0.0" name="Setup Script + Developer UX" status="NOT_STARTED">
+      <description>
+        Create a one-command setup script (scripts/setup-dev.sh) that installs
+        all free local dependencies and starts all services. This is critical
+        for the academic companion paper — someone cloning from the SSRN preprint
+        should be able to run `make setup` and have everything working.
+
+        Pattern: Modular scripts (from dpp-agents) with single entry point.
+        All services are free and local (Docker, PostgreSQL, pgvector).
+        No external service registration required.
+      </description>
+      <dependencies>0.2</dependencies>
+      <files>
+        <create>scripts/setup-dev.sh</create>
+        <modify>Makefile</modify>
+      </files>
+      <tdd-spec>
+        <red>
+          <!-- Infrastructure task — tested via running the script -->
+          1. Script is executable and runs without error on fresh clone
+          2. `make setup` starts Docker, runs migrations, seeds data
+          3. `make dev` starts both backend API and frontend dev server
+          4. Health check passes after setup: curl localhost:8000/health
+        </red>
+        <green>
+          - Create scripts/setup-dev.sh with: Docker check, docker compose up,
+            alembic upgrade head, seed data, verification
+          - Add Makefile targets: setup, dev (backend+frontend), db-up, db-down,
+            db-seed, db-reset, db-status
+          - Colored output with semantic icons (reuse dpp-agents common.sh pattern)
+          - Pre-flight checks: Docker installed? Docker running? Ports available?
+        </green>
+      </tdd-spec>
+      <acceptance-criteria>
+        <criterion>`make setup` works on fresh clone with only Docker installed</criterion>
+        <criterion>No external service registration required</criterion>
+        <criterion>Colored output with clear success/failure messages</criterion>
+        <criterion>Makefile targets for all database operations</criterion>
+      </acceptance-criteria>
+    </task>
 
     <task id="0.1" name="Async SQLAlchemy Engine + Session Factory" status="NOT_STARTED">
       <description>
         Extend src/music_attribution/db/engine.py with async engine factory
         and session management. The sync engine stays for Alembic migrations.
+
+        PERFORMANCE HARDENING (lessons from uad-copilot stochastic delays):
+        - pool_pre_ping=True — detect stale/dead connections before use
+        - pool_size=5, max_overflow=10 — prevent connection exhaustion
+        - pool_recycle=3600 — recycle connections hourly (prevent stale)
+        - statement_timeout=30s — query-level timeout via connect_args
+        - pool event listeners for logging slow checkouts
+
+        These prevent the class of bugs where queries hang forever or
+        connection pools exhaust under load — issues that only surface
+        in cloud deployments, not local development.
       </description>
       <files>
         <modify>src/music_attribution/db/engine.py</modify>
@@ -235,18 +288,24 @@
           2. test_async_session_factory_creates_session — verify yields AsyncSession
           3. test_async_session_context_manager — verify proper open/close lifecycle
           4. test_sync_engine_still_works — regression for existing sync engine
+          5. test_pool_pre_ping_enabled — verify pool_pre_ping=True in engine config
+          6. test_pool_size_configured — verify pool_size=5, max_overflow=10
+          7. test_pool_recycle_configured — verify pool_recycle=3600
         </red>
         <green>
           - Add `create_async_engine_factory(database_url: str) -> AsyncEngine`
           - Add `async_session_factory(engine: AsyncEngine) -> async_sessionmaker[AsyncSession]`
           - Add `get_async_session(factory) -> AsyncGenerator[AsyncSession, None]` context manager
           - Use `postgresql+psycopg://` URL scheme (psycopg v3 native async)
+          - Configure pool: pool_pre_ping=True, pool_size=5, max_overflow=10, pool_recycle=3600
+          - Add connect_args with statement_timeout=30000 (30s in ms)
         </green>
       </tdd-spec>
       <acceptance-criteria>
         <criterion>create_async_engine_factory returns AsyncEngine</criterion>
         <criterion>Sessions commit and rollback correctly</criterion>
         <criterion>Sync engine continues working for Alembic</criterion>
+        <criterion>Pool hardening: pre_ping, size, overflow, recycle, statement_timeout</criterion>
         <criterion>mypy passes with no type errors</criterion>
       </acceptance-criteria>
     </task>
@@ -966,6 +1025,7 @@
 
   <!--
     Phase 0 (Infrastructure):
+      0.0 (Setup Script) ◀── 0.2
       0.1 (Async Engine)  ──┐
       0.2 (Docker)        ──┤
                             │
