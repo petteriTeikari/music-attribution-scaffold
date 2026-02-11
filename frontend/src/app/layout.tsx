@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Instrument_Serif, Plus_Jakarta_Sans, IBM_Plex_Mono } from "next/font/google";
 import { ThemeProvider } from "@/components/theme/theme-provider";
+import { PostHogProvider } from "@/lib/analytics/posthog-provider";
+import { CopilotProvider } from "@/lib/copilot/copilot-provider";
 import { AppShell } from "@/components/layout/app-shell";
 import "./globals.css";
 
@@ -60,9 +62,13 @@ export default function RootLayout({
         />
       </head>
       <body>
-        <ThemeProvider>
-          <AppShell>{children}</AppShell>
-        </ThemeProvider>
+        <PostHogProvider>
+          <CopilotProvider>
+            <ThemeProvider>
+              <AppShell>{children}</AppShell>
+            </ThemeProvider>
+          </CopilotProvider>
+        </PostHogProvider>
       </body>
     </html>
   );
