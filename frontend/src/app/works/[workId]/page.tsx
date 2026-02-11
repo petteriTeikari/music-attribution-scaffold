@@ -9,6 +9,7 @@ import { ConfidenceGauge, ConfidenceBadge } from "@/components/confidence/confid
 import { AssuranceBadge } from "@/components/works/assurance-badge";
 import { CreditList } from "@/components/attribution/credit-list";
 import { ProvenanceTimeline } from "@/components/provenance/provenance-timeline";
+import { ProvenancePanel } from "@/components/citations/provenance-panel";
 
 export default function WorkDetailPage() {
   const params = useParams();
@@ -130,7 +131,14 @@ export default function WorkDetailPage() {
         <span className="editorial-caps text-xs text-[var(--color-accent)] block mb-[var(--space-2)]">
           Credits
         </span>
-        <CreditList credits={work.credits} />
+        <CreditList credits={work.credits} provenanceEvents={work.provenance_chain} />
+      </div>
+
+      <div className="accent-line my-[var(--space-8)]" style={{ opacity: 0.3 }} />
+
+      {/* Provenance sources panel (Perplexity-like) */}
+      <div>
+        <ProvenancePanel events={work.provenance_chain} />
       </div>
 
       <div className="accent-line my-[var(--space-8)]" style={{ opacity: 0.3 }} />

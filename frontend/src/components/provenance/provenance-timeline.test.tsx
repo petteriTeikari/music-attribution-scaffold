@@ -16,6 +16,8 @@ const MOCK_EVENTS: ProvenanceEvent[] = [
       rate_limited: false,
     },
     feedback_card_id: null,
+    step_uncertainty: null,
+    citation_index: null,
   },
   {
     event_type: "SCORE",
@@ -28,6 +30,8 @@ const MOCK_EVENTS: ProvenanceEvent[] = [
       scoring_method: "weighted_source_agreement",
     },
     feedback_card_id: null,
+    step_uncertainty: null,
+    citation_index: null,
   },
 ];
 

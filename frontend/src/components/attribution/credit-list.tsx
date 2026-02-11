@@ -1,9 +1,13 @@
-import type { Credit } from "@/lib/types/attribution";
+import type { Credit, ProvenanceEvent } from "@/lib/types/attribution";
+import type { CitationReference } from "@/lib/types/uncertainty";
 import { AssuranceBadge } from "@/components/works/assurance-badge";
 import { SourceTag } from "@/components/works/source-tag";
+import { InlineCitation } from "@/components/citations/inline-citation";
+import type { Source } from "@/lib/types/enums";
 
 interface CreditListProps {
   credits: Credit[];
+  provenanceEvents?: ProvenanceEvent[];
   className?: string;
 }
 
@@ -14,7 +18,34 @@ function formatRole(role: string): string {
     .join(" ");
 }
 
-export function CreditList({ credits, className = "" }: CreditListProps) {
+function buildCitationsForSources(
+  sources: Source[],
+  events: ProvenanceEvent[]
+): CitationReference[] {
+  const citations: CitationReference[] = [];
+  for (const source of sources) {
+    const matchingEvent = events.find(
+      (e) =>
+        e.details.type === "fetch" &&
+        e.details.source === source &&
+        e.citation_index !== null
+    );
+    if (matchingEvent && matchingEvent.citation_index !== null) {
+      const fetchDetails = matchingEvent.details as { source: Source };
+      citations.push({
+        index: matchingEvent.citation_index,
+        source: fetchDetails.source,
+        confidence: 1.0,
+        label: source.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()),
+        detail: `via ${matchingEvent.agent}`,
+        timestamp: matchingEvent.timestamp,
+      });
+    }
+  }
+  return citations;
+}
+
+export function CreditList({ credits, provenanceEvents, className = "" }: CreditListProps) {
   return (
     <div className={className}>
       <h3 className="text-base font-semibold text-[var(--color-heading)] mb-[var(--space-4)]">
@@ -46,6 +77,15 @@ export function CreditList({ credits, className = "" }: CreditListProps) {
                   {credit.sources.map((source) => (
                     <SourceTag key={source} source={source} />
                   ))}
+                  {provenanceEvents &&
+                    buildCitationsForSources(credit.sources, provenanceEvents).map(
+                      (citation) => (
+                        <InlineCitation
+                          key={citation.index}
+                          citation={citation}
+                        />
+                      )
+                    )}
                 </div>
               </div>
 
