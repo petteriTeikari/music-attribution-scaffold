@@ -143,6 +143,11 @@ def _record_to_model(record: AttributionRecord) -> AttributionRecordModel:
         conformal_set=record.conformal_set.model_dump(mode="json"),
         source_agreement=record.source_agreement,
         provenance_chain=[e.model_dump(mode="json") for e in record.provenance_chain],
+        uncertainty_summary=(
+            record.uncertainty_summary.model_dump(mode="json")
+            if record.uncertainty_summary
+            else None
+        ),
         needs_review=record.needs_review,
         review_priority=record.review_priority,
         created_at=record.created_at,
@@ -188,6 +193,11 @@ def _model_to_record(model: AttributionRecordModel) -> AttributionRecord:
         conformal_set=_parse_jsonb(model.conformal_set),  # type: ignore[arg-type]
         source_agreement=model.source_agreement,
         provenance_chain=_parse_jsonb(model.provenance_chain),  # type: ignore[arg-type]
+        uncertainty_summary=(
+            _parse_jsonb(model.uncertainty_summary)  # type: ignore[arg-type]
+            if model.uncertainty_summary is not None
+            else None
+        ),
         needs_review=model.needs_review,
         review_priority=model.review_priority,
         created_at=_ensure_utc(model.created_at),
