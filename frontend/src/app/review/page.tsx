@@ -1,22 +1,46 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useAtomValue } from "jotai";
+import { useRouter } from "next/navigation";
 import { userRoleAtom } from "@/lib/stores/mode";
 import type { AttributionRecord } from "@/lib/types/attribution";
 import { apiClient } from "@/lib/api/api-client";
 import { AgentReviewQueue } from "@/components/review/agent-review-queue";
 import { useAttributionContext } from "@/hooks/use-attribution-context";
+import { useAgentActions } from "@/hooks/use-agent-actions";
 
 export default function ReviewPage() {
   const role = useAtomValue(userRoleAtom);
+  const router = useRouter();
   const [works, setWorks] = useState<AttributionRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [approvedIds, setApprovedIds] = useState<Set<string>>(new Set());
   const [selectedWork, setSelectedWork] = useState<AttributionRecord | null>(null);
+  const [feedbackWorkId, setFeedbackWorkId] = useState<string | null>(null);
 
   // Feed context to CopilotKit agent
   useAttributionContext(selectedWork);
+
+  // Wire agent actions to real UI effects
+  const handleNavigateToWork = useCallback(
+    (workId: string) => router.push(`/works/${workId}`),
+    [router]
+  );
+  const handleHighlightCredit = useCallback(
+    (entityId: string) => {
+      const el = document.querySelector(`[data-entity-id="${entityId}"]`);
+      el?.scrollIntoView({ behavior: "smooth", block: "center" });
+      el?.classList.add("ring-2", "ring-[var(--color-accent)]");
+      setTimeout(() => el?.classList.remove("ring-2", "ring-[var(--color-accent)]"), 3000);
+    },
+    []
+  );
+  useAgentActions({
+    onNavigateToWork: handleNavigateToWork,
+    onHighlightCredit: handleHighlightCredit,
+    onOpenFeedbackPanel: setFeedbackWorkId,
+  });
 
   useEffect(() => {
     apiClient.getWorks().then((data) => {
