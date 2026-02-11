@@ -6,6 +6,7 @@
  */
 
 import type { AttributionRecord } from "@/lib/types/attribution";
+import type { PermissionBundle, AuditLogEntry } from "@/lib/types/permissions";
 import type { ProvenanceResponse } from "@/lib/types/uncertainty";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "";
@@ -98,6 +99,29 @@ export const apiClient = {
       }
     );
   },
+
+  async getPermissions(entityId: string): Promise<PermissionBundle | null> {
+    if (!API_BASE) return fallbackGetPermissions();
+    try {
+      const bundles = await fetchJson<PermissionBundle[]>(
+        `${API_BASE}/permissions/${entityId}`
+      );
+      return bundles.length > 0 ? bundles[0] : null;
+    } catch {
+      return fallbackGetPermissions();
+    }
+  },
+
+  async getAuditLog(): Promise<AuditLogEntry[]> {
+    if (!API_BASE) return fallbackGetAuditLog();
+    try {
+      return await fetchJson<AuditLogEntry[]>(
+        `${API_BASE}/permissions/audit-log`
+      );
+    } catch {
+      return fallbackGetAuditLog();
+    }
+  },
 };
 
 async function fallbackGetWorks(): Promise<AttributionRecord[]> {
@@ -117,4 +141,14 @@ async function fallbackGetProvenance(
 ): Promise<ProvenanceResponse | null> {
   const { mockApi } = await import("./mock-client");
   return mockApi.getProvenance(attributionId);
+}
+
+async function fallbackGetPermissions(): Promise<PermissionBundle | null> {
+  const { mockApi } = await import("./mock-client");
+  return mockApi.getPermissions();
+}
+
+async function fallbackGetAuditLog(): Promise<AuditLogEntry[]> {
+  const { mockApi } = await import("./mock-client");
+  return mockApi.getAuditLog();
 }

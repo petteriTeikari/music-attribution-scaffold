@@ -100,6 +100,37 @@ describe("ApiClient", () => {
     expect(result.result).toBe("ALLOW");
   });
 
+  it("fetches permissions via /api/v1/permissions/{entityId}", async () => {
+    const { apiClient } = await import("@/lib/api/api-client");
+    const mockData = [
+      {
+        permission_id: "perm-001",
+        entity_id: "entity-001",
+        scope: "GLOBAL",
+        default_permission: "DENY",
+      },
+    ];
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: () => Promise.resolve(mockData),
+    });
+
+    const result = await apiClient.getPermissions("entity-001");
+    expect(mockFetch).toHaveBeenCalledWith(
+      `${API_URL}/api/v1/permissions/entity-001`,
+      expect.any(Object)
+    );
+    expect(result).toBeTruthy();
+  });
+
+  it("getAuditLog falls back to mock when no API", async () => {
+    const { apiClient } = await import("@/lib/api/api-client");
+    // No API_URL in this test — should fall back
+    vi.stubEnv("NEXT_PUBLIC_API_URL", "");
+    const log = await apiClient.getAuditLog();
+    expect(Array.isArray(log)).toBe(true);
+  });
+
   it("falls back to mock data when API unavailable", async () => {
     const { apiClient } = await import("@/lib/api/api-client");
     mockFetch.mockRejectedValue(new Error("Network error"));
