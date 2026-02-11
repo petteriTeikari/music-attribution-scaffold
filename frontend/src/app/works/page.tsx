@@ -11,7 +11,7 @@ import {
   sortDirectionAtom,
   type SortField,
 } from "@/lib/stores/works";
-import { mockApi } from "@/lib/api/mock-client";
+import { apiClient } from "@/lib/api/api-client";
 import { WorkCard } from "@/components/works/work-card";
 
 const SORT_OPTIONS: { value: SortField; label: string }[] = [
@@ -31,7 +31,7 @@ export default function WorksPage() {
   useEffect(() => {
     if (works.length > 0) return;
     setLoading(true);
-    mockApi.getWorks().then((data) => {
+    apiClient.getWorks().then((data) => {
       setWorks(data);
       setLoading(false);
     });

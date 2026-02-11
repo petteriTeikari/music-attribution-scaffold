@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useAtomValue } from "jotai";
 import { userRoleAtom } from "@/lib/stores/mode";
 import type { AttributionRecord } from "@/lib/types/attribution";
-import { mockApi } from "@/lib/api/mock-client";
+import { apiClient } from "@/lib/api/api-client";
 import { AgentReviewQueue } from "@/components/review/agent-review-queue";
 import { useAttributionContext } from "@/hooks/use-attribution-context";
 
@@ -19,7 +19,7 @@ export default function ReviewPage() {
   useAttributionContext(selectedWork);
 
   useEffect(() => {
-    mockApi.getWorks().then((data) => {
+    apiClient.getWorks().then((data) => {
       setWorks(data.filter((w) => w.needs_review).sort((a, b) => b.review_priority - a.review_priority));
       setLoading(false);
     });
