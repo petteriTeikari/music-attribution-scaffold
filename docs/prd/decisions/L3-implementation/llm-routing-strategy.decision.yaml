@@ -1,0 +1,391 @@
+# LLM Routing Strategy
+#
+# How the system achieves model-agnosticity and routes requests
+# across LLM providers for cost optimization, failover, and
+# capability matching.
+
+decision_id: llm_routing_strategy
+title: "LLM Routing Strategy"
+description: >
+  Determines how the system abstracts LLM provider details and routes
+  requests to appropriate models. This is the "how" complementing
+  llm_provider's "which." Key concerns: model-agnosticity (swap providers
+  without code changes), failover (automatic fallback on errors), cost
+  optimization (route by query complexity), and observability (track
+  usage across providers). PydanticAI provides native model abstraction,
+  but gateway layers add routing intelligence, cost tracking, and
+  key management at scale.
+
+decision_level: L3_implementation
+status: active
+last_updated: 2026-02-11
+
+options:
+  - option_id: pydantic_ai_native
+    title: "PydanticAI Native (FallbackModel + Runtime Override)"
+    description: >
+      Use PydanticAI's built-in model abstraction with zero additional
+      infrastructure. FallbackModel chains provide automatic failover
+      (API errors trigger next model). Runtime model= override enables
+      per-request model selection. ConcurrencyLimitedModel manages
+      rate limits. Model is configured via env var, swappable without
+      code changes.
+
+      Pattern:
+        model = FallbackModel(
+          'anthropic:claude-haiku-4-5',     # Primary
+          'openai:gpt-4.1-mini',             # Fallback
+        )
+        agent = Agent(model)
+        result = agent.run(prompt, model='anthropic:claude-sonnet-4-5')
+
+      Pros: Zero infrastructure, zero cost overhead, zero latency added.
+      Cons: No cost tracking, no semantic routing, no centralized key mgmt.
+      Best for: MVP, solo developers, small teams.
+    prior_probability: 0.45
+    status: selected
+    complements:
+      - "ai_framework_strategy.direct_api_pydantic"
+      - "llm_provider.anthropic_primary"
+
+  - option_id: openrouter_gateway
+    title: "OpenRouter (Managed SaaS Gateway)"
+    description: >
+      Managed API gateway providing single endpoint to 200+ models.
+      OpenAI-compatible API, transparent provider failover, routing
+      hints (:nitro for speed, :floor for cheapest). PydanticAI has
+      first-class OpenRouterModel support.
+
+      Pricing: Pass-through base pricing + ~5% BYOK fee. Credit
+      purchase has ~5.5% markup. No per-token surcharge.
+
+      Pattern:
+        from pydantic_ai.models.openrouter import OpenRouterModel
+        model = OpenRouterModel('anthropic/claude-haiku-4-5')
+        agent = Agent(model)
+
+      Pros: Instant access to any model, zero infrastructure, built-in
+      fallback, great for A/B testing models.
+      Cons: 5% cost overhead, 25-40ms added latency, 40+ outages/year
+      (StatusGator), third-party dependency for all LLM calls.
+      Best for: Prototyping, model exploration, multi-model A/B testing.
+    prior_probability: 0.15
+    status: viable
+    constraints:
+      - "5% cost overhead on all API calls"
+      - "Added latency (25-40ms per request)"
+      - "Third-party SaaS dependency for all LLM traffic"
+      - "40+ tracked outages over past 12 months"
+
+  - option_id: litellm_proxy
+    title: "LiteLLM (Self-Hosted Proxy)"
+    description: >
+      Open-source Python proxy server (BerriAI, YC-backed, 20k+ stars)
+      providing unified OpenAI-compatible endpoint. Self-hosted, so zero
+      per-token markup. YAML-configured routing strategies: latency-based,
+      least-busy, usage-based. Supports fallbacks, circuit breakers,
+      per-team virtual keys, cost tracking, Redis for distributed deploys.
+      Used by Netflix, Lemonade, Rocket Money in production.
+
+      Pattern:
+        # YAML config on proxy server
+        model_list:
+          - model_name: default
+            litellm_params:
+              model: anthropic/claude-haiku-4-5
+          - model_name: fallback
+            litellm_params:
+              model: openai/gpt-4.1-mini
+        litellm_settings:
+          fallbacks: [{"default": ["fallback"]}]
+
+      PydanticAI connects via OpenAI-compat endpoint or pydantic-ai-litellm.
+
+      Pros: No per-token cost, full control, production-proven at scale,
+      centralized key mgmt, cost tracking, rate limiting.
+      Cons: Operational overhead (deploy, monitor, scale), added latency,
+      Docker/infra required.
+      Best for: Growing teams, multi-tenant, cost governance needed.
+    prior_probability: 0.20
+    status: viable
+    constraints:
+      - "Requires infrastructure to host and maintain"
+      - "Docker deployment + monitoring"
+      - "Redis recommended for distributed routing"
+
+  - option_id: portkey_gateway
+    title: "Portkey (AI Gateway + Observability)"
+    description: >
+      Production AI gateway combining routing, fallback, caching,
+      guardrails, and observability in one layer. Circuit breakers,
+      canary deployments (route 5% traffic to new model), weighted
+      load balancing, semantic caching, request/response guardrails.
+      Gartner Cool Vendor 2025. Open-source gateway available for
+      self-hosting. Cloud pricing from $49/month.
+
+      PydanticAI integration documented — configure Portkey as proxy.
+
+      Pros: Most feature-complete gateway, production guardrails,
+      built-in observability, canary deployments.
+      Cons: $49+/month cloud pricing, operational overhead if self-hosted,
+      another dependency layer.
+      Best for: Enterprise, teams needing governance + guardrails.
+    prior_probability: 0.10
+    status: viable
+    constraints:
+      - "Cloud pricing starting at $49/month"
+      - "Proxy layer adds latency"
+      - "Self-hosting requires operational investment"
+
+  - option_id: semantic_routing
+    title: "Semantic Router (Complexity-Based)"
+    description: >
+      Route requests to different model tiers based on query complexity.
+      Uses a lightweight classifier (ModernBERT or vLLM Semantic Router)
+      to categorize queries: simple → Haiku/Flash, moderate → Sonnet,
+      complex → Opus. IDC predicts 70% of enterprises adopt by 2028.
+      Can achieve 70%+ cost reduction by avoiding expensive models
+      for simple queries.
+
+      Combines with any gateway layer. The routing decision is the
+      intelligence; the gateway is the plumbing.
+
+      Pros: Maximum cost optimization, matches model to task complexity.
+      Cons: Classifier adds latency and complexity, needs training data
+      for routing quality, over-engineering for small scale.
+      Best for: High-volume production with significant cost pressure.
+    prior_probability: 0.10
+    status: experimental
+    constraints:
+      - "Requires training data for routing classifier"
+      - "Added latency for classification step"
+      - "Over-engineering for < 10K requests/day"
+
+conditional_on:
+  - parent_decision_id: llm_provider
+    influence_strength: strong
+    conditional_table:
+      - given_parent_option: anthropic_primary
+        then_probabilities:
+          pydantic_ai_native: 0.55
+          openrouter_gateway: 0.10
+          litellm_proxy: 0.15
+          portkey_gateway: 0.10
+          semantic_routing: 0.10
+      - given_parent_option: openai_primary
+        then_probabilities:
+          pydantic_ai_native: 0.50
+          openrouter_gateway: 0.15
+          litellm_proxy: 0.15
+          portkey_gateway: 0.10
+          semantic_routing: 0.10
+      - given_parent_option: google_gemini
+        then_probabilities:
+          pydantic_ai_native: 0.45
+          openrouter_gateway: 0.20
+          litellm_proxy: 0.15
+          portkey_gateway: 0.10
+          semantic_routing: 0.10
+      - given_parent_option: multi_provider
+        then_probabilities:
+          pydantic_ai_native: 0.15
+          openrouter_gateway: 0.20
+          litellm_proxy: 0.30
+          portkey_gateway: 0.15
+          semantic_routing: 0.20
+      - given_parent_option: open_source_local
+        then_probabilities:
+          pydantic_ai_native: 0.30
+          openrouter_gateway: 0.05
+          litellm_proxy: 0.40
+          portkey_gateway: 0.05
+          semantic_routing: 0.20
+
+  - parent_decision_id: ai_framework_strategy
+    influence_strength: moderate
+    conditional_table:
+      - given_parent_option: direct_api_pydantic
+        then_probabilities:
+          pydantic_ai_native: 0.50
+          openrouter_gateway: 0.15
+          litellm_proxy: 0.15
+          portkey_gateway: 0.10
+          semantic_routing: 0.10
+      - given_parent_option: lightweight_sdk
+        then_probabilities:
+          pydantic_ai_native: 0.30
+          openrouter_gateway: 0.20
+          litellm_proxy: 0.25
+          portkey_gateway: 0.15
+          semantic_routing: 0.10
+      - given_parent_option: orchestration_framework
+        then_probabilities:
+          pydantic_ai_native: 0.15
+          openrouter_gateway: 0.15
+          litellm_proxy: 0.30
+          portkey_gateway: 0.20
+          semantic_routing: 0.20
+      - given_parent_option: no_llm
+        then_probabilities:
+          pydantic_ai_native: 1.00
+          openrouter_gateway: 0.00
+          litellm_proxy: 0.00
+          portkey_gateway: 0.00
+          semantic_routing: 0.00
+
+  - parent_decision_id: build_vs_buy_posture
+    influence_strength: moderate
+    conditional_table:
+      - given_parent_option: custom_build
+        then_probabilities:
+          pydantic_ai_native: 0.30
+          openrouter_gateway: 0.10
+          litellm_proxy: 0.30
+          portkey_gateway: 0.10
+          semantic_routing: 0.20
+      - given_parent_option: managed_services
+        then_probabilities:
+          pydantic_ai_native: 0.35
+          openrouter_gateway: 0.25
+          litellm_proxy: 0.15
+          portkey_gateway: 0.20
+          semantic_routing: 0.05
+      - given_parent_option: saas_maximalist
+        then_probabilities:
+          pydantic_ai_native: 0.30
+          openrouter_gateway: 0.35
+          litellm_proxy: 0.05
+          portkey_gateway: 0.25
+          semantic_routing: 0.05
+
+archetype_weights:
+  engineer_heavy_startup:
+    probability_overrides:
+      pydantic_ai_native: 0.30
+      openrouter_gateway: 0.10
+      litellm_proxy: 0.30
+      portkey_gateway: 0.10
+      semantic_routing: 0.20
+    rationale: "Engineers invest in self-hosted routing for control. LiteLLM + semantic routing viable."
+
+  musician_first_team:
+    probability_overrides:
+      pydantic_ai_native: 0.55
+      openrouter_gateway: 0.25
+      litellm_proxy: 0.05
+      portkey_gateway: 0.10
+      semantic_routing: 0.05
+    rationale: "Simplicity wins. PydanticAI native or OpenRouter for zero-infra model switching."
+
+  solo_hacker:
+    probability_overrides:
+      pydantic_ai_native: 0.65
+      openrouter_gateway: 0.20
+      litellm_proxy: 0.05
+      portkey_gateway: 0.05
+      semantic_routing: 0.05
+    rationale: "Zero infrastructure overhead. PydanticAI FallbackModel is free and sufficient."
+
+  well_funded_startup:
+    probability_overrides:
+      pydantic_ai_native: 0.20
+      openrouter_gateway: 0.15
+      litellm_proxy: 0.25
+      portkey_gateway: 0.25
+      semantic_routing: 0.15
+    rationale: "Invest in production routing. Portkey/LiteLLM for governance and cost control."
+
+research_influences:
+  - paper: "The Future of AI is Model Routing"
+    source: "IDC Research, 2026"
+    concept: enterprise_multi_model_routing
+    prd_implication: >
+      70% of top AI enterprises will use multi-model routing architectures
+      by 2028. The shift from "pick one provider" to "route intelligently
+      across many" is the emerging enterprise pattern. However, for
+      MVP/scaffold stage, PydanticAI native provides sufficient agnosticity.
+
+  - paper: "LiteLLM: Unified LLM API Gateway for Enterprise AI"
+    source: "Medium (Mohapatra), Feb 2026"
+    concept: self_hosted_gateway_economics
+    prd_implication: >
+      Self-hosted gateway eliminates per-token markup of SaaS alternatives.
+      Netflix/Lemonade production deployments validate at scale. For teams
+      needing cost governance across multiple providers, LiteLLM proxy
+      is the standard open-source choice.
+
+  - paper: "vLLM Semantic Router v0.1 Iris Release"
+    source: "vLLM Blog, Jan 2026"
+    concept: semantic_complexity_routing
+    prd_implication: >
+      Lightweight classifier routes queries by complexity to appropriate
+      model tier. 70%+ cost reduction in production. Emerging pattern
+      that will mature by 2027. Currently over-engineering for small scale
+      but important to monitor.
+
+  - paper: "A Practical Guide to OpenRouter"
+    source: "Medium (Milesk), Jan 2026"
+    concept: managed_model_marketplace
+    prd_implication: >
+      Single endpoint to 200+ models with transparent pricing and failover.
+      Excellent for prototyping and model comparison. The 5% tax and
+      third-party dependency make it suboptimal for production-critical
+      paths, but unbeatable for developer experience.
+
+implementation_notes:
+  current_implementation: >
+    PydanticAI native with env var override. Agent model configured via
+    ATTRIBUTION_AGENT_MODEL environment variable, defaulting to
+    "anthropic:claude-haiku-4-5". FallbackModel can be added by changing
+    create_attribution_agent() to wrap primary model with fallback chain.
+
+  upgrade_path:
+    - stage: mvp
+      strategy: pydantic_ai_native
+      description: "Single provider (Anthropic) via env var. FallbackModel for failover."
+    - stage: growth
+      strategy: pydantic_ai_native_plus_openrouter
+      description: "OpenRouter for model exploration and A/B testing. Primary stays direct API."
+    - stage: scale
+      strategy: litellm_proxy
+      description: "Self-hosted LiteLLM for cost governance, multi-tenant key management."
+    - stage: enterprise
+      strategy: portkey_plus_semantic
+      description: "Portkey gateway with semantic routing for maximum cost optimization."
+
+volatility:
+  classification: volatile
+  last_assessed: 2026-02-11
+  next_review: 2026-03-11
+  change_drivers:
+    - "PydanticAI routing feature additions (native semantic routing?)"
+    - "OpenRouter pricing model changes (subscription vs markup)"
+    - "LiteLLM proxy stability and feature maturity"
+    - "Portkey open-source gateway capabilities"
+    - "vLLM Semantic Router maturity beyond v0.1"
+    - "Provider-native routing features (Anthropic/OpenAI/Google)"
+
+domain_applicability:
+  music_attribution: 0.9
+  dpp_traceability: 0.9
+  generic_graph_rag: 1.0
+
+tags:
+  - implementation
+  - llm
+  - routing
+  - model-agnosticity
+  - pydantic-ai
+  - openrouter
+  - litellm
+  - portkey
+
+references:
+  - "https://ai.pydantic.dev/models/overview/"
+  - "https://ai.pydantic.dev/api/models/fallback/"
+  - "https://ai.pydantic.dev/models/openrouter/"
+  - "https://openrouter.ai/docs"
+  - "https://docs.litellm.ai/docs/"
+  - "https://portkey.ai/docs"
+  - "https://github.com/BerriAI/litellm"
+  - "https://github.com/Portkey-AI/gateway"

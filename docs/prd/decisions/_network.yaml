@@ -12,7 +12,7 @@
 
 network:
   name: "Probabilistic PRD Decision Network"
-  version: "1.4.0"
+  version: "1.6.0"
   last_updated: 2026-02-11
   description: >
     Bayesian decision network for the Music Attribution Scaffold.
@@ -129,6 +129,11 @@ nodes:
     level: L3_implementation
     file: L3-implementation/graph-rag-engine.decision.yaml
     title: "Graph RAG Engine"
+
+  - id: llm_routing_strategy
+    level: L3_implementation
+    file: L3-implementation/llm-routing-strategy.decision.yaml
+    title: "LLM Routing Strategy"
 
   # L4: Deployment Decisions
   - id: compute_platform
@@ -507,6 +512,12 @@ edges:
     influence: moderate
     rationale: "Agentic UI framework provides agent runtime that voice extends"
 
+  # L3 → L5 edges (agentic UI → observability)
+  - from: agentic_ui_framework
+    to: observability_stack
+    influence: moderate
+    rationale: "Agentic UI generates rich user interaction events that feed product analytics and adaptive UX"
+
   # L1 → L3 skip-connections (voice agent)
   - from: target_market_segment
     to: voice_agent_stack
@@ -538,3 +549,29 @@ edges:
     to: graph_rag_engine
     influence: moderate
     rationale: "PostgreSQL enables LightRAG's native backend; SQLite limits options"
+
+  # --- LLM Routing Strategy edges ---
+
+  # L3 → L3 edges (LLM provider → routing strategy)
+  - from: llm_provider
+    to: llm_routing_strategy
+    influence: strong
+    rationale: "Single-provider choice favors native routing; multi-provider requires gateway"
+
+  # L2 → L3 edges (AI framework → routing strategy)
+  - from: ai_framework_strategy
+    to: llm_routing_strategy
+    influence: moderate
+    rationale: "PydanticAI provides native FallbackModel; orchestration frameworks need gateway"
+
+  # L1 → L3 skip-connections (build posture → routing)
+  - from: build_vs_buy_posture
+    to: llm_routing_strategy
+    influence: moderate
+    rationale: "Custom builders invest in self-hosted routing; SaaS teams use managed gateways"
+
+  # L3 → L5 edges (routing → observability)
+  - from: llm_routing_strategy
+    to: observability_stack
+    influence: moderate
+    rationale: "Gateway routing layers provide LLM cost tracking and usage observability"
