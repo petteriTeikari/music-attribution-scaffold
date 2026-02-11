@@ -119,3 +119,4 @@ docs/figures/generated/*.png
 docs/figures/visual-references/
 docs/knowledge-base/sources/*
 docs/tmp/*
+docs/figures/frontend-figures/*.png
