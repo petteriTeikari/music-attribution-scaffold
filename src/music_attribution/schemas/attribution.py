@@ -29,6 +29,7 @@ class Credit(BaseModel):
     """Attribution credit for an entity."""
 
     entity_id: uuid.UUID
+    entity_name: str = ""
     role: CreditRoleEnum
     role_detail: str | None = None
     confidence: float = Field(ge=0.0, le=1.0)
@@ -151,6 +152,8 @@ class AttributionRecord(BaseModel):
     schema_version: str = "1.0.0"
     attribution_id: uuid.UUID = Field(default_factory=uuid.uuid4)
     work_entity_id: uuid.UUID
+    work_title: str = ""
+    artist_name: str = ""
     credits: list[Credit] = Field(min_length=1)
     assurance_level: AssuranceLevelEnum
     confidence_score: float = Field(ge=0.0, le=1.0)

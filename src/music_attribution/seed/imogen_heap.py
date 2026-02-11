@@ -170,11 +170,19 @@ def _build_works() -> list[AttributionRecord]:
     ih = deterministic_uuid("artist-imogen-heap")
     gs = deterministic_uuid("artist-guy-sigsworth")
 
+    # Entity name lookup for post-processing credits
+    _entity_names: dict[uuid.UUID, str] = {
+        ih: "Imogen Heap",
+        gs: "Guy Sigsworth",
+    }
+
     records = [
         # 1. Hide and Seek — 0.95
         AttributionRecord(
             attribution_id=deterministic_uuid("work-001"),
             work_entity_id=deterministic_uuid("work-hide-and-seek"),
+            work_title="Hide and Seek",
+            artist_name="Imogen Heap",
             credits=[
                 Credit(
                     entity_id=ih,
@@ -287,6 +295,8 @@ def _build_works() -> list[AttributionRecord]:
         AttributionRecord(
             attribution_id=deterministic_uuid("work-002"),
             work_entity_id=deterministic_uuid("work-tiny-human"),
+            work_title="Tiny Human",
+            artist_name="Imogen Heap",
             credits=[
                 Credit(
                     entity_id=ih,
@@ -383,6 +393,8 @@ def _build_works() -> list[AttributionRecord]:
         AttributionRecord(
             attribution_id=deterministic_uuid("work-003"),
             work_entity_id=deterministic_uuid("work-the-moment-i-said-it"),
+            work_title="The Moment I Said It",
+            artist_name="Imogen Heap",
             credits=[
                 Credit(
                     entity_id=ih,
@@ -467,6 +479,8 @@ def _build_works() -> list[AttributionRecord]:
         AttributionRecord(
             attribution_id=deterministic_uuid("work-004"),
             work_entity_id=deterministic_uuid("work-goodnight-and-go"),
+            work_title="Goodnight and Go",
+            artist_name="Imogen Heap",
             credits=[
                 Credit(
                     entity_id=ih,
@@ -543,6 +557,8 @@ def _build_works() -> list[AttributionRecord]:
         AttributionRecord(
             attribution_id=deterministic_uuid("work-005"),
             work_entity_id=deterministic_uuid("work-headlock"),
+            work_title="Headlock",
+            artist_name="Imogen Heap",
             credits=[
                 Credit(
                     entity_id=ih,
@@ -638,6 +654,8 @@ def _build_works() -> list[AttributionRecord]:
         AttributionRecord(
             attribution_id=deterministic_uuid("work-006"),
             work_entity_id=deterministic_uuid("work-just-for-now"),
+            work_title="Just for Now",
+            artist_name="Imogen Heap",
             credits=[
                 Credit(
                     entity_id=ih,
@@ -706,6 +724,8 @@ def _build_works() -> list[AttributionRecord]:
         AttributionRecord(
             attribution_id=deterministic_uuid("work-007"),
             work_entity_id=deterministic_uuid("work-2-1"),
+            work_title="2-1",
+            artist_name="Imogen Heap",
             credits=[
                 Credit(
                     entity_id=ih,
@@ -767,6 +787,8 @@ def _build_works() -> list[AttributionRecord]:
         AttributionRecord(
             attribution_id=deterministic_uuid("work-008"),
             work_entity_id=deterministic_uuid("work-blanket"),
+            work_title="Blanket",
+            artist_name="Imogen Heap",
             credits=[
                 Credit(
                     entity_id=ih,
@@ -829,12 +851,25 @@ def _build_works() -> list[AttributionRecord]:
         ),
     ]
 
-    # Enrich all records with uncertainty metadata and citation indexes
+    # Enrich all records with uncertainty metadata, citation indexes, and entity names
     for rec in records:
         rec.uncertainty_summary = _build_uncertainty_for_record(rec)
         _add_citation_indexes(rec)
+        # Populate entity_name on each credit from the lookup
+        for credit in rec.credits:
+            credit.entity_name = _entity_names.get(credit.entity_id, "Unknown")
 
     return records
+
+
+def build_imogen_heap_records() -> list[AttributionRecord]:
+    """Build the 8 Imogen Heap attribution records (public API).
+
+    Returns:
+        List of 8 fully-populated AttributionRecord objects with display
+        fields (work_title, artist_name, entity_name) set.
+    """
+    return _build_works()
 
 
 async def seed_imogen_heap(session: AsyncSession) -> None:
