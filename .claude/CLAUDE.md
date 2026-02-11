@@ -10,7 +10,7 @@ This file defines the complete behavior contract for AI assistants working on th
 | **Code Analysis** | AST ONLY (grep/sed/awk BANNED for parsing) |
 | **File Operations** | Always use `encoding='utf-8'` and `Path()` |
 | **Datetime** | Always use `datetime.now(timezone.utc)` |
-| **Pre-commit** | MUST pass before any commit |
+| **Pre-commit** | MUST pass before any commit AND before any push |
 | **Markers** | NEVER modify `# AIDEV-IMMUTABLE` sections |
 | **Quality** | NEVER say "should work" - verify locally first |
 
@@ -47,6 +47,23 @@ This file defines the complete behavior contract for AI assistants working on th
 - ALWAYS run `make ci-docker` before pushing CI-related changes
 - NEVER push untested changes to CI - test locally first
 - If local verification is not possible, explicitly state what was NOT verified
+
+### Pre-Push Verification (MANDATORY)
+Before EVERY `git push`, run ALL of these checks and confirm they pass:
+```bash
+# 1. Pre-commit hooks (catches ruff lint, ruff format, mypy, secrets, YAML)
+pre-commit run --all-files
+
+# 2. Full test suite
+.venv/bin/python -m pytest tests/ -x -q
+
+# 3. If pre-commit fails, fix issues and re-run until ALL hooks pass
+```
+- NEVER push if `pre-commit run --all-files` fails on ANY hook
+- NEVER push if tests fail
+- Running just `ruff check` is NOT sufficient — must also run `ruff format --check`
+- If pre-commit config itself has YAML errors, fix THAT first before any other work
+- The CI workflow runs: `ruff check`, `ruff format --check`, `mypy`, `pytest` — all four must pass locally before pushing
 
 ## Required Patterns
 
