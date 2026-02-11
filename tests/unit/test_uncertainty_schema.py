@@ -173,3 +173,188 @@ class TestStepUncertainty:
         assert su.reasoning_uncertainty is None
         assert su.parameter_uncertainty is None
         assert su.prediction_uncertainty is None
+
+
+class TestSourceContribution:
+    """Tests for SourceContribution model (Task 1.1)."""
+
+    def test_source_contribution_valid(self) -> None:
+        """SourceContribution accepts source name, confidence, calibration quality."""
+        from music_attribution.schemas.uncertainty import SourceContribution
+
+        sc = SourceContribution(
+            source="MUSICBRAINZ",
+            confidence=0.92,
+            weight=0.35,
+            calibration_quality=0.88,
+            record_count=15,
+        )
+        assert sc.source == "MUSICBRAINZ"
+        assert sc.weight == pytest.approx(0.35)
+
+    def test_source_contribution_human_flag(self) -> None:
+        """is_human=True for human reviewers, False for machine sources."""
+        from music_attribution.schemas.uncertainty import SourceContribution
+
+        machine = SourceContribution(
+            source="MUSICBRAINZ",
+            confidence=0.9,
+            weight=0.3,
+            calibration_quality=0.85,
+            is_human=False,
+        )
+        assert machine.is_human is False
+
+        human = SourceContribution(
+            source="ARTIST_INPUT",
+            confidence=0.95,
+            weight=0.4,
+            calibration_quality=0.90,
+            is_human=True,
+        )
+        assert human.is_human is True
+
+    def test_source_contribution_json_roundtrip(self) -> None:
+        """JSON round-trip preserves all fields."""
+        from music_attribution.schemas.uncertainty import SourceContribution
+
+        original = SourceContribution(
+            source="DISCOGS",
+            confidence=0.78,
+            weight=0.25,
+            calibration_quality=0.70,
+            record_count=8,
+            is_human=False,
+        )
+        json_str = original.model_dump_json()
+        restored = SourceContribution.model_validate_json(json_str)
+        assert restored == original
+
+
+class TestCalibrationMetadata:
+    """Tests for CalibrationMetadata model (Task 1.1)."""
+
+    def test_calibration_metadata_ece_range(self) -> None:
+        """ECE is non-negative float."""
+        from music_attribution.schemas.uncertainty import CalibrationMetadata
+
+        cm = CalibrationMetadata(
+            expected_calibration_error=0.05,
+            calibration_set_size=100,
+            status="CALIBRATED",
+        )
+        assert cm.expected_calibration_error >= 0.0
+
+        with pytest.raises(ValidationError):
+            CalibrationMetadata(
+                expected_calibration_error=-0.01,
+                calibration_set_size=100,
+                status="CALIBRATED",
+            )
+
+    def test_calibration_metadata_json_roundtrip(self) -> None:
+        """JSON round-trip preserves all fields."""
+        from music_attribution.schemas.uncertainty import CalibrationMetadata
+
+        original = CalibrationMetadata(
+            expected_calibration_error=0.03,
+            calibration_set_size=250,
+            status="CALIBRATED",
+            method="temperature_scaling",
+        )
+        json_str = original.model_dump_json()
+        restored = CalibrationMetadata.model_validate_json(json_str)
+        assert restored == original
+
+
+class TestOverconfidenceReport:
+    """Tests for OverconfidenceReport model (Task 1.1)."""
+
+    def test_overconfidence_report_gap_calculation(self) -> None:
+        """overconfidence_gap = stated - actual (can be negative)."""
+        from music_attribution.schemas.uncertainty import OverconfidenceReport
+
+        report = OverconfidenceReport(
+            stated_confidence=0.95,
+            actual_accuracy=0.80,
+            overconfidence_gap=0.15,
+            th_score=0.12,
+        )
+        assert report.overconfidence_gap == pytest.approx(0.15)
+
+        # Underconfident case
+        under = OverconfidenceReport(
+            stated_confidence=0.70,
+            actual_accuracy=0.85,
+            overconfidence_gap=-0.15,
+        )
+        assert under.overconfidence_gap < 0
+
+    def test_overconfidence_report_optional_scores(self) -> None:
+        """TH-Score, H-Score, ECI are optional."""
+        from music_attribution.schemas.uncertainty import OverconfidenceReport
+
+        report = OverconfidenceReport(
+            stated_confidence=0.90,
+            actual_accuracy=0.85,
+            overconfidence_gap=0.05,
+        )
+        assert report.th_score is None
+        assert report.h_score is None
+        assert report.eci is None
+
+
+class TestTrajectoryCalibration:
+    """Tests for TrajectoryCalibration model (Task 1.1)."""
+
+    def test_trajectory_calibration_trend_enum(self) -> None:
+        """ConfidenceTrendEnum: INCREASING, DECREASING, STABLE, VOLATILE."""
+        from music_attribution.schemas.uncertainty import TrajectoryCalibration
+
+        tc = TrajectoryCalibration(
+            trajectory_id="pipeline-run-001",
+            step_count=4,
+            confidence_trend="INCREASING",
+            initial_confidence=0.60,
+            final_confidence=0.92,
+        )
+        assert tc.confidence_trend == "INCREASING"
+
+    def test_trajectory_calibration_htc_vector(self) -> None:
+        """htc_feature_vector is optional list[float] of length 48 when provided."""
+        from music_attribution.schemas.uncertainty import TrajectoryCalibration
+
+        tc = TrajectoryCalibration(
+            trajectory_id="pipeline-run-002",
+            step_count=3,
+            confidence_trend="STABLE",
+            initial_confidence=0.85,
+            final_confidence=0.87,
+            htc_feature_vector=[0.1] * 48,
+        )
+        assert len(tc.htc_feature_vector) == 48
+
+        with pytest.raises(ValidationError):
+            TrajectoryCalibration(
+                trajectory_id="test",
+                step_count=2,
+                confidence_trend="STABLE",
+                initial_confidence=0.8,
+                final_confidence=0.8,
+                htc_feature_vector=[0.1] * 10,  # Wrong length
+            )
+
+    def test_trajectory_calibration_json_roundtrip(self) -> None:
+        """JSON round-trip preserves all fields."""
+        from music_attribution.schemas.uncertainty import TrajectoryCalibration
+
+        original = TrajectoryCalibration(
+            trajectory_id="pipeline-run-003",
+            step_count=5,
+            confidence_trend="DECREASING",
+            initial_confidence=0.95,
+            final_confidence=0.72,
+        )
+        json_str = original.model_dump_json()
+        restored = TrajectoryCalibration.model_validate_json(json_str)
+        assert restored == original
