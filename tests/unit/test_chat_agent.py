@@ -92,6 +92,39 @@ class TestAgentDeps:
         deps.state.current_work_id = "attr-001"
         assert deps.state.current_work_id == "attr-001"
 
+    def test_deps_session_factory_default_none(self) -> None:
+        """AgentDeps.session_factory defaults to None (dict fallback)."""
+        deps = _make_deps()
+        assert deps.session_factory is None
+
+    def test_deps_accepts_session_factory(self) -> None:
+        """AgentDeps accepts a session_factory argument."""
+        from unittest.mock import MagicMock
+
+        mock_factory = MagicMock()
+        deps = AgentDeps(
+            attributions={},
+            state=AttributionAgentState(),
+            session_factory=mock_factory,
+        )
+        assert deps.session_factory is mock_factory
+
+    def test_deps_has_db_returns_true_with_factory(self) -> None:
+        """AgentDeps.has_db is True when session_factory is set."""
+        from unittest.mock import MagicMock
+
+        deps = AgentDeps(
+            attributions={},
+            state=AttributionAgentState(),
+            session_factory=MagicMock(),
+        )
+        assert deps.has_db is True
+
+    def test_deps_has_db_returns_false_without_factory(self) -> None:
+        """AgentDeps.has_db is False when session_factory is None."""
+        deps = _make_deps()
+        assert deps.has_db is False
+
 
 class TestExplainConfidenceLogic:
     """Tests for explain_confidence tool logic (without LLM call)."""

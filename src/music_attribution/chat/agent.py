@@ -11,12 +11,16 @@ from __future__ import annotations
 
 import logging
 import os
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+from typing import TYPE_CHECKING
 
 from pydantic import BaseModel, Field
 from pydantic_ai import Agent
 
 from music_attribution.chat.state import AttributionAgentState, CorrectionPreview
+
+if TYPE_CHECKING:
+    from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 logger = logging.getLogger(__name__)
 
@@ -46,10 +50,21 @@ MODEL = os.environ.get("ATTRIBUTION_AGENT_MODEL", "anthropic:claude-haiku-4-5")
 
 @dataclass
 class AgentDeps:
-    """Dependencies injected into agent tools at runtime."""
+    """Dependencies injected into agent tools at runtime.
+
+    When session_factory is provided, tools use real PostgreSQL
+    repositories. Otherwise, they fall back to the in-memory
+    attributions dict (dev/demo mode).
+    """
 
     attributions: dict[str, dict]
     state: AttributionAgentState
+    session_factory: async_sessionmaker[AsyncSession] | None = field(default=None)
+
+    @property
+    def has_db(self) -> bool:
+        """Whether a real database session factory is available."""
+        return self.session_factory is not None
 
 
 class ExplainConfidenceResult(BaseModel):
