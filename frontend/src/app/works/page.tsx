@@ -38,10 +38,13 @@ export default function WorksPage() {
   }, [works.length, setWorks, setLoading]);
 
   return (
-    <div className="mx-auto max-w-4xl px-[var(--space-6)] py-[var(--space-10)]">
+    <div className="px-[var(--space-8)] py-[var(--space-10)]">
       {/* Header */}
       <div className="mb-[var(--space-8)]">
-        <h1 className="text-[var(--text-3xl)] font-bold text-[var(--color-heading)]">
+        <span className="editorial-caps text-[var(--text-xs)] text-[var(--color-accent)] block mb-[var(--space-2)]">
+          Catalog
+        </span>
+        <h1 className="editorial-display text-[var(--text-4xl)] text-[var(--color-heading)]">
           Work Catalog
         </h1>
         <p className="mt-[var(--space-2)] text-[var(--text-base)] text-[var(--color-label)]">
@@ -56,14 +59,14 @@ export default function WorksPage() {
           placeholder="Search works or artists..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface-elevated)] px-[var(--space-4)] py-[var(--space-2)] text-[var(--text-sm)] text-[var(--color-body)] placeholder:text-[var(--color-muted)] focus:border-[var(--color-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-muted)] sm:max-w-xs"
+          className="border-b border-[var(--color-border)] bg-transparent px-0 py-[var(--space-2)] text-[var(--text-sm)] text-[var(--color-body)] placeholder:text-[var(--color-muted)] focus:border-[var(--color-accent)] focus:outline-none sm:max-w-xs"
           aria-label="Search works"
         />
 
         <div className="flex items-center gap-[var(--space-2)]">
           <label
             htmlFor="sort-select"
-            className="text-[var(--text-sm)] text-[var(--color-label)]"
+            className="editorial-caps text-[var(--text-xs)] text-[var(--color-label)]"
           >
             Sort:
           </label>
@@ -71,7 +74,7 @@ export default function WorksPage() {
             id="sort-select"
             value={sortField}
             onChange={(e) => setSortField(e.target.value as SortField)}
-            className="rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface-elevated)] px-[var(--space-3)] py-[var(--space-2)] text-[var(--text-sm)] text-[var(--color-body)]"
+            className="border-b border-[var(--color-border)] bg-transparent px-[var(--space-2)] py-[var(--space-2)] text-[var(--text-sm)] text-[var(--color-body)] focus:border-[var(--color-accent)] focus:outline-none"
           >
             {SORT_OPTIONS.map((opt) => (
               <option key={opt.value} value={opt.value}>
@@ -83,7 +86,7 @@ export default function WorksPage() {
             onClick={() =>
               setSortDirection((d) => (d === "asc" ? "desc" : "asc"))
             }
-            className="rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface-elevated)] px-[var(--space-3)] py-[var(--space-2)] text-[var(--text-sm)] text-[var(--color-body)] hover:bg-[var(--color-surface-secondary)]"
+            className="border-b border-[var(--color-border)] px-[var(--space-2)] py-[var(--space-2)] text-[var(--text-sm)] text-[var(--color-body)] hover:border-[var(--color-accent)] transition-colors"
             aria-label={`Sort ${sortDirection === "asc" ? "descending" : "ascending"}`}
           >
             {sortDirection === "asc" ? "↑" : "↓"}
@@ -91,32 +94,34 @@ export default function WorksPage() {
         </div>
       </div>
 
-      {/* Works grid */}
+      <div className="accent-line mb-[var(--space-6)]" style={{ opacity: 0.3 }} />
+
+      {/* Works list */}
       {loading ? (
         <div className="space-y-[var(--space-4)]">
           {Array.from({ length: 4 }).map((_, i) => (
             <div
               key={i}
-              className="h-28 animate-pulse rounded-[var(--radius-lg)] bg-[var(--color-surface-secondary)]"
+              className="h-20 animate-pulse bg-[var(--color-surface-secondary)]"
             />
           ))}
         </div>
       ) : filteredWorks.length === 0 ? (
-        <div className="rounded-[var(--radius-lg)] border border-[var(--color-border)] bg-[var(--color-surface-elevated)] p-[var(--space-12)] text-center">
-          <p className="text-[var(--text-lg)] text-[var(--color-label)]">
+        <div className="py-[var(--space-20)] text-center">
+          <p className="editorial-display text-[var(--text-2xl)] text-[var(--color-muted)]">
             {searchQuery ? "No works match your search." : "No works found."}
           </p>
           {searchQuery && (
             <button
               onClick={() => setSearchQuery("")}
-              className="mt-[var(--space-4)] text-[var(--text-sm)] text-[var(--color-primary)] underline underline-offset-2"
+              className="mt-[var(--space-4)] text-[var(--text-sm)] text-[var(--color-accent)] underline underline-offset-2"
             >
               Clear search
             </button>
           )}
         </div>
       ) : (
-        <div className="space-y-[var(--space-3)]">
+        <div className="divide-y divide-[var(--color-border)]">
           {filteredWorks.map((work) => (
             <WorkCard key={work.attribution_id} work={work} />
           ))}
@@ -125,7 +130,7 @@ export default function WorksPage() {
 
       {/* Result count */}
       {!loading && filteredWorks.length > 0 && (
-        <p className="mt-[var(--space-6)] text-center text-[var(--text-sm)] text-[var(--color-muted)]">
+        <p className="mt-[var(--space-8)] text-[var(--text-xs)] text-[var(--color-muted)] editorial-caps">
           {filteredWorks.length} of {works.length} works
         </p>
       )}

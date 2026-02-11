@@ -72,9 +72,9 @@ export default function ReviewPage() {
 
   if (role !== "artist") {
     return (
-      <div className="mx-auto max-w-4xl px-[var(--space-6)] py-[var(--space-10)]">
-        <div className="rounded-[var(--radius-lg)] border border-[var(--color-border)] bg-[var(--color-surface-elevated)] p-[var(--space-12)] text-center">
-          <h2 className="text-[var(--text-xl)] font-semibold text-[var(--color-heading)]">
+      <div className="px-[var(--space-8)] py-[var(--space-10)]">
+        <div className="py-[var(--space-20)] text-center">
+          <h2 className="editorial-display text-[var(--text-2xl)] text-[var(--color-heading)]">
             Artist Mode Required
           </h2>
           <p className="mt-[var(--space-2)] text-[var(--color-label)]">
@@ -86,11 +86,14 @@ export default function ReviewPage() {
   }
 
   return (
-    <div className="mx-auto max-w-4xl px-[var(--space-6)] py-[var(--space-10)]">
+    <div className="px-[var(--space-8)] py-[var(--space-10)]">
       {/* Header */}
       <div className="mb-[var(--space-8)] flex items-start justify-between">
         <div>
-          <h1 className="text-[var(--text-3xl)] font-bold text-[var(--color-heading)]">
+          <span className="editorial-caps text-[var(--text-xs)] text-[var(--color-accent)] block mb-[var(--space-2)]">
+            Review
+          </span>
+          <h1 className="editorial-display text-[var(--text-4xl)] text-[var(--color-heading)]">
             Review Queue
           </h1>
           <p className="mt-[var(--space-2)] text-[var(--color-label)]">
@@ -100,13 +103,13 @@ export default function ReviewPage() {
 
         {/* Progress + Approve All */}
         <div className="flex items-center gap-[var(--space-4)]">
-          <span className="text-[var(--text-sm)] text-[var(--color-label)]">
-            {approvedCount}/{works.length} reviewed
+          <span className="text-[var(--text-sm)] text-[var(--color-label)] data-mono">
+            {approvedCount}/{works.length}
           </span>
           {pendingWorks.length > 0 && (
             <button
               onClick={handleApproveAll}
-              className="rounded-[var(--radius-md)] bg-[var(--color-primary)] px-[var(--space-4)] py-[var(--space-2)] text-[var(--text-sm)] font-medium text-white hover:bg-[var(--color-primary-hover)] transition-colors duration-[var(--transition-fast)]"
+              className="editorial-caps text-[var(--text-xs)] text-[var(--color-heading)] underline underline-offset-4 decoration-[var(--color-accent)] decoration-2 hover:text-[var(--color-accent)] transition-colors duration-[var(--transition-fast)]"
             >
               Approve All
             </button>
@@ -115,9 +118,9 @@ export default function ReviewPage() {
       </div>
 
       {/* Progress bar */}
-      <div className="mb-[var(--space-6)] h-1.5 overflow-hidden rounded-[var(--radius-full)] bg-[var(--color-surface-secondary)]">
+      <div className="mb-[var(--space-6)] h-px bg-[var(--color-border)] relative">
         <div
-          className="h-full rounded-[var(--radius-full)] transition-all duration-[var(--transition-slow)]"
+          className="h-px absolute top-0 left-0 transition-all duration-[var(--transition-slow)]"
           style={{
             width: works.length > 0 ? `${(approvedCount / works.length) * 100}%` : "0%",
             backgroundColor: "var(--color-confidence-high)",
@@ -130,38 +133,41 @@ export default function ReviewPage() {
           {Array.from({ length: 3 }).map((_, i) => (
             <div
               key={i}
-              className="h-40 animate-pulse rounded-[var(--radius-lg)] bg-[var(--color-surface-secondary)]"
+              className="h-32 animate-pulse bg-[var(--color-surface-secondary)]"
             />
           ))}
         </div>
       ) : pendingWorks.length === 0 ? (
-        <div className="rounded-[var(--radius-lg)] border border-[var(--color-border)] bg-[var(--color-surface-elevated)] p-[var(--space-12)] text-center">
-          <p className="text-[var(--text-lg)] text-[var(--color-confidence-high)] font-medium">
-            All caught up!
+        <div className="py-[var(--space-20)] text-center">
+          <p className="editorial-display text-[var(--text-2xl)] text-[var(--color-confidence-high)]">
+            All caught up
           </p>
           <p className="mt-[var(--space-2)] text-[var(--color-label)]">
             {approvedCount} attribution{approvedCount !== 1 ? "s" : ""} reviewed.
           </p>
         </div>
       ) : (
-        <div className="space-y-[var(--space-4)]">
+        <div className="divide-y divide-[var(--color-border)]">
           {pendingWorks.map((work) => {
             const suggestions = generateSuggestions(work);
             return (
               <div
                 key={work.attribution_id}
-                className="rounded-[var(--radius-lg)] border border-[var(--color-border)] bg-[var(--color-surface-elevated)] p-[var(--space-6)] shadow-[var(--shadow-sm)]"
+                className="py-[var(--space-6)]"
               >
                 <div className="flex items-start gap-[var(--space-5)]">
-                  <ConfidenceGauge
-                    score={work.confidence_score}
-                    size="sm"
-                    showLabel={false}
-                  />
+                  <div className="flex items-center gap-[var(--space-3)]">
+                    <div className="accent-square-sm" aria-hidden="true" />
+                    <ConfidenceGauge
+                      score={work.confidence_score}
+                      size="sm"
+                      showLabel={false}
+                    />
+                  </div>
 
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-[var(--space-3)]">
-                      <h3 className="text-[var(--text-lg)] font-semibold text-[var(--color-heading)]">
+                      <h3 className="text-[var(--text-base)] font-semibold text-[var(--color-heading)]">
                         {work.work_title}
                       </h3>
                       <AssuranceBadge level={work.assurance_level} />
@@ -174,18 +180,18 @@ export default function ReviewPage() {
                     {/* Suggestion diffs */}
                     {suggestions.length > 0 && (
                       <div className="mt-[var(--space-4)] space-y-[var(--space-2)]">
-                        <p className="text-[var(--text-xs)] font-semibold uppercase tracking-wider text-[var(--color-label)]">
+                        <p className="editorial-caps text-[var(--text-xs)] text-[var(--color-label)]">
                           Suggestions
                         </p>
                         {suggestions.map((s, i) => (
                           <div
                             key={i}
-                            className="flex items-center gap-[var(--space-3)] rounded-[var(--radius-sm)] bg-[var(--color-surface-secondary)] px-[var(--space-3)] py-[var(--space-2)] text-[var(--text-sm)]"
+                            className="flex items-center gap-[var(--space-3)] py-[var(--space-1)] text-[var(--text-sm)]"
                           >
                             <span className="text-[var(--color-confidence-low)] line-through">
                               {s.current}
                             </span>
-                            <span className="text-[var(--color-muted)]">→</span>
+                            <span className="text-[var(--color-accent)]">→</span>
                             <span className="text-[var(--color-confidence-high)] font-medium">
                               {s.suggested}
                             </span>
@@ -197,7 +203,7 @@ export default function ReviewPage() {
 
                   <button
                     onClick={() => handleApprove(work.attribution_id)}
-                    className="flex-shrink-0 rounded-[var(--radius-md)] border border-[var(--color-confidence-high)] px-[var(--space-4)] py-[var(--space-2)] text-[var(--text-sm)] font-medium transition-colors duration-[var(--transition-fast)] hover:bg-[var(--color-confidence-high-bg)]"
+                    className="flex-shrink-0 editorial-caps text-[var(--text-xs)] border-b-2 border-[var(--color-confidence-high)] pb-[var(--space-1)] transition-colors duration-[var(--transition-fast)] hover:text-[var(--color-confidence-high)]"
                     style={{ color: "var(--color-confidence-high)" }}
                   >
                     Approve
