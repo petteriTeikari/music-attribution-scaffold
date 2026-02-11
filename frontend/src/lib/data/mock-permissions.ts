@@ -1,0 +1,300 @@
+/**
+ * Mock permission data for Imogen Heap's catalog.
+ */
+
+import type { PermissionBundle, AuditLogEntry } from "@/lib/types/permissions";
+
+export const MOCK_PERMISSIONS: PermissionBundle = {
+  schema_version: "1.0.0",
+  permission_id: "perm-imogen-catalog",
+  entity_id: "artist-imogen-heap",
+  scope: "CATALOG",
+  scope_entity_id: null,
+  permissions: [
+    {
+      permission_type: "STREAM",
+      value: "ALLOW",
+      conditions: [],
+      royalty_rate: null,
+      attribution_requirement: null,
+      territory: null,
+    },
+    {
+      permission_type: "DOWNLOAD",
+      value: "ALLOW_WITH_ROYALTY",
+      conditions: [],
+      royalty_rate: 0.15,
+      attribution_requirement: null,
+      territory: null,
+    },
+    {
+      permission_type: "SYNC_LICENSE",
+      value: "ASK",
+      conditions: [{ condition_type: "approval_required", value: "true" }],
+      royalty_rate: null,
+      attribution_requirement: null,
+      territory: null,
+    },
+    {
+      permission_type: "AI_TRAINING",
+      value: "ALLOW_WITH_ATTRIBUTION",
+      conditions: [
+        { condition_type: "partner_verified", value: "true" },
+        { condition_type: "opt_out_available", value: "true" },
+      ],
+      royalty_rate: null,
+      attribution_requirement: "Credit 'Imogen Heap' in training data manifest",
+      territory: null,
+    },
+    {
+      permission_type: "VOICE_CLONING",
+      value: "DENY",
+      conditions: [],
+      royalty_rate: null,
+      attribution_requirement: null,
+      territory: null,
+    },
+    {
+      permission_type: "STYLE_LEARNING",
+      value: "ASK",
+      conditions: [{ condition_type: "case_by_case", value: "true" }],
+      royalty_rate: null,
+      attribution_requirement: null,
+      territory: null,
+    },
+    {
+      permission_type: "LYRICS_IN_CHATBOTS",
+      value: "ALLOW_WITH_ATTRIBUTION",
+      conditions: [],
+      royalty_rate: null,
+      attribution_requirement: "Include songwriter credit and link to official lyrics",
+      territory: null,
+    },
+    {
+      permission_type: "COVER_VERSIONS",
+      value: "ALLOW_WITH_ROYALTY",
+      conditions: [],
+      royalty_rate: 0.091,
+      attribution_requirement: null,
+      territory: null,
+    },
+    {
+      permission_type: "REMIX",
+      value: "ASK",
+      conditions: [{ condition_type: "approval_required", value: "true" }],
+      royalty_rate: null,
+      attribution_requirement: null,
+      territory: null,
+    },
+    {
+      permission_type: "SAMPLE",
+      value: "ASK",
+      conditions: [{ condition_type: "clearance_required", value: "true" }],
+      royalty_rate: null,
+      attribution_requirement: null,
+      territory: null,
+    },
+    {
+      permission_type: "DERIVATIVE_WORK",
+      value: "ASK",
+      conditions: [],
+      royalty_rate: null,
+      attribution_requirement: null,
+      territory: null,
+    },
+  ],
+  effective_from: "2024-01-01T00:00:00Z",
+  effective_until: null,
+  delegation_chain: [
+    {
+      entity_id: "artist-imogen-heap",
+      entity_name: "Imogen Heap",
+      role: "OWNER",
+      can_modify: true,
+      can_delegate: true,
+    },
+    {
+      entity_id: "mgmt-megaphonic",
+      entity_name: "Megaphonic Management",
+      role: "MANAGER",
+      can_modify: true,
+      can_delegate: false,
+    },
+  ],
+  default_permission: "ASK",
+  created_by: "artist-imogen-heap",
+  updated_at: "2025-01-15T10:30:00Z",
+  version: 3,
+};
+
+export const MOCK_AUDIT_LOG: AuditLogEntry[] = [
+  {
+    id: "audit-001",
+    timestamp: "2025-02-10T14:22:00Z",
+    requester_name: "OpenAI",
+    requester_type: "ai_platform",
+    permission_type: "AI_TRAINING",
+    work_title: null,
+    scope: "CATALOG",
+    result: "ALLOW_WITH_ATTRIBUTION",
+    reason: "Verified AI partner — attribution requirement met",
+  },
+  {
+    id: "audit-002",
+    timestamp: "2025-02-09T09:15:00Z",
+    requester_name: "VoiceClone.ai",
+    requester_type: "ai_platform",
+    permission_type: "VOICE_CLONING",
+    work_title: "Hide and Seek",
+    scope: "RECORDING",
+    result: "DENY",
+    reason: "Voice cloning is denied for all works",
+  },
+  {
+    id: "audit-003",
+    timestamp: "2025-02-08T16:45:00Z",
+    requester_name: "Spotify",
+    requester_type: "ai_platform",
+    permission_type: "STREAM",
+    work_title: null,
+    scope: "CATALOG",
+    result: "ALLOW",
+    reason: "Streaming is allowed for all works",
+  },
+  {
+    id: "audit-004",
+    timestamp: "2025-02-07T11:30:00Z",
+    requester_name: "PRS for Music",
+    requester_type: "rights_org",
+    permission_type: "SYNC_LICENSE",
+    work_title: "Tiny Human",
+    scope: "WORK",
+    result: "ASK",
+    reason: "Sync license requires case-by-case approval",
+  },
+  {
+    id: "audit-005",
+    timestamp: "2025-02-06T08:00:00Z",
+    requester_name: "Anthropic",
+    requester_type: "ai_platform",
+    permission_type: "LYRICS_IN_CHATBOTS",
+    work_title: null,
+    scope: "CATALOG",
+    result: "ALLOW_WITH_ATTRIBUTION",
+    reason: "Lyrics usage allowed with songwriter credit",
+  },
+  {
+    id: "audit-006",
+    timestamp: "2025-02-05T13:20:00Z",
+    requester_name: "SoundBetter",
+    requester_type: "individual",
+    permission_type: "SAMPLE",
+    work_title: "Hide and Seek",
+    scope: "RECORDING",
+    result: "ASK",
+    reason: "Sample clearance required — forwarded to management",
+  },
+  {
+    id: "audit-007",
+    timestamp: "2025-02-04T10:00:00Z",
+    requester_name: "Suno AI",
+    requester_type: "ai_platform",
+    permission_type: "STYLE_LEARNING",
+    work_title: null,
+    scope: "CATALOG",
+    result: "ASK",
+    reason: "Style learning requires case-by-case review",
+  },
+];
+
+export const MCP_SCENARIOS = [
+  {
+    id: "scenario-1",
+    title: "AI Training — Verified Partner",
+    requester: "OpenAI",
+    permission: "AI_TRAINING" as const,
+    result: "ALLOW_WITH_ATTRIBUTION" as const,
+    description:
+      "A verified AI partner requests training data access. Permission granted with attribution requirement.",
+    mcpRequest: {
+      method: "permissions/check",
+      params: {
+        entity_id: "artist-imogen-heap",
+        permission_type: "AI_TRAINING",
+        requester_id: "openai-verified",
+      },
+    },
+    mcpResponse: {
+      result: "ALLOW_WITH_ATTRIBUTION",
+      attribution_requirement:
+        "Credit 'Imogen Heap' in training data manifest",
+      conditions: ["partner_verified", "opt_out_available"],
+    },
+  },
+  {
+    id: "scenario-2",
+    title: "Voice Cloning — Denied",
+    requester: "VoiceClone.ai",
+    permission: "VOICE_CLONING" as const,
+    result: "DENY" as const,
+    description:
+      "An unverified platform requests voice cloning rights. Denied — voice cloning is blocked for all requesters.",
+    mcpRequest: {
+      method: "permissions/check",
+      params: {
+        entity_id: "artist-imogen-heap",
+        permission_type: "VOICE_CLONING",
+        requester_id: "voiceclone-unknown",
+      },
+    },
+    mcpResponse: {
+      result: "DENY",
+      reason: "Voice cloning is denied for all works in catalog",
+    },
+  },
+  {
+    id: "scenario-3",
+    title: "Lyrics in Chatbot — Attributed",
+    requester: "Anthropic",
+    permission: "LYRICS_IN_CHATBOTS" as const,
+    result: "ALLOW_WITH_ATTRIBUTION" as const,
+    description:
+      "A chatbot platform requests lyrics display. Allowed with songwriter credit and official link.",
+    mcpRequest: {
+      method: "permissions/check",
+      params: {
+        entity_id: "artist-imogen-heap",
+        permission_type: "LYRICS_IN_CHATBOTS",
+        requester_id: "anthropic-verified",
+      },
+    },
+    mcpResponse: {
+      result: "ALLOW_WITH_ATTRIBUTION",
+      attribution_requirement:
+        "Include songwriter credit and link to official lyrics",
+    },
+  },
+  {
+    id: "scenario-4",
+    title: "Sample Clearance — Requires Approval",
+    requester: "Independent Producer",
+    permission: "SAMPLE" as const,
+    result: "ASK" as const,
+    description:
+      "An independent producer requests sample clearance for 'Hide and Seek'. Forwarded to management for approval.",
+    mcpRequest: {
+      method: "permissions/check",
+      params: {
+        entity_id: "artist-imogen-heap",
+        permission_type: "SAMPLE",
+        requester_id: "producer-independent",
+        scope_entity_id: "work-001",
+      },
+    },
+    mcpResponse: {
+      result: "ASK",
+      reason: "Sample clearance required",
+      contact: "management@megaphonic.com",
+    },
+  },
+];
