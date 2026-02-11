@@ -96,3 +96,35 @@ async def list_attributions(
     records = list(attributions.values())
     paginated = records[offset : offset + limit]
     return [r.model_dump(mode="json") for r in paginated]
+
+
+@router.get("/attributions/search")
+async def search_attributions(
+    request: Request,
+    q: str = Query(default="", description="Search query"),
+    limit: int = Query(default=20, ge=1, le=100),
+) -> list[dict]:
+    """Hybrid search across attribution records using RRF fusion.
+
+    Combines full-text search, vector similarity, and graph context.
+
+    Args:
+        request: FastAPI request with app state.
+        q: Search query string.
+        limit: Maximum number of results.
+
+    Returns:
+        List of results with attribution record and RRF score.
+    """
+    from music_attribution.search.hybrid_search import HybridSearchService
+
+    service = HybridSearchService()
+    async with await _get_session(request) as session:
+        results = await service.search(q, limit=limit, session=session)
+        return [
+            {
+                "attribution": r.record.model_dump(mode="json"),
+                "rrf_score": r.rrf_score,
+            }
+            for r in results
+        ]
