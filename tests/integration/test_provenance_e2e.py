@@ -12,10 +12,10 @@ import json
 import httpx
 import pytest
 from fastapi import FastAPI
-
-pytestmark = pytest.mark.integration
 from httpx import ASGITransport
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+
+pytestmark = pytest.mark.integration
 
 
 def _register_sqlite_type_compilers() -> None:
@@ -147,9 +147,7 @@ class TestProvenanceE2E:
             resp = await client.get(f"/attributions/{aid}/provenance")
             data = resp.json()
             score_confidences = [
-                e["details"]["new_confidence"]
-                for e in data["provenance_chain"]
-                if e["details"].get("type") == "score"
+                e["details"]["new_confidence"] for e in data["provenance_chain"] if e["details"].get("type") == "score"
             ]
             assert len(score_confidences) >= 1
             # For a well-attributed work, final confidence should be high

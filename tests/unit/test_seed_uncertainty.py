@@ -15,9 +15,7 @@ class TestSeedUncertainty:
         records = _build_works()
         assert len(records) == 8
         for rec in records:
-            assert rec.uncertainty_summary is not None, (
-                f"Record {rec.attribution_id} missing uncertainty_summary"
-            )
+            assert rec.uncertainty_summary is not None, f"Record {rec.attribution_id} missing uncertainty_summary"
 
     def test_high_confidence_low_uncertainty(self) -> None:
         """Hide and Seek (0.95): total_uncertainty < 0.10."""
@@ -46,11 +44,7 @@ class TestSeedUncertainty:
 
         records = _build_works()
         for rec in records:
-            indexes = [
-                e.citation_index
-                for e in rec.provenance_chain
-                if e.citation_index is not None
-            ]
+            indexes = [e.citation_index for e in rec.provenance_chain if e.citation_index is not None]
             if indexes:
                 assert indexes == list(range(1, len(indexes) + 1)), (
                     f"Record {rec.attribution_id}: citation_indexes not sequential: {indexes}"
@@ -64,9 +58,7 @@ class TestSeedUncertainty:
         for rec in records:
             if rec.uncertainty_summary is None:
                 continue
-            contrib_sources = {
-                sc.source for sc in rec.uncertainty_summary.source_contributions
-            }
+            contrib_sources = {sc.source for sc in rec.uncertainty_summary.source_contributions}
             credit_sources = set()
             for credit in rec.credits:
                 credit_sources.update(credit.sources)

@@ -144,9 +144,7 @@ def _record_to_model(record: AttributionRecord) -> AttributionRecordModel:
         source_agreement=record.source_agreement,
         provenance_chain=[e.model_dump(mode="json") for e in record.provenance_chain],
         uncertainty_summary=(
-            record.uncertainty_summary.model_dump(mode="json")
-            if record.uncertainty_summary
-            else None
+            record.uncertainty_summary.model_dump(mode="json") if record.uncertainty_summary else None
         ),
         needs_review=record.needs_review,
         review_priority=record.review_priority,

@@ -30,6 +30,8 @@ from music_attribution.schemas.attribution import (
 )
 from music_attribution.schemas.enums import (
     AssuranceLevelEnum,
+    CalibrationStatusEnum,
+    ConfidenceMethodEnum,
     CreditRoleEnum,
     ProvenanceEventTypeEnum,
     SourceEnum,
@@ -77,28 +79,28 @@ def _build_uncertainty_for_record(record: AttributionRecord) -> UncertaintyAware
         extrinsic = 0.04
         total = 0.06
         dominant = UncertaintySourceEnum.ALEATORIC
-        cal_status = "CALIBRATED"
+        cal_status = CalibrationStatusEnum.CALIBRATED
         cal_ece = 0.02
     elif confidence >= 0.50:
         intrinsic = 0.08
         extrinsic = 0.15
         total = 0.23
         dominant = UncertaintySourceEnum.EXTRINSIC
-        cal_status = "CALIBRATED"
+        cal_status = CalibrationStatusEnum.CALIBRATED
         cal_ece = 0.05
     elif confidence >= 0.20:
         intrinsic = 0.15
         extrinsic = 0.30
         total = 0.45
         dominant = UncertaintySourceEnum.EPISTEMIC
-        cal_status = "PENDING"
+        cal_status = CalibrationStatusEnum.PENDING
         cal_ece = 0.12
     else:
         intrinsic = 0.25
         extrinsic = 0.50
         total = 0.75
         dominant = UncertaintySourceEnum.EPISTEMIC
-        cal_status = "UNCALIBRATED"
+        cal_status = CalibrationStatusEnum.UNCALIBRATED
         cal_ece = 0.25
 
     # Build step uncertainties from provenance chain
@@ -115,7 +117,7 @@ def _build_uncertainty_for_record(record: AttributionRecord) -> UncertaintyAware
                 intrinsic_uncertainty=intrinsic,
                 extrinsic_uncertainty=extrinsic * (1 - i / max(len(record.provenance_chain), 1)),
                 total_uncertainty=total * (1 - 0.3 * i / max(len(record.provenance_chain), 1)),
-                confidence_method="SOURCE_WEIGHTED",
+                confidence_method=ConfidenceMethodEnum.SOURCE_WEIGHTED,
                 preceding_step_ids=[f"{record.provenance_chain[j].agent}-step-{j}" for j in range(i)],
             )
         )

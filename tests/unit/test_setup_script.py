@@ -8,10 +8,7 @@ from __future__ import annotations
 
 import os
 import stat
-import subprocess
 from pathlib import Path
-
-import pytest
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 SETUP_SCRIPT = PROJECT_ROOT / "scripts" / "setup.sh"

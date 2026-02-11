@@ -118,13 +118,9 @@ async def get_provenance(
             if record is not None:
                 return {
                     "attribution_id": str(record.attribution_id),
-                    "provenance_chain": [
-                        e.model_dump(mode="json") for e in record.provenance_chain
-                    ],
+                    "provenance_chain": [e.model_dump(mode="json") for e in record.provenance_chain],
                     "uncertainty_summary": (
-                        record.uncertainty_summary.model_dump(mode="json")
-                        if record.uncertainty_summary
-                        else None
+                        record.uncertainty_summary.model_dump(mode="json") if record.uncertainty_summary else None
                     ),
                 }
 
@@ -134,13 +130,9 @@ async def get_provenance(
         if record.attribution_id == attribution_id:
             return {
                 "attribution_id": str(record.attribution_id),
-                "provenance_chain": [
-                    e.model_dump(mode="json") for e in record.provenance_chain
-                ],
+                "provenance_chain": [e.model_dump(mode="json") for e in record.provenance_chain],
                 "uncertainty_summary": (
-                    record.uncertainty_summary.model_dump(mode="json")
-                    if record.uncertainty_summary
-                    else None
+                    record.uncertainty_summary.model_dump(mode="json") if record.uncertainty_summary else None
                 ),
             }
 
