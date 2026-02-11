@@ -9,6 +9,7 @@ import type { AttributionRecord } from "@/lib/types/attribution";
 import type { ProvenanceResponse } from "@/lib/types/uncertainty";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "";
+const API_BASE = API_URL ? `${API_URL}/api/v1` : "";
 
 export interface SearchResult {
   attribution: AttributionRecord;
@@ -33,19 +34,21 @@ async function fetchJson<T>(url: string, options?: RequestInit): Promise<T> {
 
 export const apiClient = {
   async getWorks(): Promise<AttributionRecord[]> {
-    if (!API_URL) return fallbackGetWorks();
+    if (!API_BASE) return fallbackGetWorks();
     try {
-      return await fetchJson<AttributionRecord[]>(`${API_URL}/attributions/`);
+      return await fetchJson<AttributionRecord[]>(
+        `${API_BASE}/attributions/`
+      );
     } catch {
       return fallbackGetWorks();
     }
   },
 
   async getWorkById(id: string): Promise<AttributionRecord | null> {
-    if (!API_URL) return fallbackGetWorkById(id);
+    if (!API_BASE) return fallbackGetWorkById(id);
     try {
       return await fetchJson<AttributionRecord>(
-        `${API_URL}/attributions/work/${id}`
+        `${API_BASE}/attributions/work/${id}`
       );
     } catch {
       return fallbackGetWorkById(id);
@@ -55,10 +58,10 @@ export const apiClient = {
   async getProvenance(
     attributionId: string
   ): Promise<ProvenanceResponse | null> {
-    if (!API_URL) return fallbackGetProvenance(attributionId);
+    if (!API_BASE) return fallbackGetProvenance(attributionId);
     try {
       return await fetchJson<ProvenanceResponse>(
-        `${API_URL}/attributions/${attributionId}/provenance`
+        `${API_BASE}/attributions/${attributionId}/provenance`
       );
     } catch {
       return fallbackGetProvenance(attributionId);
@@ -66,10 +69,10 @@ export const apiClient = {
   },
 
   async search(query: string): Promise<SearchResult[]> {
-    if (!API_URL) return [];
+    if (!API_BASE) return [];
     try {
       return await fetchJson<SearchResult[]>(
-        `${API_URL}/attributions/search?q=${encodeURIComponent(query)}`
+        `${API_BASE}/attributions/search?q=${encodeURIComponent(query)}`
       );
     } catch {
       return [];
@@ -80,17 +83,20 @@ export const apiClient = {
     entityId: string,
     permissionType: string
   ): Promise<PermissionCheckResult> {
-    return fetchJson<PermissionCheckResult>(`${API_URL}/permissions/check`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-      },
-      body: JSON.stringify({
-        entity_id: entityId,
-        permission_type: permissionType,
-      }),
-    });
+    return fetchJson<PermissionCheckResult>(
+      `${API_BASE}/permissions/check`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body: JSON.stringify({
+          entity_id: entityId,
+          permission_type: permissionType,
+        }),
+      }
+    );
   },
 };
 
