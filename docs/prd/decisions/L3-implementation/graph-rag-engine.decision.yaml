@@ -3,6 +3,9 @@
 # Selects the retrieval-augmented generation engine that
 # combines graph traversal with vector similarity for
 # context-aware LLM responses.
+#
+# Updated 2026-02-11: Added EdgeQuake (Rust LightRAG reimplementation)
+# as experimental option for learning/evaluation purposes.
 
 decision_id: graph_rag_engine
 title: "Graph RAG Engine"
@@ -28,7 +31,8 @@ options:
       paper). Full PostgreSQL + Apache AGE + pgvector support.
       Workspace-based multi-tenancy, incremental knowledge graph
       updates, dual-level retrieval (entity-level + community-level).
-      Aligns with existing PostgreSQL + AGE stack.
+      Aligns with existing PostgreSQL + AGE stack. Most mature
+      PostgreSQL-native Graph RAG option.
     prior_probability: 0.35
     status: recommended
     complements:
@@ -36,20 +40,43 @@ options:
       - "vector_strategy.pgvector"
       - "primary_database.postgresql_unified"
 
+  - option_id: edgequake
+    title: "EdgeQuake (Rust LightRAG)"
+    description: >
+      Rust-native reimplementation of LightRAG algorithm (Apache 2.0,
+      ~330 stars, github.com/raphaelmansuy/edgequake). PostgreSQL-only
+      backend using Apache AGE + pgvector. Single-binary deployment,
+      built-in multi-tenancy, REST API, JWT auth, 6 query modes
+      (naive/local/global/hybrid/mix/bypass). Performance advantage
+      from Rust (no GIL), but very early-stage (created Dec 2025,
+      single maintainer). Architecturally sound but unproven at scale.
+      Interesting for personal learning and evaluation.
+    prior_probability: 0.10
+    status: experimental
+    complements:
+      - "graph_strategy.apache_age"
+      - "vector_strategy.pgvector"
+      - "primary_database.postgresql_unified"
+    constraints:
+      - "Single maintainer (bus factor = 1)"
+      - "Less than 2 months old"
+      - "Requires Rust toolchain for customization"
+      - "Limited community validation"
+
   - option_id: microsoft_graphrag
     title: "Microsoft GraphRAG"
     description: >
       Microsoft's graph RAG implementation using community detection
       (Leiden algorithm) and hierarchical summarization. Strong at
       global queries over large corpora. Heavier infrastructure,
-      designed for enterprise scale. Less PostgreSQL-native than
-      LightRAG — typically uses Neo4j or custom graph stores.
-    prior_probability: 0.20
+      designed for enterprise scale. Now supports PostgreSQL + AGE
+      backend via Docker solution accelerator (Azure-native).
+    prior_probability: 0.15
     status: viable
     constraints:
       - "Heavier infrastructure requirements"
-      - "Less PostgreSQL-native"
       - "Higher LLM cost for community summarization"
+      - "Azure-optimized deployment path"
 
   - option_id: llamaindex_property_graph
     title: "LlamaIndex PropertyGraphIndex"
@@ -59,7 +86,7 @@ options:
       stores. Part of the broader LlamaIndex ecosystem with
       query pipelines, agents, and observability. Good if already
       using LlamaIndex for other RAG needs.
-    prior_probability: 0.20
+    prior_probability: 0.15
     status: viable
     complements:
       - "ai_framework_strategy.orchestration_framework"
@@ -81,25 +108,29 @@ conditional_on:
     conditional_table:
       - given_parent_option: apache_age
         then_probabilities:
-          lightrag: 0.55
+          lightrag: 0.45
+          edgequake: 0.10
           microsoft_graphrag: 0.15
           llamaindex_property_graph: 0.15
           no_graph_rag: 0.15
       - given_parent_option: sql_joins_only
         then_probabilities:
           lightrag: 0.15
+          edgequake: 0.05
           microsoft_graphrag: 0.10
-          llamaindex_property_graph: 0.15
+          llamaindex_property_graph: 0.10
           no_graph_rag: 0.60
       - given_parent_option: neo4j_dedicated
         then_probabilities:
           lightrag: 0.10
+          edgequake: 0.00
           microsoft_graphrag: 0.35
           llamaindex_property_graph: 0.35
           no_graph_rag: 0.20
       - given_parent_option: application_layer_graph
         then_probabilities:
-          lightrag: 0.30
+          lightrag: 0.25
+          edgequake: 0.05
           microsoft_graphrag: 0.20
           llamaindex_property_graph: 0.20
           no_graph_rag: 0.30
@@ -109,25 +140,29 @@ conditional_on:
     conditional_table:
       - given_parent_option: pgvector
         then_probabilities:
-          lightrag: 0.50
+          lightrag: 0.40
+          edgequake: 0.10
           microsoft_graphrag: 0.15
           llamaindex_property_graph: 0.15
           no_graph_rag: 0.20
       - given_parent_option: dedicated_vdb
         then_probabilities:
           lightrag: 0.15
+          edgequake: 0.00
           microsoft_graphrag: 0.30
           llamaindex_property_graph: 0.35
           no_graph_rag: 0.20
       - given_parent_option: sqlite_vec
         then_probabilities:
           lightrag: 0.25
+          edgequake: 0.00
           microsoft_graphrag: 0.10
           llamaindex_property_graph: 0.20
           no_graph_rag: 0.45
       - given_parent_option: no_vector_search
         then_probabilities:
           lightrag: 0.05
+          edgequake: 0.00
           microsoft_graphrag: 0.05
           llamaindex_property_graph: 0.05
           no_graph_rag: 0.85
@@ -137,26 +172,30 @@ conditional_on:
     conditional_table:
       - given_parent_option: anthropic_primary
         then_probabilities:
-          lightrag: 0.40
+          lightrag: 0.35
+          edgequake: 0.05
           microsoft_graphrag: 0.20
           llamaindex_property_graph: 0.20
           no_graph_rag: 0.20
       - given_parent_option: openai_primary
         then_probabilities:
-          lightrag: 0.30
+          lightrag: 0.25
+          edgequake: 0.05
           microsoft_graphrag: 0.30
           llamaindex_property_graph: 0.20
           no_graph_rag: 0.20
       - given_parent_option: multi_provider
         then_probabilities:
-          lightrag: 0.35
+          lightrag: 0.30
+          edgequake: 0.05
           microsoft_graphrag: 0.25
           llamaindex_property_graph: 0.25
           no_graph_rag: 0.15
       - given_parent_option: open_source_local
         then_probabilities:
-          lightrag: 0.35
-          microsoft_graphrag: 0.15
+          lightrag: 0.30
+          edgequake: 0.10
+          microsoft_graphrag: 0.10
           llamaindex_property_graph: 0.20
           no_graph_rag: 0.30
 
@@ -165,25 +204,29 @@ conditional_on:
     conditional_table:
       - given_parent_option: postgresql_unified
         then_probabilities:
-          lightrag: 0.50
+          lightrag: 0.40
+          edgequake: 0.10
           microsoft_graphrag: 0.15
           llamaindex_property_graph: 0.15
           no_graph_rag: 0.20
       - given_parent_option: supabase
         then_probabilities:
           lightrag: 0.30
+          edgequake: 0.00
           microsoft_graphrag: 0.15
           llamaindex_property_graph: 0.25
           no_graph_rag: 0.30
       - given_parent_option: sqlite_turso
         then_probabilities:
           lightrag: 0.15
+          edgequake: 0.00
           microsoft_graphrag: 0.10
           llamaindex_property_graph: 0.25
           no_graph_rag: 0.50
       - given_parent_option: cockroachdb
         then_probabilities:
           lightrag: 0.20
+          edgequake: 0.00
           microsoft_graphrag: 0.20
           llamaindex_property_graph: 0.25
           no_graph_rag: 0.35
@@ -191,35 +234,39 @@ conditional_on:
 archetype_weights:
   engineer_heavy_startup:
     probability_overrides:
-      lightrag: 0.35
+      lightrag: 0.30
+      edgequake: 0.10
       microsoft_graphrag: 0.25
-      llamaindex_property_graph: 0.20
+      llamaindex_property_graph: 0.15
       no_graph_rag: 0.20
-    rationale: "Engineers can evaluate and deploy any option. LightRAG for PostgreSQL alignment."
+    rationale: "Engineers can evaluate Rust-based EdgeQuake. LightRAG for PostgreSQL alignment."
 
   musician_first_team:
     probability_overrides:
       lightrag: 0.30
+      edgequake: 0.00
       microsoft_graphrag: 0.10
       llamaindex_property_graph: 0.20
       no_graph_rag: 0.40
-    rationale: "Graph RAG adds complexity. If used, LightRAG is most turnkey with PostgreSQL."
+    rationale: "Graph RAG adds complexity. EdgeQuake too experimental for non-engineers."
 
   solo_hacker:
     probability_overrides:
-      lightrag: 0.25
+      lightrag: 0.20
+      edgequake: 0.10
       microsoft_graphrag: 0.05
-      llamaindex_property_graph: 0.15
+      llamaindex_property_graph: 0.10
       no_graph_rag: 0.55
-    rationale: "Solo likely skips graph RAG or uses LightRAG for simplicity."
+    rationale: "Solo might try EdgeQuake for learning. LightRAG if shipping."
 
   well_funded_startup:
     probability_overrides:
-      lightrag: 0.30
+      lightrag: 0.25
+      edgequake: 0.05
       microsoft_graphrag: 0.30
       llamaindex_property_graph: 0.20
       no_graph_rag: 0.20
-    rationale: "Can invest in any option. Microsoft GraphRAG viable for enterprise scale."
+    rationale: "Microsoft GraphRAG for enterprise. EdgeQuake too immature."
 
 volatility:
   classification: volatile
@@ -227,7 +274,8 @@ volatility:
   next_review: 2026-03-11
   change_drivers:
     - "LightRAG PostgreSQL backend stability"
-    - "Microsoft GraphRAG v2 features"
+    - "EdgeQuake maturation (single maintainer risk)"
+    - "Microsoft GraphRAG v2 features and PostgreSQL support"
     - "LlamaIndex property graph improvements"
     - "New graph RAG frameworks (nano-graphrag, fast-graphrag)"
     - "LLM context window growth reducing RAG need"
@@ -246,5 +294,8 @@ tags:
 
 references:
   - "https://github.com/HKUDS/LightRAG"
+  - "https://github.com/raphaelmansuy/edgequake"
   - "https://github.com/microsoft/graphrag"
   - "https://docs.llamaindex.ai/en/stable/examples/property_graph/"
+  - "https://arxiv.org/abs/2410.05779"  # LightRAG paper (EMNLP 2025)
+  - "https://techcommunity.microsoft.com/blog/adforpostgresql/introducing-the-graphrag-solution-for-azure-database-for-postgresql/4299871"

@@ -2,6 +2,9 @@
 #
 # Where and how the database is hosted. Tightly coupled with
 # primary database choice and compute platform.
+#
+# Updated 2026-02-11: Added TigerData (Agentic Postgres) as
+# experimental option for AI-agent-optimized managed PostgreSQL.
 
 decision_id: database_hosting
 title: "Database Hosting"
@@ -9,11 +12,14 @@ description: >
   Determines how the primary database is hosted and managed. Ranges
   from fully managed serverless (Neon, Supabase) to self-hosted on
   dedicated hardware. The choice interacts with primary database
-  selection and compute platform.
+  selection and compute platform. New entrant: TigerData (formerly
+  Timescale) offers "Agentic Postgres" with sub-second database
+  forking, hybrid search (pgvectorscale + pg_textsearch), and
+  built-in MCP server for AI agent workloads.
 
 decision_level: L4_deployment
 status: active
-last_updated: 2026-02-10
+last_updated: 2026-02-11
 
 options:
   - option_id: neon
@@ -80,10 +86,36 @@ options:
     description: >
       Managed CockroachDB with global distribution and
       PostgreSQL compatibility. Enterprise-grade multi-region.
-    prior_probability: 0.10
+    prior_probability: 0.05
     status: deferred
     complements:
       - "primary_database.cockroachdb"
+
+  - option_id: tigerdata
+    title: "TigerData (Agentic Postgres)"
+    description: >
+      Managed PostgreSQL from TigerData (formerly Timescale) optimized
+      for AI agent workloads. Key features: (1) Fluid Storage with
+      sub-second copy-on-write database forking for agent sandboxes,
+      (2) built-in MCP server exposing schema introspection + query
+      advice as Claude-callable tools, (3) pgvectorscale (DiskANN,
+      28x lower latency than Pinecone at 75% less cost), (4) pg_textsearch
+      (BM25 keyword search, currently preview/in-memory only), (5) Tiger
+      Lake (PostgreSQL ↔ Apache Iceberg bridge). Free tier: 2 services,
+      750MB. Open-source extensions (pgvectorscale, pg_textsearch) can
+      be used with any PostgreSQL. Proprietary: Fluid Storage, MCP server,
+      Tiger Lake. AWS only (us-east-1, EU planned). Interesting for
+      personal learning re: agentic database patterns. Key risk: vendor
+      lock-in on proprietary features; pg_textsearch still preview.
+    prior_probability: 0.05
+    status: experimental
+    complements:
+      - "primary_database.postgresql_unified"
+    constraints:
+      - "AWS managed-only (no self-hosting)"
+      - "Proprietary Fluid Storage creates vendor lock-in"
+      - "pg_textsearch preview (in-memory only, disk storage TBD)"
+      - "No Apache AGE support (graph via recursive CTEs only)"
 
 conditional_on:
   - parent_decision_id: primary_database
@@ -91,12 +123,13 @@ conditional_on:
     conditional_table:
       - given_parent_option: postgresql_unified
         then_probabilities:
-          neon: 0.40
+          neon: 0.35
           supabase_hosted: 0.15
           aws_rds: 0.20
           self_managed: 0.15
           turso: 0.00
-          cockroach_cloud: 0.10
+          cockroach_cloud: 0.05
+          tigerdata: 0.10
       - given_parent_option: supabase
         then_probabilities:
           neon: 0.10
@@ -105,6 +138,7 @@ conditional_on:
           self_managed: 0.05
           turso: 0.00
           cockroach_cloud: 0.10
+          tigerdata: 0.00
       - given_parent_option: sqlite_turso
         then_probabilities:
           neon: 0.00
@@ -113,6 +147,7 @@ conditional_on:
           self_managed: 0.10
           turso: 0.85
           cockroach_cloud: 0.05
+          tigerdata: 0.00
       - given_parent_option: cockroachdb
         then_probabilities:
           neon: 0.05
@@ -121,42 +156,47 @@ conditional_on:
           self_managed: 0.15
           turso: 0.00
           cockroach_cloud: 0.70
+          tigerdata: 0.00
 
   - parent_decision_id: compute_platform
     influence_strength: moderate
     conditional_table:
       - given_parent_option: render
         then_probabilities:
-          neon: 0.40
+          neon: 0.35
           supabase_hosted: 0.25
           aws_rds: 0.10
           self_managed: 0.10
           turso: 0.10
           cockroach_cloud: 0.05
+          tigerdata: 0.05
       - given_parent_option: vercel_plus_backend
         then_probabilities:
-          neon: 0.35
+          neon: 0.30
           supabase_hosted: 0.30
           aws_rds: 0.10
           self_managed: 0.05
           turso: 0.15
           cockroach_cloud: 0.05
+          tigerdata: 0.05
       - given_parent_option: railway
         then_probabilities:
-          neon: 0.35
+          neon: 0.30
           supabase_hosted: 0.25
           aws_rds: 0.10
           self_managed: 0.10
           turso: 0.15
           cockroach_cloud: 0.05
+          tigerdata: 0.05
       - given_parent_option: fly_io
         then_probabilities:
-          neon: 0.30
+          neon: 0.25
           supabase_hosted: 0.15
           aws_rds: 0.15
           self_managed: 0.15
           turso: 0.15
           cockroach_cloud: 0.10
+          tigerdata: 0.05
       - given_parent_option: hetzner_dedicated
         then_probabilities:
           neon: 0.15
@@ -165,25 +205,28 @@ conditional_on:
           self_managed: 0.45
           turso: 0.10
           cockroach_cloud: 0.10
+          tigerdata: 0.00
       - given_parent_option: aws_ecs
         then_probabilities:
-          neon: 0.15
-          supabase_hosted: 0.10
-          aws_rds: 0.40
+          neon: 0.10
+          supabase_hosted: 0.05
+          aws_rds: 0.35
           self_managed: 0.10
           turso: 0.05
           cockroach_cloud: 0.20
+          tigerdata: 0.15
 
 archetype_weights:
   engineer_heavy_startup:
     probability_overrides:
-      neon: 0.25
+      neon: 0.20
       supabase_hosted: 0.10
       aws_rds: 0.25
       self_managed: 0.20
       turso: 0.05
-      cockroach_cloud: 0.15
-    rationale: "Engineers can manage RDS or self-hosted. Neon for simplicity."
+      cockroach_cloud: 0.10
+      tigerdata: 0.10
+    rationale: "Engineers can manage any option. TigerData interesting for agentic patterns."
 
   musician_first_team:
     probability_overrides:
@@ -192,8 +235,9 @@ archetype_weights:
       aws_rds: 0.05
       self_managed: 0.00
       turso: 0.15
-      cockroach_cloud: 0.10
-    rationale: "Supabase bundled experience. Neon if PostgreSQL-only."
+      cockroach_cloud: 0.05
+      tigerdata: 0.05
+    rationale: "Supabase bundled experience. TigerData too specialized for non-engineers."
 
   solo_hacker:
     probability_overrides:
@@ -201,28 +245,32 @@ archetype_weights:
       supabase_hosted: 0.25
       aws_rds: 0.05
       self_managed: 0.05
-      turso: 0.30
+      turso: 0.25
       cockroach_cloud: 0.05
-    rationale: "Free tiers matter. Turso for SQLite, Neon/Supabase for PostgreSQL."
+      tigerdata: 0.05
+    rationale: "Free tiers matter. TigerData free tier interesting for experimentation."
 
   well_funded_startup:
     probability_overrides:
-      neon: 0.20
+      neon: 0.15
       supabase_hosted: 0.10
-      aws_rds: 0.35
+      aws_rds: 0.30
       self_managed: 0.10
       turso: 0.05
-      cockroach_cloud: 0.20
-    rationale: "AWS RDS for enterprise credibility. CockroachDB for global scale."
+      cockroach_cloud: 0.15
+      tigerdata: 0.15
+    rationale: "AWS RDS for enterprise. TigerData's MCP server appealing for agentic workflows."
 
 volatility:
   classification: shifting
-  last_assessed: 2026-02-10
-  next_review: 2026-04-10
+  last_assessed: 2026-02-11
+  next_review: 2026-04-11
   change_drivers:
     - "Neon pricing evolution"
     - "Supabase extension support changes"
     - "Turso feature parity improvements"
+    - "TigerData Agentic Postgres maturation (pg_textsearch, Fluid Storage)"
+    - "Databricks/Neon acquisition impact on serverless PostgreSQL landscape"
 
 domain_applicability:
   music_attribution: 1.0
@@ -237,3 +285,7 @@ tags:
 references:
   - "../infrastructure/toc-infrastructure.md"
   - "../defaults.yaml"
+  - "https://www.tigerdata.com/agentic-postgres"
+  - "https://www.tigerdata.com/blog/its-2026-just-use-postgres"
+  - "https://github.com/timescale/pgvectorscale"  # OSS DiskANN extension
+  - "https://github.com/timescale/pg_textsearch"  # OSS BM25 extension (preview)
