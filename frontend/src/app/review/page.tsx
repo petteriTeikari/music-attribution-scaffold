@@ -7,6 +7,7 @@ import { userRoleAtom } from "@/lib/stores/mode";
 import type { AttributionRecord } from "@/lib/types/attribution";
 import { apiClient } from "@/lib/api/api-client";
 import { AgentReviewQueue } from "@/components/review/agent-review-queue";
+import { AgentFeedbackFlow, type FeedbackData } from "@/components/feedback/agent-feedback-flow";
 import { useAttributionContext } from "@/hooks/use-attribution-context";
 import { useAgentActions } from "@/hooks/use-agent-actions";
 
@@ -60,6 +61,17 @@ export default function ReviewPage() {
     setApprovedIds(new Set(works.map((w) => w.attribution_id)));
   }
 
+  function handleFeedbackSubmit(feedback: FeedbackData) {
+    // After structured feedback, close panel
+    setFeedbackWorkId(null);
+    // Mark as reviewed
+    handleApprove(feedback.workId);
+  }
+
+  const feedbackWork = feedbackWorkId
+    ? works.find((w) => w.attribution_id === feedbackWorkId) ?? null
+    : null;
+
   if (role !== "artist") {
     return (
       <div className="px-[var(--space-8)] py-[var(--space-10)]">
@@ -89,6 +101,17 @@ export default function ReviewPage() {
           Agent-assisted attribution review with AI-generated suggestions.
         </p>
       </div>
+
+      {/* Feedback flow panel */}
+      {feedbackWork && (
+        <div className="mb-[var(--space-8)] border border-[var(--color-border)] p-[var(--space-6)]">
+          <AgentFeedbackFlow
+            work={feedbackWork}
+            onSubmit={handleFeedbackSubmit}
+            onCancel={() => setFeedbackWorkId(null)}
+          />
+        </div>
+      )}
 
       {loading ? (
         <div className="space-y-[var(--space-4)]">
