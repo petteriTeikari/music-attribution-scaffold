@@ -91,6 +91,8 @@ export interface ProvenanceEvent {
   agent: string;
   details: EventDetails;
   feedback_card_id: string | null;
+  step_uncertainty: import("./uncertainty").StepUncertainty | null;
+  citation_index: number | null;
 }
 
 export interface AttributionRecord {
@@ -105,6 +107,7 @@ export interface AttributionRecord {
   conformal_set: ConformalSet;
   source_agreement: number;
   provenance_chain: ProvenanceEvent[];
+  uncertainty_summary: import("./uncertainty").UncertaintyAwareProvenance | null;
   needs_review: boolean;
   review_priority: number;
   created_at: string; // ISO 8601
