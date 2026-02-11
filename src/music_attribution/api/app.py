@@ -11,6 +11,7 @@ from fastapi import FastAPI
 
 from music_attribution.api.routes.attribution import router as attribution_router
 from music_attribution.api.routes.health import router as health_router
+from music_attribution.api.routes.permissions import router as permissions_router
 from music_attribution.db.engine import async_session_factory, create_async_engine_factory
 
 logger = logging.getLogger(__name__)
@@ -53,5 +54,6 @@ def create_app() -> FastAPI:
 
     app.include_router(health_router)
     app.include_router(attribution_router, prefix="/api/v1")
+    app.include_router(permissions_router, prefix="/api/v1")
 
     return app
