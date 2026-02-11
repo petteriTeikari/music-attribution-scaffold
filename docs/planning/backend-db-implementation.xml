@@ -1,0 +1,1061 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  EXECUTABLE ACTION PLAN — Backend Database for Mockup Data
+  ==========================================================
+  Generated: 2026-02-11
+  Branch: feat/backend-db-for-mockup-data
+  Repository: music-attribution-scaffold
+
+  PURPOSE: Production-grade PostgreSQL + pgvector backend that serves
+  the existing Imogen Heap mockup data from a real database, with
+  Graph RAG query capabilities and an ETL path that scales to
+  Discogs-size datasets (80M+ releases, 15M+ artists) without
+  re-engineering.
+
+  PRD DECISIONS SELECTED (recommended path):
+    - primary_database: postgresql_unified (0.45)
+    - graph_strategy: apache_age (0.40) + sql_joins_only (recursive CTEs for provenance)
+    - vector_strategy: pgvector (0.45) with HNSW + halfvec
+    - graph_rag_engine: lightrag (0.35) — PostgreSQL-native, study EdgeQuake for learning
+    - database_hosting: self_managed (local Docker) → neon (production)
+    - frontend_framework: next.js (already built)
+
+  ARCHITECTURE:
+    Single PostgreSQL 17 instance with extensions:
+    - pgvector (vector similarity search, HNSW indexes)
+    - Apache AGE (property graph, Cypher queries) — Tier 2
+    - tsvector (full-text search, GIN indexes)
+
+    Three storage layers in one database:
+    1. Relational: Normalized tables for entities, credits, attributions, permissions
+    2. Vector: halfvec(768) embeddings for semantic similarity
+    3. Graph: Recursive CTEs for provenance (Tier 1), AGE for complex traversal (Tier 2)
+
+    Hybrid search: RRF fusion of full-text + vector + graph in single SQL queries.
+
+  KEY CONSTRAINT: The existing frontend (Next.js 15, 176 tests) must continue
+  working. The API routes serve the same data shapes as the current mock data.
+  Zero re-engineering of frontend TypeScript types.
+
+  SCALING DESIGN DECISIONS:
+    - JSONB for flexible fields (identifiers, metadata, credits, provenance_chain)
+    - Composite indexes for common query patterns
+    - GIN indexes on JSONB and tsvector columns
+    - HNSW indexes on halfvec columns (added when >10K vectors)
+    - Table partitioning ready (HASH by entity_id) but not applied at mockup scale
+    - Connection pooling via PgBouncer (Docker service)
+    - Async SQLAlchemy throughout (AsyncSession, create_async_engine)
+
+  HOW TO USE THIS PLAN:
+    1. Tasks are organized into PHASES (sequential) containing tasks (parallel within phase)
+    2. Each task has: id, status, dependencies, TDD spec, acceptance criteria
+    3. Status values: NOT_STARTED | IN_PROGRESS | BLOCKED | DONE | DEFERRED
+    4. A task is DONE only when ALL acceptance criteria pass
+    5. Compatible with self-learning-iterative-coder skill (RED-GREEN-VERIFY-FIX cycle)
+    6. Tasks reference existing files where possible to minimize new file creation
+-->
+
+<executable-plan version="1.1" created="2026-02-11" last-updated="2026-02-11"
+    revision-note="v1.1: Added Task 0.0 (setup script + dev UX) and enhanced Task 0.1 with connection pool hardening (pool_pre_ping, pool_size, pool_recycle, statement_timeout) from uad-copilot stochastic delay lessons. No SQLite fallback — PostgreSQL+pgvector only, all free local services via Docker. TigerData as drop-in managed upgrade path. 5 phases, 20 tasks.">
+
+  <!-- ================================================================== -->
+  <!-- SECTION 1: TECHNOLOGY CHOICES                                       -->
+  <!-- ================================================================== -->
+
+  <technology-stack>
+    <description>
+      All new Python dependencies added via `uv add`. No pip, no conda.
+      Frontend unchanged — continues using existing mock data API shape.
+    </description>
+
+    <backend>
+      <tool name="SQLAlchemy 2.0" purpose="Async ORM (create_async_engine, AsyncSession)">
+        Already in pyproject.toml. Add async driver.
+      </tool>
+      <tool name="psycopg[binary]" purpose="PostgreSQL async driver (psycopg v3)">
+        Already in pyproject.toml. Supports async via psycopg.AsyncConnection.
+      </tool>
+      <tool name="Alembic" purpose="Database migrations">
+        Already configured (alembic.ini, alembic/env.py, 001_initial_schema.py).
+      </tool>
+      <tool name="pgvector (Python)" purpose="SQLAlchemy pgvector type support">
+        `uv add pgvector` — provides Vector type for SQLAlchemy mapped columns.
+      </tool>
+      <tool name="sentence-transformers" purpose="Generate embeddings for entity similarity">
+        Already in pyproject.toml (used by resolution pipeline).
+      </tool>
+      <tool name="httpx" purpose="Async HTTP client for frontend API integration tests">
+        Already in pyproject.toml (dev dependency).
+      </tool>
+    </backend>
+
+    <infrastructure>
+      <tool name="Docker Compose" purpose="Local PostgreSQL + pgvector + PgBouncer">
+        Extend existing docker-compose.dev.yml. Custom Dockerfile for AGE (Tier 2).
+      </tool>
+      <tool name="PgBouncer" purpose="Connection pooling (transaction mode)">
+        New Docker service. Required for async connection management at scale.
+      </tool>
+    </infrastructure>
+
+    <deferred>
+      <tool name="Apache AGE" purpose="Graph extension for Cypher queries">
+        Tier 2: Custom Docker image with AGE compiled. Not required for Phase 1-3.
+      </tool>
+      <tool name="LightRAG" purpose="Graph RAG engine">
+        Tier 3: After AGE is operational. Study EdgeQuake patterns for reference.
+      </tool>
+    </deferred>
+  </technology-stack>
+
+  <!-- ================================================================== -->
+  <!-- SECTION 2: DATABASE SCHEMA DESIGN                                   -->
+  <!-- Production-grade schema for mockup data that scales to Discogs      -->
+  <!-- ================================================================== -->
+
+  <schema-design>
+    <description>
+      The schema extends the existing 001_initial_schema.py migration with:
+      1. New tables: permissions, feedback_cards, edges, entity_embeddings
+      2. Full-text search vectors (tsvector) on entity tables
+      3. JSONB GIN indexes for efficient metadata queries
+      4. Unique constraints and foreign key relationships
+      5. Audit columns (created_at, updated_at) on all tables
+
+      All tables use the boundary object schemas from src/music_attribution/schemas/
+      as the source of truth. ORM models in src/music_attribution/db/models.py
+      are the single mapping layer.
+    </description>
+
+    <!--
+      Entity-Relationship Summary:
+
+      normalized_records  ──1:N──▶  resolved_entities (via source_records JSONB)
+      resolved_entities   ──1:1──▶  attribution_records (via work_entity_id FK)
+      attribution_records ──1:N──▶  feedback_cards (via attribution_id FK)
+      resolved_entities   ──1:N──▶  entity_embeddings (via entity_id FK)
+      resolved_entities   ──N:M──▶  edges (via from_entity_id, to_entity_id)
+      resolved_entities   ──1:N──▶  permission_bundles (via entity_id FK)
+    -->
+
+    <new-tables>
+      <table name="permission_bundles" maps-to="PermissionBundle (BO-5)">
+        permission_id UUID PK, entity_id UUID FK(resolved_entities), scope VARCHAR(50),
+        scope_entity_id UUID nullable, permissions JSONB, effective_from TIMESTAMPTZ,
+        effective_until TIMESTAMPTZ nullable, delegation_chain JSONB, default_permission VARCHAR(50),
+        created_by UUID, updated_at TIMESTAMPTZ, version INT
+      </table>
+
+      <table name="feedback_cards" maps-to="FeedbackCard (BO-4)">
+        feedback_id UUID PK, attribution_id UUID FK(attribution_records),
+        reviewer_id VARCHAR(255), reviewer_role VARCHAR(50), attribution_version INT,
+        corrections JSONB, overall_assessment FLOAT, center_bias_flag BOOLEAN,
+        free_text TEXT nullable, evidence_type VARCHAR(50), submitted_at TIMESTAMPTZ
+      </table>
+
+      <table name="edges" maps-to="Graph relationships (provenance + entity links)">
+        edge_id UUID PK, from_entity_id UUID FK(resolved_entities),
+        to_entity_id UUID FK(resolved_entities), relationship_type VARCHAR(100),
+        confidence FLOAT, metadata JSONB, created_at TIMESTAMPTZ
+        UNIQUE(from_entity_id, to_entity_id, relationship_type)
+      </table>
+
+      <table name="entity_embeddings" maps-to="Vector embeddings for similarity search">
+        embedding_id UUID PK, entity_id UUID FK(resolved_entities),
+        model_name VARCHAR(255), model_version VARCHAR(100),
+        embedding halfvec(768), created_at TIMESTAMPTZ
+        UNIQUE(entity_id, model_name)
+      </table>
+
+      <table name="audit_log" maps-to="Permission check audit trail">
+        audit_id UUID PK, permission_id UUID FK(permission_bundles),
+        requester_id VARCHAR(255), requester_type VARCHAR(100),
+        permission_type VARCHAR(50), result VARCHAR(50),
+        request_context JSONB, checked_at TIMESTAMPTZ
+      </table>
+    </new-tables>
+
+    <new-indexes>
+      <!-- Full-text search -->
+      <index table="normalized_records" type="GIN" column="to_tsvector('english', canonical_name)" name="ix_normalized_records_fts"/>
+      <index table="resolved_entities" type="GIN" column="to_tsvector('english', canonical_name)" name="ix_resolved_entities_fts"/>
+
+      <!-- JSONB efficient queries -->
+      <index table="normalized_records" type="GIN" column="identifiers" name="ix_normalized_records_identifiers_gin"/>
+      <index table="normalized_records" type="GIN" column="metadata" name="ix_normalized_records_metadata_gin"/>
+      <index table="resolved_entities" type="GIN" column="identifiers" name="ix_resolved_entities_identifiers_gin"/>
+
+      <!-- Graph edges -->
+      <index table="edges" type="BTREE" column="(from_entity_id, relationship_type)" name="ix_edges_from_type"/>
+      <index table="edges" type="BTREE" column="(to_entity_id, relationship_type)" name="ix_edges_to_type"/>
+
+      <!-- Vector similarity (deferred until >10K vectors) -->
+      <!-- <index table="entity_embeddings" type="HNSW" column="embedding halfvec_cosine_ops" name="ix_entity_embeddings_hnsw"/> -->
+
+      <!-- Permissions -->
+      <index table="permission_bundles" type="BTREE" column="entity_id" name="ix_permission_bundles_entity_id"/>
+      <index table="audit_log" type="BTREE" column="(permission_id, checked_at)" name="ix_audit_log_perm_time"/>
+
+      <!-- Feedback -->
+      <index table="feedback_cards" type="BTREE" column="attribution_id" name="ix_feedback_cards_attribution_id"/>
+
+      <!-- Attribution queries -->
+      <index table="attribution_records" type="BTREE" column="needs_review" name="ix_attribution_records_needs_review"/>
+      <index table="attribution_records" type="BTREE" column="confidence_score" name="ix_attribution_records_confidence"/>
+    </new-indexes>
+  </schema-design>
+
+  <!-- ================================================================== -->
+  <!-- PHASE 0: Infrastructure Setup                                       -->
+  <!-- Docker, async engine, migration framework                           -->
+  <!-- ================================================================== -->
+
+  <phase id="0" name="Infrastructure Setup" status="NOT_STARTED">
+    <description>
+      Set up the async database infrastructure. Extend Docker Compose,
+      create async engine factory, add PgBouncer for connection pooling.
+      Add one-command setup script for excellent developer UX.
+      This phase has zero business logic — pure infrastructure.
+    </description>
+
+    <task id="0.0" name="Setup Script + Developer UX" status="NOT_STARTED">
+      <description>
+        Create a one-command setup script (scripts/setup-dev.sh) that installs
+        all free local dependencies and starts all services. This is critical
+        for the academic companion paper — someone cloning from the SSRN preprint
+        should be able to run `make setup` and have everything working.
+
+        Pattern: Modular scripts (from dpp-agents) with single entry point.
+        All services are free and local (Docker, PostgreSQL, pgvector).
+        No external service registration required.
+      </description>
+      <dependencies>0.2</dependencies>
+      <files>
+        <create>scripts/setup-dev.sh</create>
+        <modify>Makefile</modify>
+      </files>
+      <tdd-spec>
+        <red>
+          <!-- Infrastructure task — tested via running the script -->
+          1. Script is executable and runs without error on fresh clone
+          2. `make setup` starts Docker, runs migrations, seeds data
+          3. `make dev` starts both backend API and frontend dev server
+          4. Health check passes after setup: curl localhost:8000/health
+        </red>
+        <green>
+          - Create scripts/setup-dev.sh with: Docker check, docker compose up,
+            alembic upgrade head, seed data, verification
+          - Add Makefile targets: setup, dev (backend+frontend), db-up, db-down,
+            db-seed, db-reset, db-status
+          - Colored output with semantic icons (reuse dpp-agents common.sh pattern)
+          - Pre-flight checks: Docker installed? Docker running? Ports available?
+        </green>
+      </tdd-spec>
+      <acceptance-criteria>
+        <criterion>`make setup` works on fresh clone with only Docker installed</criterion>
+        <criterion>No external service registration required</criterion>
+        <criterion>Colored output with clear success/failure messages</criterion>
+        <criterion>Makefile targets for all database operations</criterion>
+      </acceptance-criteria>
+    </task>
+
+    <task id="0.1" name="Async SQLAlchemy Engine + Session Factory" status="NOT_STARTED">
+      <description>
+        Extend src/music_attribution/db/engine.py with async engine factory
+        and session management. The sync engine stays for Alembic migrations.
+
+        PERFORMANCE HARDENING (lessons from uad-copilot stochastic delays):
+        - pool_pre_ping=True — detect stale/dead connections before use
+        - pool_size=5, max_overflow=10 — prevent connection exhaustion
+        - pool_recycle=3600 — recycle connections hourly (prevent stale)
+        - statement_timeout=30s — query-level timeout via connect_args
+        - pool event listeners for logging slow checkouts
+
+        These prevent the class of bugs where queries hang forever or
+        connection pools exhaust under load — issues that only surface
+        in cloud deployments, not local development.
+      </description>
+      <files>
+        <modify>src/music_attribution/db/engine.py</modify>
+        <modify>tests/unit/test_db_engine.py</modify>
+      </files>
+      <pyproject-deps>
+        <!-- psycopg[binary] already present; ensure asyncpg or psycopg async mode -->
+      </pyproject-deps>
+      <tdd-spec>
+        <red>
+          1. test_create_async_engine_returns_async_engine — verify type is AsyncEngine
+          2. test_async_session_factory_creates_session — verify yields AsyncSession
+          3. test_async_session_context_manager — verify proper open/close lifecycle
+          4. test_sync_engine_still_works — regression for existing sync engine
+          5. test_pool_pre_ping_enabled — verify pool_pre_ping=True in engine config
+          6. test_pool_size_configured — verify pool_size=5, max_overflow=10
+          7. test_pool_recycle_configured — verify pool_recycle=3600
+        </red>
+        <green>
+          - Add `create_async_engine_factory(database_url: str) -> AsyncEngine`
+          - Add `async_session_factory(engine: AsyncEngine) -> async_sessionmaker[AsyncSession]`
+          - Add `get_async_session(factory) -> AsyncGenerator[AsyncSession, None]` context manager
+          - Use `postgresql+psycopg://` URL scheme (psycopg v3 native async)
+          - Configure pool: pool_pre_ping=True, pool_size=5, max_overflow=10, pool_recycle=3600
+          - Add connect_args with statement_timeout=30000 (30s in ms)
+        </green>
+      </tdd-spec>
+      <acceptance-criteria>
+        <criterion>create_async_engine_factory returns AsyncEngine</criterion>
+        <criterion>Sessions commit and rollback correctly</criterion>
+        <criterion>Sync engine continues working for Alembic</criterion>
+        <criterion>Pool hardening: pre_ping, size, overflow, recycle, statement_timeout</criterion>
+        <criterion>mypy passes with no type errors</criterion>
+      </acceptance-criteria>
+    </task>
+
+    <task id="0.2" name="Docker Compose: PgBouncer + Health Checks" status="NOT_STARTED">
+      <description>
+        Add PgBouncer to docker-compose.dev.yml for connection pooling.
+        Update PostgreSQL health check. Add shared_preload_libraries config.
+      </description>
+      <dependencies>None</dependencies>
+      <files>
+        <modify>docker-compose.dev.yml</modify>
+      </files>
+      <tdd-spec>
+        <red>
+          <!-- Infrastructure task — tested via docker-compose up + connectivity check -->
+          1. test_docker_postgres_healthy — `docker compose exec postgres pg_isready` returns 0
+          2. test_docker_pgbouncer_healthy — connect to port 6432 succeeds
+          3. test_pgvector_extension_loaded — `SELECT extname FROM pg_extension` includes 'vector'
+        </red>
+        <green>
+          - Add PgBouncer service (bitnami/pgbouncer, transaction mode, port 6432)
+          - Add shm_size: '256mb' to postgres service
+          - Update init-extensions.sql to verify vector extension
+        </green>
+      </tdd-spec>
+      <acceptance-criteria>
+        <criterion>docker compose -f docker-compose.dev.yml up starts all services</criterion>
+        <criterion>PostgreSQL and PgBouncer health checks pass</criterion>
+        <criterion>pgvector extension loaded</criterion>
+      </acceptance-criteria>
+    </task>
+  </phase>
+
+  <!-- ================================================================== -->
+  <!-- PHASE 1: Core Persistence Layer                                     -->
+  <!-- ORM models, repositories, migrations for all boundary objects       -->
+  <!-- ================================================================== -->
+
+  <phase id="1" name="Core Persistence Layer" status="NOT_STARTED">
+    <description>
+      Implement async repository classes for all 5 boundary objects.
+      Create migration 002 for new tables. Wire up to FastAPI app.
+      After this phase, all data flows through PostgreSQL.
+    </description>
+    <depends-on>Phase 0</depends-on>
+
+    <task id="1.1" name="ORM Models: Permissions, Feedback, Edges, Embeddings, Audit" status="NOT_STARTED">
+      <description>
+        Add new SQLAlchemy models to db/models.py for the 5 new tables.
+        Add tsvector computed columns to existing entity models.
+      </description>
+      <dependencies>0.1</dependencies>
+      <files>
+        <modify>src/music_attribution/db/models.py</modify>
+        <create>tests/unit/test_db_models.py</create>
+      </files>
+      <tdd-spec>
+        <red>
+          1. test_permission_bundle_model_columns — all BO-5 fields mapped
+          2. test_feedback_card_model_columns — all BO-4 fields mapped
+          3. test_edge_model_columns — from/to entity_id, relationship_type, confidence
+          4. test_entity_embedding_model_columns — entity_id, model_name, embedding (Vector type)
+          5. test_audit_log_model_columns — requester, result, context
+          6. test_all_models_share_base — all models inherit from Base
+        </red>
+        <green>
+          - Add PermissionBundleModel, FeedbackCardModel, EdgeModel,
+            EntityEmbeddingModel, AuditLogModel to models.py
+          - Import Vector from pgvector.sqlalchemy for embedding column
+          - Use halfvec(768) via pgvector's HalfVector type
+        </green>
+      </tdd-spec>
+      <acceptance-criteria>
+        <criterion>All 8 ORM models (3 existing + 5 new) importable</criterion>
+        <criterion>Column types match Pydantic schema field types</criterion>
+        <criterion>pgvector HalfVector(768) type used for embeddings</criterion>
+        <criterion>mypy passes</criterion>
+      </acceptance-criteria>
+    </task>
+
+    <task id="1.2" name="Alembic Migration 002: New Tables + Indexes" status="NOT_STARTED">
+      <description>
+        Create migration that adds all new tables, full-text search indexes,
+        JSONB GIN indexes, and composite B-tree indexes from the schema design.
+      </description>
+      <dependencies>1.1</dependencies>
+      <files>
+        <create>alembic/versions/002_permissions_feedback_graph_vectors.py</create>
+        <modify>scripts/init-extensions.sql</modify>
+      </files>
+      <tdd-spec>
+        <red>
+          1. test_migration_002_upgrade — migration runs without error on clean DB
+          2. test_migration_002_creates_tables — all 5 new tables exist after upgrade
+          3. test_migration_002_creates_indexes — all declared indexes exist
+          4. test_migration_002_downgrade — all 5 tables removed on downgrade
+          5. test_migration_002_idempotent_extensions — pgvector extension survives re-run
+        </red>
+        <green>
+          - Create 002_permissions_feedback_graph_vectors.py with all tables/indexes
+          - Update init-extensions.sql: uncomment uuid-ossp, add pg_trgm for fuzzy search
+          - Add tsvector generated columns to normalized_records and resolved_entities
+        </green>
+      </tdd-spec>
+      <acceptance-criteria>
+        <criterion>alembic upgrade head succeeds on fresh database</criterion>
+        <criterion>alembic downgrade -1 removes new tables cleanly</criterion>
+        <criterion>All indexes from schema-design section are created</criterion>
+        <criterion>pgvector halfvec(768) column on entity_embeddings</criterion>
+      </acceptance-criteria>
+    </task>
+
+    <task id="1.3" name="Attribution Repository (Async PostgreSQL)" status="NOT_STARTED">
+      <description>
+        Replace the in-memory AttributionRecordRepository with an async
+        PostgreSQL implementation. This is the highest-priority persistence
+        gap — the frontend reads attribution data via the API.
+      </description>
+      <dependencies>1.1, 1.2</dependencies>
+      <files>
+        <modify>src/music_attribution/attribution/persistence.py</modify>
+        <create>tests/unit/test_attribution_persistence_pg.py</create>
+      </files>
+      <tdd-spec>
+        <red>
+          1. test_store_and_retrieve_by_id — round-trip store → find_by_id
+          2. test_store_and_retrieve_by_work_entity_id — lookup by work FK
+          3. test_update_increments_version — version 1→2 on update
+          4. test_update_appends_provenance_event — provenance_chain grows
+          5. test_find_needs_review — returns only needs_review=True records
+          6. test_find_needs_review_respects_limit — pagination works
+          7. test_list_with_pagination — offset/limit returns correct slice
+          8. test_store_duplicate_work_entity_id — upsert semantics or error?
+        </red>
+        <green>
+          - Implement AsyncAttributionRepository with AsyncSession
+          - Methods: store, update, find_by_id, find_by_work_entity_id,
+            find_needs_review, list_all (paginated)
+          - Keep the in-memory implementation as InMemoryAttributionRepository
+            (renamed) for tests that don't need PostgreSQL
+        </green>
+      </tdd-spec>
+      <acceptance-criteria>
+        <criterion>All CRUD operations work against real PostgreSQL</criterion>
+        <criterion>Version auto-increment on update</criterion>
+        <criterion>Provenance chain preserved as JSONB array</criterion>
+        <criterion>Pagination with offset/limit</criterion>
+        <criterion>In-memory fallback still works for unit tests</criterion>
+      </acceptance-criteria>
+    </task>
+
+    <task id="1.4" name="Permission Repository (Async PostgreSQL)" status="NOT_STARTED">
+      <description>
+        Implement async repository for PermissionBundle (BO-5) with
+        permission check query support.
+      </description>
+      <dependencies>1.1, 1.2</dependencies>
+      <files>
+        <create>src/music_attribution/permissions/persistence.py</create>
+        <create>tests/unit/test_permissions_persistence.py</create>
+      </files>
+      <tdd-spec>
+        <red>
+          1. test_store_and_retrieve_permission_bundle — round-trip
+          2. test_find_by_entity_id — lookup permissions for an artist
+          3. test_check_permission — given entity_id + permission_type, return value
+          4. test_check_permission_with_scope — work-level override of catalog default
+          5. test_audit_log_entry_created — permission check creates audit trail
+          6. test_delegation_chain_stored — JSONB delegation chain preserved
+        </red>
+        <green>
+          - Implement AsyncPermissionRepository
+          - Implement check_permission(entity_id, permission_type, scope) → PermissionValueEnum
+          - Implement record_audit(check_result) → UUID
+        </green>
+      </tdd-spec>
+      <acceptance-criteria>
+        <criterion>Permission lookup by entity + type works</criterion>
+        <criterion>Scope-specific overrides take precedence over catalog defaults</criterion>
+        <criterion>Audit log records every permission check</criterion>
+      </acceptance-criteria>
+    </task>
+
+    <task id="1.5" name="Feedback Repository (Async PostgreSQL)" status="NOT_STARTED">
+      <description>
+        Implement async repository for FeedbackCard (BO-4).
+      </description>
+      <dependencies>1.1, 1.2</dependencies>
+      <files>
+        <create>src/music_attribution/feedback/persistence.py</create>
+        <create>tests/unit/test_feedback_persistence.py</create>
+      </files>
+      <tdd-spec>
+        <red>
+          1. test_store_and_retrieve_feedback — round-trip
+          2. test_find_by_attribution_id — all feedback for a work
+          3. test_center_bias_flag_set — auto-detect center bias
+          4. test_corrections_stored_as_jsonb — corrections array preserved
+        </red>
+        <green>
+          - Implement AsyncFeedbackRepository
+          - Methods: store, find_by_id, find_by_attribution_id
+        </green>
+      </tdd-spec>
+      <acceptance-criteria>
+        <criterion>CRUD operations work</criterion>
+        <criterion>Center bias flag auto-set on storage</criterion>
+      </acceptance-criteria>
+    </task>
+
+    <task id="1.6" name="Edge Repository (Graph Edges in PostgreSQL)" status="NOT_STARTED">
+      <description>
+        Implement async repository for graph edges. This replaces the
+        in-memory GraphStore adjacency list with PostgreSQL-backed edges.
+        Uses recursive CTEs for traversal (no AGE dependency yet).
+      </description>
+      <dependencies>1.1, 1.2</dependencies>
+      <files>
+        <create>src/music_attribution/resolution/edge_repository.py</create>
+        <create>tests/unit/test_edge_repository.py</create>
+      </files>
+      <tdd-spec>
+        <red>
+          1. test_add_edge — creates edge between two entities
+          2. test_get_neighbors_depth_1 — returns direct neighbors
+          3. test_get_neighbors_depth_2 — returns 2-hop neighbors
+          4. test_find_related_by_type — filter edges by relationship_type
+          5. test_shortest_path — BFS via recursive CTE finds shortest path
+          6. test_cycle_prevention — recursive CTE doesn't infinite loop
+          7. test_provenance_lineage — trace provenance chain via edges
+        </red>
+        <green>
+          - Implement AsyncEdgeRepository
+          - Methods: add_edge, get_neighbors(entity_id, depth, rel_type),
+            shortest_path(from_id, to_id), provenance_lineage(entity_id)
+          - Use recursive CTEs with CYCLE detection (PG14+)
+          - Implement GraphStore interface for backward compatibility
+        </green>
+      </tdd-spec>
+      <acceptance-criteria>
+        <criterion>Graph traversal via recursive CTEs works</criterion>
+        <criterion>Cycle detection prevents infinite recursion</criterion>
+        <criterion>Depth-limited traversal respects max_depth parameter</criterion>
+        <criterion>Backward compatible with GraphStore interface</criterion>
+      </acceptance-criteria>
+    </task>
+  </phase>
+
+  <!-- ================================================================== -->
+  <!-- PHASE 2: Seed Data + API Integration                                -->
+  <!-- Load Imogen Heap mock data into PostgreSQL, wire API routes         -->
+  <!-- ================================================================== -->
+
+  <phase id="2" name="Seed Data and API Integration" status="NOT_STARTED">
+    <description>
+      Create the seed data loader that converts the frontend's TypeScript
+      mock data into Python boundary objects and stores them in PostgreSQL.
+      Wire FastAPI routes to query from the database instead of in-memory
+      app.state. After this phase, the frontend works against real PostgreSQL.
+    </description>
+    <depends-on>Phase 1</depends-on>
+
+    <task id="2.1" name="Seed Data Loader: Imogen Heap → PostgreSQL" status="NOT_STARTED">
+      <description>
+        Create a Python script/module that converts the 8 Imogen Heap
+        AttributionRecords + PermissionBundle from mock-works.ts / mock-permissions.ts
+        into Pydantic objects and stores them via the new repositories.
+        This is the ETL module that will later be extended for real data.
+      </description>
+      <dependencies>1.3, 1.4</dependencies>
+      <files>
+        <create>src/music_attribution/seed/imogen_heap.py</create>
+        <create>src/music_attribution/seed/__init__.py</create>
+        <create>tests/unit/test_seed_imogen_heap.py</create>
+      </files>
+      <tdd-spec>
+        <red>
+          1. test_seed_creates_8_attribution_records — count matches mock data
+          2. test_seed_creates_resolved_entities — entities for all credited artists
+          3. test_seed_creates_normalized_records — source records for each entity
+          4. test_seed_creates_permission_bundle — Imogen Heap permissions loaded
+          5. test_seed_creates_edges — entity relationships as graph edges
+          6. test_seed_confidence_scores_match — verify exact confidence values from mock
+          7. test_seed_provenance_chains_preserved — full event chains stored
+          8. test_seed_is_idempotent — running twice doesn't duplicate records
+        </red>
+        <green>
+          - Port TypeScript mock data to Python Pydantic objects
+          - Implement async seed_imogen_heap(session: AsyncSession) function
+          - Create resolved entities for: Imogen Heap, all credited collaborators
+          - Create normalized records from mock source references
+          - Create edges for entity relationships
+          - Upsert semantics for idempotency
+        </green>
+      </tdd-spec>
+      <acceptance-criteria>
+        <criterion>8 attribution records match frontend mock data exactly</criterion>
+        <criterion>All entity relationships stored as edges</criterion>
+        <criterion>Permission bundle matches mock-permissions.ts</criterion>
+        <criterion>Seed is idempotent (safe to re-run)</criterion>
+        <criterion>Provenance chains preserved with all event details</criterion>
+      </acceptance-criteria>
+    </task>
+
+    <task id="2.2" name="FastAPI App: Database Session Dependency" status="NOT_STARTED">
+      <description>
+        Replace app.state.attributions in-memory dict with database
+        session dependency injection. Update FastAPI lifespan to
+        initialize async engine and run migrations.
+      </description>
+      <dependencies>0.1, 1.3</dependencies>
+      <files>
+        <modify>src/music_attribution/api/app.py</modify>
+        <create>src/music_attribution/api/dependencies.py</create>
+        <create>tests/unit/test_api_dependencies.py</create>
+      </files>
+      <tdd-spec>
+        <red>
+          1. test_get_db_session_yields_session — dependency yields AsyncSession
+          2. test_db_session_closes_after_request — session properly cleaned up
+          3. test_app_lifespan_creates_engine — engine created on startup
+          4. test_app_lifespan_disposes_engine — engine disposed on shutdown
+        </red>
+        <green>
+          - Create get_db_session() FastAPI dependency (async generator)
+          - Update app lifespan: create engine on startup, dispose on shutdown
+          - Store engine in app.state (not individual records)
+          - Add DATABASE_URL to Settings/env config
+        </green>
+      </tdd-spec>
+      <acceptance-criteria>
+        <criterion>FastAPI dependency injection provides AsyncSession per request</criterion>
+        <criterion>Session cleaned up after each request (no leaks)</criterion>
+        <criterion>DATABASE_URL configurable via environment variable</criterion>
+      </acceptance-criteria>
+    </task>
+
+    <task id="2.3" name="API Routes: Database-Backed Attribution Queries" status="NOT_STARTED">
+      <description>
+        Update the attribution API routes to query PostgreSQL instead of
+        in-memory app.state. Add new endpoints for the frontend's needs:
+        search, sort, filter by assurance level.
+      </description>
+      <dependencies>2.1, 2.2</dependencies>
+      <files>
+        <modify>src/music_attribution/api/routes/attribution.py</modify>
+        <create>tests/unit/test_api_attribution_routes_pg.py</create>
+      </files>
+      <tdd-spec>
+        <red>
+          1. test_get_work_by_id_returns_attribution — existing endpoint still works
+          2. test_get_work_by_id_404_not_found — missing work returns 404
+          3. test_list_attributions_paginated — offset/limit pagination
+          4. test_list_attributions_sorted_by_confidence — default sort order
+          5. test_list_attributions_sorted_by_title — alphabetical sort
+          6. test_search_works_by_name — full-text search on canonical_name
+          7. test_filter_by_assurance_level — ?assurance_level=LEVEL_3
+          8. test_filter_needs_review — ?needs_review=true
+          9. test_response_includes_display_fields — work_title, artist_name populated
+        </red>
+        <green>
+          - Update get_attribution_by_work_id to use AsyncSession
+          - Update list_attributions with sort, search, filter params
+          - Add display field resolution: join with resolved_entities for work_title, artist_name
+          - Response shape matches existing frontend TypeScript types exactly
+        </green>
+      </tdd-spec>
+      <acceptance-criteria>
+        <criterion>All existing frontend API calls continue working</criterion>
+        <criterion>Pagination with offset/limit</criterion>
+        <criterion>Full-text search on work titles and artist names</criterion>
+        <criterion>Sort by confidence, title, assurance level</criterion>
+        <criterion>Filter by assurance level and needs_review flag</criterion>
+        <criterion>Display fields (work_title, artist_name) populated from DB</criterion>
+      </acceptance-criteria>
+    </task>
+
+    <task id="2.4" name="API Routes: Permission Check Endpoint" status="NOT_STARTED">
+      <description>
+        Implement the MCP-compatible permission check endpoint that the
+        frontend's MCP Query Demo tab calls.
+      </description>
+      <dependencies>1.4, 2.2</dependencies>
+      <files>
+        <create>src/music_attribution/api/routes/permissions.py</create>
+        <create>tests/unit/test_api_permission_routes.py</create>
+      </files>
+      <tdd-spec>
+        <red>
+          1. test_check_permission_allowed — returns ALLOW for streaming
+          2. test_check_permission_denied — returns DENY for voice cloning
+          3. test_check_permission_ask — returns ASK for sync license
+          4. test_check_permission_with_conditions — returns conditions for AI training
+          5. test_check_permission_creates_audit_entry — audit log written
+          6. test_list_permissions_for_entity — returns full permission bundle
+        </red>
+        <green>
+          - POST /permissions/check — MCP-compatible permission query
+          - GET /permissions/{entity_id} — full permission bundle
+          - GET /permissions/{entity_id}/audit — audit log with pagination
+        </green>
+      </tdd-spec>
+      <acceptance-criteria>
+        <criterion>Permission check returns correct value for all Imogen Heap permissions</criterion>
+        <criterion>Audit log records every check</criterion>
+        <criterion>Response shape matches frontend PermissionBundle type</criterion>
+      </acceptance-criteria>
+    </task>
+
+    <task id="2.5" name="CLI: Database Management Commands" status="NOT_STARTED">
+      <description>
+        Add CLI commands for database management: seed, reset, migrate.
+        These are developer-facing commands for local development.
+      </description>
+      <dependencies>2.1</dependencies>
+      <files>
+        <create>src/music_attribution/cli/db.py</create>
+        <create>tests/unit/test_cli_db.py</create>
+      </files>
+      <tdd-spec>
+        <red>
+          1. test_cli_seed_creates_data — `python -m music_attribution.cli.db seed` populates DB
+          2. test_cli_reset_clears_data — `reset` truncates all tables
+          3. test_cli_status_shows_counts — `status` shows record counts per table
+        </red>
+        <green>
+          - Implement click/typer CLI with commands: seed, reset, status
+          - seed: runs seed_imogen_heap()
+          - reset: TRUNCATE all tables CASCADE
+          - status: SELECT count(*) from each table
+          - Add to Makefile: `make db-seed`, `make db-reset`, `make db-status`
+        </green>
+      </tdd-spec>
+      <acceptance-criteria>
+        <criterion>CLI commands work against running Docker PostgreSQL</criterion>
+        <criterion>Makefile targets functional</criterion>
+      </acceptance-criteria>
+    </task>
+  </phase>
+
+  <!-- ================================================================== -->
+  <!-- PHASE 3: Vector Search + Hybrid Queries                             -->
+  <!-- pgvector embeddings, full-text search, RRF fusion                   -->
+  <!-- ================================================================== -->
+
+  <phase id="3" name="Vector Search and Hybrid Queries" status="NOT_STARTED">
+    <description>
+      Add embedding generation and hybrid search (full-text + vector + graph).
+      This enables the "intelligent search" that scales beyond simple text matching.
+    </description>
+    <depends-on>Phase 2</depends-on>
+
+    <task id="3.1" name="Embedding Generation Pipeline" status="NOT_STARTED">
+      <description>
+        Generate and store embeddings for all resolved entities.
+        Uses sentence-transformers with a pinned model for reproducibility.
+      </description>
+      <dependencies>1.1, 2.1</dependencies>
+      <files>
+        <create>src/music_attribution/resolution/embedding_service.py</create>
+        <create>tests/unit/test_embedding_service.py</create>
+      </files>
+      <tdd-spec>
+        <red>
+          1. test_generate_embedding_returns_vector — correct dimensionality (768)
+          2. test_embedding_text_format — entity name + type + metadata concatenated
+          3. test_store_embedding_in_db — round-trip to entity_embeddings table
+          4. test_batch_embed_entities — embed all entities in one call
+          5. test_model_name_and_version_stored — reproducibility metadata saved
+          6. test_skip_existing_embeddings — idempotent (don't re-embed)
+        </red>
+        <green>
+          - Implement EmbeddingService with pinned model (all-MiniLM-L6-v2)
+          - generate_embedding(text: str) → list[float]
+          - embed_entity(entity: ResolvedEntity) → halfvec(768)
+          - batch_embed_all(session: AsyncSession) → int (count embedded)
+        </green>
+      </tdd-spec>
+      <acceptance-criteria>
+        <criterion>768-dimensional halfvec embeddings stored for all entities</criterion>
+        <criterion>Model name + version recorded for reproducibility</criterion>
+        <criterion>Batch operation is idempotent</criterion>
+      </acceptance-criteria>
+    </task>
+
+    <task id="3.2" name="Full-Text Search on Entities" status="NOT_STARTED">
+      <description>
+        Implement PostgreSQL tsvector-based full-text search for the
+        frontend's search bar. Searches across canonical_name,
+        alternative_names, and metadata fields.
+      </description>
+      <dependencies>1.2, 2.1</dependencies>
+      <files>
+        <create>src/music_attribution/search/text_search.py</create>
+        <create>tests/unit/test_text_search.py</create>
+      </files>
+      <tdd-spec>
+        <red>
+          1. test_search_by_exact_name — "Hide and Seek" returns correct work
+          2. test_search_by_partial_name — "Hide" returns "Hide and Seek"
+          3. test_search_by_artist — "Imogen" returns all 8 works
+          4. test_search_ranking — more relevant results ranked higher
+          5. test_search_no_results — "nonexistent" returns empty list
+          6. test_search_with_pagination — offset/limit respected
+        </red>
+        <green>
+          - Implement TextSearchService
+          - search(query: str, limit: int, offset: int) → list[SearchResult]
+          - Uses plainto_tsquery + ts_rank_cd for ranking
+          - Searches both resolved_entities and attribution_records
+        </green>
+      </tdd-spec>
+      <acceptance-criteria>
+        <criterion>Frontend search bar queries return correct results</criterion>
+        <criterion>Ranking by relevance (ts_rank_cd)</criterion>
+        <criterion>Sub-50ms query time for mockup dataset</criterion>
+      </acceptance-criteria>
+    </task>
+
+    <task id="3.3" name="Vector Similarity Search" status="NOT_STARTED">
+      <description>
+        Implement pgvector cosine similarity search for "find similar works"
+        and entity deduplication candidates.
+      </description>
+      <dependencies>3.1</dependencies>
+      <files>
+        <create>src/music_attribution/search/vector_search.py</create>
+        <create>tests/unit/test_vector_search.py</create>
+      </files>
+      <tdd-spec>
+        <red>
+          1. test_find_similar_entities — query entity returns neighbors by cosine similarity
+          2. test_similarity_score_range — scores between 0 and 1
+          3. test_find_similar_excludes_self — queried entity not in results
+          4. test_find_similar_with_threshold — filter by minimum similarity
+          5. test_find_similar_with_type_filter — restrict to same entity_type
+        </red>
+        <green>
+          - Implement VectorSearchService
+          - find_similar(entity_id: UUID, limit: int, threshold: float, entity_type: str | None) → list[SimilarityResult]
+          - Uses `embedding <=> query_embedding` operator (cosine distance)
+          - Returns entity + similarity score
+        </green>
+      </tdd-spec>
+      <acceptance-criteria>
+        <criterion>Cosine similarity search returns ranked results</criterion>
+        <criterion>Threshold filtering works</criterion>
+        <criterion>Entity type filtering works</criterion>
+      </acceptance-criteria>
+    </task>
+
+    <task id="3.4" name="Hybrid Search with RRF Fusion" status="NOT_STARTED">
+      <description>
+        Combine full-text search, vector similarity, and graph neighbors
+        using Reciprocal Rank Fusion (RRF) in a single SQL query.
+        This is the production search endpoint.
+      </description>
+      <dependencies>3.2, 3.3, 1.6</dependencies>
+      <files>
+        <create>src/music_attribution/search/hybrid_search.py</create>
+        <create>tests/unit/test_hybrid_search.py</create>
+        <modify>src/music_attribution/api/routes/attribution.py</modify>
+      </files>
+      <tdd-spec>
+        <red>
+          1. test_hybrid_search_combines_text_and_vector — results from both modalities
+          2. test_hybrid_search_rrf_scoring — RRF scores computed correctly
+          3. test_hybrid_search_with_graph_context — graph neighbors boost related entities
+          4. test_hybrid_search_text_only_fallback — works without embeddings
+          5. test_hybrid_search_api_endpoint — /attributions/search returns hybrid results
+        </red>
+        <green>
+          - Implement HybridSearchService
+          - search(query: str, limit: int) → list[HybridSearchResult]
+          - RRF formula: score = Σ(1 / (k + rank_i)) across modalities, k=60
+          - Expose as GET /attributions/search?q={query}
+        </green>
+      </tdd-spec>
+      <acceptance-criteria>
+        <criterion>Hybrid search combines all three modalities</criterion>
+        <criterion>Degrades gracefully when embeddings not available</criterion>
+        <criterion>API endpoint returns ranked results with scores</criterion>
+      </acceptance-criteria>
+    </task>
+  </phase>
+
+  <!-- ================================================================== -->
+  <!-- PHASE 4: Frontend Integration + E2E Tests                           -->
+  <!-- Wire frontend to real API, verify full stack                        -->
+  <!-- ================================================================== -->
+
+  <phase id="4" name="Frontend Integration" status="NOT_STARTED">
+    <description>
+      Update the frontend to fetch data from the real API instead of
+      importing mock data directly. Add E2E integration tests that
+      verify the full stack: Frontend → API → PostgreSQL.
+    </description>
+    <depends-on>Phase 2</depends-on>
+
+    <task id="4.1" name="Frontend API Client: Real Backend" status="NOT_STARTED">
+      <description>
+        Update the frontend mock-client.ts to optionally call the real
+        FastAPI backend. In development, when API is available, use real
+        data. Fall back to mock data when API is unavailable.
+      </description>
+      <dependencies>2.3, 2.4</dependencies>
+      <files>
+        <modify>frontend/src/lib/api/mock-client.ts</modify>
+        <create>frontend/src/lib/api/api-client.ts</create>
+        <create>frontend/src/__tests__/api-client.test.ts</create>
+      </files>
+      <tdd-spec>
+        <red>
+          1. test_api_client_fetches_works — calls /attributions/ endpoint
+          2. test_api_client_fetches_work_by_id — calls /attributions/work/{id}
+          3. test_api_client_searches — calls /attributions/search?q=
+          4. test_api_client_checks_permission — calls /permissions/check
+          5. test_fallback_to_mock — returns mock data when API unavailable
+        </red>
+        <green>
+          - Create ApiClient class with fetch-based HTTP calls
+          - Environment variable NEXT_PUBLIC_API_URL for backend URL
+          - Graceful fallback to existing mock data on connection error
+        </green>
+      </tdd-spec>
+      <acceptance-criteria>
+        <criterion>Frontend renders correctly with real API data</criterion>
+        <criterion>Falls back to mock data when backend unavailable</criterion>
+        <criterion>All existing 176 frontend tests still pass</criterion>
+      </acceptance-criteria>
+    </task>
+
+    <task id="4.2" name="E2E Integration Tests: Full Stack" status="NOT_STARTED">
+      <description>
+        Integration tests that spin up PostgreSQL (via Docker), seed data,
+        start FastAPI, and verify the API returns correct data.
+      </description>
+      <dependencies>2.3, 2.4</dependencies>
+      <files>
+        <create>tests/integration/test_full_stack.py</create>
+        <create>tests/integration/conftest.py</create>
+      </files>
+      <tdd-spec>
+        <red>
+          1. test_health_endpoint — /health returns 200
+          2. test_list_works_returns_8 — /attributions/ returns 8 Imogen Heap works
+          3. test_get_work_hide_and_seek — confidence 0.95, assurance LEVEL_3
+          4. test_search_works — /attributions/search?q=Hide returns Hide and Seek
+          5. test_permission_check_streaming — ALLOW for Imogen Heap streaming
+          6. test_permission_check_voice_cloning — DENY for voice cloning
+          7. test_sort_by_confidence_desc — works ordered by confidence score
+          8. test_filter_needs_review — returns 3 works (Headlock, Just for Now, 2-1)
+        </red>
+        <green>
+          - Create pytest fixtures: async_engine, seeded_db, test_client (httpx.AsyncClient)
+          - Use testcontainers-python or docker-compose for PostgreSQL
+          - Seed with Imogen Heap data before each test class
+        </green>
+      </tdd-spec>
+      <acceptance-criteria>
+        <criterion>All integration tests pass against real PostgreSQL</criterion>
+        <criterion>Tests are marked @pytest.mark.integration</criterion>
+        <criterion>Fixtures handle setup/teardown cleanly</criterion>
+      </acceptance-criteria>
+    </task>
+  </phase>
+
+  <!-- ================================================================== -->
+  <!-- PHASE 5: Graph RAG Preparation (DEFERRED — Tier 2/3)               -->
+  <!-- Apache AGE, LightRAG integration, EdgeQuake evaluation              -->
+  <!-- ================================================================== -->
+
+  <phase id="5" name="Graph RAG Preparation" status="DEFERRED">
+    <description>
+      Deferred to a future branch. These tasks add Apache AGE for
+      Cypher queries and LightRAG/EdgeQuake for Graph RAG.
+      Phase 0-4 provide a complete production-grade PostgreSQL backend
+      with relational + vector + graph (via recursive CTEs) that
+      scales to Discogs-size without re-engineering.
+    </description>
+
+    <task id="5.1" name="Docker: Custom Image with Apache AGE" status="DEFERRED">
+      <description>
+        Build custom Docker image: pgvector/pgvector:pg17 + Apache AGE.
+        Update docker-compose.dev.yml to use custom image.
+      </description>
+    </task>
+
+    <task id="5.2" name="AGE Graph Store Implementation" status="DEFERRED">
+      <description>
+        Implement GraphStore interface using Apache AGE Cypher queries.
+        Replace recursive CTE traversal with Cypher for complex queries.
+      </description>
+    </task>
+
+    <task id="5.3" name="LightRAG Integration" status="DEFERRED">
+      <description>
+        Integrate LightRAG's PostgreSQL backend (PGGraphStorage + PGVectorStorage)
+        for Graph RAG queries. Index attribution records as LightRAG documents.
+      </description>
+    </task>
+
+    <task id="5.4" name="EdgeQuake Evaluation (Learning)" status="DEFERRED">
+      <description>
+        Deploy EdgeQuake locally to evaluate Rust-based LightRAG alternative.
+        Compare query latency, accuracy, and developer experience against
+        Python LightRAG. Document findings for PRD update.
+      </description>
+    </task>
+  </phase>
+
+  <!-- ================================================================== -->
+  <!-- DEPENDENCY DAG                                                      -->
+  <!-- Visual representation of task dependencies                          -->
+  <!-- ================================================================== -->
+
+  <!--
+    Phase 0 (Infrastructure):
+      0.0 (Setup Script) ◀── 0.2
+      0.1 (Async Engine)  ──┐
+      0.2 (Docker)        ──┤
+                            │
+    Phase 1 (Persistence):  │
+      1.1 (Models) ◀────────┘
+      1.2 (Migration) ◀── 1.1
+      1.3 (Attribution Repo) ◀── 1.1, 1.2
+      1.4 (Permission Repo) ◀── 1.1, 1.2
+      1.5 (Feedback Repo) ◀── 1.1, 1.2
+      1.6 (Edge Repo) ◀── 1.1, 1.2
+
+    Phase 2 (Seed + API):
+      2.1 (Seed Data) ◀── 1.3, 1.4
+      2.2 (App Dependencies) ◀── 0.1, 1.3
+      2.3 (Attribution Routes) ◀── 2.1, 2.2
+      2.4 (Permission Routes) ◀── 1.4, 2.2
+      2.5 (CLI) ◀── 2.1
+
+    Phase 3 (Search):
+      3.1 (Embeddings) ◀── 1.1, 2.1
+      3.2 (Text Search) ◀── 1.2, 2.1
+      3.3 (Vector Search) ◀── 3.1
+      3.4 (Hybrid Search) ◀── 3.2, 3.3, 1.6
+
+    Phase 4 (Frontend):
+      4.1 (API Client) ◀── 2.3, 2.4
+      4.2 (E2E Tests) ◀── 2.3, 2.4
+
+    Phase 5 (DEFERRED):
+      5.1-5.4 (Graph RAG)
+  -->
+
+</executable-plan>

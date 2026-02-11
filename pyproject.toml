@@ -53,6 +53,7 @@ dev = [
     "testcontainers[postgres]>=4.0",
     "hypothesis>=6.0",
     "psycopg[binary]>=3.0",
+    "aiosqlite>=0.22.1",
 ]
 test = [
     "pytest>=8.3.0",
@@ -126,7 +127,7 @@ exclude = [
 ]
 
 [[tool.mypy.overrides]]
-module = ["musicbrainzngs", "musicbrainzngs.*", "discogs_client", "discogs_client.*", "acoustid", "acoustid.*", "jellyfish", "jellyfish.*", "thefuzz", "thefuzz.*", "pandas", "pandas.*", "splink", "splink.*"]
+module = ["musicbrainzngs", "musicbrainzngs.*", "discogs_client", "discogs_client.*", "acoustid", "acoustid.*", "jellyfish", "jellyfish.*", "thefuzz", "thefuzz.*", "pandas", "pandas.*", "splink", "splink.*", "pgvector", "pgvector.*"]
 ignore_missing_imports = true
 follow_untyped_imports = true
 

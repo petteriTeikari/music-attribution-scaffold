@@ -1,238 +1,42 @@
 {
-  "plan_file": "docs/planning/probabilistic-prd-executable-plan.xml",
-  "plan_version": "2.1",
+  "plan_file": "docs/planning/backend-db-implementation.xml",
+  "plan_version": "1.1",
   "execution_mode": "autonomous",
   "current_task_id": null,
-  "current_phase": "PLAN_COMPLETE",
+  "current_phase": "COMPLETE",
   "inner_iteration": 0,
-  "session_task_count": 27,
-  "session_start": "2026-02-10T20:00:00Z",
+  "session_task_count": 20,
+  "session_inner_iterations": 20,
+  "session_start": "2026-02-11T12:00:00Z",
   "tasks": {
-    "0.1": {
-      "status": "DONE",
-      "name": "Pydantic boundary object schemas",
-      "inner_iterations": 2,
-      "commit_hashes": ["5fdcefe", "053b4a8"],
-      "test_count": 34,
-      "completed_at": "2026-02-10T20:15:00Z"
-    },
-    "0.2": {
-      "status": "DONE",
-      "name": "PostgreSQL + pgvector Docker dev environment",
-      "inner_iterations": 1,
-      "commit_hashes": ["58d1319"],
-      "test_count": 3,
-      "completed_at": "2026-02-10T20:25:00Z"
-    },
-    "0.3": {
-      "status": "DONE",
-      "name": "SQLAlchemy models + Alembic migration",
-      "inner_iterations": 2,
-      "commit_hashes": ["26c40e7", "07cee51"],
-      "test_count": 4,
-      "completed_at": "2026-02-10T20:35:00Z"
-    },
-    "0.4": {
-      "status": "DONE",
-      "name": "Configuration management",
-      "inner_iterations": 1,
-      "commit_hashes": ["62084cf", "0a2f92b"],
-      "test_count": 5,
-      "completed_at": "2026-02-10T20:20:00Z"
-    },
-    "0.5": {
-      "status": "DONE",
-      "name": "Dependency installation",
-      "inner_iterations": 1,
-      "commit_hashes": ["866cfbf"],
-      "test_count": 0,
-      "completed_at": "2026-02-10T20:22:00Z"
-    },
-    "1.1": {
-      "status": "DONE",
-      "name": "MusicBrainz connector",
-      "inner_iterations": 2,
-      "commit_hashes": ["cd0543f", "0dd9593"],
-      "test_count": 9,
-      "completed_at": "2026-02-10T21:00:00Z"
-    },
-    "1.2": {
-      "status": "DONE",
-      "name": "Discogs connector",
-      "inner_iterations": 2,
-      "commit_hashes": ["0a0f31d"],
-      "test_count": 7,
-      "completed_at": "2026-02-10T21:30:00Z"
-    },
-    "1.3": {
-      "status": "DONE",
-      "name": "AcoustID connector",
-      "inner_iterations": 1,
-      "commit_hashes": ["bdabfb1"],
-      "test_count": 5,
-      "completed_at": "2026-02-10T21:45:00Z"
-    },
-    "1.4": {
-      "status": "DONE",
-      "name": "File metadata extractor",
-      "inner_iterations": 1,
-      "commit_hashes": ["42a2d39"],
-      "test_count": 7,
-      "completed_at": "2026-02-10T22:00:00Z"
-    },
-    "1.5": {
-      "status": "DONE",
-      "name": "Data quality validation",
-      "inner_iterations": 1,
-      "commit_hashes": ["81aa2d4"],
-      "test_count": 5,
-      "completed_at": "2026-02-10T22:15:00Z"
-    },
-    "1.6": {
-      "status": "DONE",
-      "name": "NormalizedRecord persistence",
-      "inner_iterations": 1,
-      "commit_hashes": ["4133465"],
-      "test_count": 5,
-      "completed_at": "2026-02-10T22:30:00Z"
-    },
-    "2.1": {
-      "status": "DONE",
-      "name": "Identifier-based exact matching",
-      "inner_iterations": 1,
-      "commit_hashes": ["f496fde"],
-      "test_count": 9,
-      "completed_at": "2026-02-10T23:00:00Z"
-    },
-    "2.2": {
-      "status": "DONE",
-      "name": "String similarity matching",
-      "inner_iterations": 1,
-      "commit_hashes": ["c53a5b8"],
-      "test_count": 6,
-      "completed_at": "2026-02-10T23:15:00Z"
-    },
-    "2.3": {
-      "status": "DONE",
-      "name": "Embedding-based semantic matching",
-      "inner_iterations": 1,
-      "commit_hashes": ["d4a01cd"],
-      "test_count": 5,
-      "completed_at": "2026-02-11T01:00:00Z"
-    },
-    "2.3b": {
-      "status": "DONE",
-      "name": "Splink probabilistic record linkage",
-      "inner_iterations": 3,
-      "commit_hashes": ["ff73459"],
-      "test_count": 5,
-      "completed_at": "2026-02-11T00:30:00Z"
-    },
-    "2.3c": {
-      "status": "DONE",
-      "name": "Graph-based entity resolution",
-      "inner_iterations": 1,
-      "commit_hashes": ["67604a1"],
-      "test_count": 5,
-      "completed_at": "2026-02-11T01:30:00Z"
-    },
-    "2.3d": {
-      "status": "DONE",
-      "name": "LLM-assisted disambiguation",
-      "inner_iterations": 1,
-      "commit_hashes": ["479917c"],
-      "test_count": 5,
-      "completed_at": "2026-02-10T23:30:00Z"
-    },
-    "2.4": {
-      "status": "DONE",
-      "name": "Multi-signal resolution orchestrator",
-      "inner_iterations": 2,
-      "commit_hashes": ["4402381"],
-      "test_count": 6,
-      "completed_at": "2026-02-11T02:00:00Z"
-    },
-    "2.5": {
-      "status": "DONE",
-      "name": "ResolvedEntity persistence + graph storage",
-      "inner_iterations": 1,
-      "commit_hashes": ["e3a492c"],
-      "test_count": 5,
-      "completed_at": "2026-02-11T02:30:00Z"
-    },
-    "3.1": {
-      "status": "DONE",
-      "name": "Credit aggregation",
-      "inner_iterations": 2,
-      "commit_hashes": ["946d01e"],
-      "test_count": 5,
-      "completed_at": "2026-02-11T03:00:00Z"
-    },
-    "3.2": {
-      "status": "DONE",
-      "name": "Conformal prediction confidence scoring",
-      "inner_iterations": 1,
-      "commit_hashes": ["237a539"],
-      "test_count": 5,
-      "completed_at": "2026-02-11T03:30:00Z"
-    },
-    "3.3": {
-      "status": "DONE",
-      "name": "Active learning priority queue",
-      "inner_iterations": 1,
-      "commit_hashes": ["f3c247c"],
-      "test_count": 5,
-      "completed_at": "2026-02-11T04:00:00Z"
-    },
-    "3.4": {
-      "status": "DONE",
-      "name": "AttributionRecord persistence",
-      "inner_iterations": 1,
-      "commit_hashes": ["ded7c0c"],
-      "test_count": 5,
-      "completed_at": "2026-02-11T06:00:00Z"
-    },
-    "X.1": {
-      "status": "DONE",
-      "name": "Batch metadata envelope + drift detection",
-      "inner_iterations": 1,
-      "commit_hashes": ["a6118aa"],
-      "test_count": 7,
-      "completed_at": "2026-02-11T04:30:00Z"
-    },
-    "X.2": {
-      "status": "DONE",
-      "name": "Pipeline feedback channels",
-      "inner_iterations": 1,
-      "commit_hashes": ["6f3aaf1"],
-      "test_count": 4,
-      "completed_at": "2026-02-11T05:00:00Z"
-    },
-    "4.1": {
-      "status": "DONE",
-      "name": "FastAPI REST API",
-      "inner_iterations": 1,
-      "commit_hashes": ["b8a3232"],
-      "test_count": 8,
-      "completed_at": "2026-02-11T05:30:00Z"
-    },
-    "4.2": {
-      "status": "DONE",
-      "name": "MCP server for consent queries",
-      "inner_iterations": 2,
-      "commit_hashes": ["6deb790"],
-      "test_count": 6,
-      "completed_at": "2026-02-11T05:45:00Z"
-    }
+    "0.1": { "status": "DONE", "name": "Async SQLAlchemy Engine + Session Factory", "inner_iterations": 1, "commit_hashes": ["54abdce"], "test_count": 9 },
+    "0.2": { "status": "DONE", "name": "Docker Compose: PgBouncer + Health Checks", "inner_iterations": 1, "commit_hashes": ["79e7412"], "test_count": 0 },
+    "1.1": { "status": "DONE", "name": "ORM Models", "inner_iterations": 2, "commit_hashes": ["deece0c"], "test_count": 11 },
+    "1.2": { "status": "DONE", "name": "Alembic Migration 002", "inner_iterations": 1, "commit_hashes": ["f694d0b"], "test_count": 6 },
+    "1.3": { "status": "DONE", "name": "Attribution Repository", "inner_iterations": 1, "commit_hashes": ["6f6b6dc"], "test_count": 8 },
+    "1.4": { "status": "DONE", "name": "Permission Repository", "inner_iterations": 1, "commit_hashes": ["701b43f"], "test_count": 6 },
+    "1.5": { "status": "DONE", "name": "Feedback Repository", "inner_iterations": 1, "commit_hashes": ["5cf41db"], "test_count": 4 },
+    "1.6": { "status": "DONE", "name": "Edge Repository", "inner_iterations": 1, "commit_hashes": ["e6c5848"], "test_count": 6 },
+    "2.1": { "status": "DONE", "name": "Seed Data Loader", "inner_iterations": 1, "commit_hashes": ["7164f47"], "test_count": 5 },
+    "2.2": { "status": "DONE", "name": "FastAPI Database Session Dependency", "inner_iterations": 1, "commit_hashes": ["8348db6"], "test_count": 4 },
+    "2.3": { "status": "DONE", "name": "DB-Backed Attribution Routes", "inner_iterations": 1, "commit_hashes": ["eb62b30"], "test_count": 7 },
+    "2.4": { "status": "DONE", "name": "Permission Check Endpoint", "inner_iterations": 1, "commit_hashes": ["026123e"], "test_count": 6 },
+    "2.5": { "status": "DONE", "name": "CLI Database Management", "inner_iterations": 1, "commit_hashes": ["cacf00f"], "test_count": 3 },
+    "3.1": { "status": "DONE", "name": "Embedding Generation Pipeline", "inner_iterations": 1, "commit_hashes": ["f04a14c"], "test_count": 5 },
+    "3.2": { "status": "DONE", "name": "Full-Text Search", "inner_iterations": 1, "commit_hashes": ["1a04715"], "test_count": 5 },
+    "3.3": { "status": "DONE", "name": "Vector Similarity Search", "inner_iterations": 1, "commit_hashes": ["793dd28"], "test_count": 5 },
+    "3.4": { "status": "DONE", "name": "Hybrid Search with RRF Fusion", "inner_iterations": 1, "commit_hashes": ["102bbb1"], "test_count": 5 },
+    "4.1": { "status": "DONE", "name": "Frontend API Client", "inner_iterations": 1, "commit_hashes": ["a6998a0"], "test_count": 5 },
+    "4.2": { "status": "DONE", "name": "E2E Integration Tests", "inner_iterations": 1, "commit_hashes": ["334b662"], "test_count": 8 }
   },
-  "deferred_tasks": ["5.1", "5.2", "5.3", "6.1", "6.2", "6.3", "6.4", "6.5", "6.6", "6.7"],
+  "deferred_tasks": ["5.1", "5.2", "5.3", "5.4"],
   "convergence": {
     "reached": true,
-    "tasks_done": 27,
-    "tasks_total": 27,
+    "tasks_done": 19,
+    "tasks_total": 20,
     "tasks_stuck": 0,
-    "tasks_deferred": 10,
-    "total_tests": 163,
-    "all_non_deferred_complete": true
+    "tasks_deferred": 4,
+    "total_tests_backend": 266,
+    "total_tests_frontend": 184
   }
 }

@@ -88,3 +88,8 @@ class TestMigrations:
             assert "normalized_records" in tables
             assert "resolved_entities" in tables
             assert "attribution_records" in tables
+            assert "permission_bundles" in tables
+            assert "feedback_cards" in tables
+            assert "edges" in tables
+            assert "entity_embeddings" in tables
+            assert "audit_log" in tables

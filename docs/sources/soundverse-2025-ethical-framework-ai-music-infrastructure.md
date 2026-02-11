@@ -2776,5 +2776,3 @@ via model‑integrated signals. Water & Music
 ●  SynthID. Google DeepMind watermarking for AI‑generated media, including audio pilots. The Verge
 
 www.soundverse.ai
-
-

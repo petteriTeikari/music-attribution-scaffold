@@ -4,10 +4,10 @@
 # To override for a specific scenario, create an overrides file:
 # overrides/scale-mode.yaml, overrides/enterprise.yaml, etc.
 
-  # Active domain overlay (see domains/ directory)
-  active_domain: music-attribution
-  # For domain-agnostic defaults, see: domains/backbone-defaults.yaml
-  # Available domains: music-attribution, dpp-traceability, generic-graph-rag (planned)
+# Active domain overlay (see domains/ directory)
+active_domain: music-attribution
+# For domain-agnostic defaults, see: domains/backbone-defaults.yaml
+# Available domains: music-attribution, dpp-traceability, generic-graph-rag (planned)
 
 composition:
   # L1: Master vision

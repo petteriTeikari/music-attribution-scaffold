@@ -7,6 +7,9 @@ CREATE EXTENSION IF NOT EXISTS vector;
 -- UUID generation (for UUIDv7 when PG18 is available)
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
+-- pg_trgm: Trigram-based fuzzy text matching (GIN indexes for LIKE/ILIKE)
+CREATE EXTENSION IF NOT EXISTS pg_trgm;
+
 -- Apache AGE: Graph database extension
 -- Note: AGE requires a custom PostgreSQL build. When using the standard
 -- pgvector image, this will fail gracefully. Use the custom Dockerfile
