@@ -65,7 +65,21 @@ def postgres_container():
 
 
 @pytest.fixture(scope="module")
-def db_url(postgres_container):
+def _init_extensions(postgres_container):
+    """Create required PostgreSQL extensions before table creation."""
+    import psycopg
+
+    conn_url = postgres_container.get_connection_url().replace("+psycopg2", "")
+    with psycopg.connect(conn_url) as conn:
+        conn.autocommit = True
+        with conn.cursor() as cur:
+            cur.execute("CREATE EXTENSION IF NOT EXISTS vector")
+            cur.execute('CREATE EXTENSION IF NOT EXISTS "uuid-ossp"')
+            cur.execute("CREATE EXTENSION IF NOT EXISTS pg_trgm")
+
+
+@pytest.fixture(scope="module")
+def db_url(postgres_container, _init_extensions):
     """Get database URL and create tables."""
     url = postgres_container.get_connection_url().replace("+psycopg2", "+psycopg")
 

@@ -33,8 +33,22 @@ def postgres_for_migrations():
         yield pg
 
 
+@pytest.fixture(scope="module")
+def _init_extensions(postgres_for_migrations):
+    """Create required PostgreSQL extensions before migrations."""
+    import psycopg
+
+    conn_url = postgres_for_migrations.get_connection_url().replace("+psycopg2", "")
+    with psycopg.connect(conn_url) as conn:
+        conn.autocommit = True
+        with conn.cursor() as cur:
+            cur.execute("CREATE EXTENSION IF NOT EXISTS vector")
+            cur.execute('CREATE EXTENSION IF NOT EXISTS "uuid-ossp"')
+            cur.execute("CREATE EXTENSION IF NOT EXISTS pg_trgm")
+
+
 @pytest.fixture
-def alembic_config(postgres_for_migrations, tmp_path):
+def alembic_config(postgres_for_migrations, _init_extensions, tmp_path):
     """Create Alembic config pointing to test database."""
     from alembic.config import Config
 
