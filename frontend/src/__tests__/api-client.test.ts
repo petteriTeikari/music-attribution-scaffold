@@ -20,7 +20,7 @@ describe("ApiClient", () => {
     vi.unstubAllEnvs();
   });
 
-  it("fetches works from /attributions/", async () => {
+  it("fetches works from /api/v1/attributions/", async () => {
     const { apiClient } = await import("@/lib/api/api-client");
     const mockData = [
       { attribution_id: "work-001", confidence_score: 0.95, credits: [] },
@@ -32,13 +32,13 @@ describe("ApiClient", () => {
 
     const works = await apiClient.getWorks();
     expect(mockFetch).toHaveBeenCalledWith(
-      `${API_URL}/attributions/`,
+      `${API_URL}/api/v1/attributions/`,
       expect.any(Object)
     );
     expect(works).toHaveLength(1);
   });
 
-  it("fetches work by ID from /attributions/work/{id}", async () => {
+  it("fetches work by ID from /api/v1/attributions/work/{id}", async () => {
     const { apiClient } = await import("@/lib/api/api-client");
     const mockData = {
       attribution_id: "work-001",
@@ -52,14 +52,14 @@ describe("ApiClient", () => {
 
     const work = await apiClient.getWorkById("entity-001");
     expect(mockFetch).toHaveBeenCalledWith(
-      `${API_URL}/attributions/work/entity-001`,
+      `${API_URL}/api/v1/attributions/work/entity-001`,
       expect.any(Object)
     );
     expect(work).toBeTruthy();
     expect(work?.work_entity_id).toBe("entity-001");
   });
 
-  it("searches via /attributions/search", async () => {
+  it("searches via /api/v1/attributions/search", async () => {
     const { apiClient } = await import("@/lib/api/api-client");
     const mockData = [
       {
@@ -74,14 +74,14 @@ describe("ApiClient", () => {
 
     const results = await apiClient.search("vocoder");
     expect(mockFetch).toHaveBeenCalledWith(
-      expect.stringContaining("/attributions/search?q=vocoder"),
+      expect.stringContaining("/api/v1/attributions/search?q=vocoder"),
       expect.any(Object)
     );
     expect(results).toHaveLength(1);
     expect(results[0].rrf_score).toBe(0.03);
   });
 
-  it("checks permission via /permissions/check", async () => {
+  it("checks permission via /api/v1/permissions/check", async () => {
     const { apiClient } = await import("@/lib/api/api-client");
     const mockResponse = { result: "ALLOW", conditions: [] };
     mockFetch.mockResolvedValueOnce({
@@ -94,10 +94,41 @@ describe("ApiClient", () => {
       "streaming"
     );
     expect(mockFetch).toHaveBeenCalledWith(
-      `${API_URL}/permissions/check`,
+      `${API_URL}/api/v1/permissions/check`,
       expect.objectContaining({ method: "POST" })
     );
     expect(result.result).toBe("ALLOW");
+  });
+
+  it("fetches permissions via /api/v1/permissions/{entityId}", async () => {
+    const { apiClient } = await import("@/lib/api/api-client");
+    const mockData = [
+      {
+        permission_id: "perm-001",
+        entity_id: "entity-001",
+        scope: "GLOBAL",
+        default_permission: "DENY",
+      },
+    ];
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: () => Promise.resolve(mockData),
+    });
+
+    const result = await apiClient.getPermissions("entity-001");
+    expect(mockFetch).toHaveBeenCalledWith(
+      `${API_URL}/api/v1/permissions/entity-001`,
+      expect.any(Object)
+    );
+    expect(result).toBeTruthy();
+  });
+
+  it("getAuditLog falls back to mock when no API", async () => {
+    const { apiClient } = await import("@/lib/api/api-client");
+    // No API_URL in this test — should fall back
+    vi.stubEnv("NEXT_PUBLIC_API_URL", "");
+    const log = await apiClient.getAuditLog();
+    expect(Array.isArray(log)).toBe(true);
   });
 
   it("falls back to mock data when API unavailable", async () => {

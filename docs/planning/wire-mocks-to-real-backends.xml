@@ -1,0 +1,452 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Wire Mocks to Real Backends — Implementation Plan (v2, reviewed)
+  Branch: feat/wire-real-backends
+  Closes: #14, #33, #34, #19
+  Defers: #20 (calibration loop — separate PR)
+
+  Context:
+    PostgreSQL + pgvector is operational. Seed data (8 Imogen Heap works) loads
+    via scripts/setup.sh. Backend API routes already query real DB. The gap is:
+    1. Frontend pages hardcode mockApi imports instead of apiClient
+    2. Agent tools use plain dict instead of real repositories
+    3. CopilotKit actions fire but produce no UI effect
+    4. Feedback submission doesn't persist
+
+  Critical findings from review:
+    A. URL prefix mismatch: apiClient calls /attributions/ but backend serves
+       at /api/v1/attributions/. Fix: apiClient must prepend /api/v1.
+    B. Missing display fields: Backend AttributionRecord has no work_title,
+       artist_name, or Credit.entity_name. Frontend needs these. Fix: add
+       display fields to backend schema + seed data, or enrich in API response.
+    C. Method name corrections: AsyncAttributionRepository uses find_by_work_entity_id
+       (not get_by_work_id), AsyncFeedbackRepository uses store (not create).
+    D. HybridSearchService takes session as kwarg to .search(), not constructor arg.
+
+  Scope:
+    This plan wires existing infrastructure together. Minimal new schemas needed
+    (display fields only). No new database models. No new API routes.
+-->
+<plan version="2.0" project="music-attribution-scaffold">
+  <metadata>
+    <title>Wire Mocks to Real Backends</title>
+    <branch>feat/wire-real-backends</branch>
+    <closes_issues>14, 33, 34, 19</closes_issues>
+    <defers_issues>20</defers_issues>
+    <estimated_tasks>9</estimated_tasks>
+  </metadata>
+
+  <!-- =================================================================== -->
+  <!-- Phase 0: Fix API Contract Mismatches (blocking everything else)      -->
+  <!-- Without this, swapping mockApi for apiClient silently fails.         -->
+  <!-- =================================================================== -->
+
+  <task id="0.1" status="PENDING">
+    <title>Add display fields to backend schema + seed data</title>
+    <files>
+      <modify>src/music_attribution/schemas/attribution.py</modify>
+      <modify>src/music_attribution/seed/imogen_heap.py</modify>
+      <modify>src/music_attribution/seed/uncertainty.py</modify>
+      <modify>tests/unit/test_seed_imogen_heap.py</modify>
+    </files>
+    <tdd_spec>
+      <test_file>tests/unit/test_attribution_display_fields.py</test_file>
+      <test_cases>
+        <case>test_attribution_record_has_work_title_field</case>
+        <case>test_attribution_record_has_artist_name_field</case>
+        <case>test_credit_has_entity_name_field</case>
+        <case>test_display_fields_included_in_json_dump</case>
+        <case>test_display_fields_default_to_empty_string</case>
+        <case>test_seed_data_populates_work_title</case>
+        <case>test_seed_data_populates_artist_name</case>
+        <case>test_seed_data_populates_entity_name_on_credits</case>
+      </test_cases>
+      <description>
+        The frontend AttributionRecord type expects work_title: string,
+        artist_name: string, and Credit.entity_name: string. The backend
+        schema has none of these.
+
+        Add to backend schemas:
+        1. AttributionRecord: work_title: str = "" and artist_name: str = ""
+        2. Credit: entity_name: str = ""
+
+        These are display-only fields with empty string defaults (backward
+        compatible — existing records won't break). The seed module must
+        populate them for the 8 Imogen Heap works.
+
+        Also add to the ORM model (db/models.py) if stored, or compute
+        in the API response. Simplest: add to schema with defaults, populate
+        in seed, store in JSONB credits field (already includes all Credit
+        fields).
+
+        Note: work_title and artist_name won't be stored as separate DB columns
+        — they're part of the JSONB-serialized AttributionRecord. The model_dump
+        already includes all Pydantic fields.
+      </description>
+    </tdd_spec>
+  </task>
+
+  <task id="0.2" status="PENDING">
+    <title>Fix apiClient URL prefix to include /api/v1</title>
+    <files>
+      <modify>frontend/src/lib/api/api-client.ts</modify>
+      <modify>frontend/src/__tests__/api-client.test.ts</modify>
+    </files>
+    <tdd_spec>
+      <test_file>frontend/src/__tests__/api-client.test.ts</test_file>
+      <test_cases>
+        <case>apiClient.getWorks calls /api/v1/attributions/ when API_URL set</case>
+        <case>apiClient.getWorkById calls /api/v1/attributions/work/{id}</case>
+        <case>apiClient.getProvenance calls /api/v1/attributions/{id}/provenance</case>
+        <case>apiClient.search calls /api/v1/attributions/search</case>
+        <case>apiClient.checkPermission calls /api/v1/permissions/check</case>
+      </test_cases>
+      <description>
+        The backend mounts routes at /api/v1 prefix (app.py line 67):
+          app.include_router(attribution_router, prefix="/api/v1")
+
+        But apiClient calls ${API_URL}/attributions/ without the prefix.
+        If NEXT_PUBLIC_API_URL=http://localhost:8000, all calls get 404.
+
+        Fix: Change all apiClient URLs to include /api/v1:
+          ${API_URL}/attributions/ → ${API_URL}/api/v1/attributions/
+          ${API_URL}/permissions/check → ${API_URL}/api/v1/permissions/check
+
+        Alternative: set NEXT_PUBLIC_API_URL=http://localhost:8000/api/v1
+        But hardcoding the prefix in apiClient is more robust (env var is
+        the base URL, apiClient knows the API version).
+
+        Update existing api-client.test.ts to verify correct URL construction.
+      </description>
+    </tdd_spec>
+  </task>
+
+  <!-- =================================================================== -->
+  <!-- Phase 1: Backend Agent → Real Repositories (#34)                     -->
+  <!-- Must come first because frontend wiring depends on backend serving   -->
+  <!-- real data. Tests can verify in isolation.                            -->
+  <!-- =================================================================== -->
+
+  <task id="1.1" status="PENDING" depends="0.1">
+    <title>Extend AgentDeps to accept async session factory</title>
+    <closes_issue>34</closes_issue>
+    <files>
+      <modify>src/music_attribution/chat/agent.py</modify>
+      <modify>src/music_attribution/chat/agui_endpoint.py</modify>
+      <modify>tests/unit/test_chat_agent.py</modify>
+      <modify>tests/unit/test_agui_endpoint.py</modify>
+    </files>
+    <tdd_spec>
+      <test_file>tests/unit/test_chat_agent.py</test_file>
+      <test_cases>
+        <case>test_agent_deps_with_session_factory_stores_reference</case>
+        <case>test_agent_deps_with_none_session_factory_uses_dict</case>
+        <case>test_agui_endpoint_injects_session_factory_from_app_state</case>
+        <case>test_agui_endpoint_falls_back_to_dict_when_no_factory</case>
+      </test_cases>
+      <description>
+        Replace AgentDeps.attributions-only pattern with dual-path deps:
+
+        ```python
+        from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
+
+        @dataclass
+        class AgentDeps:
+            session_factory: async_sessionmaker[AsyncSession] | None = None
+            attributions: dict[str, dict] = field(default_factory=dict)
+            state: AttributionAgentState = field(default_factory=AttributionAgentState)
+        ```
+
+        In agui_endpoint.py, inject app.state.async_session_factory into deps
+        if available. Keep dict fallback for dev without DATABASE_URL.
+
+        The session_factory type is async_sessionmaker[AsyncSession] from
+        sqlalchemy.ext.asyncio. Import it explicitly.
+      </description>
+    </tdd_spec>
+  </task>
+
+  <task id="1.2" status="PENDING" depends="1.1">
+    <title>Rewrite agent tools to use real repositories</title>
+    <closes_issue>34</closes_issue>
+    <files>
+      <modify>src/music_attribution/chat/agent.py</modify>
+      <modify>tests/unit/test_chat_agent.py</modify>
+    </files>
+    <tdd_spec>
+      <test_file>tests/unit/test_chat_agent.py</test_file>
+      <test_cases>
+        <!-- explain_confidence -->
+        <case>test_explain_confidence_queries_repository_by_work_entity_id</case>
+        <case>test_explain_confidence_falls_back_to_dict_when_no_session</case>
+        <case>test_explain_confidence_work_not_found_returns_message</case>
+        <!-- search_attributions -->
+        <case>test_search_attributions_uses_hybrid_search_service</case>
+        <case>test_search_attributions_passes_session_as_kwarg</case>
+        <case>test_search_attributions_falls_back_to_dict_scan</case>
+        <case>test_search_attributions_empty_results</case>
+        <!-- suggest_correction -->
+        <case>test_suggest_correction_creates_preview_on_state</case>
+        <!-- submit_feedback -->
+        <case>test_submit_feedback_persists_via_async_feedback_repository</case>
+        <case>test_submit_feedback_falls_back_to_fake_uuid</case>
+        <case>test_submit_feedback_sets_center_bias_flag</case>
+      </test_cases>
+      <description>
+        Rewrite 4 agent tools with dual-path logic. CRITICAL method names:
+
+        1. explain_confidence:
+           - Real: AsyncAttributionRepository().find_by_work_entity_id(uuid.UUID(work_id), session)
+           - Fallback: attrs.get(work_id) (dict lookup)
+
+        2. search_attributions:
+           - Real: HybridSearchService().search(query, limit=limit, session=session)
+             NOTE: session is a KEYWORD arg, not constructor param.
+           - Fallback: scan dict values for substring match
+
+        3. suggest_correction:
+           - Build CorrectionPreview, store on state.pending_correction
+           - No DB write (preview only)
+
+        4. submit_feedback:
+           - Real: AsyncFeedbackRepository().store(card, session)
+             NOTE: method is store(), not create().
+           - Fallback: return uuid.uuid4() with warning
+
+        Each tool: open session via `async with deps.session_factory() as session:`,
+        call repository, commit. Wrap in try/except for DB errors → fallback.
+      </description>
+    </tdd_spec>
+  </task>
+
+  <!-- =================================================================== -->
+  <!-- Phase 2: Frontend → Real API (#14)                                   -->
+  <!-- Can run in parallel with Phase 1.                                    -->
+  <!-- =================================================================== -->
+
+  <task id="2.1" status="PENDING" depends="0.2">
+    <title>Add getPermissions and getAuditLog to apiClient</title>
+    <closes_issue>14</closes_issue>
+    <files>
+      <modify>frontend/src/lib/api/api-client.ts</modify>
+      <modify>frontend/src/__tests__/api-client.test.ts</modify>
+    </files>
+    <tdd_spec>
+      <test_file>frontend/src/__tests__/api-client.test.ts</test_file>
+      <test_cases>
+        <case>apiClient.getPermissions falls back to mock when no API_URL</case>
+        <case>apiClient.getAuditLog falls back to mock when no API_URL</case>
+        <case>apiClient.getPermissions calls real API when URL set</case>
+        <case>apiClient.getAuditLog calls real API when URL set</case>
+      </test_cases>
+      <description>
+        Add two methods to apiClient following the existing pattern:
+
+        getPermissions(): calls GET /api/v1/permissions/ (if backend route
+        exists) or falls back to mockApi.getPermissions(). The backend
+        currently only has POST /permissions/check — add fallback-to-mock
+        by default until a GET endpoint is created.
+
+        getAuditLog(): calls GET /api/v1/permissions/audit (if backend
+        route exists) or falls back to mockApi.getAuditLog(). Same
+        fallback-to-mock pattern.
+
+        Both use the same try/catch → fallback pattern as getWorks().
+        Add fallbackGetPermissions() and fallbackGetAuditLog() helpers.
+      </description>
+    </tdd_spec>
+  </task>
+
+  <task id="2.2" status="PENDING" depends="2.1">
+    <title>Swap mockApi → apiClient in all 4 page files</title>
+    <closes_issue>14</closes_issue>
+    <files>
+      <modify>frontend/src/app/works/page.tsx</modify>
+      <modify>frontend/src/app/works/[workId]/page.tsx</modify>
+      <modify>frontend/src/app/review/page.tsx</modify>
+      <modify>frontend/src/app/permissions/page.tsx</modify>
+    </files>
+    <tdd_spec>
+      <test_file>frontend/src/__tests__/no-direct-mock-import.test.ts</test_file>
+      <test_cases>
+        <case>no page file in app/ imports mock-client directly</case>
+      </test_cases>
+      <description>
+        In each page file:
+          - Replace: import { mockApi } from "@/lib/api/mock-client"
+          - With:    import { apiClient } from "@/lib/api/api-client"
+          - Replace all mockApi.method() calls with apiClient.method()
+
+        Files to change (4):
+          - frontend/src/app/works/page.tsx (line 14, 34)
+          - frontend/src/app/works/[workId]/page.tsx (line 7, 22)
+          - frontend/src/app/review/page.tsx (line 7, 22)
+          - frontend/src/app/permissions/page.tsx (line 5, 25)
+
+        Behavior is identical when NEXT_PUBLIC_API_URL is not set —
+        apiClient falls back to mockApi internally.
+
+        Add a lint/regression test that scans app/ directory for direct
+        mock-client imports (fail if found in non-test files).
+      </description>
+    </tdd_spec>
+  </task>
+
+  <!-- =================================================================== -->
+  <!-- Phase 3: CopilotKit Actions → Real UI Effects (#33)                  -->
+  <!-- =================================================================== -->
+
+  <task id="3.1" status="PENDING" depends="2.2">
+    <title>Wire CopilotKit action callbacks to real UI effects</title>
+    <closes_issue>33</closes_issue>
+    <files>
+      <modify>frontend/src/components/layout/app-shell.tsx</modify>
+    </files>
+    <tdd_spec>
+      <test_file>frontend/src/__tests__/agent-actions-wiring.test.tsx</test_file>
+      <test_cases>
+        <case>navigate_to_work calls router.push with /works/{workId} path</case>
+        <case>open_feedback_panel sets panel visibility state to true</case>
+        <case>highlight_credit scrolls to element with data-entity-id</case>
+        <case>show_correction_diff updates correction diff state</case>
+      </test_cases>
+      <description>
+        AppShell already renders but doesn't call useAgentActions() with
+        real callbacks. Wire it:
+
+        ```tsx
+        const router = useRouter();
+        const [feedbackWorkId, setFeedbackWorkId] = useState&lt;string | null&gt;(null);
+
+        useAgentActions({
+          onNavigateToWork: (workId) => router.push(`/works/${workId}`),
+          onOpenFeedbackPanel: (workId) => setFeedbackWorkId(workId),
+          onHighlightCredit: (entityId) => {
+            document.querySelector(`[data-entity-id="${entityId}"]`)
+              ?.scrollIntoView({ behavior: "smooth" });
+          },
+          onShowCorrectionDiff: (field, current, suggested) => {
+            // Set state to show diff in AgentFeedbackFlow
+          },
+        });
+        ```
+
+        AppShell is already "use client". Import useRouter from
+        next/navigation (App Router).
+
+        Test with mock router (vi.mock("next/navigation")) — verify
+        router.push called with correct path.
+      </description>
+    </tdd_spec>
+  </task>
+
+  <!-- =================================================================== -->
+  <!-- Phase 4: Feedback Persistence Wiring (#19)                           -->
+  <!-- =================================================================== -->
+
+  <task id="4.1" status="PENDING" depends="1.2,3.1">
+    <title>Wire AgentFeedbackFlow submission to agent chat</title>
+    <closes_issue>19</closes_issue>
+    <files>
+      <modify>frontend/src/components/feedback/agent-feedback-flow.tsx</modify>
+      <modify>frontend/src/app/review/page.tsx</modify>
+    </files>
+    <tdd_spec>
+      <test_file>frontend/src/__tests__/feedback-flow-wiring.test.tsx</test_file>
+      <test_cases>
+        <case>feedback form submission sends structured message to CopilotKit</case>
+        <case>review queue sorts works by confidence ascending for active learning</case>
+        <case>submitted feedback shows success toast state</case>
+      </test_cases>
+      <description>
+        1. AgentFeedbackFlow's Submit button should use CopilotKit's
+           useCopilotChat() hook to send a structured message that
+           triggers the agent's submit_feedback tool:
+
+           "Submit feedback for work {work_id}: role={role},
+            assessment={assessment}, evidence={evidence_type},
+            notes: {free_text}"
+
+           The agent parses this and calls submit_feedback tool, which
+           persists to PostgreSQL via AsyncFeedbackRepository (Task 1.2).
+
+        2. Review queue (/review page) should sort by confidence_score
+           ascending (lowest confidence first = highest value for review).
+           Currently sorts by review_priority descending — verify this
+           produces the active learning order.
+
+        3. After submission, show brief success state on the feedback
+           component (set step to "submitted", already exists in component).
+      </description>
+    </tdd_spec>
+  </task>
+
+  <!-- =================================================================== -->
+  <!-- Phase 5: Integration Verification                                    -->
+  <!-- =================================================================== -->
+
+  <task id="5.1" status="PENDING" depends="1.2,2.2,3.1,4.1">
+    <title>Integration test: agent → real PostgreSQL round-trip</title>
+    <files>
+      <modify>tests/integration/test_agent_e2e.py</modify>
+    </files>
+    <tdd_spec>
+      <test_file>tests/integration/test_agent_e2e.py</test_file>
+      <test_cases>
+        <case>test_explain_confidence_with_seeded_imogen_heap_data</case>
+        <case>test_search_attributions_returns_real_hybrid_results</case>
+        <case>test_submit_feedback_persists_and_retrieves_from_db</case>
+      </test_cases>
+      <description>
+        Update existing test_agent_e2e.py to add tests using real PostgreSQL
+        via testcontainers. These complement the existing mock-dict tests.
+
+        Setup: Use the postgres_container fixture from conftest.py, run
+        CREATE EXTENSION vector, run seed_imogen_heap(session), then create
+        AgentDeps with real session_factory.
+
+        Verify:
+        - explain_confidence returns real data from DB (not empty/fake)
+        - search_attributions("Hide and Seek") returns results
+        - submit_feedback persists a FeedbackCard retrievable by ID
+
+        Mark @pytest.mark.integration — requires Docker daemon.
+      </description>
+    </tdd_spec>
+  </task>
+
+  <task id="5.2" status="PENDING" depends="5.1">
+    <title>Verify full build + all tests pass</title>
+    <files/>
+    <tdd_spec>
+      <description>
+        Run full verification suite:
+          1. uv run ruff check src/ tests/
+          2. uv run ruff format --check src/ tests/
+          3. uv run mypy src/
+          4. .venv/bin/python -m pytest tests/unit/ -x -q
+          5. cd frontend and npm test
+          6. make build-frontend
+          7. pre-commit run --all-files
+
+        No new test file — verification-only task.
+      </description>
+    </tdd_spec>
+  </task>
+
+  <!-- =================================================================== -->
+  <!-- Dependency DAG                                                       -->
+  <!--                                                                      -->
+  <!--   0.1 ──→ 1.1 ──→ 1.2 ──┐                                          -->
+  <!--                          ├──→ 4.1 ──→ 5.1 ──→ 5.2                  -->
+  <!--   0.2 ──→ 2.1 ──→ 2.2 ──→ 3.1 ─┘                                  -->
+  <!--                                                                      -->
+  <!-- Phase 0 tasks are independent of each other.                        -->
+  <!-- Phase 1 (backend) depends on 0.1 (display fields in schema).        -->
+  <!-- Phase 2 (frontend) depends on 0.2 (URL prefix fix).                 -->
+  <!-- Phase 1 and Phase 2 can run in parallel after their Phase 0 dep.    -->
+  <!-- Phase 3 depends on Phase 2 (pages use apiClient).                   -->
+  <!-- Phase 4 depends on Phase 1 (agent persists) and Phase 3 (UI wired). -->
+  <!-- Phase 5 depends on all.                                             -->
+  <!-- =================================================================== -->
+</plan>

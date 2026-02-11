@@ -154,6 +154,67 @@ class TestCopilotKitEndpoint:
         assert "error" in full_text.lower()
 
 
+class TestEndpointSessionFactory:
+    """Tests that endpoint passes session_factory to AgentDeps."""
+
+    @patch("music_attribution.chat.agui_endpoint._get_agent")
+    def test_endpoint_passes_session_factory(self, mock_get_agent) -> None:
+        """When app.state.async_session_factory exists, it's passed to AgentDeps."""
+        mock_get_agent.return_value = _mock_agent_run()
+        mock_factory = AsyncMock()
+
+        test_app = FastAPI()
+        test_app.state.attributions = {}
+        test_app.state.async_session_factory = mock_factory
+        test_app.include_router(router, prefix="/api/v1")
+        test_client = TestClient(test_app)
+
+        # Capture the deps passed to agent.run
+        captured_deps = []
+        original_run = mock_get_agent.return_value.run
+
+        async def capture_run(msg, *, deps=None, **kwargs):
+            captured_deps.append(deps)
+            return await original_run(msg, deps=deps, **kwargs)
+
+        mock_get_agent.return_value.run = capture_run
+
+        test_client.post(
+            "/api/v1/copilotkit",
+            json={"messages": [{"role": "user", "content": "Hello"}]},
+        )
+
+        assert len(captured_deps) == 1
+        assert captured_deps[0].session_factory is mock_factory
+
+    @patch("music_attribution.chat.agui_endpoint._get_agent")
+    def test_endpoint_session_factory_none_without_db(self, mock_get_agent) -> None:
+        """When app.state has no async_session_factory, deps.session_factory is None."""
+        mock_get_agent.return_value = _mock_agent_run()
+
+        test_app = FastAPI()
+        test_app.state.attributions = {}
+        test_app.include_router(router, prefix="/api/v1")
+        test_client = TestClient(test_app)
+
+        captured_deps = []
+        original_run = mock_get_agent.return_value.run
+
+        async def capture_run(msg, *, deps=None, **kwargs):
+            captured_deps.append(deps)
+            return await original_run(msg, deps=deps, **kwargs)
+
+        mock_get_agent.return_value.run = capture_run
+
+        test_client.post(
+            "/api/v1/copilotkit",
+            json={"messages": [{"role": "user", "content": "Hello"}]},
+        )
+
+        assert len(captured_deps) == 1
+        assert captured_deps[0].session_factory is None
+
+
 def _parse_sse_events(text: str) -> list[dict]:
     """Parse SSE text into list of event dicts."""
     events = []

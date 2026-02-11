@@ -10,6 +10,7 @@ from __future__ import annotations
 import json
 import logging
 from collections.abc import AsyncGenerator
+from typing import Any
 
 from fastapi import APIRouter, Request
 from fastapi.responses import StreamingResponse
@@ -37,6 +38,7 @@ async def _generate_sse_events(
     messages: list[dict],
     state: AttributionAgentState,
     attributions: dict[str, dict],
+    session_factory: Any = None,
 ) -> AsyncGenerator[str, None]:
     """Generate SSE events from the agent response.
 
@@ -84,7 +86,7 @@ async def _generate_sse_events(
         user_message = "Hello"
 
     # Run agent (simplified — in production would stream token by token)
-    deps = AgentDeps(attributions=attributions, state=state)
+    deps = AgentDeps(attributions=attributions, state=state, session_factory=session_factory)
     agent = _get_agent()
 
     try:
@@ -155,8 +157,11 @@ async def copilotkit_endpoint(request: Request) -> StreamingResponse:
         if isinstance(raw, dict):
             attributions = raw
 
+    # Extract async session factory for real DB access
+    session_factory: Any = getattr(request.app.state, "async_session_factory", None)
+
     return StreamingResponse(
-        _generate_sse_events(messages, state, attributions),
+        _generate_sse_events(messages, state, attributions, session_factory),
         media_type="text/event-stream",
         headers={
             "Cache-Control": "no-cache",

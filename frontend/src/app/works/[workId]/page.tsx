@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import type { AttributionRecord } from "@/lib/types/attribution";
-import { mockApi } from "@/lib/api/mock-client";
+import { apiClient } from "@/lib/api/api-client";
 import { ConfidenceGauge, ConfidenceBadge } from "@/components/confidence/confidence-gauge";
 import { AssuranceBadge } from "@/components/works/assurance-badge";
 import { CreditList } from "@/components/attribution/credit-list";
@@ -19,7 +19,7 @@ export default function WorkDetailPage() {
 
   useEffect(() => {
     setLoading(true);
-    mockApi.getWorkById(workId).then((data) => {
+    apiClient.getWorkById(workId).then((data) => {
       setWork(data);
       setLoading(false);
     });

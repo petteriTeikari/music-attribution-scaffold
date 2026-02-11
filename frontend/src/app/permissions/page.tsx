@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import type { PermissionBundle, AuditLogEntry } from "@/lib/types/permissions";
-import { mockApi } from "@/lib/api/mock-client";
+import { apiClient } from "@/lib/api/api-client";
 import { PermissionMatrix } from "@/components/permissions/permission-matrix";
 import { AuditLog } from "@/components/permissions/audit-log";
 import { MCPQueryMockup } from "@/components/mcp/mcp-query-mockup";
@@ -22,7 +22,9 @@ export default function PermissionsPage() {
   const [activeTab, setActiveTab] = useState<TabId>("permissions");
 
   useEffect(() => {
-    Promise.all([mockApi.getPermissions(), mockApi.getAuditLog()]).then(
+    // Default entity for demo — Imogen Heap artist entity
+    const entityId = "artist-imogen-heap";
+    Promise.all([apiClient.getPermissions(entityId), apiClient.getAuditLog()]).then(
       ([perms, log]) => {
         setPermissions(perms);
         setAuditLog(log);
