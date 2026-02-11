@@ -134,15 +134,35 @@ def create_attribution_agent() -> Agent[AgentDeps, str]:
         Returns:
             Human-readable explanation of the confidence score.
         """
-        attrs = ctx.deps.attributions
-        record = attrs.get(work_id)
-        if not record:
-            return f"No attribution record found for ID: {work_id}"
+        score: float = 0
+        sources: list[str] = []
+        assurance: str = "LEVEL_0"
+        agreement: float = 0
 
-        score = record.get("confidence_score", 0)
-        sources = record.get("credits", [{}])[0].get("sources", []) if record.get("credits") else []
-        assurance = record.get("assurance_level", "LEVEL_0")
-        agreement = record.get("source_agreement", 0)
+        if ctx.deps.has_db:
+            import uuid as _uuid
+
+            from music_attribution.attribution.persistence import AsyncAttributionRepository
+
+            repo = AsyncAttributionRepository()
+            async with ctx.deps.session_factory() as session:
+                record = await repo.find_by_id(_uuid.UUID(work_id), session)
+            if not record:
+                return f"No attribution record found for ID: {work_id}"
+            score = record.confidence_score
+            if record.credits:
+                sources = [s.value for s in record.credits[0].sources]
+            assurance = record.assurance_level.value
+            agreement = record.source_agreement
+        else:
+            attrs = ctx.deps.attributions
+            raw = attrs.get(work_id)
+            if not raw:
+                return f"No attribution record found for ID: {work_id}"
+            score = raw.get("confidence_score", 0)
+            sources = raw.get("credits", [{}])[0].get("sources", []) if raw.get("credits") else []
+            assurance = raw.get("assurance_level", "LEVEL_0")
+            agreement = raw.get("source_agreement", 0)
 
         factors = []
         if agreement > 0.8:
@@ -174,18 +194,33 @@ def create_attribution_agent() -> Agent[AgentDeps, str]:
         Returns:
             Formatted search results.
         """
-        attrs = ctx.deps.attributions
-        query_lower = query.lower()
-        results = []
-        for _attr_id, record in attrs.items():
-            title = record.get("work_title", "")
-            artist = record.get("artist_name", "")
-            if query_lower in title.lower() or query_lower in artist.lower():
+        results: list[str] = []
+
+        if ctx.deps.has_db:
+            from music_attribution.search.hybrid_search import HybridSearchService
+
+            svc = HybridSearchService()
+            async with ctx.deps.session_factory() as session:
+                hits = await svc.search(query, session=session, limit=10)
+            for hit in hits:
+                rec = hit.record
                 results.append(
-                    f"- {title} by {artist} "
-                    f"(confidence: {record.get('confidence_score', 0):.0%}, "
-                    f"assurance: {record.get('assurance_level', 'LEVEL_0')})"
+                    f"- {rec.work_title} by {rec.artist_name} "
+                    f"(confidence: {rec.confidence_score:.0%}, "
+                    f"assurance: {rec.assurance_level.value})"
                 )
+        else:
+            attrs = ctx.deps.attributions
+            query_lower = query.lower()
+            for _attr_id, record in attrs.items():
+                title = record.get("work_title", "")
+                artist = record.get("artist_name", "")
+                if query_lower in title.lower() or query_lower in artist.lower():
+                    results.append(
+                        f"- {title} by {artist} "
+                        f"(confidence: {record.get('confidence_score', 0):.0%}, "
+                        f"assurance: {record.get('assurance_level', 'LEVEL_0')})"
+                    )
 
         ctx.deps.state.last_search_query = query
         ctx.deps.state.last_search_count = len(results)
@@ -252,14 +287,40 @@ def create_attribution_agent() -> Agent[AgentDeps, str]:
         Returns:
             Confirmation message.
         """
-        import uuid
-
-        feedback_id = str(uuid.uuid4())
+        import uuid as _uuid
 
         center_bias = 0.45 <= overall_assessment <= 0.55
         bias_warning = ""
         if center_bias:
             bias_warning = " (center bias detected — consider whether you can be more decisive)"
+
+        if ctx.deps.has_db:
+            from datetime import UTC, datetime
+
+            from music_attribution.feedback.persistence import AsyncFeedbackRepository
+            from music_attribution.schemas.enums import EvidenceTypeEnum, ReviewerRoleEnum
+            from music_attribution.schemas.feedback import FeedbackCard
+
+            card = FeedbackCard(
+                feedback_id=_uuid.uuid4(),
+                attribution_id=_uuid.UUID(work_id),
+                reviewer_id="agent-assisted",
+                reviewer_role=ReviewerRoleEnum.MUSICOLOGIST,
+                attribution_version=1,
+                corrections=[],
+                overall_assessment=overall_assessment,
+                center_bias_flag=center_bias,
+                free_text=free_text,
+                evidence_type=EvidenceTypeEnum.OTHER,
+                submitted_at=datetime.now(UTC),
+            )
+            repo = AsyncFeedbackRepository()
+            async with ctx.deps.session_factory() as session:
+                await repo.store(card, session)
+                await session.commit()
+            feedback_id = str(card.feedback_id)
+        else:
+            feedback_id = str(_uuid.uuid4())
 
         ctx.deps.state.pending_correction = None
 
