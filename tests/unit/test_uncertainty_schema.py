@@ -358,3 +358,137 @@ class TestTrajectoryCalibration:
         json_str = original.model_dump_json()
         restored = TrajectoryCalibration.model_validate_json(json_str)
         assert restored == original
+
+
+class TestProvenanceEventExtension:
+    """Tests for ProvenanceEvent uncertainty extension (Task 1.2)."""
+
+    def test_provenance_event_backward_compatible(self) -> None:
+        """Existing ProvenanceEvent without uncertainty fields still validates."""
+        from datetime import UTC, datetime
+
+        from music_attribution.schemas.attribution import ProvenanceEvent
+
+        event = ProvenanceEvent(
+            event_type="FETCH",
+            timestamp=datetime.now(UTC),
+            agent="etl-musicbrainz",
+            details={
+                "type": "fetch",
+                "source": "MUSICBRAINZ",
+                "source_id": "abc-123",
+                "records_fetched": 5,
+            },
+        )
+        assert event.step_uncertainty is None
+        assert event.citation_index is None
+
+    def test_provenance_event_with_step_uncertainty(self) -> None:
+        """ProvenanceEvent with step_uncertainty field validates."""
+        from datetime import UTC, datetime
+
+        from music_attribution.schemas.attribution import ProvenanceEvent
+        from music_attribution.schemas.uncertainty import StepUncertainty
+
+        su = StepUncertainty(
+            step_id="etl-musicbrainz",
+            step_name="MusicBrainz ETL",
+            step_index=0,
+            stated_confidence=0.85,
+            calibrated_confidence=0.82,
+            intrinsic_uncertainty=0.05,
+            extrinsic_uncertainty=0.08,
+            total_uncertainty=0.13,
+            confidence_method="SOURCE_WEIGHTED",
+        )
+        event = ProvenanceEvent(
+            event_type="FETCH",
+            timestamp=datetime.now(UTC),
+            agent="etl-musicbrainz",
+            details={
+                "type": "fetch",
+                "source": "MUSICBRAINZ",
+                "source_id": "abc-123",
+                "records_fetched": 5,
+            },
+            step_uncertainty=su,
+        )
+        assert event.step_uncertainty is not None
+        assert event.step_uncertainty.step_id == "etl-musicbrainz"
+
+    def test_provenance_event_citation_index(self) -> None:
+        """citation_index is optional positive int."""
+        from datetime import UTC, datetime
+
+        from music_attribution.schemas.attribution import ProvenanceEvent
+
+        event = ProvenanceEvent(
+            event_type="FETCH",
+            timestamp=datetime.now(UTC),
+            agent="etl-musicbrainz",
+            details={
+                "type": "fetch",
+                "source": "MUSICBRAINZ",
+                "source_id": "abc-123",
+                "records_fetched": 5,
+            },
+            citation_index=1,
+        )
+        assert event.citation_index == 1
+
+    def test_attribution_record_uncertainty_provenance(self) -> None:
+        """AttributionRecord accepts optional uncertainty_summary field."""
+        import uuid
+        from datetime import UTC, datetime
+
+        from music_attribution.schemas.attribution import (
+            AttributionRecord,
+            ConformalSet,
+            Credit,
+        )
+        from music_attribution.schemas.uncertainty import (
+            UncertaintyAwareProvenance,
+        )
+
+        record = AttributionRecord(
+            work_entity_id=uuid.uuid4(),
+            credits=[
+                Credit(
+                    entity_id=uuid.uuid4(),
+                    role="PERFORMER",
+                    confidence=0.9,
+                    sources=["MUSICBRAINZ"],
+                    assurance_level="LEVEL_2",
+                ),
+            ],
+            assurance_level="LEVEL_2",
+            confidence_score=0.9,
+            conformal_set=ConformalSet(
+                coverage_level=0.95,
+                marginal_coverage=0.94,
+                calibration_error=0.01,
+                calibration_method="lac",
+                calibration_set_size=100,
+            ),
+            source_agreement=0.85,
+            needs_review=False,
+            review_priority=0.1,
+            created_at=datetime.now(UTC),
+            updated_at=datetime.now(UTC),
+            version=1,
+            uncertainty_summary=UncertaintyAwareProvenance(
+                total_uncertainty=0.10,
+            ),
+        )
+        assert record.uncertainty_summary is not None
+        assert record.uncertainty_summary.total_uncertainty == pytest.approx(0.10)
+
+    def test_existing_mock_data_still_valid(self) -> None:
+        """Imogen Heap mock data validates against updated schema."""
+        from music_attribution.seed.imogen_heap import _build_works
+
+        records = _build_works()
+        assert len(records) == 8
+        for rec in records:
+            # All existing records valid — uncertainty_summary is optional
+            assert rec.attribution_id is not None
