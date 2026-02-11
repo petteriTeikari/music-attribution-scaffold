@@ -7,11 +7,32 @@ services:
       POSTGRES_PASSWORD: musicattr_dev
     ports:
       - "5432:5432"
+    shm_size: "256mb"
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./scripts/init-extensions.sql:/docker-entrypoint-initdb.d/01-extensions.sql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U musicattr -d music_attribution"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  pgbouncer:
+    image: edoburu/pgbouncer:latest
+    environment:
+      DATABASE_URL: postgres://musicattr:musicattr_dev@postgres:5432/music_attribution
+      POOL_MODE: transaction
+      MAX_CLIENT_CONN: "200"
+      DEFAULT_POOL_SIZE: "20"
+      MIN_POOL_SIZE: "5"
+      AUTH_TYPE: scram-sha-256
+    ports:
+      - "6432:5432"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -p 5432 -U musicattr"]
       interval: 5s
       timeout: 5s
       retries: 5
