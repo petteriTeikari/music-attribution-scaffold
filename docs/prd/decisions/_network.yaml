@@ -12,8 +12,8 @@
 
 network:
   name: "Probabilistic PRD Decision Network"
-  version: "1.2.0"
-  last_updated: 2026-02-10
+  version: "1.3.1"
+  last_updated: 2026-02-11
   description: >
     Bayesian decision network for the Music Attribution Scaffold.
     5-level hierarchy (L1 Business → L5 Operations) with conditional
@@ -69,6 +69,11 @@ nodes:
     file: L2-architecture/artifact-decoupling-strategy.decision.yaml
     title: "Artifact Decoupling Strategy"
 
+  - id: ui_adaptation_strategy
+    level: L2_architecture
+    file: L2-architecture/ui-adaptation-strategy.decision.yaml
+    title: "UI Adaptation Strategy"
+
   # L3: Implementation Decisions
   - id: primary_database
     level: L3_implementation
@@ -104,6 +109,21 @@ nodes:
     level: L3_implementation
     file: L3-implementation/data-quality-strategy.decision.yaml
     title: "Data Quality & Validation Strategy"
+
+  - id: agentic_ui_framework
+    level: L3_implementation
+    file: L3-implementation/agentic-ui-framework.decision.yaml
+    title: "Agentic UI Framework"
+
+  - id: voice_agent_stack
+    level: L3_implementation
+    file: L3-implementation/voice-agent-stack.decision.yaml
+    title: "Voice Agent Stack"
+
+  - id: graph_rag_engine
+    level: L3_implementation
+    file: L3-implementation/graph-rag-engine.decision.yaml
+    title: "Graph RAG Engine"
 
   # L4: Deployment Decisions
   - id: compute_platform
@@ -412,3 +432,79 @@ edges:
     to: observability_stack
     influence: moderate
     rationale: "LLM usage drives need for Langfuse-style LLM tracing"
+
+  # --- Agentic UI / Voice / Graph RAG edges ---
+
+  # L1 → L2 edges (UI adaptation)
+  - from: target_market_segment
+    to: ui_adaptation_strategy
+    influence: moderate
+    rationale: "Creator segments need adaptive UI, API consumers don't need frontend"
+
+  # L2 → L2 cross-influences (UI adaptation)
+  - from: ai_framework_strategy
+    to: ui_adaptation_strategy
+    influence: moderate
+    rationale: "AI-driven UI adaptation requires LLM capabilities; no-LLM precludes malleable UI"
+
+  # L2 → L3 edges (UI adaptation → agentic UI)
+  - from: ui_adaptation_strategy
+    to: agentic_ui_framework
+    influence: moderate
+    rationale: "Malleable UI needs agentic framework, fixed layout doesn't"
+
+  # L3 → L3 edges (frontend → agentic UI)
+  - from: frontend_framework
+    to: agentic_ui_framework
+    influence: strong
+    rationale: "CopilotKit requires Next.js/React; non-React frameworks preclude it"
+
+  # L2 → L3 edges (API protocol → agentic UI)
+  - from: api_protocol
+    to: agentic_ui_framework
+    influence: moderate
+    rationale: "MCP-primary protocol strongly favors CopilotKit's native MCP integration"
+
+  # L2 → L3 edges (AI framework → agentic UI)
+  - from: ai_framework_strategy
+    to: agentic_ui_framework
+    influence: moderate
+    rationale: "No-LLM strategy eliminates agentic UI; orchestration frameworks pair with CoAgents"
+
+  # L3 → L3 edges (agentic UI → voice agent)
+  - from: agentic_ui_framework
+    to: voice_agent_stack
+    influence: moderate
+    rationale: "Agentic UI framework provides agent runtime that voice extends"
+
+  # L1 → L3 skip-connections (voice agent)
+  - from: target_market_segment
+    to: voice_agent_stack
+    influence: moderate
+    rationale: "Independent creators benefit from hands-free voice; API consumers don't need it"
+
+  - from: build_vs_buy_posture
+    to: voice_agent_stack
+    influence: moderate
+    rationale: "Managed services favor Vapi, custom builders prefer LiveKit"
+
+  # L3 → L3 edges (graph RAG dependencies)
+  - from: graph_strategy
+    to: graph_rag_engine
+    influence: strong
+    rationale: "Graph infrastructure directly determines viable RAG engines"
+
+  - from: vector_strategy
+    to: graph_rag_engine
+    influence: strong
+    rationale: "Vector search capability is prerequisite for RAG; pgvector favors LightRAG"
+
+  - from: llm_provider
+    to: graph_rag_engine
+    influence: moderate
+    rationale: "RAG engine needs LLM for summarization and query understanding"
+
+  - from: primary_database
+    to: graph_rag_engine
+    influence: moderate
+    rationale: "PostgreSQL enables LightRAG's native backend; SQLite limits options"

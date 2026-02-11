@@ -6,7 +6,7 @@ Human-readable synthesis of the Bayesian decision network with mermaid visualiza
 
 ## Network Topology
 
-The complete decision network: 26 nodes across 5 levels with conditional probability edges.
+The complete decision network: 30 nodes across 5 levels with conditional probability edges.
 
 ```mermaid
 %%{init: {'theme': 'base', 'themeVariables': {'background': '#fcfaf5', 'primaryColor': '#1E3A5F', 'lineColor': '#5C5C5C'}}}%%
@@ -24,6 +24,7 @@ flowchart TB
         SD[Service<br/>Decomposition]
         AFS[AI Framework<br/>Strategy]
         ADS[Artifact<br/>Decoupling]
+        UAS[UI Adaptation<br/>Strategy]
     end
 
     subgraph L3["L3: Implementation Decisions"]
@@ -34,6 +35,9 @@ flowchart TB
         FF[Frontend<br/>Framework]
         AS[Auth<br/>Strategy]
         DQS[Data Quality<br/>Strategy]
+        AUF[Agentic UI<br/>Framework]
+        VAS[Voice Agent<br/>Stack]
+        GRE[Graph RAG<br/>Engine]
     end
 
     subgraph L4["L4: Deployment Decisions"]
@@ -122,9 +126,36 @@ flowchart TB
     RP --> SG
     TMS --> SS
 
+    %% L1 → L2 (UI adaptation)
+    TMS --> UAS
+
+    %% L2 → L2 (UI adaptation)
+    AFS --> UAS
+
+    %% L2 → L3 (agentic UI)
+    UAS --> AUF
+    AP --> AUF
+    AFS --> AUF
+
+    %% L3 → L3 (agentic UI, voice, graph RAG)
+    FF --> AUF
+    AUF --> VAS
+    GS --> GRE
+    VS --> GRE
+    LLM --> GRE
+    PD --> GRE
+
+    %% L1 → L3 (voice agent)
+    TMS --> VAS
+    BVB --> VAS
+
     %% L2 → L5 skip
     AFS --> OS
 
+    style UAS fill:#2E7D7B,color:#fff
+    style AUF fill:#D4A03C,color:#000
+    style VAS fill:#D4A03C,color:#000
+    style GRE fill:#D4A03C,color:#000
     style BVB fill:#1E3A5F,color:#fff
     style TMS fill:#1E3A5F,color:#fff
     style RM fill:#1E3A5F,color:#fff
@@ -338,6 +369,90 @@ Same scaffold architecture, dramatically different instantiation. REST instead o
 
 ---
 
+## Archetype Comparison: Agentic UI Framework
+
+How four team archetypes distribute probability across the agentic UI decision:
+
+```mermaid
+%%{init: {'theme': 'base'}}%%
+xychart-beta
+    title "Agentic UI Framework — Archetype Probability Comparison"
+    x-axis ["CopilotKit+AG-UI", "Vercel AI SDK", "Custom Agent UI", "No Agentic UI"]
+    y-axis "Probability" 0 --> 0.5
+    bar [0.35, 0.25, 0.20, 0.20]
+    bar [0.40, 0.30, 0.05, 0.25]
+    bar [0.30, 0.20, 0.10, 0.40]
+    bar [0.40, 0.25, 0.20, 0.15]
+```
+
+| Color | Archetype |
+|-------|-----------|
+| Bar 1 | Engineer-Heavy Startup |
+| Bar 2 | Musician-First Team |
+| Bar 3 | Solo Hacker |
+| Bar 4 | Well-Funded Startup |
+
+CopilotKit dominates across all archetypes due to open-source governance and MCP integration. Solo hackers are most likely to skip agentic UI entirely (0.40). Musician-first teams favor turnkey solutions — CopilotKit (0.40) or Vercel AI SDK (0.30).
+
+---
+
+## Scenario Path: Agentic Music Attribution Demo
+
+The "golden path" for the frontend mockup with agentic UI, voice agent, and graph RAG:
+
+```mermaid
+%%{init: {'theme': 'base', 'themeVariables': {'background': '#fcfaf5', 'primaryColor': '#1E3A5F', 'lineColor': '#5C5C5C'}}}%%
+flowchart LR
+    subgraph L1["L1"]
+        BVB["Managed<br/>Services"]
+        TMS["Independent<br/>Creators"]
+    end
+
+    subgraph L2["L2"]
+        AP["MCP<br/>Primary"]
+        AFS["Direct API<br/>+ Pydantic"]
+        UAS["Malleable<br/>AI-Driven"]
+    end
+
+    subgraph L3["L3"]
+        PD["PostgreSQL<br/>Unified"]
+        GS["Apache<br/>AGE"]
+        VS["pgvector"]
+        FF["Next.js<br/>(React)"]
+        AUF["CopilotKit<br/>+ AG-UI"]
+        VAS["Vapi.ai<br/>Managed"]
+        GRE["LightRAG"]
+    end
+
+    TMS --> UAS --> AUF
+    TMS --> AP --> AUF
+    AFS --> AUF
+    FF --> AUF --> VAS
+    BVB --> VAS
+    GS --> GRE
+    VS --> GRE
+    PD --> GS
+    PD --> VS
+    PD --> GRE
+
+    style BVB fill:#1E3A5F,color:#fff
+    style TMS fill:#1E3A5F,color:#fff
+    style AP fill:#2E7D7B,color:#fff
+    style AFS fill:#2E7D7B,color:#fff
+    style UAS fill:#2E7D7B,color:#fff
+    style PD fill:#D4A03C,color:#000
+    style GS fill:#D4A03C,color:#000
+    style VS fill:#D4A03C,color:#000
+    style FF fill:#D4A03C,color:#000
+    style AUF fill:#D4A03C,color:#000
+    style VAS fill:#D4A03C,color:#000
+    style GRE fill:#D4A03C,color:#000
+```
+
+This scenario extends the Music Attribution MVP path with four new nodes. CopilotKit (AG-UI) provides the agentic UI layer on top of Next.js, Vapi.ai adds voice agent capability, and LightRAG powers graph-augmented retrieval using the existing PostgreSQL + AGE + pgvector infrastructure. The malleable UI strategy drives confidence-based field prioritization and co-evolutionary adaptation.
+
+---
+
 ## Volatility Heatmap
 
 Decision stability across the network:
@@ -371,16 +486,20 @@ mindmap
       Data Quality Strategy
       Schema Governance
       Artifact Decoupling
+      UI Adaptation Strategy
     Volatile
       Regulatory Posture
       AI Framework Strategy
       LLM Provider
+      Agentic UI Framework
+      Voice Agent Stack
+      Graph RAG Engine
 ```
 
 **Interpretation**:
 - **Stable** (12 decisions): Core architectural choices unlikely to change within 6 months. Review quarterly.
-- **Shifting** (11 decisions): Actively evolving areas where market or technology changes may shift probabilities. Review monthly. Includes data quality strategy, schema governance, and artifact decoupling nodes.
-- **Volatile** (3 decisions): High uncertainty zones — regulatory posture (EU AI Act timeline), AI framework strategy (ecosystem consolidation), and LLM provider (model capability leaps). Review biweekly.
+- **Shifting** (12 decisions): Actively evolving areas where market or technology changes may shift probabilities. Review monthly. Includes data quality strategy, schema governance, artifact decoupling, and UI adaptation strategy.
+- **Volatile** (6 decisions): High uncertainty zones — regulatory posture (EU AI Act timeline), AI framework strategy (ecosystem consolidation), LLM provider (model capability leaps), agentic UI framework (AG-UI protocol evolving), voice agent stack (platform consolidation), and graph RAG engine (new frameworks emerging weekly). Review biweekly.
 
 ---
 
@@ -450,6 +569,9 @@ Given **Neon** hosting (P=0.40):
 | Frontend | Next.js (0.35) | Next.js (0.45) | No Frontend (0.35) | Next.js (0.45) |
 | Auth | Custom JWT (0.40) | Supabase Auth (0.40) | API Key (0.40) | Managed Service (0.35) |
 | Data Quality | Composite (0.40) | Pandera (0.40) | Composite (0.35) | GX/Composite (0.35) |
+| Agentic UI | CopilotKit (0.35) | CopilotKit (0.40) | No Agentic (0.40) | CopilotKit (0.40) |
+| Voice Agent | LiveKit (0.35) | Vapi/None (0.40/0.45) | None (0.60) | Vapi/LiveKit (0.30) |
+| Graph RAG | LightRAG (0.35) | None (0.40) | None (0.55) | MS GraphRAG (0.30) |
 
 ### L4-L5 Decisions (Infrastructure)
 
@@ -469,22 +591,44 @@ Given **Neon** hosting (P=0.40):
 
 | Metric | Value |
 |--------|-------|
-| Total nodes | 26 |
+| Total nodes | 30 |
 | L1 Business nodes | 4 |
-| L2 Architecture nodes | 5 |
-| L3 Implementation nodes | 7 |
+| L2 Architecture nodes | 6 |
+| L3 Implementation nodes | 10 |
 | L4 Deployment nodes | 5 |
 | L5 Operations nodes | 5 |
-| Total edges | 49 |
-| Same-level edges | 3 |
-| Adjacent-level edges | 26 |
-| Skip-connection edges | 20 |
+| Total edges | 60 |
+| Same-level edges | 15 |
+| Adjacent-level edges | 21 |
+| Skip-connection edges | 24 |
 | Team archetypes | 4 |
 | Domain overlays | 2 (+ 1 planned) |
-| Scenario compositions | 3 |
-| Stable decisions | 12 (46%) |
-| Shifting decisions | 11 (42%) |
-| Volatile decisions | 3 (12%) |
+| Scenario compositions | 4 |
+| Stable decisions | 12 (40%) |
+| Shifting decisions | 12 (40%) |
+| Volatile decisions | 6 (20%) |
+
+---
+
+## Research Influences
+
+Academic grounding for UI/UX decision nodes. Full details in [`../research-influences/agentic-ux-research.md`](../research-influences/agentic-ux-research.md).
+
+### Concept → Library → PRD Node Matrix
+
+| Concept | Paper | Library | Maturity | PRD Node(s) |
+|---------|-------|---------|----------|-------------|
+| Bidirectional Context Loop | DuetUI (2509.13444) | CopilotKit shared state + AG-UI | HIGH | `agentic_ui_framework` |
+| Cognitive Oversight | Deep Cognition (2507.15759) | LangGraph `interrupt()` + CoAgents | HIGH | `agentic_ui_framework` |
+| Preference-Aligned UI | AlignUI (2601.17614) | None (research frontier) | LOW | `ui_adaptation_strategy` |
+| Specification-Driven UI | SpecifyUI (2509.07334) | Google A2UI (v0.9) | HIGH | `ui_adaptation_strategy`, `agentic_ui_framework` |
+| Just-in-Time Objectives | Poppins (Stanford) | None (research frontier) | LOW | `ui_adaptation_strategy` |
+| Progressive Scaffolding | DuetUI + SpecifyUI | CopilotKit tiers | MEDIUM | `ui_adaptation_strategy`, `agentic_ui_framework` |
+| Transparent Reasoning | Deep Cognition (2507.15759) | Vercel AI SDK + assistant-ui | HIGH | `agentic_ui_framework` |
+| Real-Time Guidance | ICIS 2025 (Grau & Blohm) | Design principles | MEDIUM | `voice_agent_stack` |
+| Malleable Browser Spaces | Orca (UCSD) | Research prototype | LOW | `agentic_ui_framework` |
+
+**4 of 9 concepts** have production-ready library support. **3 concepts** are research frontiers tracked on the watchlist. This ratio ensures the PRD is grounded in what's buildable today while keeping aspirational concepts visible for future iterations.
 
 ---
 
@@ -498,3 +642,4 @@ Given **Neon** hosting (P=0.40):
 - [`../../planning/probabilistic-prd-design.md`](../../planning/probabilistic-prd-design.md) — Design rationale
 - [`../../planning/quality-tooling-contextualization.md`](../../planning/quality-tooling-contextualization.md) — Quality tooling analysis with conditional probabilities
 - [`../../planning/artifact-decoupling-contextualization.md`](../../planning/artifact-decoupling-contextualization.md) — 4-artifact decoupling (code/config/data/prompts) for reproducibility
+- [`../research-influences/agentic-ux-research.md`](../research-influences/agentic-ux-research.md) — Academic UX research mapped to PRD nodes

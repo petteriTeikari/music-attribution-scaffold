@@ -40,6 +40,16 @@ repos:
         pass_filenames: false
         args: [src/]
 
+  # Frontend CSS lint — catch broken Tailwind v4 patterns
+  - repo: local
+    hooks:
+      - id: css-token-lint
+        name: css-token-lint
+        entry: bash -c 'grep -rl "text-\[var(--text-" frontend/src/ --include="*.tsx" --include="*.ts" --exclude-dir=__tests__ && echo "ERROR: Found text-[var(--text-*)] — use Tailwind utilities (text-xl, text-2xl) instead. See .claude/memory/css-tailwind-v4-pitfalls.md" && exit 1 || exit 0'
+        language: system
+        files: '^frontend/src/.*\.tsx?$'
+        pass_filenames: false
+
   # Security checks
   - repo: https://github.com/Yelp/detect-secrets
     rev: v1.5.0

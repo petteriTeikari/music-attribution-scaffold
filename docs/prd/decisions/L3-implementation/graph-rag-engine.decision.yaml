@@ -1,0 +1,250 @@
+# Graph RAG Engine
+#
+# Selects the retrieval-augmented generation engine that
+# combines graph traversal with vector similarity for
+# context-aware LLM responses.
+
+decision_id: graph_rag_engine
+title: "Graph RAG Engine"
+description: >
+  Determines the engine for graph-augmented retrieval that
+  powers LLM-assisted attribution queries. Graph RAG combines
+  structured relationship traversal (artist → credit → track →
+  release → label) with semantic vector search to provide
+  rich, contextual answers about attribution confidence,
+  provenance chains, and rights ownership. Critical for the
+  chat/agentic UI where users ask natural language questions
+  about complex attribution networks.
+
+decision_level: L3_implementation
+status: active
+last_updated: 2026-02-11
+
+options:
+  - option_id: lightrag
+    title: "LightRAG"
+    description: >
+      Python-native graph RAG framework (28.2k stars, EMNLP 2025
+      paper). Full PostgreSQL + Apache AGE + pgvector support.
+      Workspace-based multi-tenancy, incremental knowledge graph
+      updates, dual-level retrieval (entity-level + community-level).
+      Aligns with existing PostgreSQL + AGE stack.
+    prior_probability: 0.35
+    status: recommended
+    complements:
+      - "graph_strategy.apache_age"
+      - "vector_strategy.pgvector"
+      - "primary_database.postgresql_unified"
+
+  - option_id: microsoft_graphrag
+    title: "Microsoft GraphRAG"
+    description: >
+      Microsoft's graph RAG implementation using community detection
+      (Leiden algorithm) and hierarchical summarization. Strong at
+      global queries over large corpora. Heavier infrastructure,
+      designed for enterprise scale. Less PostgreSQL-native than
+      LightRAG — typically uses Neo4j or custom graph stores.
+    prior_probability: 0.20
+    status: viable
+    constraints:
+      - "Heavier infrastructure requirements"
+      - "Less PostgreSQL-native"
+      - "Higher LLM cost for community summarization"
+
+  - option_id: llamaindex_property_graph
+    title: "LlamaIndex PropertyGraphIndex"
+    description: >
+      LlamaIndex's property graph integration for RAG. Supports
+      multiple graph stores (Neo4j, Nebula, FalkorDB) and vector
+      stores. Part of the broader LlamaIndex ecosystem with
+      query pipelines, agents, and observability. Good if already
+      using LlamaIndex for other RAG needs.
+    prior_probability: 0.20
+    status: viable
+    complements:
+      - "ai_framework_strategy.orchestration_framework"
+
+  - option_id: no_graph_rag
+    title: "No Graph RAG (Direct Queries)"
+    description: >
+      No graph RAG engine. LLM queries use direct SQL/Cypher
+      results or simple vector search without graph-augmented
+      retrieval. Simpler, but loses the contextual richness
+      of graph-traversed context windows. Viable for MVP with
+      structured API responses only.
+    prior_probability: 0.25
+    status: viable
+
+conditional_on:
+  - parent_decision_id: graph_strategy
+    influence_strength: strong
+    conditional_table:
+      - given_parent_option: apache_age
+        then_probabilities:
+          lightrag: 0.55
+          microsoft_graphrag: 0.15
+          llamaindex_property_graph: 0.15
+          no_graph_rag: 0.15
+      - given_parent_option: sql_joins_only
+        then_probabilities:
+          lightrag: 0.15
+          microsoft_graphrag: 0.10
+          llamaindex_property_graph: 0.15
+          no_graph_rag: 0.60
+      - given_parent_option: neo4j_dedicated
+        then_probabilities:
+          lightrag: 0.10
+          microsoft_graphrag: 0.35
+          llamaindex_property_graph: 0.35
+          no_graph_rag: 0.20
+      - given_parent_option: application_layer_graph
+        then_probabilities:
+          lightrag: 0.30
+          microsoft_graphrag: 0.20
+          llamaindex_property_graph: 0.20
+          no_graph_rag: 0.30
+
+  - parent_decision_id: vector_strategy
+    influence_strength: strong
+    conditional_table:
+      - given_parent_option: pgvector
+        then_probabilities:
+          lightrag: 0.50
+          microsoft_graphrag: 0.15
+          llamaindex_property_graph: 0.15
+          no_graph_rag: 0.20
+      - given_parent_option: dedicated_vdb
+        then_probabilities:
+          lightrag: 0.15
+          microsoft_graphrag: 0.30
+          llamaindex_property_graph: 0.35
+          no_graph_rag: 0.20
+      - given_parent_option: sqlite_vec
+        then_probabilities:
+          lightrag: 0.25
+          microsoft_graphrag: 0.10
+          llamaindex_property_graph: 0.20
+          no_graph_rag: 0.45
+      - given_parent_option: no_vector_search
+        then_probabilities:
+          lightrag: 0.05
+          microsoft_graphrag: 0.05
+          llamaindex_property_graph: 0.05
+          no_graph_rag: 0.85
+
+  - parent_decision_id: llm_provider
+    influence_strength: moderate
+    conditional_table:
+      - given_parent_option: anthropic_primary
+        then_probabilities:
+          lightrag: 0.40
+          microsoft_graphrag: 0.20
+          llamaindex_property_graph: 0.20
+          no_graph_rag: 0.20
+      - given_parent_option: openai_primary
+        then_probabilities:
+          lightrag: 0.30
+          microsoft_graphrag: 0.30
+          llamaindex_property_graph: 0.20
+          no_graph_rag: 0.20
+      - given_parent_option: multi_provider
+        then_probabilities:
+          lightrag: 0.35
+          microsoft_graphrag: 0.25
+          llamaindex_property_graph: 0.25
+          no_graph_rag: 0.15
+      - given_parent_option: open_source_local
+        then_probabilities:
+          lightrag: 0.35
+          microsoft_graphrag: 0.15
+          llamaindex_property_graph: 0.20
+          no_graph_rag: 0.30
+
+  - parent_decision_id: primary_database
+    influence_strength: moderate
+    conditional_table:
+      - given_parent_option: postgresql_unified
+        then_probabilities:
+          lightrag: 0.50
+          microsoft_graphrag: 0.15
+          llamaindex_property_graph: 0.15
+          no_graph_rag: 0.20
+      - given_parent_option: supabase
+        then_probabilities:
+          lightrag: 0.30
+          microsoft_graphrag: 0.15
+          llamaindex_property_graph: 0.25
+          no_graph_rag: 0.30
+      - given_parent_option: sqlite_turso
+        then_probabilities:
+          lightrag: 0.15
+          microsoft_graphrag: 0.10
+          llamaindex_property_graph: 0.25
+          no_graph_rag: 0.50
+      - given_parent_option: cockroachdb
+        then_probabilities:
+          lightrag: 0.20
+          microsoft_graphrag: 0.20
+          llamaindex_property_graph: 0.25
+          no_graph_rag: 0.35
+
+archetype_weights:
+  engineer_heavy_startup:
+    probability_overrides:
+      lightrag: 0.35
+      microsoft_graphrag: 0.25
+      llamaindex_property_graph: 0.20
+      no_graph_rag: 0.20
+    rationale: "Engineers can evaluate and deploy any option. LightRAG for PostgreSQL alignment."
+
+  musician_first_team:
+    probability_overrides:
+      lightrag: 0.30
+      microsoft_graphrag: 0.10
+      llamaindex_property_graph: 0.20
+      no_graph_rag: 0.40
+    rationale: "Graph RAG adds complexity. If used, LightRAG is most turnkey with PostgreSQL."
+
+  solo_hacker:
+    probability_overrides:
+      lightrag: 0.25
+      microsoft_graphrag: 0.05
+      llamaindex_property_graph: 0.15
+      no_graph_rag: 0.55
+    rationale: "Solo likely skips graph RAG or uses LightRAG for simplicity."
+
+  well_funded_startup:
+    probability_overrides:
+      lightrag: 0.30
+      microsoft_graphrag: 0.30
+      llamaindex_property_graph: 0.20
+      no_graph_rag: 0.20
+    rationale: "Can invest in any option. Microsoft GraphRAG viable for enterprise scale."
+
+volatility:
+  classification: volatile
+  last_assessed: 2026-02-11
+  next_review: 2026-03-11
+  change_drivers:
+    - "LightRAG PostgreSQL backend stability"
+    - "Microsoft GraphRAG v2 features"
+    - "LlamaIndex property graph improvements"
+    - "New graph RAG frameworks (nano-graphrag, fast-graphrag)"
+    - "LLM context window growth reducing RAG need"
+
+domain_applicability:
+  music_attribution: 1.0
+  dpp_traceability: 0.9
+  generic_graph_rag: 1.0
+
+tags:
+  - implementation
+  - graph
+  - rag
+  - llm
+  - knowledge-graph
+
+references:
+  - "https://github.com/HKUDS/LightRAG"
+  - "https://github.com/microsoft/graphrag"
+  - "https://docs.llamaindex.ai/en/stable/examples/property_graph/"
