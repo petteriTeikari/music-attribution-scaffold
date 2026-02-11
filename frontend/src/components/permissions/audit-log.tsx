@@ -39,19 +39,19 @@ export function AuditLog({ entries }: AuditLogProps) {
 
   return (
     <div>
-      {/* Filter controls */}
-      <div className="mb-[var(--space-4)] flex items-center gap-[var(--space-2)]">
-        <span className="text-[var(--text-sm)] text-[var(--color-label)]">
+      {/* Filter controls — editorial underline tabs */}
+      <div className="mb-[var(--space-4)] flex items-center gap-[var(--space-4)]">
+        <span className="editorial-caps text-[var(--text-xs)] text-[var(--color-label)]">
           Filter:
         </span>
         {["all", "ai_platform", "rights_org", "individual"].map((type) => (
           <button
             key={type}
             onClick={() => setFilter(type)}
-            className={`rounded-[var(--radius-full)] px-[var(--space-3)] py-[var(--space-1)] text-[var(--text-xs)] font-medium transition-colors duration-[var(--transition-fast)] ${
+            className={`editorial-caps text-[var(--text-xs)] pb-[var(--space-1)] transition-colors duration-[var(--transition-fast)] border-b-2 ${
               filter === type
-                ? "bg-[var(--color-primary)] text-white"
-                : "border border-[var(--color-border)] text-[var(--color-label)] hover:bg-[var(--color-surface-secondary)]"
+                ? "border-[var(--color-accent)] text-[var(--color-heading)]"
+                : "border-transparent text-[var(--color-label)] hover:text-[var(--color-heading)]"
             }`}
           >
             {type === "all" ? "All" : REQUESTER_TYPE_LABELS[type] ?? type}
@@ -60,17 +60,17 @@ export function AuditLog({ entries }: AuditLogProps) {
       </div>
 
       {/* Log entries */}
-      <div className="space-y-[var(--space-2)]">
+      <div className="divide-y divide-[var(--color-divider)]">
         {filtered.map((entry) => {
           const color = getResultColorVar(entry.result);
           return (
             <div
               key={entry.id}
-              className="flex items-start gap-[var(--space-3)] rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface-elevated)] p-[var(--space-3)]"
+              className="flex items-start gap-[var(--space-3)] py-[var(--space-3)]"
             >
-              {/* Result indicator */}
+              {/* Result indicator — square */}
               <span
-                className="mt-1 h-2 w-2 flex-shrink-0 rounded-full"
+                className="mt-[var(--space-1)] h-2 w-2 flex-shrink-0"
                 style={{ backgroundColor: color }}
                 aria-hidden="true"
               />
@@ -81,11 +81,8 @@ export function AuditLog({ entries }: AuditLogProps) {
                     {entry.requester_name}
                   </span>
                   <span
-                    className="rounded-[var(--radius-full)] px-[var(--space-2)] py-[var(--space-1)] text-[var(--text-xs)]"
-                    style={{
-                      backgroundColor: `color-mix(in srgb, ${color} 12%, transparent)`,
-                      color,
-                    }}
+                    className="editorial-caps text-[var(--text-xs)]"
+                    style={{ color }}
                   >
                     {entry.result.replace(/_/g, " ")}
                   </span>
@@ -99,7 +96,7 @@ export function AuditLog({ entries }: AuditLogProps) {
                 </p>
               </div>
 
-              <span className="flex-shrink-0 text-[var(--text-xs)] text-[var(--color-muted)] whitespace-nowrap">
+              <span className="flex-shrink-0 text-[var(--text-xs)] text-[var(--color-muted)] whitespace-nowrap data-mono">
                 {formatTimestamp(entry.timestamp)}
               </span>
             </div>

@@ -15,9 +15,9 @@ export function AssuranceBadge({ level, className = "" }: AssuranceBadgeProps) {
 
   return (
     <span
-      className={`inline-flex items-center gap-[var(--space-1)] rounded-[var(--radius-sm)] px-[var(--space-2)] py-[var(--space-1)] text-[var(--text-xs)] font-medium ${className}`}
+      className={`inline-flex items-center editorial-caps text-[var(--text-xs)] border-b-2 pb-[1px] ${className}`}
       style={{
-        backgroundColor: `color-mix(in srgb, ${color} 12%, transparent)`,
+        borderColor: color,
         color,
       }}
     >

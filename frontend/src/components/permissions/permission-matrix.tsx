@@ -48,13 +48,13 @@ export function PermissionMatrix({
       <table className="w-full text-[var(--text-sm)]">
         <thead>
           <tr className="border-b border-[var(--color-border)]">
-            <th className="py-[var(--space-3)] pr-[var(--space-4)] text-left font-semibold text-[var(--color-heading)]">
+            <th className="py-[var(--space-3)] pr-[var(--space-4)] text-left editorial-caps text-[var(--text-xs)] text-[var(--color-label)]">
               Permission
             </th>
-            <th className="py-[var(--space-3)] px-[var(--space-4)] text-left font-semibold text-[var(--color-heading)]">
+            <th className="py-[var(--space-3)] px-[var(--space-4)] text-left editorial-caps text-[var(--text-xs)] text-[var(--color-label)]">
               Status
             </th>
-            <th className="py-[var(--space-3)] px-[var(--space-4)] text-left font-semibold text-[var(--color-heading)]">
+            <th className="py-[var(--space-3)] px-[var(--space-4)] text-left editorial-caps text-[var(--text-xs)] text-[var(--color-label)]">
               Details
             </th>
           </tr>
@@ -77,35 +77,30 @@ export function PermissionMatrix({
                 </td>
                 <td className="py-[var(--space-3)] px-[var(--space-4)]">
                   <span
-                    className="inline-flex items-center gap-[var(--space-1)] rounded-[var(--radius-full)] px-[var(--space-3)] py-[var(--space-1)] text-[var(--text-xs)] font-medium"
-                    style={{
-                      backgroundColor: `color-mix(in srgb, ${config.colorVar} 12%, transparent)`,
-                      color: config.colorVar,
-                    }}
+                    className="inline-flex items-center gap-[var(--space-1)] editorial-caps text-[var(--text-xs)]"
+                    style={{ color: config.colorVar }}
                   >
                     <span
-                      className="h-1.5 w-1.5 rounded-full"
+                      className="h-1.5 w-1.5"
                       style={{ backgroundColor: config.colorVar }}
                       aria-hidden="true"
                     />
                     {config.label}
                   </span>
                 </td>
-                <td className="py-[var(--space-3)] px-[var(--space-4)] text-[var(--color-muted)]">
+                <td className="py-[var(--space-3)] px-[var(--space-4)] text-[var(--color-muted)] text-[var(--text-xs)]">
                   {perm.attribution_requirement && (
-                    <span className="text-[var(--text-xs)]">
-                      {perm.attribution_requirement}
-                    </span>
+                    <span>{perm.attribution_requirement}</span>
                   )}
                   {perm.royalty_rate !== null && (
-                    <span className="text-[var(--text-xs)]">
+                    <span className="data-mono">
                       Royalty: {(perm.royalty_rate * 100).toFixed(1)}%
                     </span>
                   )}
                   {perm.conditions.length > 0 &&
                     !perm.attribution_requirement &&
                     perm.royalty_rate === null && (
-                      <span className="text-[var(--text-xs)]">
+                      <span>
                         {perm.conditions.map((c) => c.condition_type.replace(/_/g, " ")).join(", ")}
                       </span>
                     )}

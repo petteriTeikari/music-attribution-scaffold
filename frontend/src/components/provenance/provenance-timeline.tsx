@@ -8,15 +8,6 @@ interface ProvenanceTimelineProps {
   className?: string;
 }
 
-const EVENT_ICONS: Record<string, string> = {
-  FETCH: "↓",
-  RESOLVE: "⊕",
-  SCORE: "◉",
-  REVIEW: "✎",
-  UPDATE: "↻",
-  FEEDBACK: "✉",
-};
-
 function formatTimestamp(iso: string): string {
   const date = new Date(iso);
   return date.toLocaleDateString("en-US", {
@@ -88,10 +79,10 @@ export function ProvenanceTimeline({
 
   return (
     <div className={`relative ${className}`} aria-label="Provenance timeline">
-      {/* Vertical line */}
+      {/* Vertical accent line as timeline spine */}
       <div
-        className="absolute left-4 top-0 bottom-0 w-px"
-        style={{ backgroundColor: "var(--color-border)" }}
+        className="absolute left-[7px] top-0 bottom-0 accent-line-v"
+        style={{ opacity: 0.4 }}
         aria-hidden="true"
       />
 
@@ -99,23 +90,22 @@ export function ProvenanceTimeline({
         {events.map((event, index) => {
           const color = getEventColor(event);
           const confidence = confidences[index];
-          const icon = EVENT_ICONS[event.event_type] ?? "•";
 
           return (
-            <li key={`${event.timestamp}-${index}`} className="relative pl-10">
-              {/* Timeline dot */}
+            <li key={`${event.timestamp}-${index}`} className="relative pl-[var(--space-8)]">
+              {/* Timeline marker — accent square instead of dot */}
               <div
-                className="absolute left-2.5 top-1 flex h-3 w-3 items-center justify-center rounded-full text-[8px]"
-                style={{ backgroundColor: color, color: "white" }}
+                className="absolute left-0 top-[var(--space-1)] accent-square-sm"
+                style={{ backgroundColor: color }}
                 aria-hidden="true"
               />
 
-              <div className="rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface-elevated)] p-[var(--space-3)]">
+              <div className="border-b border-[var(--color-divider)] pb-[var(--space-3)]">
                 <div className="flex items-start justify-between gap-[var(--space-2)]">
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-[var(--space-2)]">
                       <span
-                        className="text-[var(--text-xs)] font-semibold uppercase tracking-wider"
+                        className="editorial-caps text-[var(--text-xs)]"
                         style={{ color }}
                       >
                         {event.event_type}
@@ -130,12 +120,12 @@ export function ProvenanceTimeline({
                   </div>
 
                   <div className="flex flex-col items-end gap-[var(--space-1)]">
-                    <span className="text-[var(--text-xs)] text-[var(--color-muted)] whitespace-nowrap">
+                    <span className="text-[var(--text-xs)] text-[var(--color-muted)] whitespace-nowrap data-mono">
                       {formatTimestamp(event.timestamp)}
                     </span>
                     {confidence !== null && (
                       <span
-                        className="text-[var(--text-sm)] font-bold"
+                        className="editorial-display text-[var(--text-base)]"
                         style={{ color }}
                       >
                         {Math.round(confidence * 100)}%

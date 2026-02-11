@@ -9,15 +9,13 @@ interface EmptyStateProps {
 
 export function EmptyState({ title, description, action }: EmptyStateProps) {
   return (
-    <div className="rounded-[var(--radius-lg)] border border-[var(--color-border)] bg-[var(--color-surface-elevated)] p-[var(--space-12)] text-center">
-      {/* Simple illustration: a subtle circle with a question mark */}
-      <div className="mx-auto mb-[var(--space-6)] flex h-16 w-16 items-center justify-center rounded-full bg-[var(--color-surface-secondary)]">
-        <span className="text-[var(--text-2xl)] text-[var(--color-muted)]">
-          ?
-        </span>
+    <div className="py-[var(--space-20)] text-center">
+      {/* Accent line as visual marker */}
+      <div className="mx-auto mb-[var(--space-6)] w-16">
+        <div className="accent-line" />
       </div>
 
-      <h3 className="text-[var(--text-lg)] font-semibold text-[var(--color-heading)]">
+      <h3 className="editorial-display text-[var(--text-xl)] text-[var(--color-heading)]">
         {title}
       </h3>
       <p className="mt-[var(--space-2)] text-[var(--text-sm)] text-[var(--color-label)]">
@@ -27,7 +25,7 @@ export function EmptyState({ title, description, action }: EmptyStateProps) {
       {action && (
         <button
           onClick={action.onClick}
-          className="mt-[var(--space-6)] rounded-[var(--radius-md)] bg-[var(--color-primary)] px-[var(--space-6)] py-[var(--space-3)] text-[var(--text-sm)] font-medium text-white transition-colors duration-[var(--transition-fast)] hover:bg-[var(--color-primary-hover)]"
+          className="mt-[var(--space-6)] text-[var(--text-sm)] font-medium text-[var(--color-heading)] underline underline-offset-4 decoration-[var(--color-accent)] decoration-2 hover:text-[var(--color-accent)] transition-colors duration-[var(--transition-fast)]"
         >
           {action.label}
         </button>

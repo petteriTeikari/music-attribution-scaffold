@@ -3,45 +3,26 @@
 import { useAtom } from "jotai";
 import { themeAtom, type Theme } from "@/lib/stores/theme";
 
-const THEME_OPTIONS: { value: Theme; label: string; icon: string }[] = [
-  { value: "light", label: "Light", icon: "☀" },
-  { value: "dark", label: "Dark", icon: "☾" },
-  { value: "system", label: "System", icon: "⚙" },
-];
+const CYCLE_ORDER: Theme[] = ["light", "dark", "system"];
+
+const ICONS: Record<Theme, string> = {
+  light: "\u2600",
+  dark: "\u263E",
+  system: "\u2699",
+};
 
 export function ThemeToggle() {
   const [theme, setTheme] = useAtom(themeAtom);
 
+  const next = CYCLE_ORDER[(CYCLE_ORDER.indexOf(theme) + 1) % CYCLE_ORDER.length];
+
   return (
-    <div
-      className="flex items-center rounded-[var(--radius-full)] border border-[var(--color-border)] bg-[var(--color-surface-secondary)] p-[var(--space-1)]"
-      role="radiogroup"
-      aria-label="Theme selection"
+    <button
+      onClick={() => setTheme(next)}
+      className="flex h-6 w-6 items-center justify-center text-[var(--text-sm)] text-[var(--color-label)] hover:text-[var(--color-heading)] transition-colors duration-[var(--transition-fast)]"
+      aria-label={`Theme: ${theme}. Click for ${next}`}
     >
-      {THEME_OPTIONS.map((option) => (
-        <button
-          key={option.value}
-          role="radio"
-          aria-checked={theme === option.value}
-          aria-label={option.label}
-          onClick={() => setTheme(option.value)}
-          className={`
-            flex items-center justify-center rounded-[var(--radius-full)]
-            px-[var(--space-3)] py-[var(--space-1)]
-            text-[var(--text-sm)] transition-all duration-[var(--transition-fast)]
-            ${
-              theme === option.value
-                ? "bg-[var(--color-surface-elevated)] text-[var(--color-heading)] shadow-[var(--shadow-sm)]"
-                : "text-[var(--color-muted)] hover:text-[var(--color-body)]"
-            }
-          `}
-        >
-          <span className="mr-[var(--space-1)]" aria-hidden="true">
-            {option.icon}
-          </span>
-          <span className="hidden sm:inline">{option.label}</span>
-        </button>
-      ))}
-    </div>
+      <span aria-hidden="true">{ICONS[theme]}</span>
+    </button>
   );
 }

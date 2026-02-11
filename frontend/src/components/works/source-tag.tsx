@@ -20,14 +20,11 @@ export function SourceTag({ source, className = "" }: SourceTagProps) {
 
   return (
     <span
-      className={`inline-flex items-center gap-[var(--space-1)] rounded-[var(--radius-sm)] border px-[var(--space-2)] py-[var(--space-1)] text-[var(--text-xs)] ${className}`}
-      style={{
-        borderColor: `color-mix(in srgb, ${color} 30%, transparent)`,
-        color,
-      }}
+      className={`inline-flex items-center gap-[var(--space-1)] text-[var(--text-xs)] ${className}`}
+      style={{ color }}
     >
       <span
-        className="h-1.5 w-1.5 rounded-full"
+        className="h-1.5 w-1.5"
         style={{ backgroundColor: color }}
         aria-hidden="true"
       />

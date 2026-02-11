@@ -53,12 +53,12 @@ export function NotificationBadge() {
     <div className="relative">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="relative rounded-[var(--radius-md)] border border-[var(--color-border)] p-[var(--space-2)] text-[var(--color-label)] hover:bg-[var(--color-surface-secondary)] transition-colors"
+        className="relative flex h-6 w-6 items-center justify-center text-[var(--color-label)] hover:text-[var(--color-heading)] transition-colors"
         aria-label={`Notifications (${unreadCount} unread)`}
       >
         <svg
-          width="16"
-          height="16"
+          width="14"
+          height="14"
           viewBox="0 0 16 16"
           fill="none"
           aria-hidden="true"
@@ -71,8 +71,8 @@ export function NotificationBadge() {
         </svg>
         {unreadCount > 0 && (
           <span
-            className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full text-[10px] font-bold text-white"
-            style={{ backgroundColor: "var(--color-confidence-low)" }}
+            className="absolute -right-0.5 -top-0.5 flex h-3 w-3 items-center justify-center text-[8px] font-bold text-white"
+            style={{ backgroundColor: "var(--color-accent)" }}
           >
             {unreadCount}
           </span>
@@ -81,9 +81,9 @@ export function NotificationBadge() {
 
       {/* Dropdown */}
       {isOpen && (
-        <div className="absolute right-0 top-full mt-[var(--space-2)] w-80 rounded-[var(--radius-lg)] border border-[var(--color-border)] bg-[var(--color-surface-elevated)] shadow-[var(--shadow-lg)] z-50">
+        <div className="absolute left-full top-0 ml-[var(--space-2)] w-72 border border-[var(--color-border)] bg-[var(--color-surface-elevated)] shadow-[var(--shadow-lg)] z-50">
           <div className="p-[var(--space-3)] border-b border-[var(--color-divider)]">
-            <h3 className="text-[var(--text-sm)] font-semibold text-[var(--color-heading)]">
+            <h3 className="editorial-caps text-[var(--text-xs)] text-[var(--color-heading)]">
               Notifications
             </h3>
           </div>
@@ -93,7 +93,7 @@ export function NotificationBadge() {
                 key={notif.id}
                 className={`p-[var(--space-3)] border-b border-[var(--color-divider)] last:border-0 ${
                   !notif.read
-                    ? "bg-[var(--color-primary-muted)]"
+                    ? "border-l-2 border-l-[var(--color-accent)]"
                     : ""
                 }`}
               >

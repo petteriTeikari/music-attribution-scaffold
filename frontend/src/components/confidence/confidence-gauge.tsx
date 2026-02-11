@@ -22,9 +22,9 @@ const SIZE_CONFIG: Record<
   GaugeSize,
   { width: number; strokeWidth: number; fontSize: string; labelSize: string }
 > = {
-  sm: { width: 48, strokeWidth: 4, fontSize: "var(--text-sm)", labelSize: "var(--text-xs)" },
-  md: { width: 80, strokeWidth: 6, fontSize: "var(--text-xl)", labelSize: "var(--text-sm)" },
-  lg: { width: 140, strokeWidth: 8, fontSize: "var(--text-3xl)", labelSize: "var(--text-base)" },
+  sm: { width: 48, strokeWidth: 3, fontSize: "var(--text-sm)", labelSize: "var(--text-xs)" },
+  md: { width: 80, strokeWidth: 4, fontSize: "var(--text-xl)", labelSize: "var(--text-sm)" },
+  lg: { width: 140, strokeWidth: 5, fontSize: "var(--text-3xl)", labelSize: "var(--text-base)" },
 };
 
 export function ConfidenceGauge({
@@ -41,10 +41,9 @@ export function ConfidenceGauge({
 
   const radius = (config.width - config.strokeWidth) / 2;
   const circumference = 2 * Math.PI * radius;
-  // Arc spans 270 degrees (¾ circle)
+  // Arc spans 270 degrees (3/4 circle)
   const arcLength = (270 / 360) * circumference;
   const filledLength = arcLength * displayScore;
-  const dashOffset = arcLength - filledLength;
 
   // Mount animation
   useEffect(() => {
@@ -104,7 +103,7 @@ export function ConfidenceGauge({
         viewBox={`0 0 ${config.width} ${config.width}`}
         className="transform -rotate-[135deg]"
       >
-        {/* Background track */}
+        {/* Background track — thin, minimal */}
         <circle
           cx={config.width / 2}
           cy={config.width / 2}
@@ -113,7 +112,7 @@ export function ConfidenceGauge({
           stroke="var(--color-border)"
           strokeWidth={config.strokeWidth}
           strokeDasharray={`${arcLength} ${circumference}`}
-          strokeLinecap="round"
+          strokeLinecap="butt"
         />
         {/* Filled arc */}
         {displayScore > 0 && (
@@ -126,11 +125,11 @@ export function ConfidenceGauge({
             strokeWidth={config.strokeWidth}
             strokeDasharray={`${filledLength} ${circumference}`}
             strokeDashoffset={0}
-            strokeLinecap="round"
+            strokeLinecap="butt"
           />
         )}
       </svg>
-      {/* Center score */}
+      {/* Center score — editorial display font */}
       <div
         className="absolute flex flex-col items-center justify-center"
         style={{
@@ -139,7 +138,7 @@ export function ConfidenceGauge({
         }}
       >
         <span
-          className="font-bold"
+          className="editorial-display"
           style={{ fontSize: config.fontSize, color }}
         >
           {Math.round(displayScore * 100)}
@@ -148,7 +147,7 @@ export function ConfidenceGauge({
       {/* Label below */}
       {showLabel && (
         <span
-          className="mt-[var(--space-1)] font-medium"
+          className="mt-[var(--space-1)] editorial-caps"
           style={{
             fontSize: config.labelSize,
             color,
@@ -174,14 +173,11 @@ export function ConfidenceBadge({
 
   return (
     <span
-      className={`inline-flex items-center gap-[var(--space-1)] rounded-[var(--radius-full)] px-[var(--space-3)] py-[var(--space-1)] text-[var(--text-xs)] font-medium ${className}`}
-      style={{
-        backgroundColor: `color-mix(in srgb, ${color} 12%, transparent)`,
-        color,
-      }}
+      className={`inline-flex items-center gap-[var(--space-2)] editorial-caps text-[var(--text-xs)] ${className}`}
+      style={{ color }}
     >
       <span
-        className="h-1.5 w-1.5 rounded-full"
+        className="h-1.5 w-1.5"
         style={{ backgroundColor: color }}
         aria-hidden="true"
       />

@@ -4,8 +4,8 @@ import { useAtom } from "jotai";
 import { userRoleAtom, type UserRole } from "@/lib/stores/mode";
 
 const ROLES: { value: UserRole; label: string }[] = [
-  { value: "artist", label: "Artist" },
-  { value: "query", label: "Query" },
+  { value: "artist", label: "A" },
+  { value: "query", label: "Q" },
 ];
 
 export function RoleToggle() {
@@ -13,7 +13,7 @@ export function RoleToggle() {
 
   return (
     <div
-      className="flex items-center rounded-[var(--radius-full)] border border-[var(--color-border)] bg-[var(--color-surface-secondary)] p-[var(--space-1)]"
+      className="flex flex-col items-center gap-[var(--space-1)]"
       role="radiogroup"
       aria-label="User role"
     >
@@ -29,24 +29,23 @@ export function RoleToggle() {
             key={option.value}
             role="radio"
             aria-checked={isActive}
+            aria-label={option.value === "artist" ? "Artist mode" : "Query mode"}
             onClick={() => setRole(option.value)}
             className={`
-              rounded-[var(--radius-full)]
-              px-[var(--space-4)] py-[var(--space-1)]
-              text-[var(--text-sm)] font-medium
+              flex h-6 w-6 items-center justify-center
+              text-[10px] font-bold
               transition-all duration-[var(--transition-fast)]
               ${
                 isActive
-                  ? "shadow-[var(--shadow-sm)]"
+                  ? ""
                   : "text-[var(--color-muted)] hover:text-[var(--color-body)]"
               }
             `}
             style={
               isActive
                 ? {
-                    backgroundColor: `${accentColor}15`,
                     color: accentColor,
-                    borderColor: accentColor,
+                    borderBottom: `2px solid ${accentColor}`,
                   }
                 : undefined
             }
