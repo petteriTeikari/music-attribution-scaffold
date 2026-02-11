@@ -8,10 +8,12 @@ from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 from music_attribution.api.routes.attribution import router as attribution_router
 from music_attribution.api.routes.health import router as health_router
 from music_attribution.api.routes.permissions import router as permissions_router
+from music_attribution.chat.agui_endpoint import router as copilotkit_router
 from music_attribution.db.engine import async_session_factory, create_async_engine_factory
 
 logger = logging.getLogger(__name__)
@@ -49,11 +51,21 @@ def create_app() -> FastAPI:
         lifespan=lifespan,
     )
 
+    # CORS for frontend dev server
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=os.environ.get("CORS_ORIGINS", "http://localhost:3000").split(","),
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+
     # Kept for backward compatibility with existing tests
     app.state.attributions = {}
 
     app.include_router(health_router)
     app.include_router(attribution_router, prefix="/api/v1")
     app.include_router(permissions_router, prefix="/api/v1")
+    app.include_router(copilotkit_router, prefix="/api/v1")
 
     return app

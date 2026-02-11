@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<plan name="agentic-ui" version="1.0" created="2026-02-11">
+  <metadata>
+    <branch>feat/agentic-ui</branch>
+    <closes_issues>6, 18</closes_issues>
+    <description>
+      Agentic UI implementation using CopilotKit + AG-UI protocol + PydanticAI
+      for intelligent, adaptive HITL annotation in music attribution.
+    </description>
+  </metadata>
+
+  <phases>
+    <phase id="0" name="PRD and Infrastructure">
+      <task id="0.1" name="Update PRD decision nodes" status="complete">
+        <files>
+          <modify>docs/prd/decisions/L5-operations/observability-stack.decision.yaml</modify>
+          <modify>docs/prd/decisions/L3-implementation/agentic-ui-framework.decision.yaml</modify>
+          <modify>docs/prd/decisions/_network.yaml</modify>
+        </files>
+      </task>
+      <task id="0.2" name="Add Python dependencies" status="complete">
+        <files><modify>pyproject.toml</modify></files>
+      </task>
+      <task id="0.3" name="Add frontend dependencies" status="complete">
+        <files><modify>frontend/package.json</modify></files>
+      </task>
+      <task id="0.4" name="PostHog provider" status="complete">
+        <files>
+          <create>frontend/src/lib/analytics/posthog-provider.tsx</create>
+          <modify>frontend/src/app/layout.tsx</modify>
+        </files>
+      </task>
+    </phase>
+
+    <phase id="1" name="PydanticAI Backend Agent">
+      <task id="1.1" name="AttributionAgentState" depends_on="">
+        <files>
+          <create>src/music_attribution/chat/state.py</create>
+          <create>tests/unit/test_chat_state.py</create>
+        </files>
+      </task>
+      <task id="1.2" name="PydanticAI agent with 4 tools" depends_on="1.1">
+        <files>
+          <create>src/music_attribution/chat/agent.py</create>
+          <create>tests/unit/test_chat_agent.py</create>
+        </files>
+      </task>
+      <task id="1.3" name="AG-UI FastAPI endpoint" depends_on="1.2">
+        <files>
+          <create>src/music_attribution/chat/agui_endpoint.py</create>
+          <create>tests/unit/test_agui_endpoint.py</create>
+          <modify>src/music_attribution/api/app.py</modify>
+        </files>
+      </task>
+    </phase>
+
+    <phase id="2" name="CopilotKit Frontend">
+      <task id="2.1" name="CopilotKit provider" depends_on="1.3">
+        <files>
+          <create>frontend/src/lib/copilot/copilot-provider.tsx</create>
+          <modify>frontend/src/app/layout.tsx</modify>
+        </files>
+      </task>
+      <task id="2.2" name="CopilotSidebar editorial styling" depends_on="2.1">
+        <files>
+          <create>frontend/src/components/chat/copilot-sidebar.tsx</create>
+          <modify>frontend/src/components/layout/app-shell.tsx</modify>
+          <modify>frontend/src/app/globals.css</modify>
+        </files>
+      </task>
+      <task id="2.3" name="useCopilotReadable context hook" depends_on="2.1">
+        <files>
+          <create>frontend/src/hooks/use-attribution-context.ts</create>
+        </files>
+      </task>
+      <task id="2.4" name="useCopilotAction hooks" depends_on="2.1, 2.3">
+        <files>
+          <create>frontend/src/hooks/use-agent-actions.ts</create>
+        </files>
+      </task>
+    </phase>
+
+    <phase id="3" name="Active Learning Review Flow">
+      <task id="3.1" name="Agent-assisted review queue" depends_on="2.2, 2.4">
+        <files>
+          <create>frontend/src/components/review/agent-review-queue.tsx</create>
+          <modify>frontend/src/app/review/page.tsx</modify>
+        </files>
+      </task>
+      <task id="3.2" name="Confidence explanation panel" depends_on="2.4, 1.2">
+        <files>
+          <create>frontend/src/components/confidence/confidence-explanation.tsx</create>
+        </files>
+      </task>
+      <task id="3.3" name="Agent-guided feedback flow" depends_on="3.1, 1.2">
+        <files>
+          <create>frontend/src/components/feedback/agent-feedback-flow.tsx</create>
+        </files>
+      </task>
+    </phase>
+
+    <phase id="4" name="Adaptive UI and Proficiency">
+      <task id="4.1" name="PostHog event tracking" depends_on="0.4">
+        <files>
+          <create>frontend/src/lib/analytics/events.ts</create>
+        </files>
+      </task>
+      <task id="4.2" name="Proficiency model" depends_on="4.1">
+        <files>
+          <create>frontend/src/lib/stores/proficiency.ts</create>
+        </files>
+      </task>
+      <task id="4.3" name="Adaptive tooltips" depends_on="4.2">
+        <files>
+          <create>frontend/src/components/ui/adaptive-tooltip.tsx</create>
+        </files>
+      </task>
+      <task id="4.4" name="Feature flag-driven UI density" depends_on="4.2, 0.4">
+        <files>
+          <create>frontend/src/hooks/use-feature-flags.ts</create>
+        </files>
+      </task>
+    </phase>
+
+    <phase id="5" name="Integration">
+      <task id="5.1" name="E2E tests" depends_on="all">
+        <files>
+          <create>tests/integration/test_agent_e2e.py</create>
+          <create>frontend/src/__tests__/agent-integration.test.tsx</create>
+        </files>
+      </task>
+      <task id="5.2" name="Build verification and docs" depends_on="5.1">
+        <files>
+          <modify>Makefile</modify>
+        </files>
+      </task>
+    </phase>
+  </phases>
+</plan>

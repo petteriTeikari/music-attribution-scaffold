@@ -297,6 +297,47 @@ body::before {
 }
 
 /* ========================================================================
+   COPILOTKIT OVERRIDES — editorial styling
+   ======================================================================== */
+.agent-sidebar-wrapper {
+  --copilot-kit-primary-color: var(--color-accent);
+  --copilot-kit-background-color: var(--color-surface);
+  --copilot-kit-secondary-color: var(--color-surface-secondary);
+  --copilot-kit-separator-color: var(--color-border);
+  --copilot-kit-response-button-background-color: var(--color-surface-secondary);
+  --copilot-kit-response-button-color: var(--color-heading);
+}
+
+.agent-sidebar-wrapper [data-copilotkit-sidebar] {
+  font-family: var(--font-sans);
+  border-left: 1px solid var(--color-border);
+  background-color: var(--color-surface);
+}
+
+.agent-sidebar-wrapper [data-copilotkit-header] {
+  font-family: var(--font-display);
+  font-weight: 400;
+  background-color: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.agent-sidebar-wrapper [data-copilotkit-message] {
+  font-family: var(--font-sans);
+  color: var(--color-body);
+}
+
+.agent-sidebar-wrapper [data-copilotkit-input] textarea {
+  font-family: var(--font-sans);
+  background-color: var(--color-surface-secondary);
+  border: 1px solid var(--color-border);
+  color: var(--color-heading);
+}
+
+.agent-sidebar-wrapper [data-copilotkit-input] textarea::placeholder {
+  color: var(--color-muted);
+}
+
+/* ========================================================================
    TAILWIND THEME EXTENSIONS
    ======================================================================== */
 @theme {

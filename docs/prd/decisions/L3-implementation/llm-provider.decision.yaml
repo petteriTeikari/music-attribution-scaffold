@@ -1,64 +1,105 @@
 # LLM Provider
 #
 # Which LLM provider(s) the system uses for entity resolution,
-# confidence assessment, and conversational features.
+# confidence assessment, conversational features, and agentic tools.
 
 decision_id: llm_provider
 title: "LLM Provider"
 description: >
   Selects the primary LLM provider for AI-powered features: entity
-  resolution, confidence narrative generation, conversational gap-filling,
-  and permission reasoning. This decision interacts with AI framework
-  strategy and affects cost structure, latency, and capability ceiling.
+  resolution, confidence narrative generation, agentic tool-calling,
+  conversational gap-filling, and permission reasoning. This decision
+  interacts with AI framework strategy and affects cost structure,
+  latency, tool-calling reliability, and capability ceiling.
+  Music attribution agents need reliable structured tool use and
+  domain reasoning, not raw benchmark performance.
 
 decision_level: L3_implementation
 status: active
-last_updated: 2026-02-10
+last_updated: 2026-02-11
 
 options:
   - option_id: anthropic_primary
     title: "Anthropic (Claude) Primary"
     description: >
-      Claude as the primary LLM. Strong structured output, long
-      context, good reasoning. MCP-native integration. Higher
-      cost per token but better output quality for complex tasks.
-    prior_probability: 0.35
-    status: recommended
+      Claude as the primary LLM. Best-in-class tool-calling reliability
+      for agentic workflows (multiple practitioner sources confirm).
+      MCP-native integration. Prompt caching reduces cost 90% on
+      repeated system prompts. Tiered models: Haiku 4.5 ($1/$5 MTok,
+      fast agent default), Sonnet 4.5 ($3/$15, production reasoning),
+      Opus 4.6 ($5/$25, complex tasks). With prompt caching, Haiku
+      cached input drops to $0.10/MTok — competitive with GPT-4o-mini.
+      PydanticAI string: "anthropic:claude-haiku-4-5".
+    prior_probability: 0.45
+    status: selected
+    complements:
+      - "ai_framework_strategy.direct_api_pydantic"
+      - "agentic_ui_framework.copilotkit_agui"
 
   - option_id: openai_primary
     title: "OpenAI (GPT) Primary"
     description: >
-      GPT-4 family as primary LLM. Broadest ecosystem, most
-      third-party integrations, function calling maturity.
-      Strong developer tooling (Assistants API, embeddings).
-    prior_probability: 0.30
+      GPT-4.1/5 family as primary LLM. Broadest ecosystem, most
+      third-party integrations. GPT-4.1 mini ($0.40/$1.60) and
+      GPT-5 mini ($0.25/$2.00) offer excellent cost efficiency.
+      Strong function calling. Newer Responses API alongside
+      Chat Completions. Less reliable than Claude for complex
+      multi-step tool chains per practitioner consensus.
+      PydanticAI string: "openai:gpt-4.1-mini".
+    prior_probability: 0.25
     status: viable
 
-  - option_id: multi_provider
-    title: "Multi-Provider (Router)"
+  - option_id: google_gemini
+    title: "Google (Gemini) Primary"
     description: >
-      Use multiple providers with routing logic (e.g., Claude for
-      reasoning, GPT-4o for structured output, local models for
-      embeddings). Maximum flexibility, higher complexity.
-    prior_probability: 0.20
+      Gemini 2.5 Flash ($0.30/$2.50) and Pro ($1.25/$10.00).
+      Cheapest viable option with generous free tier for prototyping.
+      Gemini 3 Pro/Flash in preview. Best value for simple tasks.
+      However, tool-calling reliability lags behind Claude and GPT
+      for complex multi-step agent workflows — the gap is real and
+      well-documented by practitioners. Best used as a secondary
+      model for simple routing, not primary agent backbone.
+      PydanticAI string: "google-gla:gemini-2.5-flash".
+    prior_probability: 0.10
     status: viable
     constraints:
-      - "Provider abstraction layer required"
+      - "Tool-calling reliability gap for complex agent workflows"
+      - "Less predictable structured output vs Claude/GPT"
+
+  - option_id: multi_provider
+    title: "Multi-Provider (Tiered Routing)"
+    description: >
+      Use multiple providers with tiered routing: cheap/fast models
+      for simple tasks (Haiku, GPT-4.1-mini, Gemini Flash), powerful
+      models for complex reasoning (Sonnet, GPT-4.1, Gemini Pro),
+      and premium models for high-stakes decisions (Opus, GPT-5).
+      PydanticAI FallbackModel provides native failover. Semantic
+      routing can reduce costs 70%+ by matching query complexity
+      to model capability. Requires routing strategy decision.
+    prior_probability: 0.15
+    status: viable
+    constraints:
+      - "Routing strategy decision required (see llm_routing_strategy)"
       - "Multiple API key management"
       - "Cost tracking across providers"
+      - "Increased testing surface (each model may behave differently)"
 
   - option_id: open_source_local
     title: "Open Source / Local Models"
     description: >
-      Self-hosted open-source models (Llama, Mistral, Qwen) via
-      Ollama, vLLM, or similar. Maximum data privacy, no API costs,
-      but requires GPU infrastructure and model management.
-    prior_probability: 0.15
+      Self-hosted open-source models (Llama 4, Mistral Large,
+      Qwen 3, DeepSeek V3) via Ollama, vLLM, or similar.
+      Maximum data privacy, no API costs, but requires GPU
+      infrastructure and model management. Quality gap on
+      complex reasoning and tool-calling tasks. Best for
+      embeddings and simple classification, not primary agent.
+    prior_probability: 0.05
     status: experimental
     constraints:
       - "GPU infrastructure (A100/H100 or consumer GPU for small models)"
       - "Model management and updating"
-      - "Quality gap on complex reasoning tasks"
+      - "Tool-calling quality gap on complex reasoning tasks"
+      - "Latency overhead for first-token on consumer hardware"
 
 conditional_on:
   - parent_decision_id: ai_framework_strategy
@@ -66,26 +107,30 @@ conditional_on:
     conditional_table:
       - given_parent_option: direct_api_pydantic
         then_probabilities:
-          anthropic_primary: 0.40
-          openai_primary: 0.30
+          anthropic_primary: 0.45
+          openai_primary: 0.25
+          google_gemini: 0.10
           multi_provider: 0.15
-          open_source_local: 0.15
+          open_source_local: 0.05
       - given_parent_option: lightweight_sdk
         then_probabilities:
           anthropic_primary: 0.35
-          openai_primary: 0.35
-          multi_provider: 0.20
-          open_source_local: 0.10
+          openai_primary: 0.30
+          google_gemini: 0.15
+          multi_provider: 0.15
+          open_source_local: 0.05
       - given_parent_option: orchestration_framework
         then_probabilities:
           anthropic_primary: 0.25
-          openai_primary: 0.35
+          openai_primary: 0.30
+          google_gemini: 0.10
           multi_provider: 0.30
-          open_source_local: 0.10
+          open_source_local: 0.05
       - given_parent_option: no_llm
         then_probabilities:
           anthropic_primary: 0.00
           openai_primary: 0.00
+          google_gemini: 0.00
           multi_provider: 0.00
           open_source_local: 1.00
 
@@ -94,65 +139,141 @@ conditional_on:
     conditional_table:
       - given_parent_option: custom_build
         then_probabilities:
-          anthropic_primary: 0.30
-          openai_primary: 0.25
+          anthropic_primary: 0.35
+          openai_primary: 0.20
+          google_gemini: 0.10
           multi_provider: 0.20
-          open_source_local: 0.25
+          open_source_local: 0.15
       - given_parent_option: managed_services
         then_probabilities:
-          anthropic_primary: 0.35
-          openai_primary: 0.35
-          multi_provider: 0.20
-          open_source_local: 0.10
+          anthropic_primary: 0.40
+          openai_primary: 0.30
+          google_gemini: 0.10
+          multi_provider: 0.15
+          open_source_local: 0.05
       - given_parent_option: saas_maximalist
         then_probabilities:
           anthropic_primary: 0.35
-          openai_primary: 0.40
-          multi_provider: 0.20
+          openai_primary: 0.35
+          google_gemini: 0.15
+          multi_provider: 0.10
           open_source_local: 0.05
 
 archetype_weights:
   engineer_heavy_startup:
     probability_overrides:
-      anthropic_primary: 0.30
-      openai_primary: 0.25
+      anthropic_primary: 0.35
+      openai_primary: 0.20
+      google_gemini: 0.10
       multi_provider: 0.25
-      open_source_local: 0.20
-    rationale: "Engineers explore all options. Multi-provider and local models viable."
+      open_source_local: 0.10
+    rationale: "Engineers explore all options. Multi-provider routing is viable investment."
 
   musician_first_team:
     probability_overrides:
-      anthropic_primary: 0.35
-      openai_primary: 0.40
-      multi_provider: 0.15
-      open_source_local: 0.10
-    rationale: "Single provider simplicity. OpenAI has broader ecosystem awareness."
+      anthropic_primary: 0.40
+      openai_primary: 0.30
+      google_gemini: 0.15
+      multi_provider: 0.10
+      open_source_local: 0.05
+    rationale: "Single provider simplicity. Claude's tool reliability matters for HITL workflows."
 
   solo_hacker:
     probability_overrides:
-      anthropic_primary: 0.35
-      openai_primary: 0.35
-      multi_provider: 0.10
-      open_source_local: 0.20
-    rationale: "Single provider for simplicity. Local models for cost-sensitive prototyping."
+      anthropic_primary: 0.40
+      openai_primary: 0.25
+      google_gemini: 0.20
+      multi_provider: 0.05
+      open_source_local: 0.10
+    rationale: "Single provider. Gemini free tier attractive for cost-conscious prototyping."
 
   well_funded_startup:
     probability_overrides:
       anthropic_primary: 0.35
-      openai_primary: 0.30
-      multi_provider: 0.25
-      open_source_local: 0.10
-    rationale: "Can afford multi-provider strategy. Anthropic for quality, OpenAI for breadth."
+      openai_primary: 0.25
+      google_gemini: 0.05
+      multi_provider: 0.30
+      open_source_local: 0.05
+    rationale: "Can afford multi-provider strategy. Anthropic for quality, routing for cost optimization."
+
+research_influences:
+  - paper: "LLM Selection for AI Agents"
+    source: "Softcery Engineering Blog, 2026"
+    concept: tool_calling_reliability
+    prd_implication: >
+      Practitioner consensus: Claude receives "the most consistent praise
+      from people who spend their time building agents." Tool-calling
+      reliability is more important than raw benchmark performance for
+      agentic workflows. Validates anthropic_primary as default.
+
+  - paper: "The Future of AI is Model Routing"
+    source: "IDC Research, 2026"
+    concept: semantic_model_routing
+    prd_implication: >
+      70% of top AI enterprises will use multi-model routing by 2028.
+      Real-world cost reduction of 70%+ by routing simple queries to
+      cheap models. Validates multi_provider option for scaling.
+
+  - paper: "Anthropic Prompt Caching"
+    source: "Anthropic Documentation, 2026"
+    concept: prompt_caching_economics
+    prd_implication: >
+      90% cost reduction and 85% latency reduction for repeated context.
+      Agent system prompts + tool definitions are ideal caching candidates.
+      Cached Haiku 4.5 input at $0.10/MTok is competitive with GPT-4o-mini.
+      Strongly favors single-provider Anthropic strategy over multi-provider
+      routing for cost optimization.
+
+pricing_comparison:
+  budget_tier:
+    - model: "Claude Haiku 4.5"
+      input_per_mtok: 1.00
+      output_per_mtok: 5.00
+      cached_input_per_mtok: 0.10
+      pydantic_ai_string: "anthropic:claude-haiku-4-5"
+    - model: "GPT-4.1 mini"
+      input_per_mtok: 0.40
+      output_per_mtok: 1.60
+      pydantic_ai_string: "openai:gpt-4.1-mini"
+    - model: "GPT-5 mini"
+      input_per_mtok: 0.25
+      output_per_mtok: 2.00
+      pydantic_ai_string: "openai:gpt-5-mini"
+    - model: "Gemini 2.5 Flash"
+      input_per_mtok: 0.30
+      output_per_mtok: 2.50
+      pydantic_ai_string: "google-gla:gemini-2.5-flash"
+  production_tier:
+    - model: "Claude Sonnet 4.5"
+      input_per_mtok: 3.00
+      output_per_mtok: 15.00
+      cached_input_per_mtok: 0.30
+      pydantic_ai_string: "anthropic:claude-sonnet-4-5"
+    - model: "GPT-4.1"
+      input_per_mtok: 2.00
+      output_per_mtok: 8.00
+      pydantic_ai_string: "openai:gpt-4.1"
+    - model: "Gemini 2.5 Pro"
+      input_per_mtok: 1.25
+      output_per_mtok: 10.00
+      pydantic_ai_string: "google-gla:gemini-2.5-pro"
+  premium_tier:
+    - model: "Claude Opus 4.6"
+      input_per_mtok: 5.00
+      output_per_mtok: 25.00
+      pydantic_ai_string: "anthropic:claude-opus-4-6"
 
 volatility:
   classification: volatile
-  last_assessed: 2026-02-10
-  next_review: 2026-03-10
+  last_assessed: 2026-02-11
+  next_review: 2026-03-11
   change_drivers:
-    - "Model capability leaps (Claude 4.5, GPT-5)"
-    - "Pricing changes across providers"
-    - "Open-source model quality convergence"
+    - "Model capability leaps (Claude 4.6, GPT-5, Gemini 3)"
+    - "Pricing changes and prompt caching economics"
+    - "Open-source model quality convergence (Llama 4, DeepSeek V3)"
     - "Data residency/privacy requirements from regulations"
+    - "Tool-calling benchmark standardization"
+    - "Google Gemini tool-calling reliability improvements"
 
 domain_applicability:
   music_attribution: 1.0
@@ -164,6 +285,14 @@ tags:
   - llm
   - ai
   - provider
+  - anthropic
+  - openai
+  - gemini
+  - pricing
 
 references:
   - "../attribution-engine/toc-attribution-engine.md"
+  - "https://platform.claude.com/docs/en/about-claude/pricing"
+  - "https://openai.com/api/pricing/"
+  - "https://ai.google.dev/gemini-api/docs/pricing"
+  - "https://ai.pydantic.dev/models/overview/"

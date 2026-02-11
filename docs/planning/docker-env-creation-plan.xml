@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<plan>
+  <metadata>
+    <title>Docker Dev Environment &amp; Integration Test Fixes</title>
+    <created>2026-02-11</created>
+    <branch>feat/agentic-ui</branch>
+    <description>
+      Fix integration test failures and ensure all 37 integration tests
+      pass locally with Docker. The core issue is NOT missing infrastructure —
+      docker-compose.dev.yml and testcontainers already provide PostgreSQL 17
+      with pgvector. The issue is two test files missing pgvector extension
+      initialization before table creation. Additionally, add a streamlined
+      make target for running integration tests.
+    </description>
+  </metadata>
+
+  <diagnosis>
+    <finding id="F1" severity="high">
+      tests/integration/etl/test_persistence.py creates tables via
+      Base.metadata.create_all() WITHOUT first running
+      CREATE EXTENSION vector. The entity_embeddings table uses HALFVEC(768)
+      which requires the vector extension. 6 tests ERROR.
+    </finding>
+    <finding id="F2" severity="high">
+      tests/integration/test_migrations.py runs Alembic upgrade head
+      WITHOUT first creating the vector extension. The migration creates
+      entity_embeddings with HALFVEC(768). 3 tests FAIL.
+    </finding>
+    <finding id="F3" severity="low">
+      tests/integration/etl/test_musicbrainz_live.py test_fetch_known_recording_abbey_road
+      hits live MusicBrainz API — recording ID may have changed. Flaky by nature.
+      1 test FAILS intermittently.
+    </finding>
+    <finding id="F4" severity="info">
+      test_migrations_real_pg.py already works correctly (5/5 pass) because
+      it has _init_extensions fixture. This is the pattern to copy.
+    </finding>
+    <finding id="F5" severity="medium">
+      No single make target runs integration tests conveniently.
+      Users must know to pass -m integration flag.
+    </finding>
+  </diagnosis>
+
+  <tasks>
+    <task id="1.1" phase="1" status="PENDING">
+      <title>Fix test_persistence.py pgvector extension</title>
+      <description>
+        Add _init_extensions fixture (CREATE EXTENSION vector, uuid-ossp, pg_trgm)
+        to the db_url fixture in tests/integration/etl/test_persistence.py,
+        BEFORE Base.metadata.create_all(). Follow the pattern from
+        test_migrations_real_pg.py.
+      </description>
+      <tdd_spec>
+        <red>Run: pytest tests/integration/etl/test_persistence.py -m integration -v</red>
+        <green>All 6 tests pass (previously 6 ERRORs from HALFVEC undefined)</green>
+      </tdd_spec>
+      <files>
+        <modify>tests/integration/etl/test_persistence.py</modify>
+      </files>
+    </task>
+
+    <task id="1.2" phase="1" status="PENDING">
+      <title>Fix test_migrations.py pgvector extension</title>
+      <description>
+        Add _init_extensions fixture to tests/integration/test_migrations.py
+        that runs CREATE EXTENSION vector before Alembic migrations.
+        The alembic_config fixture should depend on _init_extensions.
+      </description>
+      <tdd_spec>
+        <red>Run: pytest tests/integration/test_migrations.py -m integration -v</red>
+        <green>All 4 tests pass (previously 3 FAIL from HALFVEC undefined)</green>
+      </tdd_spec>
+      <files>
+        <modify>tests/integration/test_migrations.py</modify>
+      </files>
+    </task>
+
+    <task id="1.3" phase="1" status="PENDING">
+      <title>Fix MusicBrainz live test flakiness</title>
+      <description>
+        Update the recording ID in test_fetch_known_recording_abbey_road
+        or mark it as xfail(reason="live API, recording IDs may change").
+        This test hits the real MusicBrainz API and should be resilient
+        to catalog changes.
+      </description>
+      <tdd_spec>
+        <red>Run: pytest tests/integration/etl/test_musicbrainz_live.py -m integration -v</red>
+        <green>Both tests pass or the flaky one is marked xfail</green>
+      </tdd_spec>
+      <files>
+        <modify>tests/integration/etl/test_musicbrainz_live.py</modify>
+      </files>
+    </task>
+
+    <task id="2.1" phase="2" status="PENDING">
+      <title>Add make test-integration target</title>
+      <description>
+        Add a convenient Makefile target that runs integration tests:
+        make test-integration → .venv/bin/python -m pytest tests/ -m integration -v --timeout=120
+        Document in README or CLAUDE.md.
+      </description>
+      <tdd_spec>
+        <red>make test-integration should exist and run integration tests</red>
+        <green>Target runs, all 37 integration tests pass (0 errors, 0 failures)</green>
+      </tdd_spec>
+      <files>
+        <modify>Makefile</modify>
+      </files>
+    </task>
+
+    <task id="2.2" phase="2" status="PENDING">
+      <title>Verify all 37 integration tests pass</title>
+      <description>
+        Final verification: run pytest tests/ -m integration -v and confirm
+        37 passed, 0 failed, 0 errors. This validates the complete
+        integration test suite works with testcontainers + Docker daemon.
+      </description>
+      <tdd_spec>
+        <red>pytest tests/ -m integration -v shows failures</red>
+        <green>37 passed, 0 failed, 0 errors</green>
+      </tdd_spec>
+      <files/>
+    </task>
+  </tasks>
+
+  <notes>
+    <note>
+      docker-compose.dev.yml already provides PostgreSQL 17 + pgvector + pgBouncer + Valkey.
+      testcontainers[postgres] already spins up disposable PG instances per test module.
+      No new Docker infrastructure is needed — just fixture fixes.
+    </note>
+    <note>
+      The test_migrations_real_pg.py file (5/5 pass) is the reference implementation
+      showing the correct pattern: _init_extensions fixture creates vector, uuid-ossp,
+      pg_trgm extensions BEFORE running Alembic migrations.
+    </note>
+  </notes>
+</plan>

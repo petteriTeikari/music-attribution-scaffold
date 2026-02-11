@@ -47,13 +47,24 @@ options:
       - "Budget for Datadog pricing ($15-30/host/month+)"
       - "Vendor lock-in on dashboard definitions"
 
+  - option_id: posthog_sentry
+    title: "PostHog + Sentry"
+    description: >
+      PostHog for product analytics, feature flags, session replay,
+      and A/B experiments. Sentry for error tracking and performance
+      monitoring. PostHog free tier: 1M events/month, 5K session
+      recordings. Sentry self-hosted includes all features.
+      NOTE: Highlight.io shut down Feb 28, 2026 (LaunchDarkly acquisition).
+    prior_probability: 0.30
+    status: recommended
+
   - option_id: minimal_logging
     title: "Minimal (Structured Logging Only)"
     description: >
       Structured JSON logging to stdout, consumed by platform log
       aggregation. No dedicated metrics, tracing, or dashboards.
       Sufficient for early-stage MVPs.
-    prior_probability: 0.30
+    prior_probability: 0.20
     status: viable
 
 conditional_on:
@@ -62,83 +73,94 @@ conditional_on:
     conditional_table:
       - given_parent_option: custom_build
         then_probabilities:
-          langfuse_plus_platform: 0.20
-          grafana_stack: 0.40
-          datadog: 0.15
-          minimal_logging: 0.25
+          langfuse_plus_platform: 0.15
+          grafana_stack: 0.35
+          datadog: 0.10
+          posthog_sentry: 0.25
+          minimal_logging: 0.15
       - given_parent_option: managed_services
         then_probabilities:
-          langfuse_plus_platform: 0.35
-          grafana_stack: 0.20
+          langfuse_plus_platform: 0.25
+          grafana_stack: 0.15
           datadog: 0.15
-          minimal_logging: 0.30
+          posthog_sentry: 0.25
+          minimal_logging: 0.20
       - given_parent_option: saas_maximalist
         then_probabilities:
-          langfuse_plus_platform: 0.30
+          langfuse_plus_platform: 0.20
           grafana_stack: 0.10
-          datadog: 0.20
-          minimal_logging: 0.40
+          datadog: 0.15
+          posthog_sentry: 0.30
+          minimal_logging: 0.25
 
   - parent_decision_id: ai_framework_strategy
     influence_strength: moderate
     conditional_table:
       - given_parent_option: direct_api_pydantic
         then_probabilities:
-          langfuse_plus_platform: 0.35
-          grafana_stack: 0.25
-          datadog: 0.15
-          minimal_logging: 0.25
+          langfuse_plus_platform: 0.25
+          grafana_stack: 0.20
+          datadog: 0.10
+          posthog_sentry: 0.30
+          minimal_logging: 0.15
       - given_parent_option: lightweight_sdk
         then_probabilities:
-          langfuse_plus_platform: 0.35
-          grafana_stack: 0.25
-          datadog: 0.15
-          minimal_logging: 0.25
+          langfuse_plus_platform: 0.25
+          grafana_stack: 0.20
+          datadog: 0.10
+          posthog_sentry: 0.30
+          minimal_logging: 0.15
       - given_parent_option: orchestration_framework
         then_probabilities:
-          langfuse_plus_platform: 0.40
-          grafana_stack: 0.25
-          datadog: 0.15
-          minimal_logging: 0.20
+          langfuse_plus_platform: 0.30
+          grafana_stack: 0.20
+          datadog: 0.10
+          posthog_sentry: 0.25
+          minimal_logging: 0.15
       - given_parent_option: no_llm
         then_probabilities:
           langfuse_plus_platform: 0.10
-          grafana_stack: 0.30
-          datadog: 0.20
-          minimal_logging: 0.40
+          grafana_stack: 0.25
+          datadog: 0.15
+          posthog_sentry: 0.20
+          minimal_logging: 0.30
 
 archetype_weights:
   engineer_heavy_startup:
     probability_overrides:
-      langfuse_plus_platform: 0.25
-      grafana_stack: 0.40
-      datadog: 0.15
-      minimal_logging: 0.20
-    rationale: "Engineers build Grafana dashboards and appreciate open-source stack."
+      langfuse_plus_platform: 0.20
+      grafana_stack: 0.30
+      datadog: 0.10
+      posthog_sentry: 0.25
+      minimal_logging: 0.15
+    rationale: "Engineers build Grafana dashboards and appreciate open-source stack. PostHog for product analytics."
 
   musician_first_team:
     probability_overrides:
-      langfuse_plus_platform: 0.30
-      grafana_stack: 0.10
-      datadog: 0.10
-      minimal_logging: 0.50
-    rationale: "Minimal logging until there's a real need. Langfuse if using LLMs."
+      langfuse_plus_platform: 0.20
+      grafana_stack: 0.05
+      datadog: 0.05
+      posthog_sentry: 0.35
+      minimal_logging: 0.35
+    rationale: "PostHog free tier for analytics and feature flags. Minimal logging as fallback."
 
   solo_hacker:
     probability_overrides:
-      langfuse_plus_platform: 0.25
+      langfuse_plus_platform: 0.15
       grafana_stack: 0.05
       datadog: 0.05
-      minimal_logging: 0.65
-    rationale: "Structured logging to stdout. Langfuse free tier for LLM tracing."
+      posthog_sentry: 0.30
+      minimal_logging: 0.45
+    rationale: "PostHog free tier for analytics. Structured logging to stdout as baseline."
 
   well_funded_startup:
     probability_overrides:
-      langfuse_plus_platform: 0.25
-      grafana_stack: 0.25
-      datadog: 0.35
-      minimal_logging: 0.15
-    rationale: "Datadog for enterprise SLAs and comprehensive visibility."
+      langfuse_plus_platform: 0.20
+      grafana_stack: 0.20
+      datadog: 0.25
+      posthog_sentry: 0.25
+      minimal_logging: 0.10
+    rationale: "Datadog for enterprise SLAs, PostHog for product analytics. Best of both worlds."
 
 volatility:
   classification: stable

@@ -29,8 +29,8 @@ options:
       MCP integration (shipped Jan 2026), CoAgents for LangGraph
       interop, generative UI via tool-to-component mapping.
       Requires Next.js. Strong community, rapid iteration.
-    prior_probability: 0.35
-    status: recommended
+    prior_probability: 0.50
+    status: selected
     complements:
       - "frontend_framework.nextjs"
       - "api_protocol.mcp_primary"
@@ -256,6 +256,47 @@ research_influences:
       assistant-ui (github.com/assistant-ui/assistant-ui) complements
       copilotkit_agui — composable chat primitives that integrate with both
       Vercel AI SDK and LangGraph. Consider as a complement, not a replacement.
+
+  - paper: "AlignUI: Preference-Aligned UI Generation"
+    arxiv: "2601.17614"
+    concept: preference_aligned_generation
+    library_status: research
+    library: "N/A — research concept for UI generation from preferences"
+    prd_implication: >
+      Validates that user preferences can drive UI layout and density
+      decisions. Maps to proficiency-based adaptive UI: as users demonstrate
+      expertise, the interface adapts density and tooltip behavior.
+
+  - paper: "ActiveLLM: Large Language Model-based Active Learning for Textual Few-Shot Scenarios"
+    arxiv: "2024"
+    concept: active_learning_annotation
+    library_status: research
+    library: "N/A — active learning strategy applicable to annotation workflows"
+    prd_implication: >
+      6% of human annotation achieves full labeling quality when using
+      LLM-based active learning. Directly validates agent-assisted review
+      queue where AI pre-generates suggestions and humans approve/correct.
+
+  - paper: "Markup: A Web-Based Annotation Tool Powered by Active Learning"
+    pubmed: "PMC8521860"
+    concept: active_learning_annotation_tool
+    library_status: production_ready
+    library: "N/A — annotation time reduction methodology"
+    prd_implication: >
+      14.2% annotation time reduction via active learning strategies.
+      Validates the review queue pattern with batch approve, priority
+      sorting, and agent-generated correction suggestions.
+
+  - paper: "Real-Time Guidance Design for Human-AI Interaction"
+    venue: "ICIS 2025"
+    authors: "Grau & Blohm"
+    concept: progressive_disclosure_attention_aware
+    library_status: research
+    library: "N/A — design pattern for attention-aware progressive disclosure"
+    prd_implication: >
+      Progressive disclosure combined with attention-aware UI adaptation.
+      Maps to adaptive tooltips that show/hide based on user proficiency
+      level and interaction history.
 
   - paper: "Orca: Malleable Browser Spaces for Agentic Tasks"
     authors: "Jiang & Xia, UCSD"
