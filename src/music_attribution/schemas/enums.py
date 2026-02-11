@@ -179,3 +179,51 @@ class PipelineFeedbackTypeEnum(StrEnum):
     RECALIBRATE = "RECALIBRATE"
     DISPUTE = "DISPUTE"
     STALE = "STALE"
+
+
+class UncertaintySourceEnum(StrEnum):
+    """Uncertainty source taxonomy (UProp, Duan 2025)."""
+
+    INTRINSIC = "INTRINSIC"
+    EXTRINSIC = "EXTRINSIC"
+    ALEATORIC = "ALEATORIC"
+    EPISTEMIC = "EPISTEMIC"
+
+
+class UncertaintyDimensionEnum(StrEnum):
+    """4-dimensional uncertainty framework (Liu 2025, arXiv:2503.15850)."""
+
+    INPUT = "INPUT"
+    REASONING = "REASONING"
+    PARAMETER = "PARAMETER"
+    PREDICTION = "PREDICTION"
+
+
+class ConfidenceMethodEnum(StrEnum):
+    """Methods used to produce confidence scores."""
+
+    SELF_REPORT = "SELF_REPORT"
+    MULTI_SAMPLE = "MULTI_SAMPLE"
+    LOGPROB = "LOGPROB"
+    ENSEMBLE = "ENSEMBLE"
+    CONFORMAL = "CONFORMAL"
+    SOURCE_WEIGHTED = "SOURCE_WEIGHTED"
+    HUMAN_RATED = "HUMAN_RATED"
+    HTC = "HTC"
+
+
+class CalibrationStatusEnum(StrEnum):
+    """Calibration status of a confidence score."""
+
+    CALIBRATED = "CALIBRATED"
+    UNCALIBRATED = "UNCALIBRATED"
+    PENDING = "PENDING"
+
+
+class ConfidenceTrendEnum(StrEnum):
+    """Confidence trend across pipeline steps (Zhang 2026)."""
+
+    INCREASING = "INCREASING"
+    DECREASING = "DECREASING"
+    STABLE = "STABLE"
+    VOLATILE = "VOLATILE"

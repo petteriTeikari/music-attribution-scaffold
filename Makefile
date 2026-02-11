@@ -1,4 +1,4 @@
-.PHONY: help install install-dev
+.PHONY: help install install-dev setup
 .PHONY: test test-py311 test-all lint
 .PHONY: test-local test-unit test-integration test-cov lint-local format typecheck ci-local
 .PHONY: ci-docker docker-build docker-clean clean
@@ -23,6 +23,9 @@ install:  ## Install production dependencies only
 install-dev:  ## Install all dependencies (dev + test groups)
 	uv sync --frozen --group dev --group test
 	uv run pre-commit install
+
+setup:  ## One-command setup: Docker + deps + migrations + seed + frontend
+	@./scripts/setup.sh
 
 # =============================================================================
 # DOCKER TESTING (DEFAULT - mirrors GitHub Actions exactly)

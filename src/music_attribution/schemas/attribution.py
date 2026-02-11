@@ -19,6 +19,10 @@ from music_attribution.schemas.enums import (
     ProvenanceEventTypeEnum,
     SourceEnum,
 )
+from music_attribution.schemas.uncertainty import (
+    StepUncertainty,
+    UncertaintyAwareProvenance,
+)
 
 
 class Credit(BaseModel):
@@ -124,6 +128,8 @@ class ProvenanceEvent(BaseModel):
     agent: str
     details: EventDetails
     feedback_card_id: uuid.UUID | None = None
+    step_uncertainty: StepUncertainty | None = None
+    citation_index: int | None = Field(default=None, ge=1)
 
     @field_validator("timestamp")
     @classmethod
@@ -151,6 +157,7 @@ class AttributionRecord(BaseModel):
     conformal_set: ConformalSet
     source_agreement: float = Field(ge=0.0, le=1.0)
     provenance_chain: list[ProvenanceEvent] = Field(default_factory=list)
+    uncertainty_summary: UncertaintyAwareProvenance | None = None
     needs_review: bool = False
     review_priority: float = Field(ge=0.0, le=1.0)
     created_at: datetime

@@ -30,9 +30,18 @@ from music_attribution.schemas.attribution import (
 )
 from music_attribution.schemas.enums import (
     AssuranceLevelEnum,
+    CalibrationStatusEnum,
+    ConfidenceMethodEnum,
     CreditRoleEnum,
     ProvenanceEventTypeEnum,
     SourceEnum,
+    UncertaintySourceEnum,
+)
+from music_attribution.schemas.uncertainty import (
+    CalibrationMetadata,
+    SourceContribution,
+    StepUncertainty,
+    UncertaintyAwareProvenance,
 )
 
 logger = logging.getLogger(__name__)
@@ -51,12 +60,117 @@ def _dt(iso: str) -> datetime:
     return datetime.fromisoformat(iso).replace(tzinfo=UTC)
 
 
+def _build_uncertainty_for_record(record: AttributionRecord) -> UncertaintyAwareProvenance:
+    """Build mock uncertainty metadata for a single record.
+
+    Returns uncertainty values that tell a coherent story:
+    - High-confidence records (>= 0.85) have low total uncertainty
+    - Low-confidence records (< 0.50) have high epistemic uncertainty
+    - Source contributions match the credit sources
+    """
+    confidence = record.confidence_score
+    credit_sources: set[SourceEnum] = set()
+    for credit in record.credits:
+        credit_sources.update(credit.sources)
+
+    # Derive uncertainty from confidence level
+    if confidence >= 0.85:
+        intrinsic = 0.02
+        extrinsic = 0.04
+        total = 0.06
+        dominant = UncertaintySourceEnum.ALEATORIC
+        cal_status = CalibrationStatusEnum.CALIBRATED
+        cal_ece = 0.02
+    elif confidence >= 0.50:
+        intrinsic = 0.08
+        extrinsic = 0.15
+        total = 0.23
+        dominant = UncertaintySourceEnum.EXTRINSIC
+        cal_status = CalibrationStatusEnum.CALIBRATED
+        cal_ece = 0.05
+    elif confidence >= 0.20:
+        intrinsic = 0.15
+        extrinsic = 0.30
+        total = 0.45
+        dominant = UncertaintySourceEnum.EPISTEMIC
+        cal_status = CalibrationStatusEnum.PENDING
+        cal_ece = 0.12
+    else:
+        intrinsic = 0.25
+        extrinsic = 0.50
+        total = 0.75
+        dominant = UncertaintySourceEnum.EPISTEMIC
+        cal_status = CalibrationStatusEnum.UNCALIBRATED
+        cal_ece = 0.25
+
+    # Build step uncertainties from provenance chain
+    steps = []
+    for i, event in enumerate(record.provenance_chain):
+        step_conf = confidence * (0.5 + 0.5 * (i / max(len(record.provenance_chain) - 1, 1)))
+        steps.append(
+            StepUncertainty(
+                step_id=f"{event.agent}-step-{i}",
+                step_name=f"{event.event_type.value} by {event.agent}",
+                step_index=i,
+                stated_confidence=min(step_conf + 0.05, 1.0),
+                calibrated_confidence=min(step_conf, 1.0),
+                intrinsic_uncertainty=intrinsic,
+                extrinsic_uncertainty=extrinsic * (1 - i / max(len(record.provenance_chain), 1)),
+                total_uncertainty=total * (1 - 0.3 * i / max(len(record.provenance_chain), 1)),
+                confidence_method=ConfidenceMethodEnum.SOURCE_WEIGHTED,
+                preceding_step_ids=[f"{record.provenance_chain[j].agent}-step-{j}" for j in range(i)],
+            )
+        )
+
+    # Build source contributions from credit sources
+    source_weights = {
+        SourceEnum.MUSICBRAINZ: (0.90, 0.88, False),
+        SourceEnum.DISCOGS: (0.82, 0.80, False),
+        SourceEnum.ACOUSTID: (0.75, 0.70, False),
+        SourceEnum.ARTIST_INPUT: (0.95, 0.92, True),
+        SourceEnum.FILE_METADATA: (0.60, 0.55, False),
+    }
+    contributions = []
+    n_sources = max(len(credit_sources), 1)
+    for source in sorted(credit_sources, key=lambda s: s.value):
+        conf, cal_q, is_human = source_weights.get(source, (0.70, 0.65, False))
+        contributions.append(
+            SourceContribution(
+                source=source,
+                confidence=conf * min(confidence + 0.3, 1.0),
+                weight=round(1.0 / n_sources, 2),
+                calibration_quality=cal_q,
+                is_human=is_human,
+            )
+        )
+
+    return UncertaintyAwareProvenance(
+        steps=steps,
+        source_contributions=contributions,
+        calibration=CalibrationMetadata(
+            expected_calibration_error=cal_ece,
+            calibration_set_size=int(confidence * 1000),
+            status=cal_status,
+        ),
+        total_uncertainty=total,
+        dominant_uncertainty_source=dominant,
+    )
+
+
+def _add_citation_indexes(record: AttributionRecord) -> None:
+    """Add sequential citation_index to provenance events (mutate in place)."""
+    idx = 1
+    for event in record.provenance_chain:
+        event.citation_index = idx
+        idx += 1
+
+
 def _build_works() -> list[AttributionRecord]:
     """Build the 8 Imogen Heap attribution records."""
     ih = deterministic_uuid("artist-imogen-heap")
     gs = deterministic_uuid("artist-guy-sigsworth")
 
-    return [
+    records = [
         # 1. Hide and Seek — 0.95
         AttributionRecord(
             attribution_id=deterministic_uuid("work-001"),
@@ -714,6 +828,13 @@ def _build_works() -> list[AttributionRecord]:
             version=1,
         ),
     ]
+
+    # Enrich all records with uncertainty metadata and citation indexes
+    for rec in records:
+        rec.uncertainty_summary = _build_uncertainty_for_record(rec)
+        _add_citation_indexes(rec)
+
+    return records
 
 
 async def seed_imogen_heap(session: AsyncSession) -> None:

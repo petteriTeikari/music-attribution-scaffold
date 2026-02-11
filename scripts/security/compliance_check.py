@@ -152,8 +152,8 @@ def check_env_files_not_tracked() -> dict:
 
     for f in tracked:
         fname = Path(f).name
-        # .env.example is a safe template — skip it
-        if fname == ".env.example":
+        # .env.example and .env.*.example are safe templates — skip them
+        if fname.endswith(".example"):
             continue
         if fname.startswith(".env") or fname.endswith(".env"):
             findings.append(

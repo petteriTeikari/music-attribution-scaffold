@@ -94,6 +94,51 @@ async def list_attributions(
     return [r.model_dump(mode="json") for r in paginated]
 
 
+@router.get("/attributions/{attribution_id}/provenance")
+async def get_provenance(
+    request: Request,
+    attribution_id: uuid.UUID,
+) -> dict:
+    """Get full provenance chain with uncertainty metadata for an attribution.
+
+    Returns the provenance chain, uncertainty summary, and citation-ready data
+    for Perplexity-like inline source references.
+
+    Args:
+        request: FastAPI request with app state.
+        attribution_id: Attribution record UUID.
+
+    Returns:
+        Provenance chain with uncertainty metadata.
+    """
+    if hasattr(request.app.state, "async_session_factory"):
+        repo = AsyncAttributionRepository()
+        async with await _get_session(request) as session:
+            record = await repo.find_by_id(attribution_id, session)
+            if record is not None:
+                return {
+                    "attribution_id": str(record.attribution_id),
+                    "provenance_chain": [e.model_dump(mode="json") for e in record.provenance_chain],
+                    "uncertainty_summary": (
+                        record.uncertainty_summary.model_dump(mode="json") if record.uncertainty_summary else None
+                    ),
+                }
+
+    # Fallback: in-memory dict (legacy tests)
+    attributions: dict[uuid.UUID, AttributionRecord] = getattr(request.app.state, "attributions", {})
+    for record in attributions.values():
+        if record.attribution_id == attribution_id:
+            return {
+                "attribution_id": str(record.attribution_id),
+                "provenance_chain": [e.model_dump(mode="json") for e in record.provenance_chain],
+                "uncertainty_summary": (
+                    record.uncertainty_summary.model_dump(mode="json") if record.uncertainty_summary else None
+                ),
+            }
+
+    raise HTTPException(status_code=404, detail="Attribution not found")
+
+
 @router.get("/attributions/search")
 async def search_attributions(
     request: Request,

@@ -6,6 +6,7 @@
  */
 
 import type { AttributionRecord } from "@/lib/types/attribution";
+import type { ProvenanceResponse } from "@/lib/types/uncertainty";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "";
 
@@ -51,6 +52,19 @@ export const apiClient = {
     }
   },
 
+  async getProvenance(
+    attributionId: string
+  ): Promise<ProvenanceResponse | null> {
+    if (!API_URL) return fallbackGetProvenance(attributionId);
+    try {
+      return await fetchJson<ProvenanceResponse>(
+        `${API_URL}/attributions/${attributionId}/provenance`
+      );
+    } catch {
+      return fallbackGetProvenance(attributionId);
+    }
+  },
+
   async search(query: string): Promise<SearchResult[]> {
     if (!API_URL) return [];
     try {
@@ -90,4 +104,11 @@ async function fallbackGetWorkById(
 ): Promise<AttributionRecord | null> {
   const { mockApi } = await import("./mock-client");
   return mockApi.getWorkById(id);
+}
+
+async function fallbackGetProvenance(
+  attributionId: string
+): Promise<ProvenanceResponse | null> {
+  const { mockApi } = await import("./mock-client");
+  return mockApi.getProvenance(attributionId);
 }

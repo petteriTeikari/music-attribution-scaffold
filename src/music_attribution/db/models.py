@@ -97,6 +97,7 @@ class AttributionRecordModel(Base):
     conformal_set: Mapped[dict] = mapped_column(JSONB, nullable=False)
     source_agreement: Mapped[float] = mapped_column(Float, nullable=False)
     provenance_chain: Mapped[dict] = mapped_column(JSONB, default=list)
+    uncertainty_summary: Mapped[dict | None] = mapped_column(JSONB, nullable=True, default=None)
     needs_review: Mapped[bool] = mapped_column(Boolean, default=False)
     review_priority: Mapped[float] = mapped_column(Float, default=0.0)
     created_at: Mapped[str] = mapped_column(DateTime(timezone=True), nullable=False)

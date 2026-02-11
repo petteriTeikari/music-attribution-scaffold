@@ -5,6 +5,7 @@
 
 import type { AttributionRecord } from "@/lib/types/attribution";
 import type { PermissionBundle, AuditLogEntry } from "@/lib/types/permissions";
+import type { ProvenanceResponse } from "@/lib/types/uncertainty";
 
 function delay(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -26,6 +27,20 @@ export const mockApi = {
     const { getWorkById } = await import("@/lib/data/mock-works");
     await delay(randomDelay());
     return getWorkById(id) ?? null;
+  },
+
+  async getProvenance(
+    attributionId: string
+  ): Promise<ProvenanceResponse | null> {
+    await delay(randomDelay());
+    const { MOCK_WORKS } = await import("@/lib/data/mock-works");
+    const work = MOCK_WORKS.find((w) => w.attribution_id === attributionId);
+    if (!work) return null;
+    return {
+      attribution_id: work.attribution_id,
+      provenance_chain: work.provenance_chain,
+      uncertainty_summary: work.uncertainty_summary,
+    };
   },
 
   async getPermissions(): Promise<PermissionBundle | null> {
