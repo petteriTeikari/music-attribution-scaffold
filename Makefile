@@ -3,6 +3,7 @@
 .PHONY: test-local test-unit test-integration test-cov lint-local format typecheck ci-local
 .PHONY: ci-docker docker-build docker-clean clean
 .PHONY: dev-frontend test-frontend lint-frontend build-frontend
+.PHONY: agent dev-agent
 
 .DEFAULT_GOAL := help
 
@@ -55,8 +56,11 @@ test-local:  ## Run tests locally (fast, no Docker)
 test-unit:  ## Run unit tests only (local)
 	@uv run pytest tests/unit/ -v -m unit || ([ $$? -eq 5 ] && echo "No unit tests collected yet" && exit 0)
 
-test-integration:  ## Run integration tests only (local)
-	@uv run pytest tests/integration/ -v -m integration || ([ $$? -eq 5 ] && echo "No integration tests collected yet" && exit 0)
+test-integration:  ## Run integration tests only (requires Docker daemon)
+	.venv/bin/python -m pytest tests/integration/ -v -m integration --timeout=120
+
+test-all-local:  ## Run ALL tests: unit + integration (requires Docker daemon)
+	.venv/bin/python -m pytest tests/ -v -m "unit or integration" --timeout=120
 
 test-cov:  ## Run tests with coverage (local)
 	uv run pytest tests/ -v --cov=src/music_attribution --cov-report=html --cov-report=term-missing
@@ -106,6 +110,19 @@ lint-frontend:  ## Lint frontend (ESLint + TypeScript)
 
 build-frontend:  ## Build frontend for production
 	cd frontend && npm run build
+
+# =============================================================================
+# AGENT (PydanticAI + AG-UI)
+# =============================================================================
+
+agent:  ## Start FastAPI with CopilotKit AG-UI endpoint (localhost:8000)
+	uv run uvicorn music_attribution.api.app:create_app --factory --host 0.0.0.0 --port 8000 --reload
+
+dev-agent:  ## Start agent backend + frontend dev server
+	@echo "Starting agent backend on :8000 and frontend on :3000"
+	@echo "Set NEXT_PUBLIC_API_URL=http://localhost:8000 in frontend/.env.local"
+	$(MAKE) agent &
+	NEXT_PUBLIC_API_URL=http://localhost:8000 $(MAKE) dev-frontend
 
 # =============================================================================
 # CLEANUP
