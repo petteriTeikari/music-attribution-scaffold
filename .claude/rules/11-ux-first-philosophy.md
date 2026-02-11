@@ -4,6 +4,21 @@
 
 **"Premium UX first"** — UX quality is non-negotiable. Attribution is inherently tedious work; the UI must make it feel effortless and even delightful.
 
+## Editorial Boldness
+
+The interface is **not a generic SaaS dashboard**. It is an editorial experience:
+
+1. **Instrument Serif headings** at 48-96px are the primary visual element
+2. **Asymmetric layouts** — never perfectly centered, never symmetric grids
+3. **Fixed left sidebar** with rotated text — not a horizontal top nav
+4. **Coral red accent** (#E84C4F) as single bold accent against warm neutrals
+5. **Accent squares and lines** as pure CSS graphic elements
+6. **Text links with underlines** — not pill buttons
+7. **Horizontal rows with dividers** — not shadow-box cards
+8. **Stagger reveal animations** — scroll-triggered, motion/react
+9. **Noise grain overlay** — subtle SVG texture at 3.5% opacity
+10. **Roman numerals** for sequential elements (Warp Records homage)
+
 ## Interaction Design Standards
 
 1. **Every click feels considered** — no gratuitous steps, no pointless modals
@@ -73,6 +88,6 @@ When in doubt about a design choice, ask:
 
 1. Would this feel at home in a premium music platform? (Not a dev tool)
 2. Does this respect the user's time? (No unnecessary steps)
-3. Is this warm? (Cream backgrounds, editorial typography, gold accents)
+3. Is this warm? (Cream backgrounds, editorial typography, coral red accent)
 4. Does this communicate confidence clearly? (Green/amber/red is instant)
 5. Would Imogen Heap enjoy using this? (Our persona — technically savvy artist who cares deeply about attribution)
