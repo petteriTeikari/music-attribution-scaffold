@@ -2,6 +2,11 @@
 
 Validates that scripts/setup.sh exists, is executable, checks
 prerequisites, and that the Makefile has a setup target.
+
+Note: These tests validate project layout files (scripts/, Makefile)
+that are NOT copied into the Docker test image (docker/Dockerfile.test
+only copies src/, tests/, alembic/). They are skipped automatically
+when running inside Docker CI.
 """
 
 from __future__ import annotations
@@ -10,11 +15,16 @@ import os
 import stat
 from pathlib import Path
 
+import pytest
+
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 SETUP_SCRIPT = PROJECT_ROOT / "scripts" / "setup.sh"
 MAKEFILE = PROJECT_ROOT / "Makefile"
 
+_IN_DOCKER = os.environ.get("RUNNING_IN_DOCKER") == "true"
 
+
+@pytest.mark.skipif(_IN_DOCKER, reason="scripts/ and Makefile not copied into Docker test image")
 class TestSetupScript:
     """Tests for scripts/setup.sh."""
 

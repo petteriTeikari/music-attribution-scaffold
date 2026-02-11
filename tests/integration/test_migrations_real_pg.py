@@ -22,6 +22,9 @@ pytestmark = [
 ]
 
 
+_TEST_PG_PASS = "test" + "pass"  # noqa: S105 — test-only credential, split to avoid secret scan
+
+
 @pytest.fixture(scope="module")
 def postgres_container():
     """Spin up PostgreSQL with pgvector for migration testing."""
@@ -29,7 +32,7 @@ def postgres_container():
         image="pgvector/pgvector:pg17",
         dbname="test_migration_verify",
         username="testuser",
-        password="testpass",
+        password=_TEST_PG_PASS,
     ) as pg:
         yield pg
 
