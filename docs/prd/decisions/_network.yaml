@@ -74,6 +74,11 @@ nodes:
     file: L2-architecture/ui-adaptation-strategy.decision.yaml
     title: "UI Adaptation Strategy"
 
+  - id: provenance_strategy
+    level: L2_architecture
+    file: L2-architecture/provenance-strategy.decision.yaml
+    title: "Provenance & Citation Strategy"
+
   # L3: Implementation Decisions
   - id: primary_database
     level: L3_implementation
@@ -432,6 +437,31 @@ edges:
     to: observability_stack
     influence: moderate
     rationale: "LLM usage drives need for Langfuse-style LLM tracing"
+
+  # --- Provenance Strategy edges ---
+
+  # L1 → L2 edges (provenance)
+  - from: build_vs_buy_posture
+    to: provenance_strategy
+    influence: moderate
+    rationale: "Custom builders invest in provenance infrastructure, SaaS teams keep it simple"
+
+  - from: regulatory_posture
+    to: provenance_strategy
+    influence: strong
+    rationale: "Compliance requirements drive provenance tracking depth"
+
+  # L2 → L2 cross-influences (provenance)
+  - from: data_model_complexity
+    to: provenance_strategy
+    influence: moderate
+    rationale: "Complex data models with graph relationships need richer provenance tracking"
+
+  # L2 → L5 edges (provenance → schema governance)
+  - from: provenance_strategy
+    to: schema_governance
+    influence: moderate
+    rationale: "Provenance strategy determines lineage tracking in schema governance"
 
   # --- Agentic UI / Voice / Graph RAG edges ---
 

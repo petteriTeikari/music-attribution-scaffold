@@ -1,0 +1,857 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  EXECUTABLE ACTION PLAN — End-to-End MVP
+  ========================================
+  Generated: 2026-02-11
+  Branch: feat/end-to-end-mvp
+  Repository: music-attribution-scaffold
+
+  PURPOSE: Wire the frontend to the real PostgreSQL backend, add
+  uncertainty-aware provenance schema, and build Perplexity-like
+  citation UI — the core differentiator showing WHERE attribution
+  data comes from, with what confidence, and how that confidence
+  was calibrated.
+
+  CLOSES ISSUES: #4 (Citations), #13 (make setup), #14 (wire ApiClient),
+  #16 (verify Alembic migration 002)
+
+  PRD DECISIONS SELECTED:
+    - provenance_strategy: pydantic_provenance (0.40) — custom Pydantic
+      provenance chain with uncertainty metadata, OpenLineage-export-ready
+    - primary_database: postgresql_unified (already implemented)
+    - frontend_framework: next.js (already implemented)
+
+  ACADEMIC GROUNDING:
+    - UProp (Duan 2025, arXiv:2506.17419): intrinsic/extrinsic decomposition
+    - Yáñez (2025, Patterns): confidence-weighted source integration
+    - Zhang (2026, arXiv:2601.15778): trajectory-level calibration (HTC)
+    - Tian (2025, arXiv:2508.06225): overconfidence detection (TH-Score)
+    - Tripathi (2025, arXiv:2506.23464): H-Score, ECI metrics
+    - Beigi (2024, arXiv:2410.20199): uncertainty source taxonomy
+    - Liu (2025, arXiv:2503.15850): 4-dimensional uncertainty framework
+
+  KEY CONSTRAINT: Mock confidence values are OK for now, but schema
+  MUST have placeholders for proper uncertainties. The schema is the
+  deliverable — implementations can be stubbed.
+
+  CROSS-BRANCH DEPENDENCIES:
+    - Assumes `feat/backend-db-for-mockup-data` branch is merged to main
+    - File conflicts possible: seed/imogen_heap.py, api/routes/attribution.py
+    - RECOMMENDED: Rebase this branch onto latest main before starting Phase 1
+
+  HOW TO USE THIS PLAN:
+    1. Tasks organized into PHASES (sequential) with tasks (parallel within phase)
+    2. Each task has: id, status, dependencies, TDD spec, acceptance criteria
+    3. Status values: NOT_STARTED | IN_PROGRESS | BLOCKED | DONE | DEFERRED
+    4. Compatible with self-learning-iterative-coder skill (RED-GREEN-VERIFY-FIX)
+    5. Tasks reference existing files to minimize new file creation
+-->
+
+<executable-plan version="1.0" created="2026-02-11" last-updated="2026-02-11"
+    revision-note="v1.0: Initial plan. 4 phases, 14 tasks. Closes #4, #13, #14, #16.">
+
+  <!-- ================================================================== -->
+  <!-- TECHNOLOGY STACK                                                     -->
+  <!-- ================================================================== -->
+
+  <technology-stack>
+    <description>
+      No new Python dependencies for MVP. All provenance and uncertainty
+      types are Pydantic models stored as JSONB. Frontend uses existing
+      Next.js 15 + Tailwind v4 stack. Citation UI built with native
+      components (no shadcn dependency).
+    </description>
+
+    <backend>
+      <tool name="Pydantic v2" purpose="Uncertainty schema models">
+        Already in pyproject.toml. New models in schemas/uncertainty.py.
+      </tool>
+      <tool name="SQLAlchemy 2.0" purpose="Async ORM">
+        Already configured. No schema changes — uncertainty stored in
+        existing JSONB provenance_chain column.
+      </tool>
+    </backend>
+
+    <frontend>
+      <tool name="Next.js 15" purpose="App Router, SSR">
+        Already configured. New components in components/citations/.
+      </tool>
+      <tool name="Tailwind CSS v4" purpose="Styling">
+        Already configured. New CSS tokens for citation styling.
+      </tool>
+    </frontend>
+  </technology-stack>
+
+  <!-- ================================================================== -->
+  <!-- PHASE 0: FOUNDATION                                                  -->
+  <!-- ================================================================== -->
+
+  <phase id="0" title="Foundation" description="Dev environment and PRD updates.">
+
+    <task id="0.0" title="One-command setup script (make setup)"
+          status="NOT_STARTED" closes-issue="13">
+      <description>
+        Create `make setup` target that bootstraps the entire dev environment:
+        (1) check prerequisites (Docker, uv, node), (2) start PostgreSQL
+        via docker-compose, (3) uv sync, (4) run Alembic migrations,
+        (5) seed Imogen Heap data, (6) install frontend deps, (7) verify
+        with health check. Single command from fresh clone to working dev.
+      </description>
+      <dependencies/>
+      <files-to-create>
+        <file path="scripts/setup.sh" reason="Main setup orchestration script"/>
+      </files-to-create>
+      <files-to-modify>
+        <file path="Makefile" reason="Add setup target"/>
+      </files-to-modify>
+      <tdd-spec>
+        <test-file>tests/unit/test_setup_script.py</test-file>
+        <tests>
+          <test name="test_setup_script_exists_and_executable">
+            Script file exists at scripts/setup.sh and has +x permission.
+          </test>
+          <test name="test_makefile_has_setup_target">
+            Makefile contains 'setup' target that calls scripts/setup.sh.
+          </test>
+          <test name="test_setup_checks_prerequisites">
+            Script checks for docker, uv, and node before proceeding.
+          </test>
+          <test name="test_setup_idempotent">
+            Running setup twice doesn't fail (checks if services already running).
+          </test>
+        </tests>
+      </tdd-spec>
+      <acceptance-criteria>
+        <criterion>Fresh `git clone &amp;&amp; make setup` gets to working dev state</criterion>
+        <criterion>`make setup` is idempotent (safe to run repeatedly)</criterion>
+        <criterion>Script prints clear error if Docker/uv/node not installed</criterion>
+        <criterion>Script seeds Imogen Heap data into PostgreSQL</criterion>
+      </acceptance-criteria>
+    </task>
+
+    <task id="0.1" title="Verify Alembic migration 002 against real PostgreSQL"
+          status="NOT_STARTED" closes-issue="16">
+      <description>
+        Run Alembic migrations against a real PostgreSQL instance (not
+        SQLite) and verify all tables, indexes, and constraints match
+        the ORM models. This was deferred from the backend-db PR.
+        Requires Docker PostgreSQL running (docker compose up -d).
+      </description>
+      <dependencies/>
+      <files-to-modify>
+        <file path="tests/integration/test_migrations_real_pg.py" reason="New integration test"/>
+      </files-to-modify>
+      <tdd-spec>
+        <test-file>tests/integration/test_migrations_real_pg.py</test-file>
+        <tests>
+          <test name="test_alembic_upgrade_head_succeeds">
+            `alembic upgrade head` completes without error on real PostgreSQL.
+          </test>
+          <test name="test_all_tables_created">
+            All expected tables exist: attribution_records, resolved_entities,
+            entity_embeddings, edges, permission_bundles, feedback_cards,
+            audit_logs.
+          </test>
+          <test name="test_pgvector_extension_enabled">
+            `SELECT * FROM pg_extension WHERE extname = 'vector'` returns a row.
+          </test>
+          <test name="test_seed_data_insertable">
+            Imogen Heap seed data inserts successfully into real PostgreSQL.
+          </test>
+          <test name="test_alembic_downgrade_succeeds">
+            `alembic downgrade base` completes without error.
+          </test>
+        </tests>
+      </tdd-spec>
+      <acceptance-criteria>
+        <criterion>Alembic upgrade head succeeds on PostgreSQL 17 with pgvector</criterion>
+        <criterion>All ORM models match the created schema</criterion>
+        <criterion>Seed data round-trips correctly</criterion>
+        <criterion>Downgrade path works cleanly</criterion>
+      </acceptance-criteria>
+    </task>
+
+  </phase>
+
+  <!-- ================================================================== -->
+  <!-- PHASE 1: UNCERTAINTY SCHEMA EXTENSION                                -->
+  <!-- ================================================================== -->
+
+  <phase id="1" title="Uncertainty Schema Extension"
+         description="Extend Pydantic schemas with uncertainty-aware provenance fields.
+         Mock values OK — schema is the deliverable, not the computation.">
+
+    <task id="1.0" title="Uncertainty enums and StepUncertainty model"
+          status="NOT_STARTED">
+      <description>
+        Create uncertainty-specific enums and the StepUncertainty Pydantic
+        model. Based on UProp (Duan 2025) intrinsic/extrinsic decomposition
+        and Liu (2025) 4-dimensional uncertainty framework.
+
+        New enums: UncertaintySourceEnum, UncertaintyDimensionEnum,
+        ConfidenceMethodEnum, CalibrationStatusEnum, ConfidenceTrendEnum.
+
+        StepUncertainty model fields: step_id, step_name, step_index,
+        timestamp, stated_confidence, calibrated_confidence,
+        intrinsic_uncertainty, extrinsic_uncertainty, total_uncertainty,
+        input/reasoning/parameter/prediction uncertainty (optional),
+        uncertainty_sources, confidence_method, preceding_step_ids.
+      </description>
+      <dependencies/>
+      <files-to-create>
+        <file path="src/music_attribution/schemas/uncertainty.py"
+              reason="New module for uncertainty-aware provenance types"/>
+      </files-to-create>
+      <files-to-modify>
+        <file path="src/music_attribution/schemas/enums.py"
+              reason="Add uncertainty-related enums"/>
+      </files-to-modify>
+      <tdd-spec>
+        <test-file>tests/unit/test_uncertainty_schema.py</test-file>
+        <tests>
+          <test name="test_step_uncertainty_valid_construction">
+            StepUncertainty accepts valid fields and validates constraints.
+          </test>
+          <test name="test_step_uncertainty_confidence_range">
+            stated_confidence and calibrated_confidence constrained to [0, 1].
+          </test>
+          <test name="test_total_uncertainty_consistency">
+            total_uncertainty >= intrinsic_uncertainty (by definition).
+          </test>
+          <test name="test_uncertainty_enums_values">
+            All enum members have expected string values.
+          </test>
+          <test name="test_step_uncertainty_json_roundtrip">
+            model_dump_json() → model_validate_json() preserves all fields.
+          </test>
+          <test name="test_confidence_method_enum_completeness">
+            ConfidenceMethodEnum has: SELF_REPORT, MULTI_SAMPLE, LOGPROB,
+            ENSEMBLE, CONFORMAL, SOURCE_WEIGHTED, HUMAN_RATED, HTC.
+          </test>
+        </tests>
+      </tdd-spec>
+      <acceptance-criteria>
+        <criterion>StepUncertainty model validates and round-trips through JSON</criterion>
+        <criterion>All 5 uncertainty enums defined with correct members</criterion>
+        <criterion>Constraints enforced: confidence in [0,1], total >= intrinsic</criterion>
+        <criterion>mypy passes with strict mode</criterion>
+      </acceptance-criteria>
+    </task>
+
+    <task id="1.1" title="SourceContribution and CalibrationMetadata models"
+          status="NOT_STARTED">
+      <description>
+        Add SourceContribution (per-source confidence with calibration
+        quality, based on Yáñez 2025) and CalibrationMetadata (per-step
+        calibration metrics, based on Tian 2025 TH-Score and existing
+        CalibrationReport). Also OverconfidenceReport (Tripathi 2025
+        H-Score, ECI) and TrajectoryCalibration (Zhang 2026 HTC).
+      </description>
+      <dependencies>
+        <dependency task-id="1.0" reason="Depends on uncertainty enums"/>
+      </dependencies>
+      <files-to-modify>
+        <file path="src/music_attribution/schemas/uncertainty.py"
+              reason="Add remaining uncertainty models"/>
+      </files-to-modify>
+      <tdd-spec>
+        <test-file>tests/unit/test_uncertainty_schema.py</test-file>
+        <tests>
+          <test name="test_source_contribution_valid">
+            SourceContribution accepts source name, confidence, calibration quality.
+          </test>
+          <test name="test_source_contribution_human_flag">
+            is_human=True for human reviewers, False for machine sources.
+          </test>
+          <test name="test_calibration_metadata_ece_range">
+            ECE is non-negative float.
+          </test>
+          <test name="test_overconfidence_report_gap_calculation">
+            overconfidence_gap = stated - actual (can be negative).
+          </test>
+          <test name="test_trajectory_calibration_trend_enum">
+            ConfidenceTrendEnum: INCREASING, DECREASING, STABLE, VOLATILE.
+          </test>
+          <test name="test_trajectory_calibration_htc_vector">
+            htc_feature_vector is optional list[float] of length 48 when provided.
+          </test>
+        </tests>
+      </tdd-spec>
+      <acceptance-criteria>
+        <criterion>All 4 models validate and round-trip through JSON</criterion>
+        <criterion>SourceContribution tracks per-source calibration quality</criterion>
+        <criterion>TrajectoryCalibration captures cross-step dynamics</criterion>
+        <criterion>mypy passes with strict mode</criterion>
+      </acceptance-criteria>
+    </task>
+
+    <task id="1.2" title="Extend ProvenanceEvent with uncertainty metadata"
+          status="NOT_STARTED">
+      <description>
+        Add optional StepUncertainty field to ProvenanceEvent and
+        UncertaintyAwareProvenance as top-level container on
+        AttributionRecord. This is backward-compatible: existing
+        provenance chains without uncertainty fields remain valid.
+
+        Also add citation_index (int) to ProvenanceEvent for
+        Perplexity-like numbered references in the UI.
+      </description>
+      <dependencies>
+        <dependency task-id="1.1" reason="Depends on uncertainty models"/>
+      </dependencies>
+      <files-to-modify>
+        <file path="src/music_attribution/schemas/attribution.py"
+              reason="Extend ProvenanceEvent and AttributionRecord"/>
+      </files-to-modify>
+      <tdd-spec>
+        <test-file>tests/unit/test_uncertainty_schema.py</test-file>
+        <tests>
+          <test name="test_provenance_event_backward_compatible">
+            Existing ProvenanceEvent without uncertainty fields still validates.
+          </test>
+          <test name="test_provenance_event_with_step_uncertainty">
+            ProvenanceEvent with step_uncertainty field validates.
+          </test>
+          <test name="test_provenance_event_citation_index">
+            citation_index is optional positive int.
+          </test>
+          <test name="test_attribution_record_uncertainty_provenance">
+            AttributionRecord accepts optional uncertainty_summary field.
+          </test>
+          <test name="test_existing_mock_data_still_valid">
+            Imogen Heap mock data validates against updated schema.
+          </test>
+        </tests>
+      </tdd-spec>
+      <acceptance-criteria>
+        <criterion>Existing tests pass unchanged (backward compatible)</criterion>
+        <criterion>ProvenanceEvent optionally carries StepUncertainty</criterion>
+        <criterion>citation_index enables numbered source references</criterion>
+        <criterion>All 258+ existing tests still pass</criterion>
+      </acceptance-criteria>
+    </task>
+
+    <task id="1.3" title="Update Imogen Heap mock data with uncertainty values"
+          status="NOT_STARTED">
+      <description>
+        Enrich the 8 Imogen Heap attribution records with realistic
+        mock uncertainty values. Each provenance event gets a
+        StepUncertainty with mock intrinsic/extrinsic values that
+        tell a coherent story (e.g., Hide and Seek has low uncertainty
+        because multiple sources agree; Blanket has high epistemic
+        uncertainty because only artist claim exists).
+
+        Also add citation_index to each ProvenanceEvent so the
+        frontend can render numbered source references.
+      </description>
+      <dependencies>
+        <dependency task-id="1.2" reason="Depends on extended ProvenanceEvent"/>
+      </dependencies>
+      <files-to-modify>
+        <file path="src/music_attribution/seed/imogen_heap.py"
+              reason="Add uncertainty metadata to seed data"/>
+        <file path="frontend/src/lib/data/mock-works.ts"
+              reason="Mirror uncertainty data in frontend mocks"/>
+      </files-to-modify>
+      <tdd-spec>
+        <test-file>tests/unit/test_seed_uncertainty.py</test-file>
+        <tests>
+          <test name="test_all_seed_records_have_uncertainty">
+            All 8 Imogen Heap records have uncertainty_summary populated.
+          </test>
+          <test name="test_high_confidence_low_uncertainty">
+            Hide and Seek (0.95): total_uncertainty less than 0.1.
+          </test>
+          <test name="test_low_confidence_high_uncertainty">
+            Blanket (0.0): dominant epistemic uncertainty.
+          </test>
+          <test name="test_citation_indexes_sequential">
+            Each record's provenance events have sequential citation_index values.
+          </test>
+          <test name="test_source_contributions_match_credits">
+            Each record's source_contributions list matches its credit sources.
+          </test>
+        </tests>
+      </tdd-spec>
+      <acceptance-criteria>
+        <criterion>All 8 records have coherent uncertainty stories</criterion>
+        <criterion>High-confidence works (>= 0.85): total_uncertainty less than 0.10</criterion>
+        <criterion>Low-confidence works (less than 0.50): epistemic_uncertainty greater than 0.30</criterion>
+        <criterion>citation_index enables numbered references</criterion>
+        <criterion>Frontend mock-works.ts matches backend seed data</criterion>
+      </acceptance-criteria>
+    </task>
+
+  </phase>
+
+  <!-- ================================================================== -->
+  <!-- PHASE 2: FRONTEND → REAL BACKEND                                     -->
+  <!-- ================================================================== -->
+
+  <phase id="2" title="Frontend → Real Backend"
+         description="Wire the frontend API client to the real PostgreSQL backend
+         and add provenance API endpoint.">
+
+    <task id="2.0" title="Provenance API endpoint"
+          status="NOT_STARTED">
+      <description>
+        Add GET /api/v1/attributions/{attribution_id}/provenance endpoint
+        that returns the full provenance chain with uncertainty metadata.
+        Response includes citation-ready data: numbered source references,
+        per-step confidence progression, source contributions with
+        calibration quality.
+      </description>
+      <dependencies>
+        <dependency task-id="1.2" reason="Depends on extended schema"/>
+      </dependencies>
+      <files-to-modify>
+        <file path="src/music_attribution/api/routes/attribution.py"
+              reason="Add provenance endpoint"/>
+      </files-to-modify>
+      <tdd-spec>
+        <test-file>tests/unit/test_provenance_api.py</test-file>
+        <tests>
+          <test name="test_get_provenance_returns_chain">
+            GET /provenance returns list of ProvenanceEvent with uncertainty.
+          </test>
+          <test name="test_get_provenance_includes_citations">
+            Response includes citation_index on each event.
+          </test>
+          <test name="test_get_provenance_includes_uncertainty_summary">
+            Response includes top-level uncertainty summary.
+          </test>
+          <test name="test_get_provenance_404_for_unknown_id">
+            Returns 404 for non-existent attribution_id.
+          </test>
+          <test name="test_provenance_response_shape_matches_frontend_types">
+            Response JSON shape matches frontend TypeScript types.
+          </test>
+        </tests>
+      </tdd-spec>
+      <acceptance-criteria>
+        <criterion>Endpoint returns full provenance chain with uncertainty</criterion>
+        <criterion>citation_index enables numbered source references</criterion>
+        <criterion>Response shape matches frontend TypeScript types</criterion>
+        <criterion>404 for unknown attribution_id</criterion>
+      </acceptance-criteria>
+    </task>
+
+    <task id="2.1" title="Wire ApiClient to real backend"
+          status="NOT_STARTED" closes-issue="14">
+      <description>
+        Update the frontend API client to use NEXT_PUBLIC_API_URL
+        environment variable to connect to the real backend. Add
+        getProvenance(attributionId) method. Ensure graceful fallback
+        to mock data when backend is unavailable. Update .env.local
+        template.
+      </description>
+      <dependencies>
+        <dependency task-id="2.0" reason="Needs provenance endpoint"/>
+      </dependencies>
+      <files-to-modify>
+        <file path="frontend/src/lib/api/api-client.ts"
+              reason="Add getProvenance method, verify real API connection"/>
+        <file path="frontend/src/lib/api/mock-client.ts"
+              reason="Add mock getProvenance"/>
+        <file path="frontend/.env.local.example"
+              reason="Document NEXT_PUBLIC_API_URL"/>
+      </files-to-modify>
+      <tdd-spec>
+        <test-file>frontend/src/__tests__/api-client-provenance.test.ts</test-file>
+        <tests>
+          <test name="test_api_client_has_get_provenance_method">
+            apiClient.getProvenance(id) exists and returns Promise.
+          </test>
+          <test name="test_mock_client_returns_provenance_data">
+            mockApi.getProvenance(id) returns citation-ready provenance chain.
+          </test>
+          <test name="test_api_client_falls_back_to_mock">
+            When NEXT_PUBLIC_API_URL is unset, falls back to mock client.
+          </test>
+          <test name="test_provenance_response_has_citation_index">
+            Response provenance events have citation_index fields.
+          </test>
+        </tests>
+      </tdd-spec>
+      <acceptance-criteria>
+        <criterion>apiClient.getProvenance() works against real backend</criterion>
+        <criterion>Graceful fallback to mock data when backend unavailable</criterion>
+        <criterion>.env.local.example documents the API URL variable</criterion>
+        <criterion>Existing frontend tests still pass</criterion>
+      </acceptance-criteria>
+    </task>
+
+  </phase>
+
+  <!-- ================================================================== -->
+  <!-- PHASE 3: CITATION UI (PERPLEXITY-LIKE)                               -->
+  <!-- ================================================================== -->
+
+  <phase id="3" title="Citation UI"
+         description="Perplexity-like inline citations showing where attribution
+         data comes from, with confidence scores and source details.">
+
+    <task id="3.0" title="Citation TypeScript types"
+          status="NOT_STARTED">
+      <description>
+        Add TypeScript types mirroring the uncertainty schema: StepUncertainty,
+        SourceContribution, CalibrationMetadata, UncertaintyAwareProvenance,
+        and CitationReference (simplified view for UI rendering).
+
+        CitationReference: { index: number, source: Source, confidence: number,
+        label: string, detail: string, timestamp: string }.
+      </description>
+      <dependencies>
+        <dependency task-id="1.2" reason="Depends on finalized Python schema"/>
+      </dependencies>
+      <files-to-create>
+        <file path="frontend/src/lib/types/uncertainty.ts"
+              reason="TypeScript types for uncertainty-aware provenance"/>
+      </files-to-create>
+      <files-to-modify>
+        <file path="frontend/src/lib/types/attribution.ts"
+              reason="Add uncertainty_summary to AttributionRecord"/>
+      </files-to-modify>
+      <tdd-spec>
+        <test-file>frontend/src/__tests__/citation-types.test.ts</test-file>
+        <tests>
+          <test name="test_citation_reference_type_shape">
+            CitationReference has index, source, confidence, label, detail.
+          </test>
+          <test name="test_step_uncertainty_type_matches_python">
+            StepUncertainty TS type has same fields as Python model.
+          </test>
+          <test name="test_mock_data_conforms_to_types">
+            Mock Imogen Heap data validates against updated TS types.
+          </test>
+        </tests>
+      </tdd-spec>
+      <acceptance-criteria>
+        <criterion>TypeScript types mirror Python uncertainty schema</criterion>
+        <criterion>CitationReference provides simplified UI-ready view</criterion>
+        <criterion>Mock data conforms to updated types</criterion>
+      </acceptance-criteria>
+    </task>
+
+    <task id="3.1" title="InlineCitation component"
+          status="NOT_STARTED">
+      <description>
+        Build InlineCitation component: a small numbered badge (e.g., [1])
+        that shows source details on hover. Similar to Perplexity's
+        citation markers. Uses editorial design system: Instrument Serif
+        for the number, coral accent for hover state, Plus Jakarta Sans
+        for tooltip content.
+
+        Tooltip shows: source name (e.g., "MusicBrainz"), confidence
+        score, event type (FETCH/RESOLVE/SCORE), and timestamp.
+
+        Must respect prefers-reduced-motion for hover animations.
+        Must have proper ARIA attributes for accessibility.
+      </description>
+      <dependencies>
+        <dependency task-id="3.0" reason="Needs CitationReference type"/>
+      </dependencies>
+      <files-to-create>
+        <file path="frontend/src/components/citations/inline-citation.tsx"
+              reason="Numbered citation badge with hover tooltip"/>
+      </files-to-create>
+      <tdd-spec>
+        <test-file>frontend/src/__tests__/inline-citation.test.tsx</test-file>
+        <tests>
+          <test name="test_renders_citation_number">
+            Renders [1], [2], etc. based on index prop.
+          </test>
+          <test name="test_shows_tooltip_on_hover">
+            Tooltip appears on mouseEnter with source details.
+          </test>
+          <test name="test_tooltip_contains_source_name">
+            Tooltip shows source name (e.g., "MusicBrainz").
+          </test>
+          <test name="test_tooltip_contains_confidence">
+            Tooltip shows confidence score formatted as percentage.
+          </test>
+          <test name="test_accessibility_aria_attributes">
+            Has role="doc-noteref", aria-label, and aria-describedby.
+          </test>
+          <test name="test_uses_design_tokens_not_hardcoded_hex">
+            No hardcoded hex values in component.
+          </test>
+        </tests>
+      </tdd-spec>
+      <acceptance-criteria>
+        <criterion>Numbered badges render inline with text</criterion>
+        <criterion>Hover tooltip shows source, confidence, timestamp</criterion>
+        <criterion>WCAG 2.1 AA accessible (ARIA, keyboard, contrast)</criterion>
+        <criterion>Uses design system tokens, zero hardcoded hex</criterion>
+        <criterion>Respects prefers-reduced-motion</criterion>
+      </acceptance-criteria>
+    </task>
+
+    <task id="3.2" title="ProvenancePanel component"
+          status="NOT_STARTED">
+      <description>
+        Collapsible panel showing the full provenance chain for an
+        attribution record. Inspired by Perplexity's "Sources" panel.
+        Shows chronological list of provenance events with:
+        - Source badge (colored by data source)
+        - Event type label (FETCH → RESOLVE → SCORE → REVIEW)
+        - Confidence progression (mini sparkline or step indicators)
+        - Uncertainty decomposition (intrinsic vs extrinsic bar)
+        - Expandable detail for each event
+
+        Uses editorial design: horizontal rows with accent line dividers,
+        data-mono for numbers, editorial-caps for labels.
+      </description>
+      <dependencies>
+        <dependency task-id="3.1" reason="Uses InlineCitation for cross-references"/>
+      </dependencies>
+      <files-to-create>
+        <file path="frontend/src/components/citations/provenance-panel.tsx"
+              reason="Collapsible provenance chain panel"/>
+      </files-to-create>
+      <tdd-spec>
+        <test-file>frontend/src/__tests__/provenance-panel.test.tsx</test-file>
+        <tests>
+          <test name="test_renders_provenance_events_chronologically">
+            Events rendered in timestamp order.
+          </test>
+          <test name="test_shows_source_badges">
+            Each event shows colored source badge.
+          </test>
+          <test name="test_shows_confidence_progression">
+            Confidence values displayed for SCORE events.
+          </test>
+          <test name="test_collapsible_toggle">
+            Panel can be collapsed/expanded.
+          </test>
+          <test name="test_shows_uncertainty_when_available">
+            When step_uncertainty present, shows intrinsic/extrinsic split.
+          </test>
+          <test name="test_empty_state_for_no_provenance">
+            Shows meaningful empty state when provenance_chain is empty.
+          </test>
+          <test name="test_uses_design_tokens_not_hardcoded_hex">
+            No hardcoded hex values in component.
+          </test>
+        </tests>
+      </tdd-spec>
+      <acceptance-criteria>
+        <criterion>Full provenance chain rendered chronologically</criterion>
+        <criterion>Source badges use data source colors from design system</criterion>
+        <criterion>Collapsible panel with smooth animation</criterion>
+        <criterion>Empty state for records without provenance</criterion>
+        <criterion>Zero hardcoded hex values</criterion>
+      </acceptance-criteria>
+    </task>
+
+    <task id="3.3" title="Wire citations into work detail page"
+          status="NOT_STARTED" closes-issue="4">
+      <description>
+        Integrate InlineCitation badges into credit-list.tsx (each credit
+        gets citation markers for its sources) and add ProvenancePanel
+        to the work detail page. The work detail page shows:
+        1. Credits with inline citation badges
+        2. Confidence gauge (existing)
+        3. Collapsible "Sources" panel (ProvenancePanel)
+        4. Uncertainty summary (if available)
+
+        This creates the full "Perplexity for music attribution" experience.
+      </description>
+      <dependencies>
+        <dependency task-id="3.2" reason="Needs ProvenancePanel"/>
+        <dependency task-id="2.1" reason="Needs API client wired"/>
+        <dependency task-id="1.3" reason="Needs mock data with citations"/>
+      </dependencies>
+      <files-to-modify>
+        <file path="frontend/src/components/attribution/credit-list.tsx"
+              reason="Add InlineCitation badges to credits"/>
+        <file path="frontend/src/app/works/[id]/page.tsx"
+              reason="Add ProvenancePanel to work detail"/>
+      </files-to-modify>
+      <tdd-spec>
+        <test-file>frontend/src/__tests__/work-detail-citations.test.tsx</test-file>
+        <tests>
+          <test name="test_credit_list_shows_citation_badges">
+            Each credit row has InlineCitation markers for its sources.
+          </test>
+          <test name="test_work_detail_has_provenance_panel">
+            Work detail page renders ProvenancePanel.
+          </test>
+          <test name="test_citation_badge_links_to_provenance_event">
+            Clicking citation badge scrolls to corresponding provenance event.
+          </test>
+          <test name="test_works_with_mock_data">
+            Page renders correctly with Imogen Heap mock data.
+          </test>
+        </tests>
+      </tdd-spec>
+      <acceptance-criteria>
+        <criterion>Credits show inline citation badges</criterion>
+        <criterion>ProvenancePanel shows full source chain</criterion>
+        <criterion>Citation badges link to provenance events</criterion>
+        <criterion>Works with both mock data and real API</criterion>
+        <criterion>Closes issue #4</criterion>
+      </acceptance-criteria>
+    </task>
+
+  </phase>
+
+  <!-- ================================================================== -->
+  <!-- PHASE 4: INTEGRATION AND POLISH                                      -->
+  <!-- ================================================================== -->
+
+  <phase id="4" title="Integration and Polish"
+         description="End-to-end verification and build validation.">
+
+    <task id="4.0" title="End-to-end integration test"
+          status="NOT_STARTED">
+      <description>
+        Integration test that: (1) seeds PostgreSQL with Imogen Heap data
+        (including uncertainty), (2) queries the API for a work's provenance,
+        (3) verifies the response contains citation-ready data with
+        uncertainty metadata, (4) verifies the response shape matches
+        frontend TypeScript types.
+      </description>
+      <dependencies>
+        <dependency task-id="2.0" reason="Needs provenance endpoint"/>
+        <dependency task-id="1.3" reason="Needs seed data with uncertainty"/>
+      </dependencies>
+      <files-to-create>
+        <file path="tests/integration/test_provenance_e2e.py"
+              reason="End-to-end provenance chain test"/>
+      </files-to-create>
+      <tdd-spec>
+        <test-file>tests/integration/test_provenance_e2e.py</test-file>
+        <tests>
+          <test name="test_seed_to_api_provenance_chain">
+            Seed → API → provenance chain has all expected events.
+          </test>
+          <test name="test_provenance_has_uncertainty_metadata">
+            API response includes uncertainty summary.
+          </test>
+          <test name="test_citation_indexes_present">
+            Each provenance event has a citation_index.
+          </test>
+          <test name="test_confidence_progression_monotonic">
+            For well-attributed works, confidence increases across events.
+          </test>
+        </tests>
+      </tdd-spec>
+      <acceptance-criteria>
+        <criterion>Full seed → API → provenance chain verified</criterion>
+        <criterion>Uncertainty metadata present in response</criterion>
+        <criterion>Citation indexes enable numbered references</criterion>
+      </acceptance-criteria>
+    </task>
+
+    <task id="4.1" title="Frontend build and test verification"
+          status="NOT_STARTED">
+      <description>
+        Verify that: (1) `make build-frontend` succeeds with all new
+        components, (2) all frontend tests pass including new citation
+        tests, (3) css-token-lint passes (no hardcoded hex), (4) pre-commit
+        hooks pass on all changed files.
+      </description>
+      <dependencies>
+        <dependency task-id="3.3" reason="Needs all citation components"/>
+      </dependencies>
+      <tdd-spec>
+        <test-file>N/A — verification task</test-file>
+        <tests>
+          <test name="test_frontend_build_succeeds">
+            `make build-frontend` exits 0.
+          </test>
+          <test name="test_all_frontend_tests_pass">
+            `make test-frontend` exits 0 with all tests passing.
+          </test>
+          <test name="test_css_token_lint_passes">
+            No text-[var(--text-*)] patterns in .tsx files.
+          </test>
+          <test name="test_pre_commit_all_hooks_pass">
+            `pre-commit run --all-files` exits 0.
+          </test>
+        </tests>
+      </tdd-spec>
+      <acceptance-criteria>
+        <criterion>Frontend production build succeeds</criterion>
+        <criterion>All frontend tests pass</criterion>
+        <criterion>Pre-commit hooks pass on all files</criterion>
+        <criterion>No hardcoded hex values in .tsx files</criterion>
+      </acceptance-criteria>
+    </task>
+
+  </phase>
+
+  <!-- ================================================================== -->
+  <!-- DEFERRED TASKS                                                       -->
+  <!-- ================================================================== -->
+
+  <deferred-tasks>
+    <task id="D.0" title="OpenLineage export adapter"
+          reason="Not needed for MVP — schema is export-ready by design">
+      <description>
+        Convert Pydantic provenance chains to OpenLineage RunEvents
+        with custom facets. Export endpoint: GET /api/v1/lineage/export.
+      </description>
+    </task>
+
+    <task id="D.1" title="C2PA manifest generation"
+          reason="Tracked in issue #24, requires audio file handling">
+      <description>
+        Generate C2PA manifests with attribution provenance embedded
+        in audio files using c2pa-python.
+      </description>
+    </task>
+
+    <task id="D.2" title="Real uncertainty computation"
+          reason="Requires calibration dataset and feedback loop">
+      <description>
+        Replace mock uncertainty values with real computation:
+        conformal prediction sets, Bayesian source weighting,
+        HTC trajectory calibration.
+      </description>
+    </task>
+
+    <task id="D.3" title="CI integration tests against PostgreSQL"
+          reason="Tracked in issue #15, separate CI concern">
+      <description>
+        Run integration tests against real PostgreSQL in GitHub Actions
+        using service containers.
+      </description>
+    </task>
+  </deferred-tasks>
+
+  <!-- ================================================================== -->
+  <!-- DEPENDENCY DAG                                                       -->
+  <!-- ================================================================== -->
+  <!--
+    Phase 0 (Foundation) — both tasks independent:
+      0.0 (make setup)            — no deps
+      0.1 (verify migration)      — no deps
+
+    Phase 1 (Uncertainty Schema) — linear chain:
+      1.0 (enums + StepUncertainty)
+       └─ 1.1 (SourceContribution + CalibrationMetadata)
+           └─ 1.2 (extend ProvenanceEvent)
+               └─ 1.3 (update mock data)
+
+    Phase 2 (Frontend → Backend):
+      2.0 (provenance API) ← 1.2
+       └─ 2.1 (wire ApiClient) ← 2.0
+
+    Phase 3 (Citation UI):
+      3.0 (TS types) ← 1.2
+       └─ 3.1 (InlineCitation) ← 3.0
+           └─ 3.2 (ProvenancePanel) ← 3.1
+               └─ 3.3 (wire into work detail) ← 3.2, 2.1, 1.3
+
+    Phase 4 (Integration):
+      4.0 (E2E test) ← 2.0, 1.3
+      4.1 (frontend build) ← 3.3
+
+    Critical path: 1.0 → 1.1 → 1.2 → 1.3 → 3.3 → 4.1
+    Parallel path:  1.2 → 2.0 → 2.1 ──────↗
+    Parallel path:  1.2 → 3.0 → 3.1 → 3.2 ↗
+  -->
+
+</executable-plan>
