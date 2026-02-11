@@ -256,7 +256,8 @@ export default function HomePage() {
       </section>
 
       {/* ──── FEATURES ──── */}
-      <section className="px-[var(--space-8)] py-[var(--space-20)] bg-[var(--color-surface-secondary)]">
+      <section className="px-[var(--space-8)] py-[var(--space-20)]">
+        <div className="accent-line mb-[var(--space-16)]" style={{ opacity: 0.4 }} aria-hidden="true" />
         <motion.div
           initial="hidden"
           whileInView="visible"
