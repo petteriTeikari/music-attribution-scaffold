@@ -91,11 +91,13 @@ async def test_client():
         perm_bundle = PermissionBundleModel(
             entity_id=ih_id,
             scope="CATALOG",
-            permissions=json.dumps([
-                {"permission_type": "STREAM", "value": "ALLOW", "conditions": []},
-                {"permission_type": "VOICE_CLONING", "value": "DENY", "conditions": []},
-                {"permission_type": "AI_TRAINING", "value": "ASK", "conditions": []},
-            ]),
+            permissions=json.dumps(
+                [
+                    {"permission_type": "STREAM", "value": "ALLOW", "conditions": []},
+                    {"permission_type": "VOICE_CLONING", "value": "DENY", "conditions": []},
+                    {"permission_type": "AI_TRAINING", "value": "ASK", "conditions": []},
+                ]
+            ),
             effective_from=datetime.now(UTC),
             delegation_chain=json.dumps([]),
             default_permission="ASK",
@@ -160,9 +162,7 @@ class TestFullStackIntegration:
 
     async def test_filter_needs_review(self, test_client: httpx.AsyncClient) -> None:
         """needs_review=true returns works that need review."""
-        resp = await test_client.get(
-            "/attributions/", params={"needs_review": "true", "limit": 50}
-        )
+        resp = await test_client.get("/attributions/", params={"needs_review": "true", "limit": 50})
         data = resp.json()
         # Headlock (0.58), Just for Now (0.35), 2-1 (0.28), Blanket (0.0)
         assert len(data) == 4
@@ -195,9 +195,7 @@ class TestFullStackIntegration:
 
     async def test_search_works(self, test_client: httpx.AsyncClient) -> None:
         """Search for 'vocoder' returns results including Hide and Seek."""
-        resp = await test_client.get(
-            "/attributions/search", params={"q": "vocoder"}
-        )
+        resp = await test_client.get("/attributions/search", params={"q": "vocoder"})
         assert resp.status_code == 200
         data = resp.json()
         assert len(data) >= 1

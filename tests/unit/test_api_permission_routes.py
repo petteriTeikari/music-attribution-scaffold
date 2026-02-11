@@ -221,8 +221,6 @@ class TestPermissionCheckRoutes:
 
         app, _ = permission_app
         async with app.state.async_session_factory() as session:
-            result = await session.execute(
-                select(func.count()).select_from(AuditLogModel)
-            )
+            result = await session.execute(select(func.count()).select_from(AuditLogModel))
             count = result.scalar()
             assert count >= 1

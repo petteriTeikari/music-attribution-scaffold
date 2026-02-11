@@ -28,12 +28,14 @@ def _register_sqlite_type_compilers() -> None:
 
     def _patched_bind_processor(self, dialect):  # noqa: ANN001, ANN202
         if dialect.name == "sqlite":
+
             def process(value):  # noqa: ANN001, ANN202
                 if value is None:
                     return None
                 if isinstance(value, (list, tuple)):
                     return json.dumps([float(v) for v in value])
                 return str(value)
+
             return process
         return _original_process(self, dialect)
 
@@ -146,7 +148,10 @@ class TestVectorSearch:
         service = VectorSearchService()
         query_id = uuid.uuid5(uuid.NAMESPACE_DNS, "entity-a")
         results = await service.find_similar(
-            query_id, limit=5, threshold=0.5, session=async_session,
+            query_id,
+            limit=5,
+            threshold=0.5,
+            session=async_session,
         )
         for _, score in results:
             assert score >= 0.5
@@ -158,7 +163,10 @@ class TestVectorSearch:
         service = VectorSearchService()
         query_id = uuid.uuid5(uuid.NAMESPACE_DNS, "entity-a")
         results = await service.find_similar(
-            query_id, limit=5, entity_type="ARTIST", session=async_session,
+            query_id,
+            limit=5,
+            entity_type="ARTIST",
+            session=async_session,
         )
         # Should only contain ARTIST-type entities, not WORK
         for eid, _ in results:

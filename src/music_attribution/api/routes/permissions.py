@@ -71,7 +71,10 @@ async def check_permission(
                 requester_type="api",
                 permission_type=perm_type,
                 result=result,
-                request_context={"source": "api", "scope_entity_id": str(body.scope_entity_id) if body.scope_entity_id else None},
+                request_context={
+                    "source": "api",
+                    "scope_entity_id": str(body.scope_entity_id) if body.scope_entity_id else None,
+                },
                 session=session,
             )
             await session.commit()

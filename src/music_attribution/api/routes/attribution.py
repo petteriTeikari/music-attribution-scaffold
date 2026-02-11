@@ -76,15 +76,11 @@ async def list_attributions(
                 records = await repo.find_needs_review(limit=limit, session=session)
                 return [r.model_dump(mode="json") for r in records]
 
-            all_records = await repo.list_all(
-                offset=offset, limit=limit, session=session
-            )
+            all_records = await repo.list_all(offset=offset, limit=limit, session=session)
 
             # Apply assurance_level filter if specified
             if assurance_level is not None:
-                all_records = [
-                    r for r in all_records if r.assurance_level.value == assurance_level
-                ]
+                all_records = [r for r in all_records if r.assurance_level.value == assurance_level]
 
             # Sort by confidence descending
             all_records.sort(key=lambda r: r.confidence_score, reverse=True)

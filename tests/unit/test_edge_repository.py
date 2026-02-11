@@ -113,9 +113,7 @@ class TestAsyncEdgeRepository:
         await repo.add_edge(a, b, "PERFORMED", 0.9, session=async_session)
         await repo.add_edge(a, c, "WROTE", 0.8, session=async_session)
 
-        performed = await repo.get_neighbors(
-            a, depth=1, rel_type="PERFORMED", session=async_session
-        )
+        performed = await repo.get_neighbors(a, depth=1, rel_type="PERFORMED", session=async_session)
         assert len(performed) == 1
         assert performed[0].to_entity_id == b
 

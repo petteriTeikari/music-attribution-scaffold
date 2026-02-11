@@ -54,9 +54,7 @@ async def run_status(factory: async_sessionmaker[AsyncSession]) -> dict[str, int
     """
     counts: dict[str, int] = {}
     async with factory() as session:
-        result = await session.execute(
-            select(func.count()).select_from(AttributionRecordModel)
-        )
+        result = await session.execute(select(func.count()).select_from(AttributionRecordModel))
         counts["attribution_records"] = result.scalar() or 0
     return counts
 

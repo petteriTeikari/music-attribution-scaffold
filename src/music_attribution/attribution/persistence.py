@@ -353,11 +353,6 @@ class AsyncAttributionRepository:
         Returns:
             List of attribution records.
         """
-        stmt = (
-            select(AttributionRecordModel)
-            .order_by(AttributionRecordModel.created_at)
-            .offset(offset)
-            .limit(limit)
-        )
+        stmt = select(AttributionRecordModel).order_by(AttributionRecordModel.created_at).offset(offset).limit(limit)
         result = await session.execute(stmt)
         return [_model_to_record(m) for m in result.scalars().all()]

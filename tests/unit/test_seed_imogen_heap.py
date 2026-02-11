@@ -53,9 +53,7 @@ class TestSeedImogenHeap:
 
         await seed_imogen_heap(async_session)
 
-        result = await async_session.execute(
-            select(func.count()).select_from(AttributionRecordModel)
-        )
+        result = await async_session.execute(select(func.count()).select_from(AttributionRecordModel))
         count = result.scalar()
         assert count == 8
 
@@ -68,9 +66,7 @@ class TestSeedImogenHeap:
         await seed_imogen_heap(async_session)
 
         result = await async_session.execute(
-            select(AttributionRecordModel.confidence_score).order_by(
-                AttributionRecordModel.confidence_score.desc()
-            )
+            select(AttributionRecordModel.confidence_score).order_by(AttributionRecordModel.confidence_score.desc())
         )
         scores = [row[0] for row in result.all()]
         expected = [0.95, 0.91, 0.82, 0.72, 0.58, 0.35, 0.28, 0.0]
@@ -85,9 +81,7 @@ class TestSeedImogenHeap:
         await seed_imogen_heap(async_session)
         await seed_imogen_heap(async_session)
 
-        result = await async_session.execute(
-            select(func.count()).select_from(AttributionRecordModel)
-        )
+        result = await async_session.execute(select(func.count()).select_from(AttributionRecordModel))
         count = result.scalar()
         assert count == 8
 
@@ -116,9 +110,7 @@ class TestSeedImogenHeap:
         # Hide and Seek has 6 provenance events
         work_001_id = deterministic_uuid("work-001")
         result = await async_session.execute(
-            select(AttributionRecordModel).where(
-                AttributionRecordModel.attribution_id == work_001_id
-            )
+            select(AttributionRecordModel).where(AttributionRecordModel.attribution_id == work_001_id)
         )
         record = result.scalar_one()
         chain = record.provenance_chain

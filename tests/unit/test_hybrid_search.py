@@ -26,12 +26,14 @@ def _register_sqlite_type_compilers() -> None:
 
     def _patched_bind_processor(self, dialect):  # noqa: ANN001, ANN202
         if dialect.name == "sqlite":
+
             def process(value):  # noqa: ANN001, ANN202
                 if value is None:
                     return None
                 if isinstance(value, (list, tuple)):
                     return json.dumps([float(v) for v in value])
                 return str(value)
+
             return process
         return _original_process(self, dialect)
 
@@ -134,7 +136,8 @@ class TestHybridSearch:
     """Tests for HybridSearchService."""
 
     async def test_hybrid_search_combines_text_and_vector(
-        self, hybrid_session: AsyncSession,
+        self,
+        hybrid_session: AsyncSession,
     ) -> None:
         """Search returns results combining text and vector modalities."""
         from music_attribution.search.hybrid_search import HybridSearchService
@@ -147,7 +150,8 @@ class TestHybridSearch:
         assert hasattr(results[0], "rrf_score")
 
     async def test_hybrid_search_rrf_scoring(
-        self, hybrid_session: AsyncSession,
+        self,
+        hybrid_session: AsyncSession,
     ) -> None:
         """RRF scores are positive and results sorted descending."""
         from music_attribution.search.hybrid_search import HybridSearchService
@@ -159,7 +163,8 @@ class TestHybridSearch:
         assert scores == sorted(scores, reverse=True)
 
     async def test_hybrid_search_with_graph_context(
-        self, hybrid_session: AsyncSession,
+        self,
+        hybrid_session: AsyncSession,
     ) -> None:
         """Graph neighbors of matched entities appear in results."""
         from music_attribution.search.hybrid_search import HybridSearchService
@@ -171,7 +176,8 @@ class TestHybridSearch:
         assert len(results) >= 1
 
     async def test_hybrid_search_text_only_fallback(
-        self, hybrid_session: AsyncSession,
+        self,
+        hybrid_session: AsyncSession,
     ) -> None:
         """Search works when only text modality has matches."""
         from music_attribution.search.hybrid_search import HybridSearchService

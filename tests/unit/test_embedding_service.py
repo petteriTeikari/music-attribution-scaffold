@@ -29,12 +29,14 @@ def _register_sqlite_type_compilers() -> None:
 
     def _patched_bind_processor(self, dialect):  # noqa: ANN001, ANN202
         if dialect.name == "sqlite":
+
             def process(value):  # noqa: ANN001, ANN202
                 if value is None:
                     return None
                 if isinstance(value, (list, tuple)):
                     return json.dumps([float(v) for v in value])
                 return str(value)
+
             return process
         return _original_process(self, dialect)
 
@@ -193,7 +195,9 @@ class TestEmbeddingService:
         await async_session.flush()
 
         result = await async_session.execute(
-            select(func.count()).select_from(EntityEmbeddingModel).where(
+            select(func.count())
+            .select_from(EntityEmbeddingModel)
+            .where(
                 EntityEmbeddingModel.entity_id == entity_id,
             )
         )

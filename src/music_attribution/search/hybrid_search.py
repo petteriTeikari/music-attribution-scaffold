@@ -68,7 +68,9 @@ class HybridSearchService:
 
         # --- Modality 1: Text search ---
         text_results = await self._text_search.search(
-            query, limit=limit * 2, session=session,
+            query,
+            limit=limit * 2,
+            session=session,
         )
         for rank, record in enumerate(text_results, start=1):
             text_ranks[record.attribution_id] = rank
@@ -77,7 +79,8 @@ class HybridSearchService:
         vector_entity_ids = await self._vector_search_by_query(query, limit=limit, session=session)
         # Map entity_ids to attribution_ids
         vector_attribution_ids = await self._entities_to_attributions(
-            [eid for eid, _ in vector_entity_ids], session=session,
+            [eid for eid, _ in vector_entity_ids],
+            session=session,
         )
         for rank, attr_id in enumerate(vector_attribution_ids, start=1):
             if attr_id not in vector_ranks:
@@ -88,7 +91,8 @@ class HybridSearchService:
         matched_entity_ids = {eid for eid, _ in vector_entity_ids}
         neighbor_entity_ids = await self._graph_neighbors(matched_entity_ids, session=session)
         neighbor_attribution_ids = await self._entities_to_attributions(
-            list(neighbor_entity_ids), session=session,
+            list(neighbor_entity_ids),
+            session=session,
         )
         for rank, attr_id in enumerate(neighbor_attribution_ids, start=1):
             if attr_id not in graph_ranks:

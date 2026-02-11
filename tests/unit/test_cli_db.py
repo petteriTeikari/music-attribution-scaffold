@@ -53,9 +53,7 @@ class TestCliDb:
         await run_seed(factory)
 
         async with factory() as session:
-            result = await session.execute(
-                select(func.count()).select_from(AttributionRecordModel)
-            )
+            result = await session.execute(select(func.count()).select_from(AttributionRecordModel))
             count = result.scalar()
             assert count == 8
 
@@ -86,8 +84,6 @@ class TestCliDb:
         await run_reset(factory)
 
         async with factory() as session:
-            result = await session.execute(
-                select(func.count()).select_from(AttributionRecordModel)
-            )
+            result = await session.execute(select(func.count()).select_from(AttributionRecordModel))
             count = result.scalar()
             assert count == 0

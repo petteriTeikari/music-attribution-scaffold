@@ -110,9 +110,7 @@ class PermissionBundleModel(Base):
     __tablename__ = "permission_bundles"
 
     permission_id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
-    entity_id: Mapped[uuid.UUID] = mapped_column(
-        Uuid, ForeignKey("resolved_entities.entity_id"), nullable=False
-    )
+    entity_id: Mapped[uuid.UUID] = mapped_column(Uuid, ForeignKey("resolved_entities.entity_id"), nullable=False)
     scope: Mapped[str] = mapped_column(String(50), nullable=False)
     scope_entity_id: Mapped[uuid.UUID | None] = mapped_column(Uuid, nullable=True)
     permissions: Mapped[dict] = mapped_column(JSONB, nullable=False)
@@ -159,12 +157,8 @@ class EdgeModel(Base):
     )
 
     edge_id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
-    from_entity_id: Mapped[uuid.UUID] = mapped_column(
-        Uuid, ForeignKey("resolved_entities.entity_id"), nullable=False
-    )
-    to_entity_id: Mapped[uuid.UUID] = mapped_column(
-        Uuid, ForeignKey("resolved_entities.entity_id"), nullable=False
-    )
+    from_entity_id: Mapped[uuid.UUID] = mapped_column(Uuid, ForeignKey("resolved_entities.entity_id"), nullable=False)
+    to_entity_id: Mapped[uuid.UUID] = mapped_column(Uuid, ForeignKey("resolved_entities.entity_id"), nullable=False)
     relationship_type: Mapped[str] = mapped_column(String(100), nullable=False)
     confidence: Mapped[float] = mapped_column(Float, nullable=False)
     metadata_: Mapped[dict] = mapped_column("metadata", JSONB, default=dict)
@@ -175,14 +169,10 @@ class EntityEmbeddingModel(Base):
     """SQLAlchemy model for vector embeddings (pgvector halfvec)."""
 
     __tablename__ = "entity_embeddings"
-    __table_args__ = (
-        UniqueConstraint("entity_id", "model_name", name="uq_entity_embeddings_entity_model"),
-    )
+    __table_args__ = (UniqueConstraint("entity_id", "model_name", name="uq_entity_embeddings_entity_model"),)
 
     embedding_id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
-    entity_id: Mapped[uuid.UUID] = mapped_column(
-        Uuid, ForeignKey("resolved_entities.entity_id"), nullable=False
-    )
+    entity_id: Mapped[uuid.UUID] = mapped_column(Uuid, ForeignKey("resolved_entities.entity_id"), nullable=False)
     model_name: Mapped[str] = mapped_column(String(255), nullable=False)
     model_version: Mapped[str] = mapped_column(String(100), nullable=False)
     embedding = mapped_column(HALFVEC(768), nullable=False)
