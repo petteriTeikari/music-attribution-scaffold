@@ -2,11 +2,11 @@
   "plan_file": "docs/planning/wire-mocks-to-real-backends.xml",
   "plan_version": "2.0",
   "execution_mode": "autonomous",
-  "current_task_id": "5.1",
-  "current_phase": "RED",
-  "inner_iteration": 9,
-  "session_task_count": 9,
-  "session_inner_iterations": 9,
+  "current_task_id": null,
+  "current_phase": null,
+  "inner_iteration": 10,
+  "session_task_count": 10,
+  "session_inner_iterations": 10,
   "session_start": "2026-02-11T21:30:00Z",
   "tasks": {
     "0.1": { "status": "DONE", "name": "Add display fields to backend schema + seed data", "inner_iterations": 1, "commit_hashes": ["cfe13f9"], "test_count": 10 },
@@ -17,12 +17,12 @@
     "2.2": { "status": "DONE", "name": "Swap mockApi to apiClient in all 4 page files", "inner_iterations": 1, "commit_hashes": ["761d97f"], "test_count": 0 },
     "3.1": { "status": "DONE", "name": "Wire CopilotKit action callbacks to real UI effects", "inner_iterations": 1, "commit_hashes": ["f796970"], "test_count": 0 },
     "4.1": { "status": "DONE", "name": "Wire AgentFeedbackFlow submission to agent chat", "inner_iterations": 1, "commit_hashes": ["da33f54"], "test_count": 0 },
-    "5.1": { "status": "IN_PROGRESS", "name": "Integration test: agent to real PostgreSQL round-trip", "inner_iterations": 0, "commit_hashes": [], "test_count": 0 },
-    "5.2": { "status": "NOT_STARTED", "name": "Verify full build + all tests pass", "inner_iterations": 0, "commit_hashes": [], "test_count": 0 }
+    "5.1": { "status": "DONE", "name": "Integration test: agent to real PostgreSQL round-trip", "inner_iterations": 1, "commit_hashes": ["c7dc674"], "test_count": 6 },
+    "5.2": { "status": "DONE", "name": "Verify full build + all tests pass", "inner_iterations": 1, "commit_hashes": [], "test_count": 0 }
   },
   "convergence": {
-    "reached": false,
-    "tasks_done": 8,
+    "reached": true,
+    "tasks_done": 10,
     "tasks_total": 10,
     "tasks_stuck": 0
   }
