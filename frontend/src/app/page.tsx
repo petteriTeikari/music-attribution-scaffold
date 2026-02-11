@@ -9,6 +9,8 @@ const FEATURES = [
     title: "Confidence Scoring",
     description:
       "Every attribution comes with a calibrated confidence score from conformal prediction. Know exactly how reliable each credit is.",
+    detail:
+      "Conformal prediction provides a mathematical guarantee: when the system says \u201c90% confident,\u201d the data is correct 90% of the time \u2014 not a heuristic, but a provable bound. Evidence is stratified across assurance levels (A0 unverified \u2192 A3 artist-verified), mapped to industry standards like ISRC, ISWC, and ISNI. Continuous monitoring detects calibration drift, triggering automatic alerts when confidence distributions shift.",
     marker: "I",
     image: "/images/figures/fig-feature-01-confidence-arc.webp",
     alt: "Concentric arcs representing conformal, Bayesian, and calibrated confidence scoring methods with a large 95% score",
@@ -16,7 +18,9 @@ const FEATURES = [
   {
     title: "Provenance Lineage",
     description:
-      "See how confidence was built over time — from initial fetch through entity resolution to expert review. Full audit trail.",
+      "See how confidence was built over time \u2014 from initial fetch through entity resolution to expert review. Full audit trail.",
+    detail:
+      "Attribution-by-design embeds provenance at creation rather than computing it retrospectively. Every event \u2014 metadata fetch, entity resolution match, source corroboration, artist confirmation \u2014 is recorded as an immutable audit entry with timestamps and source identifiers. Confidence grows with each verified touchpoint, giving artists and platforms ironclad proof of authorship that licensing authorities can trust.",
     marker: "II",
     image: "/images/figures/fig-feature-02-provenance-flow.webp",
     alt: "Constructivist data flow diagram showing provenance events connected by lines with a confidence gradient bar",
@@ -25,6 +29,8 @@ const FEATURES = [
     title: "MCP Permission Patchbay",
     description:
       "Machine-readable permissions for AI platforms. Define granular rules: who can train on your music, who can clone your voice.",
+    detail:
+      "When an AI system wants to use your creative data \u2014 voice, lyrics, compositions, or metadata \u2014 it must first query your permission settings via the Model Context Protocol. Set rules per use type: allow streaming but deny training, permit non-commercial generation but require attribution, restrict voice cloning entirely. Every request is logged and archived, making compliance automatic for ethical platforms and violations auditable for legal recourse.",
     marker: "III",
     image: "/images/figures/fig-feature-03-mcp-patchbay.webp",
     alt: "Bauhaus-inspired grid of colored squares representing AI permission states for music usage types",
@@ -33,6 +39,8 @@ const FEATURES = [
     title: "Dual-Role Interface",
     description:
       "Artist mode for editing and approving credits. Query mode for browsing and searching. One interface, two perspectives.",
+    detail:
+      "Artists get a private workspace: claim credits, verify collaborators, upload evidence, and approve or deny AI usage requests with bulk editing and real-time approval queues. Platforms and researchers get a read-only gateway that respects permission boundaries, with access tiers scaled from full internal to rate-limited public. The same identity serves both roles \u2014 switch between creation and consumption with a single toggle.",
     marker: "IV",
     image: "/images/figures/fig-feature-04-dual-role.webp",
     alt: "Split composition with warm gold artist panel and cool blue query panel divided by a coral accent line",
@@ -293,8 +301,11 @@ export default function HomePage() {
                   <h3 className="editorial-display text-[var(--text-3xl)] text-[var(--color-heading)]">
                     {feature.title}
                   </h3>
-                  <p className="mt-[var(--space-4)] text-[var(--text-base)] text-[var(--color-body)] leading-[var(--leading-relaxed)] max-w-md">
+                  <p className="mt-[var(--space-4)] text-[var(--text-lg)] text-[var(--color-body)] leading-[var(--leading-relaxed)] max-w-lg">
                     {feature.description}
+                  </p>
+                  <p className="mt-[var(--space-3)] text-[var(--text-sm)] text-[var(--color-muted)] leading-[var(--leading-relaxed)] max-w-lg">
+                    {feature.detail}
                   </p>
                 </div>
 
