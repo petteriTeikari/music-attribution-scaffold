@@ -1,8 +1,12 @@
 "use client";
 
+import { useState } from "react";
 import { Navigation } from "./navigation";
+import { AgentSidebar } from "@/components/chat/copilot-sidebar";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
+  const [agentOpen, setAgentOpen] = useState(false);
+
   return (
     <div className="min-h-screen bg-[var(--color-surface)]">
       <Navigation />
@@ -15,6 +19,39 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <div className="md:block hidden">{/* spacer for desktop — no top offset needed */}</div>
         {children}
       </main>
+
+      {/* Agent toggle button — fixed bottom-right */}
+      <button
+        onClick={() => setAgentOpen((prev) => !prev)}
+        className="fixed bottom-[var(--space-6)] right-[var(--space-6)] z-40 flex h-12 w-12 items-center justify-center bg-[var(--color-accent)] text-white transition-colors duration-[var(--transition-fast)] hover:bg-[var(--color-accent-hover)]"
+        aria-label={agentOpen ? "Close agent chat" : "Open agent chat"}
+        title="Attribution Agent"
+      >
+        <svg
+          width="20"
+          height="20"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          {agentOpen ? (
+            <>
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
+            </>
+          ) : (
+            <>
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+            </>
+          )}
+        </svg>
+      </button>
+
+      {/* Agent sidebar */}
+      <AgentSidebar open={agentOpen} onOpenChange={setAgentOpen} />
 
       {/* Footer */}
       <footer
