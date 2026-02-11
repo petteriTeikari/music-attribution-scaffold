@@ -4,13 +4,39 @@ import { Navigation } from "./navigation";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex min-h-screen flex-col bg-[var(--color-surface)]">
+    <div className="min-h-screen bg-[var(--color-surface)]">
       <Navigation />
-      <main className="flex-1">{children}</main>
-      <footer className="border-t border-[var(--color-border)] px-[var(--space-6)] py-[var(--space-8)]">
-        <div className="mx-auto max-w-7xl">
-          <p className="text-[var(--text-sm)] text-[var(--color-muted)]">
-            Music Attribution Scaffold — Open-source research companion to{" "}
+
+      {/* Main content: offset by sidebar on desktop, offset by top bar on mobile */}
+      <main
+        className="min-h-screen pt-[48px] md:pt-0"
+        style={{ marginLeft: "var(--sidebar-width)" }}
+      >
+        <div className="md:block hidden">{/* spacer for desktop — no top offset needed */}</div>
+        {children}
+      </main>
+
+      {/* Footer */}
+      <footer
+        className="border-t border-[var(--color-border)] px-[var(--space-8)] py-[var(--space-12)]"
+        style={{ marginLeft: "var(--sidebar-width)" }}
+      >
+        <div className="flex items-center justify-between">
+          <p
+            className="editorial-caps text-[var(--text-xs)] text-[var(--color-muted)]"
+            style={{
+              writingMode: "vertical-rl",
+              transform: "rotate(180deg)",
+              height: "fit-content",
+            }}
+          >
+            Music Attribution Scaffold
+          </p>
+          <div className="flex-1 px-[var(--space-8)]">
+            <div className="accent-line" />
+          </div>
+          <p className="text-[var(--text-xs)] text-[var(--color-muted)]">
+            Open-source research companion to{" "}
             <a
               href="https://papers.ssrn.com/sol3/papers.cfm?abstract_id=6109087"
               target="_blank"
