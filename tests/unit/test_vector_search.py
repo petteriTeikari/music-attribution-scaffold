@@ -32,7 +32,7 @@ def _register_sqlite_type_compilers() -> None:
             def process(value):  # noqa: ANN001, ANN202
                 if value is None:
                     return None
-                if isinstance(value, (list, tuple)):
+                if isinstance(value, list | tuple):
                     return json.dumps([float(v) for v in value])
                 return str(value)
 

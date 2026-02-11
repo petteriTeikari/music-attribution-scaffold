@@ -45,8 +45,8 @@ repos:
     hooks:
       - id: css-token-lint
         name: css-token-lint
-        entry: bash -c 'grep -rl "text-\[var(--text-" frontend/src/ --include="*.tsx" --include="*.ts" --exclude-dir=__tests__ && echo "ERROR: Found text-[var(--text-*)] — use Tailwind utilities (text-xl, text-2xl) instead. See .claude/memory/css-tailwind-v4-pitfalls.md" && exit 1 || exit 0'
-        language: system
+        entry: scripts/css-token-lint.sh
+        language: script
         files: '^frontend/src/.*\.tsx?$'
         pass_filenames: false
 

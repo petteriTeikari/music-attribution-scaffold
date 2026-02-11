@@ -39,7 +39,7 @@ def _parse_embedding(raw: object) -> list[float]:
 
     PostgreSQL returns a HalfVector via pgvector; SQLite stores as JSON string.
     """
-    if isinstance(raw, (list, tuple)):
+    if isinstance(raw, list | tuple):
         return [float(v) for v in raw]
     if isinstance(raw, str):
         return [float(v) for v in json.loads(raw)]

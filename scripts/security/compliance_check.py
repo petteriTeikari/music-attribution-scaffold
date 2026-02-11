@@ -17,7 +17,7 @@ import json
 import re
 import subprocess
 import sys
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
@@ -248,15 +248,13 @@ def run_all_checks() -> dict:
     ]
 
     total_findings = sum(len(c["findings"]) for c in checks)
-    critical_findings = sum(
-        1 for c in checks for f in c["findings"] if f.get("severity") == "CRITICAL"
-    )
+    critical_findings = sum(1 for c in checks for f in c["findings"] if f.get("severity") == "CRITICAL")
     passed_checks = sum(1 for c in checks if c["passed"])
     total_checks = len(checks)
     compliance_pct = (passed_checks / total_checks) * 100 if total_checks > 0 else 0
 
     return {
-        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "timestamp": datetime.now(UTC).isoformat(),
         "overall_compliance": compliance_pct,
         "critical_findings": critical_findings,
         "total_findings": total_findings,
@@ -268,12 +266,8 @@ def run_all_checks() -> dict:
 
 def main() -> int:
     """Run compliance checks and output report."""
-    parser = argparse.ArgumentParser(
-        description="Music Attribution Scaffold Compliance Check"
-    )
-    parser.add_argument(
-        "--validate", action="store_true", help="Run all compliance checks"
-    )
+    parser = argparse.ArgumentParser(description="Music Attribution Scaffold Compliance Check")
+    parser.add_argument("--validate", action="store_true", help="Run all compliance checks")
     parser.add_argument(
         "--output",
         type=Path,
