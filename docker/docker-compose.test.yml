@@ -2,7 +2,6 @@
 #
 # Usage:
 #   docker compose -f docker/docker-compose.test.yml run --rm test
-#   docker compose -f docker/docker-compose.test.yml run --rm test-py311
 #   docker compose -f docker/docker-compose.test.yml run --rm lint
 #
 # Or use the wrapper script:
@@ -28,22 +27,6 @@ services:
       - ../htmlcov:/app/htmlcov
       - ../.coverage:/app/.coverage
     command: ["uv", "run", "pytest", "tests/", "-v", "--cov=src/music_attribution", "--cov-report=term-missing", "--cov-report=html"]
-
-  # Python 3.11 tests (matches CI matrix)
-  test-py311:
-    build:
-      context: ..
-      dockerfile: docker/Dockerfile.test
-      args:
-        PYTHON_VERSION: "3.11"
-    environment:
-      - CI=true
-      - RUNNING_IN_DOCKER=true
-      - PYTHONPATH=/app/src
-    volumes:
-      - ../src:/app/src:ro
-      - ../tests:/app/tests:ro
-    command: ["uv", "run", "pytest", "tests/", "-v"]
 
   # Linting - matches CI exactly
   lint:

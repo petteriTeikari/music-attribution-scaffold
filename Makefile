@@ -1,5 +1,5 @@
 .PHONY: help install install-dev setup
-.PHONY: test test-py311 test-all lint
+.PHONY: test test-all lint
 .PHONY: test-local test-unit test-integration test-cov lint-local format typecheck ci-local
 .PHONY: ci-docker docker-build docker-clean clean
 .PHONY: dev-frontend test-frontend lint-frontend build-frontend
@@ -34,9 +34,6 @@ setup:  ## One-command setup: Docker + deps + migrations + seed + frontend
 
 test: ## Default: run tests in Docker (CI-parity)
 	@./scripts/test-docker.sh --build
-
-test-py311:  ## Tests in Docker (Python 3.11, CI matrix)
-	@./scripts/test-docker.sh py311 --build
 
 test-all:  ## Full CI simulation in Docker (lint + typecheck + tests)
 	@./scripts/test-docker.sh ci --build

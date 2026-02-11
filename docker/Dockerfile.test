@@ -2,7 +2,7 @@
 # IMPORTANT: Keep in sync with .github/workflows/ci.yml
 #
 # This image matches the CI environment exactly:
-# - Same Python versions (3.11, 3.13)
+# - Python 3.13 only (project requires >=3.13,<3.14)
 # - Same uv version
 # - Same dependency groups
 # - Same test commands
