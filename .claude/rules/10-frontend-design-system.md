@@ -62,6 +62,10 @@ Component code MUST reference tokens — **zero hardcoded hex values** in any `.
 
 CSS tokens: `--font-display`, `--font-sans`, `--font-mono`
 
+Font sizes use Tailwind v4 built-in scale: `text-xs` through `text-7xl`.
+**NEVER** use `text-[var(--text-xl)]` — this generates `color:` not `font-size:` in Tailwind v4.
+See `.claude/memory/css-tailwind-v4-pitfalls.md` for details.
+
 ### Editorial Typography Classes
 
 | Class | Effect |
@@ -145,3 +149,5 @@ The following are COMPLETELY BANNED in all frontend code:
 - Shadow-sm box cards (use horizontal rows with divider lines)
 - Symmetric 2-column grids (use asymmetric layouts)
 - Inter font (replaced by Plus Jakarta Sans)
+- `text-[var(--text-*)]` (Tailwind v4 treats as color, not font-size — use `text-xl` etc.)
+- `--text-*` custom properties in `:root` (conflicts with Tailwind v4 built-in scale)
