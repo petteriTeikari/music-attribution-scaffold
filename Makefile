@@ -2,6 +2,7 @@
 .PHONY: test test-py311 test-all lint
 .PHONY: test-local test-unit test-integration test-cov lint-local format typecheck ci-local
 .PHONY: ci-docker docker-build docker-clean clean
+.PHONY: dev-frontend test-frontend lint-frontend build-frontend
 
 .DEFAULT_GOAL := help
 
@@ -86,6 +87,22 @@ docker-build:  ## Build test Docker image
 docker-clean:  ## Remove test Docker images and volumes
 	docker compose -f docker/docker-compose.test.yml down --rmi local --volumes 2>/dev/null || true
 	docker image prune -f
+
+# =============================================================================
+# FRONTEND (Next.js)
+# =============================================================================
+
+dev-frontend:  ## Start frontend dev server (localhost:3000)
+	cd frontend && npm run dev
+
+test-frontend:  ## Run frontend tests (Vitest)
+	cd frontend && npm test
+
+lint-frontend:  ## Lint frontend (ESLint + TypeScript)
+	cd frontend && npm run lint && npx tsc --noEmit
+
+build-frontend:  ## Build frontend for production
+	cd frontend && npm run build
 
 # =============================================================================
 # CLEANUP

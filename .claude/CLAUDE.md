@@ -105,6 +105,34 @@ class TestFeatureName:
 | Any file | `.claude/CLAUDE.md`, `CLAUDE.md` |
 | `tests/**` | `.claude/domains/testing.md` |
 | `pyproject.toml` | `.claude/domains/configuration.md` |
+| `frontend/**` | `.claude/rules/10-frontend-design-system.md`, `.claude/rules/11-ux-first-philosophy.md` |
+| `frontend/src/components/**` | `.claude/rules/10-frontend-design-system.md` |
+| `frontend/src/app/**` | `.claude/rules/11-ux-first-philosophy.md` |
+
+## Frontend Quick Commands
+
+```bash
+# Development server
+make dev-frontend
+
+# Run frontend tests
+make test-frontend
+
+# Lint frontend
+make lint-frontend
+
+# Production build
+make build-frontend
+```
+
+## Frontend Rules
+
+- **Zero hardcoded hex** in `.tsx` files — use CSS custom property tokens only
+- **CSS custom properties** for all theme values in `globals.css`
+- **Vitest + React Testing Library** for component tests
+- **`vitest-axe`** for component-level WCAG checks
+- **Jotai** for client state (theme, role mode)
+- **App Router** (Next.js 15) — all pages in `frontend/src/app/`
 
 ## Mode System
 
