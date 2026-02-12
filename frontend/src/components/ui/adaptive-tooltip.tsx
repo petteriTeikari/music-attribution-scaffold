@@ -1,5 +1,7 @@
 "use client";
 
+// TODO: Component not yet integrated — wire up during UI fine-tuning
+
 import { useState, useEffect } from "react";
 import { useAtomValue } from "jotai";
 import { proficiencyLevelsAtom } from "@/lib/stores/proficiency";

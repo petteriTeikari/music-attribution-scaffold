@@ -4,6 +4,7 @@ export type Theme = "light" | "dark" | "system";
 
 export const themeAtom = atom<Theme>("system");
 
+// TODO: Atom not yet used in any component
 export const resolvedThemeAtom = atom<"light" | "dark">((get) => {
   const theme = get(themeAtom);
   if (theme === "system") {

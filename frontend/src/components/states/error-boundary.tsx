@@ -1,5 +1,7 @@
 "use client";
 
+// TODO: Component not yet integrated — wire up during UI fine-tuning
+
 import { Component, type ReactNode } from "react";
 
 interface ErrorBoundaryProps {
