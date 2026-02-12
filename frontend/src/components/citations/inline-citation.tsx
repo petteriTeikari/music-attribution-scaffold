@@ -45,13 +45,13 @@ export function InlineCitation({ citation }: InlineCitationProps) {
           className="absolute z-50 bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 text-xs rounded whitespace-nowrap"
           style={{
             backgroundColor: "var(--color-surface-elevated)",
-            color: "var(--color-text)",
+            color: "var(--color-heading)",
             border: "1px solid var(--color-border)",
             boxShadow: "0 2px 8px rgba(0,0,0,0.12)",
           }}
         >
           <span className="font-medium">{citation.label}</span>
-          <span className="mx-1" style={{ color: "var(--color-text-muted)" }}>
+          <span className="mx-1" style={{ color: "var(--color-muted)" }}>
             ·
           </span>
           <span style={{ color: "var(--color-accent)" }}>
@@ -60,7 +60,7 @@ export function InlineCitation({ citation }: InlineCitationProps) {
           <br />
           <span
             className="text-xs"
-            style={{ color: "var(--color-text-muted)" }}
+            style={{ color: "var(--color-muted)" }}
           >
             {citation.detail}
           </span>
