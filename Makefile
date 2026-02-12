@@ -1,7 +1,7 @@
 .PHONY: help install install-dev setup
 .PHONY: dev dev-down dev-logs
 .PHONY: test test-all lint
-.PHONY: test-local test-unit test-integration test-cov lint-local format typecheck ci-local
+.PHONY: test-local test-integration test-cov lint-local format typecheck ci-local
 .PHONY: ci-docker docker-build docker-clean clean
 .PHONY: dev-frontend test-frontend lint-frontend build-frontend
 .PHONY: agent dev-agent
@@ -61,20 +61,14 @@ ci-docker: test-all  ## Alias for test-all
 # LOCAL DEVELOPMENT (quick iteration, may differ from CI)
 # =============================================================================
 
-test-local:  ## Run unit tests locally (fast, no Docker)
-	@uv run pytest tests/ -v || ([ $$? -eq 5 ] && echo "No tests collected yet" && exit 0)
+test-local:  ## Run ALL tests locally: unit + integration (requires Docker daemon for testcontainers)
+	.venv/bin/python -m pytest tests/ -v --timeout=120
 
-test-unit:  ## Run unit tests only (local)
-	@uv run pytest tests/unit/ -v -m unit || ([ $$? -eq 5 ] && echo "No unit tests collected yet" && exit 0)
+test-integration:  ## Run integration tests only (testcontainers PostgreSQL, requires Docker daemon)
+	.venv/bin/python -m pytest tests/integration/ -v --timeout=120
 
-test-integration:  ## Run integration tests (testcontainers PostgreSQL, requires Docker daemon)
-	.venv/bin/python -m pytest tests/integration/ -v -m integration --timeout=120
-
-test-all-local:  ## Run ALL tests: unit + integration (requires Docker daemon)
-	.venv/bin/python -m pytest tests/ -v -m "unit or integration" --timeout=120
-
-test-cov:  ## Run tests with coverage (local)
-	uv run pytest tests/ -v --cov=src/music_attribution --cov-report=html --cov-report=term-missing
+test-cov:  ## Run ALL tests with coverage (requires Docker daemon for testcontainers)
+	.venv/bin/python -m pytest tests/ -v --timeout=120 --cov=src/music_attribution --cov-report=html --cov-report=term-missing
 
 lint-local:  ## Run linting locally (fast, no Docker)
 	uv run ruff check src/ tests/
