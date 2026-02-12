@@ -51,7 +51,6 @@ MOCK_ATTRIBUTIONS = {
 
 def _make_deps() -> AgentDeps:
     return AgentDeps(
-        attributions=MOCK_ATTRIBUTIONS,
         state=AttributionAgentState(),
     )
 
@@ -82,9 +81,8 @@ class TestAgentCreation:
 class TestAgentDeps:
     """Tests for AgentDeps dataclass."""
 
-    def test_deps_with_attributions(self) -> None:
+    def test_deps_state_accessible(self) -> None:
         deps = _make_deps()
-        assert "attr-001" in deps.attributions
         assert deps.state.current_work_id is None
 
     def test_deps_state_mutable(self) -> None:
@@ -93,7 +91,7 @@ class TestAgentDeps:
         assert deps.state.current_work_id == "attr-001"
 
     def test_deps_session_factory_default_none(self) -> None:
-        """AgentDeps.session_factory defaults to None (dict fallback)."""
+        """AgentDeps.session_factory defaults to None."""
         deps = _make_deps()
         assert deps.session_factory is None
 
@@ -103,27 +101,10 @@ class TestAgentDeps:
 
         mock_factory = MagicMock()
         deps = AgentDeps(
-            attributions={},
             state=AttributionAgentState(),
             session_factory=mock_factory,
         )
         assert deps.session_factory is mock_factory
-
-    def test_deps_has_db_returns_true_with_factory(self) -> None:
-        """AgentDeps.has_db is True when session_factory is set."""
-        from unittest.mock import MagicMock
-
-        deps = AgentDeps(
-            attributions={},
-            state=AttributionAgentState(),
-            session_factory=MagicMock(),
-        )
-        assert deps.has_db is True
-
-    def test_deps_has_db_returns_false_without_factory(self) -> None:
-        """AgentDeps.has_db is False when session_factory is None."""
-        deps = _make_deps()
-        assert deps.has_db is False
 
 
 class TestExplainConfidenceLogic:
@@ -140,40 +121,36 @@ class TestExplainConfidenceLogic:
         assert record["source_agreement"] < 0.5
 
     def test_missing_record_handled(self) -> None:
-        deps = _make_deps()
-        assert deps.attributions.get("nonexistent") is None
+        assert MOCK_ATTRIBUTIONS.get("nonexistent") is None
 
 
 class TestSearchLogic:
-    """Tests for search_attributions tool logic."""
+    """Tests for search_attributions tool logic (reference data)."""
 
     def test_search_by_title(self) -> None:
-        deps = _make_deps()
         query = "hide"
         results = [
             attr_id
-            for attr_id, record in deps.attributions.items()
+            for attr_id, record in MOCK_ATTRIBUTIONS.items()
             if query.lower() in record.get("work_title", "").lower()
         ]
         assert len(results) == 1
         assert results[0] == "attr-001"
 
     def test_search_by_artist(self) -> None:
-        deps = _make_deps()
         query = "imogen"
         results = [
             attr_id
-            for attr_id, record in deps.attributions.items()
+            for attr_id, record in MOCK_ATTRIBUTIONS.items()
             if query.lower() in record.get("artist_name", "").lower()
         ]
         assert len(results) == 2
 
     def test_search_no_results(self) -> None:
-        deps = _make_deps()
         query = "nonexistent"
         results = [
             attr_id
-            for attr_id, record in deps.attributions.items()
+            for attr_id, record in MOCK_ATTRIBUTIONS.items()
             if query.lower() in record.get("work_title", "").lower()
         ]
         assert len(results) == 0

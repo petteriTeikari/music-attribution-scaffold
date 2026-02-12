@@ -15,7 +15,6 @@ class Settings(BaseSettings):
 
     Required environment variables:
         DATABASE_URL: PostgreSQL connection string
-        MUSICBRAINZ_USER_AGENT: User agent for MusicBrainz API compliance
 
     All other settings have sensible defaults for local development.
     """
@@ -31,13 +30,21 @@ class Settings(BaseSettings):
     database_url: str = Field(description="PostgreSQL async connection string")
     valkey_url: str = Field(default="redis://localhost:6379", description="Valkey/Redis connection URL")
 
+    # API
+    api_host: str = Field(default="0.0.0.0", description="API server host")
+    api_port: int = Field(default=8000, description="API server port")
+    cors_origins: str = Field(default="http://localhost:3000", description="Comma-separated CORS origins")
+
     # External APIs
-    musicbrainz_user_agent: str = Field(description="User-Agent for MusicBrainz API (required for rate limiting)")
+    musicbrainz_user_agent: str | None = Field(default=None, description="User-Agent for MusicBrainz API")
     discogs_token: SecretStr | None = Field(default=None, description="Discogs API token")
 
-    # LLM
+    # LLM / Agent
     llm_provider: str = Field(default="anthropic", description="LLM provider name")
     llm_model: str = Field(default="claude-haiku-4-5", description="LLM model identifier")
+    attribution_agent_model: str = Field(
+        default="anthropic:claude-haiku-4-5", description="PydanticAI model string for attribution agent"
+    )
 
     # Reproducibility
     attribution_seed: int = Field(default=42, description="Random seed for reproducible experiments")

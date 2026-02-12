@@ -8,7 +8,6 @@ Two implementations:
 from __future__ import annotations
 
 import copy
-import json
 import logging
 import uuid
 from datetime import UTC, datetime
@@ -17,6 +16,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from music_attribution.db.models import AttributionRecordModel
+from music_attribution.db.utils import ensure_utc, parse_jsonb
 from music_attribution.schemas.attribution import (
     AttributionRecord,
     ProvenanceEvent,
@@ -156,27 +156,6 @@ def _record_to_model(record: AttributionRecord) -> AttributionRecordModel:
     )
 
 
-def _ensure_utc(dt: datetime | str) -> datetime:
-    """Ensure a datetime has UTC timezone (SQLite strips tzinfo).
-
-    ORM models annotate DateTime columns as Mapped[str] but the actual
-    runtime value is a datetime object. Accept both to satisfy mypy.
-    """
-    if isinstance(dt, str):
-        parsed = datetime.fromisoformat(dt)
-        return parsed.replace(tzinfo=UTC) if parsed.tzinfo is None else parsed
-    if dt.tzinfo is None:
-        return dt.replace(tzinfo=UTC)
-    return dt
-
-
-def _parse_jsonb(value: dict | list | str) -> dict | list:  # noqa: E501
-    """Parse JSONB value — str from SQLite, native dict/list from PostgreSQL."""
-    if isinstance(value, str):
-        return json.loads(value)  # type: ignore[no-any-return]
-    return value
-
-
 def _model_to_record(model: AttributionRecordModel) -> AttributionRecord:
     """Convert an ORM model to a Pydantic AttributionRecord.
 
@@ -189,21 +168,21 @@ def _model_to_record(model: AttributionRecordModel) -> AttributionRecord:
         work_entity_id=model.work_entity_id,
         work_title=model.work_title,
         artist_name=model.artist_name,
-        credits=_parse_jsonb(model.credits),  # type: ignore[arg-type]
+        credits=parse_jsonb(model.credits),  # type: ignore[arg-type]
         assurance_level=model.assurance_level,  # type: ignore[arg-type]
         confidence_score=model.confidence_score,
-        conformal_set=_parse_jsonb(model.conformal_set),  # type: ignore[arg-type]
+        conformal_set=parse_jsonb(model.conformal_set),  # type: ignore[arg-type]
         source_agreement=model.source_agreement,
-        provenance_chain=_parse_jsonb(model.provenance_chain),  # type: ignore[arg-type]
+        provenance_chain=parse_jsonb(model.provenance_chain),  # type: ignore[arg-type]
         uncertainty_summary=(
-            _parse_jsonb(model.uncertainty_summary)  # type: ignore[arg-type]
+            parse_jsonb(model.uncertainty_summary)  # type: ignore[arg-type]
             if model.uncertainty_summary is not None
             else None
         ),
         needs_review=model.needs_review,
         review_priority=model.review_priority,
-        created_at=_ensure_utc(model.created_at),
-        updated_at=_ensure_utc(model.updated_at),
+        created_at=ensure_utc(model.created_at),
+        updated_at=ensure_utc(model.updated_at),
         version=model.version,
     )
 

@@ -13,7 +13,7 @@ export function RoleToggle() {
 
   return (
     <div
-      className="flex flex-col items-center gap-[var(--space-1)]"
+      className="flex flex-col items-center gap-1"
       role="radiogroup"
       aria-label="User role"
     >
@@ -34,11 +34,11 @@ export function RoleToggle() {
             className={`
               flex h-6 w-6 items-center justify-center
               text-[10px] font-bold
-              transition-all duration-[var(--transition-fast)]
+              transition-all duration-150
               ${
                 isActive
                   ? ""
-                  : "text-[var(--color-muted)] hover:text-[var(--color-body)]"
+                  : "text-muted hover:text-body"
               }
             `}
             style={

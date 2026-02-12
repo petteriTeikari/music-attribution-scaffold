@@ -3,6 +3,7 @@ import type { AttributionRecord } from "@/lib/types/attribution";
 
 export const worksAtom = atom<AttributionRecord[]>([]);
 export const worksLoadingAtom = atom<boolean>(false);
+// TODO: Atom not yet used in any component
 export const selectedWorkAtom = atom<AttributionRecord | null>(null);
 
 export type SortField = "confidence" | "title" | "updated";

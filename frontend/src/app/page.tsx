@@ -236,7 +236,7 @@ export default function HomePage() {
                   >
                     <div className="flex items-start gap-6">
                       <div className="accent-square-sm mt-1" aria-hidden="true" />
-                      <div style={{ paddingLeft: index % 2 === 1 ? "48px" : undefined }}>
+                      <div style={{ paddingLeft: index % 2 === 1 ? "var(--space-12)" : undefined }}>
                         <h3 className="editorial-caps text-sm text-heading">
                           {item.label}
                         </h3>

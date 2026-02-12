@@ -377,6 +377,20 @@ body::before {
   --color-border-strong: var(--color-border-strong);
   --color-divider: var(--color-divider);
 
+  --color-sidebar: var(--color-sidebar);
+
+  /* Border radius — our values don't match Tailwind defaults */
+  --radius-sm: var(--radius-sm);
+  --radius-md: var(--radius-md);
+  --radius-lg: var(--radius-lg);
+  --radius-xl: var(--radius-xl);
+
+  /* Shadows — custom brand tint, not Tailwind defaults */
+  --shadow-sm: var(--shadow-sm);
+  --shadow-md: var(--shadow-md);
+  --shadow-lg: var(--shadow-lg);
+  --shadow-xl: var(--shadow-xl);
+
   /* Line-height overrides — our tight/snug differ from Tailwind defaults */
   --line-height-tight: 1.1;   /* Tailwind default: 1.25 */
   --line-height-snug: 1.2;    /* Tailwind default: 1.375 */

@@ -20,7 +20,7 @@ export function SourceTag({ source, className = "" }: SourceTagProps) {
 
   return (
     <span
-      className={`inline-flex items-center gap-[var(--space-1)] text-xs ${className}`}
+      className={`inline-flex items-center gap-1 text-xs ${className}`}
       style={{ color }}
     >
       <span

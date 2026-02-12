@@ -1,5 +1,7 @@
 "use client";
 
+// TODO: Component not yet integrated — wire up during UI fine-tuning
+
 import { Component, type ReactNode } from "react";
 
 interface ErrorBoundaryProps {
@@ -32,16 +34,16 @@ export class ErrorBoundary extends Component<
       }
 
       return (
-        <div className="rounded-[var(--radius-lg)] border border-[var(--color-confidence-low)] bg-[var(--color-confidence-low-bg)] p-[var(--space-8)] text-center">
-          <h2 className="text-lg font-semibold text-[var(--color-heading)]">
+        <div className="rounded-lg border border-confidence-low bg-confidence-low-bg p-8 text-center">
+          <h2 className="text-lg font-semibold text-heading">
             Something went wrong
           </h2>
-          <p className="mt-[var(--space-2)] text-sm text-[var(--color-body)]">
+          <p className="mt-2 text-sm text-body">
             {this.state.error?.message ?? "An unexpected error occurred."}
           </p>
           <button
             onClick={() => this.setState({ hasError: false, error: null })}
-            className="mt-[var(--space-4)] rounded-[var(--radius-md)] border border-[var(--color-border)] px-[var(--space-4)] py-[var(--space-2)] text-sm font-medium text-[var(--color-primary)] hover:bg-[var(--color-surface-secondary)]"
+            className="mt-4 rounded-md border border-border px-4 py-2 text-sm font-medium text-primary hover:bg-surface-secondary"
           >
             Try again
           </button>

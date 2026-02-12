@@ -1,30 +1,31 @@
 {
-  "plan_file": "docs/planning/frontend-citation-improvement.md",
+  "plan_file": "docs/planning/qa-double-check-plan-before-ui-finetuning.xml",
   "plan_version": "1.0",
   "execution_mode": "autonomous",
-  "current_task_id": null,
-  "current_phase": null,
-  "inner_iteration": 0,
-  "session_task_count": 9,
+  "current_task_id": "4.1",
+  "current_phase": "4",
+  "inner_iteration": 1,
+  "session_task_count": 12,
   "session_inner_iterations": 10,
-  "session_start": "2026-02-12T20:22:00Z",
+  "session_start": "2026-02-12T15:00:00Z",
   "tasks": {
-    "0.1": { "status": "DONE", "name": "Create citation data module", "inner_iterations": 1, "commit_hashes": ["f8e7299"], "test_files": ["frontend/src/__tests__/citation-data.test.ts"], "source_files": ["frontend/src/lib/data/citations.ts", "frontend/src/lib/data/topic-cards.ts"], "test_count": 18, "test_results": ["PASS"], "fix_attempts": [], "started_at": "2026-02-12T20:25:00Z", "completed_at": "2026-02-12T20:30:00Z" },
-    "0.2": { "status": "DONE", "name": "Create CitationOverlay component", "inner_iterations": 1, "commit_hashes": ["fe8b186"], "test_files": ["frontend/src/__tests__/citation-overlay.test.tsx"], "source_files": ["frontend/src/components/citations/citation-overlay.tsx"], "test_count": 9, "test_results": ["PASS"], "fix_attempts": [], "started_at": "2026-02-12T20:30:00Z", "completed_at": "2026-02-12T20:35:00Z" },
-    "0.3": { "status": "DONE", "name": "Create CitationRef component", "inner_iterations": 2, "commit_hashes": ["c6380eb"], "test_files": ["frontend/src/__tests__/citation-ref.test.tsx"], "source_files": ["frontend/src/components/citations/citation-ref.tsx"], "test_count": 6, "test_results": ["FAIL", "PASS"], "fix_attempts": ["Changed label from References to Bibliography to avoid duplicate text match"], "started_at": "2026-02-12T20:35:00Z", "completed_at": "2026-02-12T20:40:00Z" },
-    "1.1": { "status": "DONE", "name": "Redesign HERO section", "inner_iterations": 2, "commit_hashes": ["999eb9e"], "test_files": ["frontend/src/__tests__/landing-hero.test.tsx"], "source_files": ["frontend/src/app/page.tsx"], "test_count": 6, "test_results": ["FAIL", "PASS"], "fix_attempts": ["getAllByText for paper title; exact match for author"], "started_at": "2026-02-12T20:40:00Z", "completed_at": "2026-02-12T20:50:00Z" },
-    "1.2": { "status": "DONE", "name": "Expand HOW IT WORKS with citations", "inner_iterations": 1, "commit_hashes": ["9625c19"], "test_files": ["frontend/src/__tests__/landing-sections.test.tsx"], "source_files": ["frontend/src/app/page.tsx"], "test_count": 13, "test_results": ["PASS"], "fix_attempts": [], "started_at": "2026-02-12T20:50:00Z", "completed_at": "2026-02-12T21:00:00Z" },
-    "1.3": { "status": "DONE", "name": "Replace FEATURES with 12 citation topic cards", "inner_iterations": 0, "commit_hashes": ["9625c19"], "test_files": [], "source_files": [], "test_count": 0, "test_results": ["PASS"], "fix_attempts": [], "started_at": "2026-02-12T20:50:00Z", "completed_at": "2026-02-12T21:00:00Z" },
-    "1.4": { "status": "DONE", "name": "Add A0-A3 assurance levels section", "inner_iterations": 0, "commit_hashes": ["9625c19"], "test_files": [], "source_files": [], "test_count": 0, "test_results": ["PASS"], "fix_attempts": [], "started_at": "2026-02-12T20:50:00Z", "completed_at": "2026-02-12T21:00:00Z" },
-    "2.1": { "status": "DONE", "name": "Add numbered reference list section", "inner_iterations": 0, "commit_hashes": ["9625c19"], "test_files": [], "source_files": [], "test_count": 0, "test_results": ["PASS"], "fix_attempts": [], "started_at": "2026-02-12T20:50:00Z", "completed_at": "2026-02-12T21:00:00Z" },
-    "2.2": { "status": "DONE", "name": "Final verification", "inner_iterations": 1, "commit_hashes": [], "test_files": [], "source_files": [], "test_count": 0, "test_results": ["331 vitest PASS", "181 css-lint PASS", "build OK"], "fix_attempts": [], "started_at": "2026-02-12T21:00:00Z", "completed_at": "2026-02-12T21:05:00Z" }
+    "0.1": { "status": "DONE", "name": "Expand Settings class with all env vars", "inner_iterations": 1, "commit_hashes": ["5c36fa3"], "test_count": 5 },
+    "0.2": { "status": "DONE", "name": "Wire app.py to use Settings", "inner_iterations": 1, "commit_hashes": ["92ce614"], "test_count": 3 },
+    "0.3": { "status": "DONE", "name": "Wire cli/db.py and chat/agent.py to use Settings", "inner_iterations": 1, "commit_hashes": ["763301d"], "test_count": 1 },
+    "0.4": { "status": "DONE", "name": "Create .env.example with all env vars", "inner_iterations": 1, "commit_hashes": ["b950c83"], "test_count": 1 },
+    "0.5": { "status": "DONE", "name": "Consolidate frontend API_URL to shared config", "inner_iterations": 1, "commit_hashes": ["a0dac2d"], "test_count": 3 },
+    "1.1": { "status": "DONE", "name": "Remove fallback from attribution routes", "inner_iterations": 1, "commit_hashes": ["3a99e4d"], "test_count": 3 },
+    "1.2": { "status": "DONE", "name": "Update unit tests to use mock session factory", "inner_iterations": 0, "commit_hashes": ["3a99e4d"], "test_count": 8 },
+    "2.1": { "status": "DONE", "name": "Extract _register_sqlite_type_compilers to conftest", "inner_iterations": 1, "commit_hashes": ["59d1eae"], "test_count": 0 },
+    "2.2": { "status": "DONE", "name": "Extract _ensure_utc and _parse_jsonb to db/utils.py", "inner_iterations": 1, "commit_hashes": ["84f57a7"], "test_count": 0 },
+    "2.3": { "status": "DONE", "name": "Remove dead backend functions and unused deps", "inner_iterations": 1, "commit_hashes": ["92f4be2"], "test_count": 0 },
+    "3.1": { "status": "DONE", "name": "Flag unused frontend components with TODO", "inner_iterations": 1, "commit_hashes": ["192fa38"], "test_count": 0 },
+    "3.2": { "status": "DONE", "name": "Fix pgbouncer healthcheck and document services", "inner_iterations": 1, "commit_hashes": ["4737e23"], "test_count": 0 }
   },
-  "deferred_tasks": [],
   "convergence": {
     "reached": true,
-    "tasks_done": 9,
-    "tasks_total": 9,
-    "tasks_stuck": 0,
-    "tasks_deferred": 0
+    "tasks_done": 12,
+    "tasks_total": 12,
+    "tasks_stuck": 0
   }
 }

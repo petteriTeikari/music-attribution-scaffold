@@ -1,8 +1,8 @@
-"""Integration tests: agent tools → real SQLite DB round-trip.
+"""Integration tests: agent tools → real PostgreSQL DB round-trip.
 
 Verifies that dual-path agent tools correctly read from and write to
 a real database when session_factory is provided on AgentDeps.
-Uses SQLite for fast CI without Docker.
+Uses testcontainers for real PostgreSQL testing.
 
 Mark with @pytest.mark.integration for selective running.
 """
@@ -15,7 +15,6 @@ from datetime import UTC, datetime
 from unittest.mock import AsyncMock, patch
 
 import pytest
-from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 from music_attribution.attribution.persistence import AsyncAttributionRepository
 from music_attribution.chat.agent import AgentDeps
@@ -24,62 +23,21 @@ from music_attribution.feedback.persistence import AsyncFeedbackRepository
 from music_attribution.schemas.enums import EvidenceTypeEnum, ReviewerRoleEnum
 from music_attribution.schemas.feedback import FeedbackCard
 
-
-def _register_sqlite_type_compilers() -> None:
-    """Register JSONB and HALFVEC compilation for SQLite dialect (test-only)."""
-    from pgvector.sqlalchemy import HALFVEC
-    from sqlalchemy.dialects.postgresql import JSONB
-    from sqlalchemy.ext.compiler import compiles
-
-    @compiles(JSONB, "sqlite")  # type: ignore[misc]
-    def _compile_jsonb_sqlite(type_, compiler, **kw):  # noqa: ARG001
-        return "JSON"
-
-    @compiles(HALFVEC, "sqlite")  # type: ignore[misc]
-    def _compile_halfvec_sqlite(type_, compiler, **kw):  # noqa: ARG001
-        return "TEXT"
-
-
-_register_sqlite_type_compilers()
-
-pytestmark = pytest.mark.integration
-
-
-@pytest.fixture
-async def db_session_factory():
-    """Create a SQLite-backed async session factory with seeded Imogen Heap data."""
-    from music_attribution.db.models import (
-        AttributionRecordModel,
-        FeedbackCardModel,
-    )
-    from music_attribution.seed.imogen_heap import seed_imogen_heap
-
-    engine = create_async_engine("sqlite+aiosqlite://", echo=False)
-    async with engine.begin() as conn:
-        await conn.run_sync(AttributionRecordModel.__table__.create)
-        await conn.run_sync(FeedbackCardModel.__table__.create)
-
-    factory = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
-
-    async with factory() as session:
-        await seed_imogen_heap(session)
-        await session.commit()
-
-    yield factory
-
-    await engine.dispose()
+pytestmark = [
+    pytest.mark.integration,
+]
 
 
 class TestExplainConfidenceWithDB:
     """Test explain_confidence tool path with real database."""
 
-    async def test_find_hide_and_seek_by_id(self, db_session_factory) -> None:
+    async def test_find_hide_and_seek_by_id(self, pg_session_factory) -> None:
         """AsyncAttributionRepository finds Hide and Seek record from DB."""
         from music_attribution.seed.imogen_heap import deterministic_uuid
 
         work_id = deterministic_uuid("work-001")
         repo = AsyncAttributionRepository()
-        async with db_session_factory() as session:
+        async with pg_session_factory() as session:
             record = await repo.find_by_id(work_id, session)
 
         assert record is not None
@@ -88,22 +46,21 @@ class TestExplainConfidenceWithDB:
         assert record.artist_name == "Imogen Heap"
         assert record.attribution_id == work_id
 
-    async def test_agent_deps_has_db_true(self, db_session_factory) -> None:
-        """AgentDeps.has_db is True when session_factory is provided."""
+    async def test_agent_deps_has_session_factory(self, pg_session_factory) -> None:
+        """AgentDeps.session_factory is set when provided."""
         deps = AgentDeps(
-            attributions={},
             state=AttributionAgentState(),
-            session_factory=db_session_factory,
+            session_factory=pg_session_factory,
         )
-        assert deps.has_db is True
+        assert deps.session_factory is not None
 
-    async def test_explain_reads_real_data(self, db_session_factory) -> None:
+    async def test_explain_reads_real_data(self, pg_session_factory) -> None:
         """The explain_confidence DB path reads correct fields from seeded data."""
         from music_attribution.seed.imogen_heap import deterministic_uuid
 
         work_id = deterministic_uuid("work-001")
         repo = AsyncAttributionRepository()
-        async with db_session_factory() as session:
+        async with pg_session_factory() as session:
             record = await repo.find_by_id(work_id, session)
 
         assert record is not None
@@ -119,7 +76,7 @@ class TestExplainConfidenceWithDB:
 class TestSubmitFeedbackWithDB:
     """Test submit_feedback tool path with real database."""
 
-    async def test_store_feedback_card(self, db_session_factory) -> None:
+    async def test_store_feedback_card(self, pg_session_factory) -> None:
         """AsyncFeedbackRepository stores and retrieves a FeedbackCard."""
         from music_attribution.seed.imogen_heap import deterministic_uuid
 
@@ -140,14 +97,14 @@ class TestSubmitFeedbackWithDB:
         )
 
         repo = AsyncFeedbackRepository()
-        async with db_session_factory() as session:
+        async with pg_session_factory() as session:
             stored_id = await repo.store(card, session)
             await session.commit()
 
         assert stored_id == feedback_id
 
         # Retrieve and verify
-        async with db_session_factory() as session:
+        async with pg_session_factory() as session:
             retrieved = await repo.find_by_id(feedback_id, session)
 
         assert retrieved is not None
@@ -155,7 +112,7 @@ class TestSubmitFeedbackWithDB:
         assert retrieved.reviewer_id == "agent-assisted"
         assert retrieved.free_text == "Good attribution"
 
-    async def test_center_bias_flag_persisted(self, db_session_factory) -> None:
+    async def test_center_bias_flag_persisted(self, pg_session_factory) -> None:
         """Center bias flag is correctly persisted."""
         from music_attribution.seed.imogen_heap import deterministic_uuid
 
@@ -175,11 +132,11 @@ class TestSubmitFeedbackWithDB:
         )
 
         repo = AsyncFeedbackRepository()
-        async with db_session_factory() as session:
+        async with pg_session_factory() as session:
             await repo.store(card, session)
             await session.commit()
 
-        async with db_session_factory() as session:
+        async with pg_session_factory() as session:
             retrieved = await repo.find_by_id(card.feedback_id, session)
 
         assert retrieved is not None

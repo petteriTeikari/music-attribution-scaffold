@@ -5,6 +5,8 @@ from __future__ import annotations
 import os
 from unittest.mock import patch
 
+import pytest
+
 from music_attribution.config import Settings
 
 
@@ -78,3 +80,78 @@ class TestSettings:
             settings = Settings()
             repr_str = repr(settings)
             assert "super-secret-token" not in repr_str
+
+    def test_settings_defaults(self) -> None:
+        """Verify all default values match spec."""
+        env = {
+            "DATABASE_URL": "postgresql+psycopg://u:p@localhost/db",  # pragma: allowlist secret
+        }
+        with patch.dict(os.environ, env, clear=False):
+            settings = Settings()
+            assert settings.cors_origins == "http://localhost:3000"
+            assert settings.attribution_agent_model == "anthropic:claude-haiku-4-5"
+            assert settings.api_host == "0.0.0.0"
+            assert settings.api_port == 8000
+            assert settings.valkey_url == "redis://localhost:6379"
+            assert settings.llm_provider == "anthropic"
+            assert settings.llm_model == "claude-haiku-4-5"
+            assert settings.attribution_seed == 42
+            assert settings.log_level == "INFO"
+            assert settings.environment == "development"
+
+    def test_cors_origins_field(self) -> None:
+        """Verify cors_origins field exists and accepts custom value."""
+        env = {
+            "DATABASE_URL": "postgresql+psycopg://u:p@localhost/db",  # pragma: allowlist secret
+            "CORS_ORIGINS": "http://localhost:3000,https://app.example.com",
+        }
+        with patch.dict(os.environ, env, clear=False):
+            settings = Settings()
+            assert settings.cors_origins == "http://localhost:3000,https://app.example.com"
+
+    def test_agent_model_field(self) -> None:
+        """Verify attribution_agent_model field exists and accepts custom value."""
+        env = {
+            "DATABASE_URL": "postgresql+psycopg://u:p@localhost/db",  # pragma: allowlist secret
+            "ATTRIBUTION_AGENT_MODEL": "openai:gpt-4o",
+        }
+        with patch.dict(os.environ, env, clear=False):
+            settings = Settings()
+            assert settings.attribution_agent_model == "openai:gpt-4o"
+
+    def test_settings_ignores_extra(self) -> None:
+        """Extra env vars don't cause errors."""
+        env = {
+            "DATABASE_URL": "postgresql+psycopg://u:p@localhost/db",  # pragma: allowlist secret
+            "TOTALLY_UNKNOWN_VAR": "some-value",
+        }
+        with patch.dict(os.environ, env, clear=False):
+            settings = Settings()
+            assert settings.database_url is not None
+
+    def test_musicbrainz_user_agent_optional(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        """musicbrainz_user_agent has a None default (not yet used in codebase)."""
+        monkeypatch.setenv("DATABASE_URL", "postgresql+psycopg://u:p@localhost/db")
+        monkeypatch.delenv("MUSICBRAINZ_USER_AGENT", raising=False)
+        settings = Settings()
+        assert settings.musicbrainz_user_agent is None
+
+    def test_env_example_has_all_settings_fields(self) -> None:
+        """Parse .env.example and verify every Settings field is documented."""
+        from pathlib import Path
+
+        env_example = Path(".env.example")
+        assert env_example.exists(), ".env.example file must exist"
+
+        content = env_example.read_text(encoding="utf-8")
+        env_keys = set()
+        for line in content.splitlines():
+            line = line.strip()
+            if line and not line.startswith("#") and "=" in line:
+                key = line.split("=", 1)[0].strip()
+                env_keys.add(key.upper())
+
+        # All Settings fields should be documented in .env.example
+        settings_fields = set(Settings.model_fields.keys())
+        for field_name in settings_fields:
+            assert field_name.upper() in env_keys, f"Settings field '{field_name}' is not documented in .env.example"

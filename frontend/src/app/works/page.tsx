@@ -38,35 +38,35 @@ export default function WorksPage() {
   }, [works.length, setWorks, setLoading]);
 
   return (
-    <div className="px-[var(--space-8)] py-[var(--space-10)]">
+    <div className="px-8 py-10">
       {/* Header */}
-      <div className="mb-[var(--space-8)]">
-        <span className="editorial-caps text-xs text-[var(--color-accent)] block mb-[var(--space-2)]">
+      <div className="mb-8">
+        <span className="editorial-caps text-xs text-accent block mb-2">
           Catalog
         </span>
-        <h1 className="editorial-display text-4xl text-[var(--color-heading)]">
+        <h1 className="editorial-display text-4xl text-heading">
           Work Catalog
         </h1>
-        <p className="mt-[var(--space-2)] text-base text-[var(--color-label)]">
+        <p className="mt-2 text-base text-label">
           Attribution records with confidence scoring and provenance lineage.
         </p>
       </div>
 
       {/* Search + Sort controls */}
-      <div className="mb-[var(--space-6)] flex flex-col gap-[var(--space-3)] sm:flex-row sm:items-center sm:justify-between">
+      <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <input
           type="search"
           placeholder="Search works or artists..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="border-b border-[var(--color-border)] bg-transparent px-0 py-[var(--space-2)] text-sm text-[var(--color-body)] placeholder:text-[var(--color-muted)] focus:border-[var(--color-accent)] focus:outline-none sm:max-w-xs"
+          className="border-b border-border bg-transparent px-0 py-2 text-sm text-body placeholder:text-muted focus:border-accent focus:outline-none sm:max-w-xs"
           aria-label="Search works"
         />
 
-        <div className="flex items-center gap-[var(--space-2)]">
+        <div className="flex items-center gap-2">
           <label
             htmlFor="sort-select"
-            className="editorial-caps text-xs text-[var(--color-label)]"
+            className="editorial-caps text-xs text-label"
           >
             Sort:
           </label>
@@ -74,7 +74,7 @@ export default function WorksPage() {
             id="sort-select"
             value={sortField}
             onChange={(e) => setSortField(e.target.value as SortField)}
-            className="border-b border-[var(--color-border)] bg-transparent px-[var(--space-2)] py-[var(--space-2)] text-sm text-[var(--color-body)] focus:border-[var(--color-accent)] focus:outline-none"
+            className="border-b border-border bg-transparent px-2 py-2 text-sm text-body focus:border-accent focus:outline-none"
           >
             {SORT_OPTIONS.map((opt) => (
               <option key={opt.value} value={opt.value}>
@@ -86,7 +86,7 @@ export default function WorksPage() {
             onClick={() =>
               setSortDirection((d) => (d === "asc" ? "desc" : "asc"))
             }
-            className="border-b border-[var(--color-border)] px-[var(--space-2)] py-[var(--space-2)] text-sm text-[var(--color-body)] hover:border-[var(--color-accent)] transition-colors"
+            className="border-b border-border px-2 py-2 text-sm text-body hover:border-accent transition-colors"
             aria-label={`Sort ${sortDirection === "asc" ? "descending" : "ascending"}`}
           >
             {sortDirection === "asc" ? "↑" : "↓"}
@@ -94,34 +94,34 @@ export default function WorksPage() {
         </div>
       </div>
 
-      <div className="accent-line mb-[var(--space-6)]" style={{ opacity: 0.3 }} />
+      <div className="accent-line mb-6" style={{ opacity: 0.3 }} />
 
       {/* Works list */}
       {loading ? (
-        <div className="space-y-[var(--space-4)]">
+        <div className="space-y-4">
           {Array.from({ length: 4 }).map((_, i) => (
             <div
               key={i}
-              className="h-20 animate-pulse bg-[var(--color-surface-secondary)]"
+              className="h-20 animate-pulse bg-surface-secondary"
             />
           ))}
         </div>
       ) : filteredWorks.length === 0 ? (
-        <div className="py-[var(--space-20)] text-center">
-          <p className="editorial-display text-2xl text-[var(--color-muted)]">
+        <div className="py-20 text-center">
+          <p className="editorial-display text-2xl text-muted">
             {searchQuery ? "No works match your search." : "No works found."}
           </p>
           {searchQuery && (
             <button
               onClick={() => setSearchQuery("")}
-              className="mt-[var(--space-4)] text-sm text-[var(--color-accent)] underline underline-offset-2"
+              className="mt-4 text-sm text-accent underline underline-offset-2"
             >
               Clear search
             </button>
           )}
         </div>
       ) : (
-        <div className="divide-y divide-[var(--color-border)]">
+        <div className="divide-y divide-border">
           {filteredWorks.map((work) => (
             <WorkCard key={work.attribution_id} work={work} />
           ))}
@@ -130,7 +130,7 @@ export default function WorksPage() {
 
       {/* Result count */}
       {!loading && filteredWorks.length > 0 && (
-        <p className="mt-[var(--space-8)] text-xs text-[var(--color-muted)] editorial-caps">
+        <p className="mt-8 text-xs text-muted editorial-caps">
           {filteredWorks.length} of {works.length} works
         </p>
       )}

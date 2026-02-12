@@ -1,5 +1,7 @@
 "use client";
 
+// TODO: Component not yet integrated — wire up during UI fine-tuning
+
 import { useState, useRef, useEffect } from "react";
 import type { Credit } from "@/lib/types/attribution";
 import { CreditRole } from "@/lib/types/enums";
@@ -62,13 +64,13 @@ export function CreditEditor({ credit, onSave, onCancel }: CreditEditorProps) {
 
   return (
     <div
-      className="rounded-[var(--radius-md)] border border-[var(--color-primary)] bg-[var(--color-surface-elevated)] p-[var(--space-4)]"
+      className="rounded-md border border-primary bg-surface-elevated p-4"
       onKeyDown={handleKeyDown}
     >
-      <div className="space-y-[var(--space-3)]">
+      <div className="space-y-3">
         {/* Name field */}
         <div>
-          <label className="text-xs text-[var(--color-label)]">
+          <label className="text-xs text-label">
             Name
           </label>
           {editingField === "name" ? (
@@ -76,13 +78,13 @@ export function CreditEditor({ credit, onSave, onCancel }: CreditEditorProps) {
               ref={inputRef}
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="w-full rounded-[var(--radius-sm)] border border-[var(--color-border)] bg-[var(--color-surface)] px-[var(--space-2)] py-[var(--space-1)] text-sm text-[var(--color-heading)]"
+              className="w-full rounded-sm border border-border bg-surface px-2 py-1 text-sm text-heading"
               aria-label="Credit name"
             />
           ) : (
             <button
               onClick={() => setEditingField("name")}
-              className="w-full text-left px-[var(--space-2)] py-[var(--space-1)] text-sm text-[var(--color-heading)] hover:bg-[var(--color-surface-secondary)] rounded-[var(--radius-sm)]"
+              className="w-full text-left px-2 py-1 text-sm text-heading hover:bg-surface-secondary rounded-sm"
             >
               {name}
             </button>
@@ -91,14 +93,14 @@ export function CreditEditor({ credit, onSave, onCancel }: CreditEditorProps) {
 
         {/* Role field */}
         <div>
-          <label className="text-xs text-[var(--color-label)]">
+          <label className="text-xs text-label">
             Role
           </label>
           {editingField === "role" ? (
             <select
               value={role}
               onChange={(e) => setRole(e.target.value as Credit["role"])}
-              className="w-full rounded-[var(--radius-sm)] border border-[var(--color-border)] bg-[var(--color-surface)] px-[var(--space-2)] py-[var(--space-1)] text-sm text-[var(--color-heading)]"
+              className="w-full rounded-sm border border-border bg-surface px-2 py-1 text-sm text-heading"
               aria-label="Credit role"
             >
               {ROLE_OPTIONS.map((r) => (
@@ -110,7 +112,7 @@ export function CreditEditor({ credit, onSave, onCancel }: CreditEditorProps) {
           ) : (
             <button
               onClick={() => setEditingField("role")}
-              className="w-full text-left px-[var(--space-2)] py-[var(--space-1)] text-sm text-[var(--color-heading)] hover:bg-[var(--color-surface-secondary)] rounded-[var(--radius-sm)]"
+              className="w-full text-left px-2 py-1 text-sm text-heading hover:bg-surface-secondary rounded-sm"
             >
               {formatRole(role)}
             </button>
@@ -119,7 +121,7 @@ export function CreditEditor({ credit, onSave, onCancel }: CreditEditorProps) {
 
         {/* Detail field */}
         <div>
-          <label className="text-xs text-[var(--color-label)]">
+          <label className="text-xs text-label">
             Detail
           </label>
           {editingField === "detail" ? (
@@ -127,13 +129,13 @@ export function CreditEditor({ credit, onSave, onCancel }: CreditEditorProps) {
               value={roleDetail}
               onChange={(e) => setRoleDetail(e.target.value)}
               placeholder="Optional detail..."
-              className="w-full rounded-[var(--radius-sm)] border border-[var(--color-border)] bg-[var(--color-surface)] px-[var(--space-2)] py-[var(--space-1)] text-sm text-[var(--color-heading)] placeholder:text-[var(--color-muted)]"
+              className="w-full rounded-sm border border-border bg-surface px-2 py-1 text-sm text-heading placeholder:text-muted"
               aria-label="Credit detail"
             />
           ) : (
             <button
               onClick={() => setEditingField("detail")}
-              className="w-full text-left px-[var(--space-2)] py-[var(--space-1)] text-sm text-[var(--color-muted)] hover:bg-[var(--color-surface-secondary)] rounded-[var(--radius-sm)]"
+              className="w-full text-left px-2 py-1 text-sm text-muted hover:bg-surface-secondary rounded-sm"
             >
               {roleDetail || "Click to add detail..."}
             </button>
@@ -142,7 +144,7 @@ export function CreditEditor({ credit, onSave, onCancel }: CreditEditorProps) {
       </div>
 
       {/* Action buttons */}
-      <div className="mt-[var(--space-3)] flex justify-end gap-[var(--space-2)]">
+      <div className="mt-3 flex justify-end gap-2">
         <button
           onClick={() => {
             setName(credit.entity_name);
@@ -151,13 +153,13 @@ export function CreditEditor({ credit, onSave, onCancel }: CreditEditorProps) {
             setEditingField(null);
             onCancel?.();
           }}
-          className="rounded-[var(--radius-sm)] border border-[var(--color-border)] px-[var(--space-3)] py-[var(--space-1)] text-xs text-[var(--color-label)]"
+          className="rounded-sm border border-border px-3 py-1 text-xs text-label"
         >
           Cancel
         </button>
         <button
           onClick={handleSave}
-          className="rounded-[var(--radius-sm)] bg-[var(--color-primary)] px-[var(--space-3)] py-[var(--space-1)] text-xs text-white"
+          className="rounded-sm bg-primary px-3 py-1 text-xs text-white"
         >
           Save
         </button>

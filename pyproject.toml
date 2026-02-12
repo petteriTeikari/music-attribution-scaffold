@@ -49,9 +49,7 @@ dev = [
     "pre-commit>=4.0.0",
     "ruff>=0.8.0",
     "mypy>=1.15.0",
-    "pillow>=12.1.0",
     "testcontainers[postgres]>=4.0",
-    "hypothesis>=6.0",
     "psycopg[binary]>=3.0",
     "aiosqlite>=0.22.1",
 ]
@@ -83,7 +81,7 @@ asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "function"
 
 [tool.ruff]
-target-version = "py311"
+target-version = "py313"
 line-length = 120
 src = ["src", "tests"]
 
@@ -102,6 +100,7 @@ select = [
 ignore = [
     "E501",  # line too long (handled by formatter)
     "B008",  # do not perform function calls in argument defaults
+    "UP046",  # Pydantic BaseModel + Generic[T] is the standard pattern
 ]
 
 [tool.ruff.lint.per-file-ignores]

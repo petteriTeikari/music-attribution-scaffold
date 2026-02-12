@@ -1,6 +1,7 @@
 .PHONY: help install install-dev setup
+.PHONY: dev dev-down dev-logs
 .PHONY: test test-all lint
-.PHONY: test-local test-unit test-integration test-cov lint-local format typecheck ci-local
+.PHONY: test-local test-integration test-cov lint-local format typecheck ci-local
 .PHONY: ci-docker docker-build docker-clean clean
 .PHONY: dev-frontend test-frontend lint-frontend build-frontend
 .PHONY: agent dev-agent
@@ -29,10 +30,23 @@ setup:  ## One-command setup: Docker + deps + migrations + seed + frontend
 	@./scripts/setup.sh
 
 # =============================================================================
-# DOCKER TESTING (DEFAULT - mirrors GitHub Actions exactly)
+# DOCKER DEVELOPMENT (PRIMARY — PhD student starts here)
 # =============================================================================
 
-test: ## Default: run tests in Docker (CI-parity)
+dev:  ## Start full stack via Docker (postgres + backend + frontend)
+	docker compose -f docker-compose.dev.yml up --build
+
+dev-down:  ## Tear down Docker dev environment
+	docker compose -f docker-compose.dev.yml down
+
+dev-logs:  ## Follow logs from Docker dev environment
+	docker compose -f docker-compose.dev.yml logs -f
+
+# =============================================================================
+# DOCKER TESTING (mirrors GitHub Actions exactly)
+# =============================================================================
+
+test: ## Default: run unit tests in Docker (CI-parity)
 	@./scripts/test-docker.sh --build
 
 test-all:  ## Full CI simulation in Docker (lint + typecheck + tests)
@@ -47,20 +61,14 @@ ci-docker: test-all  ## Alias for test-all
 # LOCAL DEVELOPMENT (quick iteration, may differ from CI)
 # =============================================================================
 
-test-local:  ## Run tests locally (fast, no Docker)
-	@uv run pytest tests/ -v || ([ $$? -eq 5 ] && echo "No tests collected yet" && exit 0)
+test-local:  ## Run ALL tests locally: unit + integration (requires Docker daemon for testcontainers)
+	.venv/bin/python -m pytest tests/ -v --timeout=120
 
-test-unit:  ## Run unit tests only (local)
-	@uv run pytest tests/unit/ -v -m unit || ([ $$? -eq 5 ] && echo "No unit tests collected yet" && exit 0)
+test-integration:  ## Run integration tests only (testcontainers PostgreSQL, requires Docker daemon)
+	.venv/bin/python -m pytest tests/integration/ -v --timeout=120
 
-test-integration:  ## Run integration tests only (requires Docker daemon)
-	.venv/bin/python -m pytest tests/integration/ -v -m integration --timeout=120
-
-test-all-local:  ## Run ALL tests: unit + integration (requires Docker daemon)
-	.venv/bin/python -m pytest tests/ -v -m "unit or integration" --timeout=120
-
-test-cov:  ## Run tests with coverage (local)
-	uv run pytest tests/ -v --cov=src/music_attribution --cov-report=html --cov-report=term-missing
+test-cov:  ## Run ALL tests with coverage (requires Docker daemon for testcontainers)
+	.venv/bin/python -m pytest tests/ -v --timeout=120 --cov=src/music_attribution --cov-report=html --cov-report=term-missing
 
 lint-local:  ## Run linting locally (fast, no Docker)
 	uv run ruff check src/ tests/
@@ -88,8 +96,9 @@ ci-local:  ## Run full CI locally (quick but may differ from CI)
 docker-build:  ## Build test Docker image
 	docker compose -f docker/docker-compose.test.yml build test
 
-docker-clean:  ## Remove test Docker images and volumes
+docker-clean:  ## Remove Docker images and volumes
 	docker compose -f docker/docker-compose.test.yml down --rmi local --volumes 2>/dev/null || true
+	docker compose -f docker-compose.dev.yml down --rmi local --volumes 2>/dev/null || true
 	docker image prune -f
 
 # =============================================================================
@@ -113,7 +122,7 @@ build-frontend:  ## Build frontend for production
 # =============================================================================
 
 agent:  ## Start FastAPI with CopilotKit AG-UI endpoint (localhost:8000)
-	uv run uvicorn music_attribution.api.app:create_app --factory --host 0.0.0.0 --port 8000 --reload
+	DATABASE_URL=postgresql+psycopg://musicattr:musicattr_dev@localhost:5432/music_attribution uv run uvicorn music_attribution.api.app:create_app --factory --host 0.0.0.0 --port 8000 --reload  # pragma: allowlist secret
 
 dev-agent:  ## Start agent backend + frontend dev server
 	@echo "Starting agent backend on :8000 and frontend on :3000"

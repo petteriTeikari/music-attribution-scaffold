@@ -9,6 +9,11 @@
  * because the `text-` prefix is ambiguous (font-size OR color).
  * This silently breaks all font sizes with no build error.
  *
+ * The `[var(--*)]` arbitrary value syntax is BANNED in className
+ * strings. All tokens are either registered in @theme (colors,
+ * radius, shadows) or map to Tailwind's built-in scale (spacing,
+ * transitions).
+ *
  * See: .claude/memory/css-tailwind-v4-pitfalls.md
  */
 
@@ -44,36 +49,53 @@ const SRC_DIR = resolve(__dirname, "..");
 describe("CSS Token Lint", () => {
   const tsxFiles = findTsxFiles(SRC_DIR);
 
-  describe("text-[var(--text-*)] is banned (generates color instead of font-size)", () => {
-    // Pattern: text-[var(--text-xs)], text-[var(--text-2xl)], etc.
-    const BANNED_FONT_SIZE_PATTERN = /text-\[var\(--text-[a-z0-9]+\)\]/g;
+  describe("[var(--*)] arbitrary values are banned in className strings", () => {
+    // Catch ALL [var(--*)] patterns in className-like contexts.
+    // This covers spacing, colors, radius, transitions, shadows — everything.
+    //
+    // Correct alternatives:
+    //   Spacing:     px-[var(--space-8)]        → px-8
+    //   Colors:      text-[var(--color-heading)] → text-heading (via @theme)
+    //   Radius:      rounded-[var(--radius-md)]  → rounded-md (via @theme)
+    //   Transitions: duration-[var(--transition-fast)] → duration-150
+    //   Shadows:     shadow-[var(--shadow-md)]   → shadow-md (via @theme)
+    const VAR_ARBITRARY_PATTERN = /\[var\(--/g;
 
-    it.each(tsxFiles)("no broken font-size patterns in %s", (filePath) => {
+    it.each(tsxFiles)("no [var(--*)] arbitrary values in %s", (filePath) => {
       const content = readFileSync(filePath, "utf-8");
-      const matches = content.match(BANNED_FONT_SIZE_PATTERN);
+      const lines = content.split("\n");
+      const violations: string[] = [];
+
+      lines.forEach((line, i) => {
+        // Skip comments
+        if (line.trim().startsWith("//") || line.trim().startsWith("*")) return;
+        // Skip import lines
+        if (line.trim().startsWith("import ")) return;
+        // Allow inline style objects — var(--*) is fine in style={{ }}
+        // Allow CSS accent-color property — accent-[var(--color-primary)] is valid CSS, not a Tailwind utility
+        // We only ban [var(-- which is the Tailwind arbitrary value syntax
+        const matches = line.match(VAR_ARBITRARY_PATTERN);
+        if (matches) {
+          // Exception: accent-[var(--color-*)] is CSS accent-color, not a Tailwind utility
+          if (line.includes("accent-[var(--color-")) {
+            return;
+          }
+          violations.push(
+            `  Line ${i + 1}: ${matches.length} instance(s) — ${line.trim().substring(0, 100)}`,
+          );
+        }
+      });
+
       expect(
-        matches,
-        `Found banned pattern(s): ${matches?.join(", ")}. ` +
-          `Use Tailwind utilities (text-xl, text-2xl) instead of text-[var(--text-*)]. ` +
-          `See .claude/memory/css-tailwind-v4-pitfalls.md`,
-      ).toBeNull();
-    });
-  });
-
-  describe("text-[var(--color-*)] should use @theme utilities instead", () => {
-    // Pattern: text-[var(--color-heading)], text-[var(--color-muted)], etc.
-    // These WORK but are redundant — @theme registers them as text-heading, text-muted
-    const REDUNDANT_COLOR_PATTERN = /text-\[var\(--color-(heading|subheading|body|label|muted|accent|primary|teal)\)\]/g;
-
-    it.each(tsxFiles)("no redundant color patterns in %s", (filePath) => {
-      const content = readFileSync(filePath, "utf-8");
-      const matches = content.match(REDUNDANT_COLOR_PATTERN);
-      // Warn but don't fail — these work, they're just not idiomatic
-      if (matches) {
-        console.warn(
-          `[warn] ${filePath}: Found text-[var(--color-*)] that could use @theme utility: ${matches.join(", ")}`,
-        );
-      }
+        violations,
+        `Found [var(--*)] arbitrary value patterns (use Tailwind utilities or @theme tokens):\n${violations.join("\n")}\n\n` +
+          `Fix guide:\n` +
+          `  Spacing:     px-[var(--space-8)] → px-8\n` +
+          `  Colors:      text-[var(--color-heading)] → text-heading\n` +
+          `  Radius:      rounded-[var(--radius-md)] → rounded-md\n` +
+          `  Transitions: duration-[var(--transition-fast)] → duration-150\n` +
+          `  Shadows:     shadow-[var(--shadow-md)] → shadow-md`,
+      ).toHaveLength(0);
     });
   });
 

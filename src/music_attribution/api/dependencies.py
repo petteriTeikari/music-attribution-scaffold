@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 async def get_db_session(
     factory: async_sessionmaker[AsyncSession],
-) -> AsyncGenerator[AsyncSession, None]:
+) -> AsyncGenerator[AsyncSession]:
     """Yield an async database session for a single request.
 
     Intended as a FastAPI dependency. The session is automatically

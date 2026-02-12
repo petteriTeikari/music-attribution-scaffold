@@ -14,26 +14,8 @@ from music_attribution.chat.agui_endpoint import router
 
 @pytest.fixture()
 def app() -> FastAPI:
-    """Create test FastAPI app with copilotkit router."""
+    """Create test FastAPI app with copilotkit router (no in-memory dict)."""
     app = FastAPI()
-    app.state.attributions = {
-        "attr-001": {
-            "attribution_id": "attr-001",
-            "work_title": "Hide and Seek",
-            "artist_name": "Imogen Heap",
-            "confidence_score": 0.95,
-            "assurance_level": "LEVEL_3",
-            "source_agreement": 0.92,
-            "credits": [
-                {
-                    "entity_id": "e1",
-                    "role": "PERFORMER",
-                    "confidence": 0.95,
-                    "sources": ["MUSICBRAINZ", "DISCOGS"],
-                }
-            ],
-        },
-    }
     app.include_router(router, prefix="/api/v1")
     return app
 
@@ -113,8 +95,8 @@ class TestCopilotKitEndpoint:
         assert response.status_code == 200
 
     @patch("music_attribution.chat.agui_endpoint._get_agent")
-    def test_endpoint_handles_no_attributions(self, mock_get_agent) -> None:
-        """Test graceful handling when no attributions are in app state."""
+    def test_endpoint_works_without_session_factory(self, mock_get_agent) -> None:
+        """Test endpoint works when no async_session_factory is set."""
         mock_get_agent.return_value = _mock_agent_run()
         app = FastAPI()
         app.include_router(router, prefix="/api/v1")
@@ -164,7 +146,6 @@ class TestEndpointSessionFactory:
         mock_factory = AsyncMock()
 
         test_app = FastAPI()
-        test_app.state.attributions = {}
         test_app.state.async_session_factory = mock_factory
         test_app.include_router(router, prefix="/api/v1")
         test_client = TestClient(test_app)
@@ -193,7 +174,6 @@ class TestEndpointSessionFactory:
         mock_get_agent.return_value = _mock_agent_run()
 
         test_app = FastAPI()
-        test_app.state.attributions = {}
         test_app.include_router(router, prefix="/api/v1")
         test_client = TestClient(test_app)
 

@@ -1,5 +1,7 @@
 "use client";
 
+// TODO: Component not yet integrated — wire up during UI fine-tuning
+
 import { useState } from "react";
 
 export function VoiceAgentBanner() {
@@ -8,17 +10,17 @@ export function VoiceAgentBanner() {
   if (dismissed) return null;
 
   return (
-    <div className="mx-auto max-w-4xl px-[var(--space-6)]">
-      <div className="relative overflow-hidden rounded-[var(--radius-lg)] border border-[var(--color-accent)] bg-[var(--color-accent-muted)] p-[var(--space-6)]">
+    <div className="mx-auto max-w-4xl px-6">
+      <div className="relative overflow-hidden rounded-lg border border-accent bg-accent-muted p-6">
         <button
           onClick={() => setDismissed(true)}
-          className="absolute right-[var(--space-3)] top-[var(--space-3)] text-[var(--color-muted)] hover:text-[var(--color-body)] transition-colors"
+          className="absolute right-3 top-3 text-muted hover:text-body transition-colors"
           aria-label="Dismiss"
         >
           ×
         </button>
 
-        <div className="flex items-center gap-[var(--space-6)]">
+        <div className="flex items-center gap-6">
           {/* Mic animation */}
           <div className="flex-shrink-0">
             <div
@@ -50,19 +52,19 @@ export function VoiceAgentBanner() {
           </div>
 
           <div className="flex-1">
-            <h3 className="text-base font-semibold text-[var(--color-heading)]">
+            <h3 className="text-base font-semibold text-heading">
               Voice Agent — Pro Feature
             </h3>
-            <p className="mt-[var(--space-1)] text-sm text-[var(--color-body)]">
+            <p className="mt-1 text-sm text-body">
               Ask questions about your attributions by voice.{" "}
-              <span className="italic text-[var(--color-muted)]">
+              <span className="italic text-muted">
                 &ldquo;Who produced Hide and Seek?&rdquo;
               </span>
             </p>
           </div>
 
           <button
-            className="flex-shrink-0 rounded-[var(--radius-md)] px-[var(--space-4)] py-[var(--space-2)] text-sm font-medium transition-colors duration-[var(--transition-fast)]"
+            className="flex-shrink-0 rounded-md px-4 py-2 text-sm font-medium transition-colors duration-150"
             style={{
               backgroundColor: "var(--color-accent)",
               color: "white",

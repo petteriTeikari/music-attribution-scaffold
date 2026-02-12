@@ -147,7 +147,7 @@ export function ConfidenceGauge({
       {/* Label below */}
       {showLabel && (
         <span
-          className="mt-[var(--space-1)] editorial-caps"
+          className="mt-1 editorial-caps"
           style={{
             fontSize: config.labelSize,
             color,
@@ -173,7 +173,7 @@ export function ConfidenceBadge({
 
   return (
     <span
-      className={`inline-flex items-center gap-[var(--space-2)] editorial-caps text-xs ${className}`}
+      className={`inline-flex items-center gap-2 editorial-caps text-xs ${className}`}
       style={{ color }}
     >
       <span

@@ -8,7 +8,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const [agentOpen, setAgentOpen] = useState(false);
 
   return (
-    <div className="min-h-screen bg-[var(--color-surface)]">
+    <div className="min-h-screen bg-surface">
       <Navigation />
 
       {/* Main content: offset by sidebar on desktop, offset by top bar on mobile */}
@@ -23,7 +23,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       {/* Agent toggle button — fixed bottom-right */}
       <button
         onClick={() => setAgentOpen((prev) => !prev)}
-        className="fixed bottom-[var(--space-6)] right-[var(--space-6)] z-40 flex h-12 w-12 items-center justify-center bg-[var(--color-accent)] text-white transition-colors duration-[var(--transition-fast)] hover:bg-[var(--color-accent-hover)]"
+        className="fixed bottom-6 right-6 z-40 flex h-12 w-12 items-center justify-center bg-accent text-white transition-colors duration-150 hover:bg-accent-hover"
         aria-label={agentOpen ? "Close agent chat" : "Open agent chat"}
         title="Attribution Agent"
       >
@@ -55,12 +55,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
       {/* Footer */}
       <footer
-        className="border-t border-[var(--color-border)] px-[var(--space-8)] py-[var(--space-12)]"
+        className="border-t border-border px-8 py-12"
         style={{ marginLeft: "var(--sidebar-width)" }}
       >
         <div className="flex items-center justify-between">
           <p
-            className="editorial-caps text-xs text-[var(--color-muted)]"
+            className="editorial-caps text-xs text-muted"
             style={{
               writingMode: "vertical-rl",
               transform: "rotate(180deg)",
@@ -69,16 +69,16 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           >
             Music Attribution Scaffold
           </p>
-          <div className="flex-1 px-[var(--space-8)]">
+          <div className="flex-1 px-8">
             <div className="accent-line" />
           </div>
-          <p className="text-xs text-[var(--color-muted)]">
+          <p className="text-xs text-muted">
             Open-source research companion to{" "}
             <a
               href="https://papers.ssrn.com/sol3/papers.cfm?abstract_id=6109087"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-[var(--color-primary)] underline underline-offset-2 hover:text-[var(--color-primary-hover)]"
+              className="text-primary underline underline-offset-2 hover:text-primary-hover"
             >
               SSRN No. 6109087
             </a>

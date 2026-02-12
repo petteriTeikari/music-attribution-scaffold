@@ -27,7 +27,7 @@ export function WorkCard({ work }: WorkCardProps) {
   return (
     <Link
       href={`/works/${work.attribution_id}`}
-      className="group flex items-center gap-[var(--space-6)] py-[var(--space-5)] transition-colors duration-[var(--transition-fast)] hover:bg-[var(--color-surface-secondary)]"
+      className="group flex items-center gap-6 py-5 transition-colors duration-150 hover:bg-surface-secondary"
     >
       {/* Large confidence number — editorial typography */}
       <div className="flex-shrink-0 w-16 text-right">
@@ -41,13 +41,13 @@ export function WorkCard({ work }: WorkCardProps) {
 
       {/* Work info */}
       <div className="min-w-0 flex-1">
-        <h3 className="text-base font-semibold text-[var(--color-heading)] group-hover:text-[var(--color-accent)] transition-colors duration-[var(--transition-fast)]">
+        <h3 className="text-base font-semibold text-heading group-hover:text-accent transition-colors duration-150">
           {work.work_title}
         </h3>
-        <p className="mt-[var(--space-1)] text-sm text-[var(--color-label)]">
+        <p className="mt-1 text-sm text-label">
           {work.artist_name}
           {primaryCredit?.role && (
-            <span className="text-[var(--color-muted)]">
+            <span className="text-muted">
               {" "}
               — {primaryCredit.role.toLowerCase().replace(/_/g, " ")}
             </span>
@@ -56,7 +56,7 @@ export function WorkCard({ work }: WorkCardProps) {
       </div>
 
       {/* Badges */}
-      <div className="hidden sm:flex items-center gap-[var(--space-2)]">
+      <div className="hidden sm:flex items-center gap-2">
         <AssuranceBadge level={work.assurance_level} />
         {Array.from(allSources).map((source) => (
           <SourceTag key={source} source={source} />
@@ -66,11 +66,11 @@ export function WorkCard({ work }: WorkCardProps) {
       {/* Review indicator + version */}
       <div className="flex-shrink-0 text-right">
         {work.needs_review && (
-          <p className="text-xs text-[var(--color-confidence-medium)] mb-[var(--space-1)]">
+          <p className="text-xs text-confidence-medium mb-1">
             Review
           </p>
         )}
-        <span className="text-xs text-[var(--color-muted)] data-mono">
+        <span className="text-xs text-muted data-mono">
           v{work.version}
         </span>
       </div>

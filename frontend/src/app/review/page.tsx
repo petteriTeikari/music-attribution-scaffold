@@ -32,8 +32,8 @@ export default function ReviewPage() {
     (entityId: string) => {
       const el = document.querySelector(`[data-entity-id="${entityId}"]`);
       el?.scrollIntoView({ behavior: "smooth", block: "center" });
-      el?.classList.add("ring-2", "ring-[var(--color-accent)]");
-      setTimeout(() => el?.classList.remove("ring-2", "ring-[var(--color-accent)]"), 3000);
+      el?.classList.add("ring-2", "ring-accent");
+      setTimeout(() => el?.classList.remove("ring-2", "ring-accent"), 3000);
     },
     []
   );
@@ -74,12 +74,12 @@ export default function ReviewPage() {
 
   if (role !== "artist") {
     return (
-      <div className="px-[var(--space-8)] py-[var(--space-10)]">
-        <div className="py-[var(--space-20)] text-center">
-          <h2 className="editorial-display text-2xl text-[var(--color-heading)]">
+      <div className="px-8 py-10">
+        <div className="py-20 text-center">
+          <h2 className="editorial-display text-2xl text-heading">
             Artist Mode Required
           </h2>
-          <p className="mt-[var(--space-2)] text-[var(--color-label)]">
+          <p className="mt-2 text-label">
             Switch to Artist mode to access the review queue.
           </p>
         </div>
@@ -88,23 +88,23 @@ export default function ReviewPage() {
   }
 
   return (
-    <div className="px-[var(--space-8)] py-[var(--space-10)]">
+    <div className="px-8 py-10">
       {/* Header */}
-      <div className="mb-[var(--space-8)]">
-        <span className="editorial-caps text-xs text-[var(--color-accent)] block mb-[var(--space-2)]">
+      <div className="mb-8">
+        <span className="editorial-caps text-xs text-accent block mb-2">
           Review
         </span>
-        <h1 className="editorial-display text-4xl text-[var(--color-heading)]">
+        <h1 className="editorial-display text-4xl text-heading">
           Review Queue
         </h1>
-        <p className="mt-[var(--space-2)] text-[var(--color-label)]">
+        <p className="mt-2 text-label">
           Agent-assisted attribution review with AI-generated suggestions.
         </p>
       </div>
 
       {/* Feedback flow panel */}
       {feedbackWork && (
-        <div className="mb-[var(--space-8)] border border-[var(--color-border)] p-[var(--space-6)]">
+        <div className="mb-8 border border-border p-6">
           <AgentFeedbackFlow
             work={feedbackWork}
             onSubmit={handleFeedbackSubmit}
@@ -114,20 +114,20 @@ export default function ReviewPage() {
       )}
 
       {loading ? (
-        <div className="space-y-[var(--space-4)]">
+        <div className="space-y-4">
           {Array.from({ length: 3 }).map((_, i) => (
             <div
               key={i}
-              className="h-32 animate-pulse bg-[var(--color-surface-secondary)]"
+              className="h-32 animate-pulse bg-surface-secondary"
             />
           ))}
         </div>
       ) : pendingWorks.length === 0 && approvedCount > 0 ? (
-        <div className="py-[var(--space-20)] text-center">
-          <p className="editorial-display text-2xl text-[var(--color-confidence-high)]">
+        <div className="py-20 text-center">
+          <p className="editorial-display text-2xl text-confidence-high">
             All caught up
           </p>
-          <p className="mt-[var(--space-2)] text-[var(--color-label)]">
+          <p className="mt-2 text-label">
             {approvedCount} attribution{approvedCount !== 1 ? "s" : ""} reviewed.
           </p>
         </div>

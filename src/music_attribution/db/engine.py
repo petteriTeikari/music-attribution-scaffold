@@ -1,4 +1,4 @@
-"""Sync and async SQLAlchemy engine factories with pool hardening.
+"""Async SQLAlchemy engine factory with pool hardening.
 
 Pool hardening lessons from uad-copilot stochastic delay analysis:
 - pool_pre_ping: detect stale/dead connections before use
@@ -12,8 +12,6 @@ from __future__ import annotations
 import logging
 from collections.abc import AsyncGenerator
 
-from sqlalchemy import create_engine
-from sqlalchemy.engine import Engine
 from sqlalchemy.ext.asyncio import (
     AsyncEngine,
     AsyncSession,
@@ -28,20 +26,6 @@ DEFAULT_POOL_SIZE = 5
 DEFAULT_MAX_OVERFLOW = 10
 DEFAULT_POOL_RECYCLE = 3600  # 1 hour
 DEFAULT_STATEMENT_TIMEOUT_MS = 30_000  # 30 seconds
-
-
-def create_sync_engine(database_url: str) -> Engine:
-    """Create a synchronous SQLAlchemy engine.
-
-    Used by Alembic migrations (which require sync engines).
-
-    Args:
-        database_url: PostgreSQL connection string.
-
-    Returns:
-        SQLAlchemy Engine instance.
-    """
-    return create_engine(database_url, echo=False)
 
 
 def create_async_engine_factory(
@@ -117,7 +101,7 @@ def async_session_factory(
 
 async def get_async_session(
     factory: async_sessionmaker[AsyncSession],
-) -> AsyncGenerator[AsyncSession, None]:
+) -> AsyncGenerator[AsyncSession]:
     """Yield an async session and ensure cleanup.
 
     Usage as a FastAPI dependency::

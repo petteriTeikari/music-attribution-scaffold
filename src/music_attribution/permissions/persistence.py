@@ -5,7 +5,6 @@ Implements permission lookup with scope-specific overrides and audit logging.
 
 from __future__ import annotations
 
-import json
 import logging
 import uuid
 from datetime import UTC, datetime
@@ -14,27 +13,11 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from music_attribution.db.models import AuditLogModel, PermissionBundleModel
+from music_attribution.db.utils import ensure_utc, parse_jsonb
 from music_attribution.schemas.enums import PermissionTypeEnum, PermissionValueEnum
 from music_attribution.schemas.permissions import PermissionBundle
 
 logger = logging.getLogger(__name__)
-
-
-def _ensure_utc(dt: datetime | str) -> datetime:
-    """Ensure a datetime has UTC timezone (SQLite strips tzinfo)."""
-    if isinstance(dt, str):
-        parsed = datetime.fromisoformat(dt)
-        return parsed.replace(tzinfo=UTC) if parsed.tzinfo is None else parsed
-    if dt.tzinfo is None:
-        return dt.replace(tzinfo=UTC)
-    return dt
-
-
-def _parse_jsonb(value: dict | list | str) -> dict | list:
-    """Parse JSONB value — str from SQLite, native dict/list from PostgreSQL."""
-    if isinstance(value, str):
-        return json.loads(value)  # type: ignore[no-any-return]
-    return value
 
 
 def _bundle_to_model(bundle: PermissionBundle) -> PermissionBundleModel:
@@ -62,13 +45,13 @@ def _model_to_bundle(model: PermissionBundleModel) -> PermissionBundle:
         entity_id=model.entity_id,
         scope=model.scope,  # type: ignore[arg-type]
         scope_entity_id=model.scope_entity_id,
-        permissions=_parse_jsonb(model.permissions),  # type: ignore[arg-type]
-        effective_from=_ensure_utc(model.effective_from),
-        effective_until=_ensure_utc(model.effective_until) if model.effective_until else None,
-        delegation_chain=_parse_jsonb(model.delegation_chain),  # type: ignore[arg-type]
+        permissions=parse_jsonb(model.permissions),  # type: ignore[arg-type]
+        effective_from=ensure_utc(model.effective_from),
+        effective_until=ensure_utc(model.effective_until) if model.effective_until else None,
+        delegation_chain=parse_jsonb(model.delegation_chain),  # type: ignore[arg-type]
         default_permission=model.default_permission,  # type: ignore[arg-type]
         created_by=model.created_by,
-        updated_at=_ensure_utc(model.updated_at),
+        updated_at=ensure_utc(model.updated_at),
         version=model.version,
     )
 

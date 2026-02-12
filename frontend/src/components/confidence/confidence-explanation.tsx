@@ -1,5 +1,7 @@
 "use client";
 
+// TODO: Component not yet integrated — wire up during UI fine-tuning
+
 import type { AttributionRecord } from "@/lib/types/attribution";
 
 interface SourceContribution {
@@ -52,15 +54,15 @@ export function ConfidenceExplanation({ work }: ConfidenceExplanationProps) {
   const tier = getConfidenceTier(work.confidence_score);
 
   return (
-    <div className="space-y-[var(--space-5)]">
+    <div className="space-y-5">
       {/* Score summary */}
-      <div className="flex items-center gap-[var(--space-4)]">
+      <div className="flex items-center gap-4">
         <div className="accent-square-sm" aria-hidden="true" />
         <div>
-          <span className="editorial-caps text-xs text-[var(--color-label)]">
+          <span className="editorial-caps text-xs text-label">
             Confidence
           </span>
-          <div className="flex items-baseline gap-[var(--space-2)]">
+          <div className="flex items-baseline gap-2">
             <span
               className="text-2xl font-semibold data-mono"
               style={{ color: tier.color }}
@@ -76,25 +78,25 @@ export function ConfidenceExplanation({ work }: ConfidenceExplanationProps) {
 
       {/* Source contribution bars */}
       <div>
-        <p className="editorial-caps text-xs text-[var(--color-label)] mb-[var(--space-3)]">
+        <p className="editorial-caps text-xs text-label mb-3">
           Source Contributions
         </p>
-        <div className="space-y-[var(--space-2)]">
+        <div className="space-y-2">
           {contributions.map((c) => (
-            <div key={c.source} className="flex items-center gap-[var(--space-3)]">
-              <span className="text-xs text-[var(--color-label)] w-28 data-mono">
+            <div key={c.source} className="flex items-center gap-3">
+              <span className="text-xs text-label w-28 data-mono">
                 {c.source.replace("_", " ")}
               </span>
-              <div className="flex-1 h-2 bg-[var(--color-surface-secondary)] relative">
+              <div className="flex-1 h-2 bg-surface-secondary relative">
                 <div
-                  className="absolute inset-y-0 left-0 transition-all duration-[var(--transition-slow)]"
+                  className="absolute inset-y-0 left-0 transition-all duration-300"
                   style={{
                     width: `${c.contribution * 100}%`,
                     backgroundColor: c.color,
                   }}
                 />
               </div>
-              <span className="text-xs text-[var(--color-muted)] w-10 text-right data-mono">
+              <span className="text-xs text-muted w-10 text-right data-mono">
                 {Math.round(c.contribution * 100)}%
               </span>
             </div>
@@ -103,8 +105,8 @@ export function ConfidenceExplanation({ work }: ConfidenceExplanationProps) {
       </div>
 
       {/* Source agreement */}
-      <div className="flex items-center gap-[var(--space-3)] pt-[var(--space-2)] border-t border-[var(--color-border)]">
-        <span className="text-xs text-[var(--color-label)]">Source Agreement</span>
+      <div className="flex items-center gap-3 pt-2 border-t border-border">
+        <span className="text-xs text-label">Source Agreement</span>
         <span className="text-sm font-medium data-mono" style={{ color: tier.color }}>
           {Math.round(work.source_agreement * 100)}%
         </span>
@@ -112,20 +114,20 @@ export function ConfidenceExplanation({ work }: ConfidenceExplanationProps) {
 
       {/* Conformal set summary */}
       {work.conformal_set && (
-        <div className="pt-[var(--space-2)] border-t border-[var(--color-border)]">
-          <p className="editorial-caps text-xs text-[var(--color-label)] mb-[var(--space-2)]">
+        <div className="pt-2 border-t border-border">
+          <p className="editorial-caps text-xs text-label mb-2">
             Uncertainty (Conformal Set)
           </p>
-          <div className="grid grid-cols-2 gap-[var(--space-2)] text-xs">
+          <div className="grid grid-cols-2 gap-2 text-xs">
             <div>
-              <span className="text-[var(--color-muted)]">Coverage</span>
-              <span className="ml-[var(--space-2)] data-mono text-[var(--color-heading)]">
+              <span className="text-muted">Coverage</span>
+              <span className="ml-2 data-mono text-heading">
                 {Math.round(work.conformal_set.coverage_level * 100)}%
               </span>
             </div>
             <div>
-              <span className="text-[var(--color-muted)]">Cal. Error</span>
-              <span className="ml-[var(--space-2)] data-mono text-[var(--color-heading)]">
+              <span className="text-muted">Cal. Error</span>
+              <span className="ml-2 data-mono text-heading">
                 {work.conformal_set.calibration_error.toFixed(3)}
               </span>
             </div>
