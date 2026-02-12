@@ -69,13 +69,13 @@ export function AdaptiveTooltip({
       {visible && (
         <div
           role="tooltip"
-          className="absolute z-50 bottom-full left-0 mb-[var(--space-2)] px-[var(--space-3)] py-[var(--space-2)] bg-[var(--color-surface-elevated)] border border-[var(--color-border)] shadow-[var(--shadow-md)] text-xs text-[var(--color-body)] max-w-64"
+          className="absolute z-50 bottom-full left-0 mb-2 px-3 py-2 bg-surface-elevated border border-border shadow-md text-xs text-body max-w-64"
         >
           <p>{displayContent}</p>
           {level === "novice" && (
             <button
               onClick={handleDismiss}
-              className="mt-[var(--space-1)] text-[var(--color-accent)] underline underline-offset-2 text-xs"
+              className="mt-1 text-accent underline underline-offset-2 text-xs"
             >
               Got it
             </button>

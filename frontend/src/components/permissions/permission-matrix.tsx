@@ -47,14 +47,14 @@ export function PermissionMatrix({
     <div className="overflow-x-auto">
       <table className="w-full text-sm">
         <thead>
-          <tr className="border-b border-[var(--color-border)]">
-            <th className="py-[var(--space-3)] pr-[var(--space-4)] text-left editorial-caps text-xs text-[var(--color-label)]">
+          <tr className="border-b border-border">
+            <th className="py-3 pr-4 text-left editorial-caps text-xs text-label">
               Permission
             </th>
-            <th className="py-[var(--space-3)] px-[var(--space-4)] text-left editorial-caps text-xs text-[var(--color-label)]">
+            <th className="py-3 px-4 text-left editorial-caps text-xs text-label">
               Status
             </th>
-            <th className="py-[var(--space-3)] px-[var(--space-4)] text-left editorial-caps text-xs text-[var(--color-label)]">
+            <th className="py-3 px-4 text-left editorial-caps text-xs text-label">
               Details
             </th>
           </tr>
@@ -70,14 +70,14 @@ export function PermissionMatrix({
             return (
               <tr
                 key={perm.permission_type}
-                className="border-b border-[var(--color-divider)]"
+                className="border-b border-divider"
               >
-                <td className="py-[var(--space-3)] pr-[var(--space-4)] text-[var(--color-body)]">
+                <td className="py-3 pr-4 text-body">
                   {label}
                 </td>
-                <td className="py-[var(--space-3)] px-[var(--space-4)]">
+                <td className="py-3 px-4">
                   <span
-                    className="inline-flex items-center gap-[var(--space-1)] editorial-caps text-xs"
+                    className="inline-flex items-center gap-1 editorial-caps text-xs"
                     style={{ color: config.colorVar }}
                   >
                     <span
@@ -88,7 +88,7 @@ export function PermissionMatrix({
                     {config.label}
                   </span>
                 </td>
-                <td className="py-[var(--space-3)] px-[var(--space-4)] text-[var(--color-muted)] text-xs">
+                <td className="py-3 px-4 text-muted text-xs">
                   {perm.attribution_requirement && (
                     <span>{perm.attribution_requirement}</span>
                   )}

@@ -40,18 +40,18 @@ export function AuditLog({ entries }: AuditLogProps) {
   return (
     <div>
       {/* Filter controls — editorial underline tabs */}
-      <div className="mb-[var(--space-4)] flex items-center gap-[var(--space-4)]">
-        <span className="editorial-caps text-xs text-[var(--color-label)]">
+      <div className="mb-4 flex items-center gap-4">
+        <span className="editorial-caps text-xs text-label">
           Filter:
         </span>
         {["all", "ai_platform", "rights_org", "individual"].map((type) => (
           <button
             key={type}
             onClick={() => setFilter(type)}
-            className={`editorial-caps text-xs pb-[var(--space-1)] transition-colors duration-[var(--transition-fast)] border-b-2 ${
+            className={`editorial-caps text-xs pb-1 transition-colors duration-150 border-b-2 ${
               filter === type
-                ? "border-[var(--color-accent)] text-[var(--color-heading)]"
-                : "border-transparent text-[var(--color-label)] hover:text-[var(--color-heading)]"
+                ? "border-accent text-heading"
+                : "border-transparent text-label hover:text-heading"
             }`}
           >
             {type === "all" ? "All" : REQUESTER_TYPE_LABELS[type] ?? type}
@@ -60,24 +60,24 @@ export function AuditLog({ entries }: AuditLogProps) {
       </div>
 
       {/* Log entries */}
-      <div className="divide-y divide-[var(--color-divider)]">
+      <div className="divide-y divide-divider">
         {filtered.map((entry) => {
           const color = getResultColorVar(entry.result);
           return (
             <div
               key={entry.id}
-              className="flex items-start gap-[var(--space-3)] py-[var(--space-3)]"
+              className="flex items-start gap-3 py-3"
             >
               {/* Result indicator — square */}
               <span
-                className="mt-[var(--space-1)] h-2 w-2 flex-shrink-0"
+                className="mt-1 h-2 w-2 flex-shrink-0"
                 style={{ backgroundColor: color }}
                 aria-hidden="true"
               />
 
               <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-[var(--space-2)]">
-                  <span className="font-medium text-[var(--color-heading)] text-sm">
+                <div className="flex items-center gap-2">
+                  <span className="font-medium text-heading text-sm">
                     {entry.requester_name}
                   </span>
                   <span
@@ -87,16 +87,16 @@ export function AuditLog({ entries }: AuditLogProps) {
                     {entry.result.replace(/_/g, " ")}
                   </span>
                 </div>
-                <p className="mt-[var(--space-1)] text-xs text-[var(--color-label)]">
+                <p className="mt-1 text-xs text-label">
                   {entry.permission_type.replace(/_/g, " ")}
                   {entry.work_title && ` — "${entry.work_title}"`}
                 </p>
-                <p className="mt-[var(--space-1)] text-xs text-[var(--color-muted)]">
+                <p className="mt-1 text-xs text-muted">
                   {entry.reason}
                 </p>
               </div>
 
-              <span className="flex-shrink-0 text-xs text-[var(--color-muted)] whitespace-nowrap data-mono">
+              <span className="flex-shrink-0 text-xs text-muted whitespace-nowrap data-mono">
                 {formatTimestamp(entry.timestamp)}
               </span>
             </div>

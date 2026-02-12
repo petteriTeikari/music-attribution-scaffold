@@ -71,7 +71,7 @@ export function ProvenanceTimeline({
 
   if (events.length === 0) {
     return (
-      <p className="text-sm text-[var(--color-muted)] italic">
+      <p className="text-sm text-muted italic">
         No provenance events recorded.
       </p>
     );
@@ -86,41 +86,41 @@ export function ProvenanceTimeline({
         aria-hidden="true"
       />
 
-      <ol className="space-y-[var(--space-4)]">
+      <ol className="space-y-4">
         {events.map((event, index) => {
           const color = getEventColor(event);
           const confidence = confidences[index];
 
           return (
-            <li key={`${event.timestamp}-${index}`} className="relative pl-[var(--space-8)]">
+            <li key={`${event.timestamp}-${index}`} className="relative pl-8">
               {/* Timeline marker — accent square instead of dot */}
               <div
-                className="absolute left-0 top-[var(--space-1)] accent-square-sm"
+                className="absolute left-0 top-1 accent-square-sm"
                 style={{ backgroundColor: color }}
                 aria-hidden="true"
               />
 
-              <div className="border-b border-[var(--color-divider)] pb-[var(--space-3)]">
-                <div className="flex items-start justify-between gap-[var(--space-2)]">
+              <div className="border-b border-divider pb-3">
+                <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-[var(--space-2)]">
+                    <div className="flex items-center gap-2">
                       <span
                         className="editorial-caps text-xs"
                         style={{ color }}
                       >
                         {event.event_type}
                       </span>
-                      <span className="text-xs text-[var(--color-muted)]">
+                      <span className="text-xs text-muted">
                         {event.agent}
                       </span>
                     </div>
-                    <p className="mt-[var(--space-1)] text-sm text-[var(--color-body)]">
+                    <p className="mt-1 text-sm text-body">
                       {getEventDescription(event)}
                     </p>
                   </div>
 
-                  <div className="flex flex-col items-end gap-[var(--space-1)]">
-                    <span className="text-xs text-[var(--color-muted)] whitespace-nowrap data-mono">
+                  <div className="flex flex-col items-end gap-1">
+                    <span className="text-xs text-muted whitespace-nowrap data-mono">
                       {formatTimestamp(event.timestamp)}
                     </span>
                     {confidence !== null && (

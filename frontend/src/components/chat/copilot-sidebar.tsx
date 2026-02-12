@@ -22,7 +22,7 @@ export function AgentSidebar({ open, onOpenChange }: AgentSidebarProps) {
         }}
         icons={{
           headerCloseIcon: (
-            <span className="text-[var(--color-muted)] hover:text-[var(--color-heading)] transition-colors">
+            <span className="text-muted hover:text-heading transition-colors">
               &times;
             </span>
           ),

@@ -49,27 +49,27 @@ export function FeedbackPanel({
       />
 
       {/* Panel */}
-      <div className="relative w-full max-w-md bg-[var(--color-surface-elevated)] border-l border-[var(--color-border)] shadow-[var(--shadow-xl)] overflow-y-auto">
-        <div className="p-[var(--space-6)]">
-          <div className="flex items-center justify-between mb-[var(--space-6)]">
-            <h2 className="text-lg font-semibold text-[var(--color-heading)]">
+      <div className="relative w-full max-w-md bg-surface-elevated border-l border-border shadow-xl overflow-y-auto">
+        <div className="p-6">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-lg font-semibold text-heading">
               Submit Feedback
             </h2>
             <button
               onClick={onClose}
-              className="text-[var(--color-muted)] hover:text-[var(--color-body)] text-xl"
+              className="text-muted hover:text-body text-xl"
               aria-label="Close"
             >
               ×
             </button>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-[var(--space-6)]">
+          <form onSubmit={handleSubmit} className="space-y-6">
             {/* Overall assessment slider */}
             <div>
               <label
                 htmlFor="assessment"
-                className="block text-sm font-medium text-[var(--color-heading)] mb-[var(--space-2)]"
+                className="block text-sm font-medium text-heading mb-2"
               >
                 Overall Assessment: {Math.round(assessment * 100)}%
               </label>
@@ -85,7 +85,7 @@ export function FeedbackPanel({
                 className="w-full accent-[var(--color-primary)]"
               />
               {isCenterBiased && (
-                <p className="mt-[var(--space-1)] text-xs text-[var(--color-confidence-medium)]">
+                <p className="mt-1 text-xs text-confidence-medium">
                   Center bias detected — values near 50% may indicate
                   uncertainty. Consider moving the slider if you have a stronger
                   opinion.
@@ -97,7 +97,7 @@ export function FeedbackPanel({
             <div>
               <label
                 htmlFor="evidence-type"
-                className="block text-sm font-medium text-[var(--color-heading)] mb-[var(--space-2)]"
+                className="block text-sm font-medium text-heading mb-2"
               >
                 Evidence Type
               </label>
@@ -105,7 +105,7 @@ export function FeedbackPanel({
                 id="evidence-type"
                 value={evidenceType}
                 onChange={(e) => setEvidenceType(e.target.value)}
-                className="w-full rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] px-[var(--space-3)] py-[var(--space-2)] text-sm text-[var(--color-body)]"
+                className="w-full rounded-md border border-border bg-surface px-3 py-2 text-sm text-body"
               >
                 <option value="LINER_NOTES">Liner Notes</option>
                 <option value="MEMORY">Personal Memory</option>
@@ -119,7 +119,7 @@ export function FeedbackPanel({
             <div>
               <label
                 htmlFor="feedback-text"
-                className="block text-sm font-medium text-[var(--color-heading)] mb-[var(--space-2)]"
+                className="block text-sm font-medium text-heading mb-2"
               >
                 Comments
               </label>
@@ -129,13 +129,13 @@ export function FeedbackPanel({
                 onChange={(e) => setFreeText(e.target.value)}
                 rows={4}
                 placeholder="Any additional context about this attribution..."
-                className="w-full rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] px-[var(--space-3)] py-[var(--space-2)] text-sm text-[var(--color-body)] placeholder:text-[var(--color-muted)]"
+                className="w-full rounded-md border border-border bg-surface px-3 py-2 text-sm text-body placeholder:text-muted"
               />
             </div>
 
             <button
               type="submit"
-              className="w-full rounded-[var(--radius-md)] bg-[var(--color-primary)] py-[var(--space-3)] text-sm font-medium text-white transition-colors duration-[var(--transition-fast)] hover:bg-[var(--color-primary-hover)]"
+              className="w-full rounded-md bg-primary py-3 text-sm font-medium text-white transition-colors duration-150 hover:bg-primary-hover"
             >
               Submit Feedback
             </button>

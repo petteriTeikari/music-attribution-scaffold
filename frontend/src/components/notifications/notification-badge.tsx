@@ -53,7 +53,7 @@ export function NotificationBadge() {
     <div className="relative">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="relative flex h-6 w-6 items-center justify-center text-[var(--color-label)] hover:text-[var(--color-heading)] transition-colors"
+        className="relative flex h-6 w-6 items-center justify-center text-label hover:text-heading transition-colors"
         aria-label={`Notifications (${unreadCount} unread)`}
       >
         <svg
@@ -81,9 +81,9 @@ export function NotificationBadge() {
 
       {/* Dropdown */}
       {isOpen && (
-        <div className="absolute left-full top-0 ml-[var(--space-2)] w-72 border border-[var(--color-border)] bg-[var(--color-surface-elevated)] shadow-[var(--shadow-lg)] z-50">
-          <div className="p-[var(--space-3)] border-b border-[var(--color-divider)]">
-            <h3 className="editorial-caps text-xs text-[var(--color-heading)]">
+        <div className="absolute left-full top-0 ml-2 w-72 border border-border bg-surface-elevated shadow-lg z-50">
+          <div className="p-3 border-b border-divider">
+            <h3 className="editorial-caps text-xs text-heading">
               Notifications
             </h3>
           </div>
@@ -91,16 +91,16 @@ export function NotificationBadge() {
             {notifications.map((notif) => (
               <div
                 key={notif.id}
-                className={`p-[var(--space-3)] border-b border-[var(--color-divider)] last:border-0 ${
+                className={`p-3 border-b border-divider last:border-0 ${
                   !notif.read
-                    ? "border-l-2 border-l-[var(--color-accent)]"
+                    ? "border-l-2 border-l-accent"
                     : ""
                 }`}
               >
-                <p className="text-sm font-medium text-[var(--color-heading)]">
+                <p className="text-sm font-medium text-heading">
                   {notif.title}
                 </p>
-                <p className="mt-[var(--space-1)] text-xs text-[var(--color-muted)]">
+                <p className="mt-1 text-xs text-muted">
                   {notif.description}
                 </p>
               </div>

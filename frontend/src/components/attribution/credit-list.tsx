@@ -48,31 +48,31 @@ function buildCitationsForSources(
 export function CreditList({ credits, provenanceEvents, className = "" }: CreditListProps) {
   return (
     <div className={className}>
-      <h3 className="text-base font-semibold text-[var(--color-heading)] mb-[var(--space-4)]">
+      <h3 className="text-base font-semibold text-heading mb-4">
         Credits
       </h3>
-      <ul className="space-y-[var(--space-3)]">
+      <ul className="space-y-3">
         {credits.map((credit, index) => (
           <li
             key={`${credit.entity_id}-${credit.role}-${index}`}
-            className="rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface-elevated)] p-[var(--space-4)]"
+            className="rounded-md border border-border bg-surface-elevated p-4"
           >
-            <div className="flex items-start justify-between gap-[var(--space-3)]">
+            <div className="flex items-start justify-between gap-3">
               <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-[var(--space-2)]">
-                  <span className="font-medium text-[var(--color-heading)]">
+                <div className="flex items-center gap-2">
+                  <span className="font-medium text-heading">
                     {credit.entity_name}
                   </span>
-                  <span className="text-sm text-[var(--color-label)]">
+                  <span className="text-sm text-label">
                     {formatRole(credit.role)}
                   </span>
                 </div>
                 {credit.role_detail && (
-                  <p className="mt-[var(--space-1)] text-sm text-[var(--color-muted)]">
+                  <p className="mt-1 text-sm text-muted">
                     {credit.role_detail}
                   </p>
                 )}
-                <div className="mt-[var(--space-2)] flex flex-wrap items-center gap-[var(--space-2)]">
+                <div className="mt-2 flex flex-wrap items-center gap-2">
                   <AssuranceBadge level={credit.assurance_level} />
                   {credit.sources.map((source) => (
                     <SourceTag key={source} source={source} />
@@ -90,7 +90,7 @@ export function CreditList({ credits, provenanceEvents, className = "" }: Credit
               </div>
 
               <div className="text-right">
-                <span className="text-lg font-bold text-[var(--color-heading)]">
+                <span className="text-lg font-bold text-heading">
                   {Math.round(credit.confidence * 100)}%
                 </span>
               </div>
