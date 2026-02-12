@@ -137,6 +137,8 @@ def _record_to_model(record: AttributionRecord) -> AttributionRecordModel:
         attribution_id=record.attribution_id,
         schema_version=record.schema_version,
         work_entity_id=record.work_entity_id,
+        work_title=record.work_title,
+        artist_name=record.artist_name,
         credits=[c.model_dump(mode="json") for c in record.credits],
         assurance_level=record.assurance_level.value,
         confidence_score=record.confidence_score,
@@ -185,6 +187,8 @@ def _model_to_record(model: AttributionRecordModel) -> AttributionRecord:
         schema_version=model.schema_version,
         attribution_id=model.attribution_id,
         work_entity_id=model.work_entity_id,
+        work_title=model.work_title,
+        artist_name=model.artist_name,
         credits=_parse_jsonb(model.credits),  # type: ignore[arg-type]
         assurance_level=model.assurance_level,  # type: ignore[arg-type]
         confidence_score=model.confidence_score,

@@ -84,8 +84,8 @@ class TestExplainConfidenceWithDB:
 
         assert record is not None
         assert record.confidence_score == 0.95
-        # work_title is a Pydantic display field, not stored in DB
-        # Verify attribution_id round-trips correctly
+        assert record.work_title == "Hide and Seek"
+        assert record.artist_name == "Imogen Heap"
         assert record.attribution_id == work_id
 
     async def test_agent_deps_has_db_true(self, db_session_factory) -> None:
