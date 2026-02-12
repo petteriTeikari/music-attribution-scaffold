@@ -88,6 +88,7 @@ export const CITATIONS: CitationRef[] = [
     year: 2025,
     title: "Attribution-by-Design: Inference-Time Provenance for Generative AI",
     venue: "arXiv",
+    url: "https://arxiv.org/abs/2510.08062",
   },
   {
     id: 10,
@@ -112,7 +113,7 @@ export const CITATIONS: CitationRef[] = [
     title: "Digital Product Passports as Agentic Supply Chain Infrastructure: A Strategic Framework for Fashion",
     venue: "SSRN No. 6068907",
     url: "https://doi.org/10.2139/ssrn.6068907",
-    doi: "https://doi.org/10.2139/ssrn.6068907",
+    doi: "10.2139/ssrn.6068907",
   },
   {
     id: 13,
@@ -120,7 +121,7 @@ export const CITATIONS: CitationRef[] = [
     year: 2026,
     title: "Governing Generative Music: Attribution Limits, Platform Incentives, and the Future of Creator Income",
     venue: "SSRN No. 6109087",
-    url: "https://papers.ssrn.com/sol3/papers.cfm?abstract_id=6109087",
+    url: "https://doi.org/10.2139/ssrn.6109087",
   },
   {
     id: 14,
@@ -128,6 +129,7 @@ export const CITATIONS: CitationRef[] = [
     year: 2025,
     title: "Voice Cloning: A Comprehensive Survey",
     venue: "arXiv",
+    url: "http://arxiv.org/abs/2505.00579",
   },
   {
     id: 15,
@@ -135,6 +137,7 @@ export const CITATIONS: CitationRef[] = [
     year: 2025,
     title: "HarmonicAttack: Audio Watermark Removal via Harmonic Analysis",
     venue: "arXiv",
+    url: "http://arxiv.org/abs/2511.21577",
   },
   {
     id: 16,
@@ -142,6 +145,7 @@ export const CITATIONS: CitationRef[] = [
     year: 2019,
     title: "Learning Under Concept Drift: A Review",
     venue: "IEEE TKDE",
+    url: "https://arxiv.org/abs/2004.05785",
   },
   {
     id: 17,
@@ -157,6 +161,7 @@ export const CITATIONS: CitationRef[] = [
     year: 1969,
     title: "A Theory for Record Linkage",
     venue: "JASA",
+    url: "https://doi.org/10.1080/01621459.1969.10501049",
   },
   {
     id: 19,
@@ -164,6 +169,7 @@ export const CITATIONS: CitationRef[] = [
     year: 2021,
     title: "Blocking and Filtering Techniques for Entity Resolution",
     venue: "ACM Computing Surveys",
+    url: "https://arxiv.org/abs/1905.06167",
   },
   {
     id: 20,
@@ -171,6 +177,7 @@ export const CITATIONS: CitationRef[] = [
     year: 2009,
     title: "Active Learning Literature Survey",
     venue: "CS Tech Report, University of Wisconsin-Madison",
+    url: "http://digital.library.wisc.edu/1793/60660",
   },
   {
     id: 21,
@@ -178,6 +185,7 @@ export const CITATIONS: CitationRef[] = [
     year: 2017,
     title: "SOC 2 Trust Services Criteria",
     venue: "AICPA",
+    url: "https://www.aicpa-cima.com/topic/audit-assurance/audit-and-assurance-greater-than-soc-2",
   },
   {
     id: 22,
@@ -185,6 +193,7 @@ export const CITATIONS: CitationRef[] = [
     year: 2023,
     title: "ISO/IEC 42001: AI Management System Standard",
     venue: "ISO",
+    url: "https://www.iso.org/standard/42001",
   },
   {
     id: 23,
@@ -216,6 +225,7 @@ export const CITATIONS: CitationRef[] = [
     year: 1937,
     title: "The Nature of the Firm",
     venue: "Economica",
+    url: "https://doi.org/10.1111/j.1468-0335.1937.tb00002.x",
   },
   {
     id: 27,
@@ -223,6 +233,7 @@ export const CITATIONS: CitationRef[] = [
     year: 1968,
     title: "Crime and Punishment: An Economic Approach",
     venue: "Journal of Political Economy",
+    url: "https://doi.org/10.1086/259394",
   },
   {
     id: 28,
@@ -230,6 +241,7 @@ export const CITATIONS: CitationRef[] = [
     year: 2019,
     title: "Radical Markets: Uprooting Capitalism and Democracy for a Just Society",
     venue: "Princeton University Press",
+    url: "https://www.amazon.com/Radical-Markets-Uprooting-Capitalism-Democracy/dp/0691177503",
   },
   {
     id: 29,
@@ -237,5 +249,14 @@ export const CITATIONS: CitationRef[] = [
     year: 1984,
     title: "Distinction: A Social Critique of the Judgement of Taste",
     venue: "Harvard University Press",
+    url: "https://www.amazon.com/Distinction-Social-Critique-Judgement-Taste/dp/0674212770",
+  },
+  {
+    id: 30,
+    authors: "Nemecek, A., Jiang, Y. & Ayday, E.",
+    year: 2025,
+    title: "Watermarking Without Standards Is Not AI Governance",
+    venue: "arXiv",
+    url: "https://doi.org/10.48550/arXiv.2505.23814",
   },
 ];

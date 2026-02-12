@@ -53,7 +53,7 @@ describe("Citation database", () => {
         expect(c.url).toMatch(urlPattern);
       }
       if (c.doi) {
-        expect(c.doi).toMatch(/^https?:\/\//);
+        expect(c.doi).toMatch(/^(https?:\/\/|10\.)/);
       }
     }
   });

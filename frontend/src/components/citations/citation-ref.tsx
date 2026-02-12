@@ -21,24 +21,23 @@ export function CitationRefList({ citations }: CitationRefListProps) {
               [{ref.id}]
             </span>
             <p className="text-body leading-relaxed">
-              {ref.authors} ({ref.year}).{" "}
+              {ref.url ? (
+                <a
+                  href={ref.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-primary underline underline-offset-2 decoration-accent decoration-1 hover:decoration-2 transition-all"
+                >
+                  {ref.authors}
+                </a>
+              ) : (
+                <span>{ref.authors}</span>
+              )}{" "}
+              ({ref.year}).{" "}
               <span className="text-heading">
                 &ldquo;{ref.title}.&rdquo;
               </span>{" "}
               <span className="text-label italic">{ref.venue}.</span>
-              {ref.url && (
-                <>
-                  {" "}
-                  <a
-                    href={ref.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-primary underline underline-offset-2 decoration-accent decoration-1 hover:decoration-2 transition-all"
-                  >
-                    {ref.doi ? "DOI" : "Link"}
-                  </a>
-                </>
-              )}
             </p>
           </div>
         ))}
