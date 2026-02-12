@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import type { CitationRef } from "@/lib/data/citations";
 
 interface CitationOverlayProps {
@@ -11,6 +12,8 @@ interface CitationOverlayProps {
   citationIds: number[];
   figurePlan: string;
   citations: CitationRef[];
+  image?: string;
+  imageAlt?: string;
 }
 
 export function CitationOverlay({
@@ -21,6 +24,8 @@ export function CitationOverlay({
   citationIds,
   figurePlan,
   citations,
+  image,
+  imageAlt,
 }: CitationOverlayProps) {
   const [expanded, setExpanded] = useState(false);
 
@@ -65,15 +70,27 @@ export function CitationOverlay({
                 {detail}
               </p>
 
-              {/* Nano Banana figure placeholder */}
-              <div className="mt-4 border border-dashed border-border p-4">
-                <span className="editorial-caps text-xs text-muted block mb-2">
-                  Planned Infographic
-                </span>
-                <p className="text-xs text-label leading-relaxed">
-                  {figurePlan}
-                </p>
-              </div>
+              {/* Topic figure */}
+              {image ? (
+                <div className="mt-4">
+                  <Image
+                    src={image}
+                    alt={imageAlt || figurePlan}
+                    width={1200}
+                    height={900}
+                    className="w-full h-auto"
+                  />
+                </div>
+              ) : (
+                <div className="mt-4 border border-dashed border-border p-4">
+                  <span className="editorial-caps text-xs text-muted block mb-2">
+                    Planned Infographic
+                  </span>
+                  <p className="text-xs text-label leading-relaxed">
+                    {figurePlan}
+                  </p>
+                </div>
+              )}
 
               {/* Inline citation details */}
               <div className="mt-3 space-y-1">

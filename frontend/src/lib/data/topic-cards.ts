@@ -16,11 +16,15 @@ export interface TopicCard {
   detail: string;
   citationIds: number[];
   figurePlan: string;
+  image?: string;
+  imageAlt?: string;
 }
 
 export interface TopicGroup {
   label: string;
   cardIds: string[];
+  image?: string;
+  imageAlt?: string;
 }
 
 export const TOPIC_CARDS: TopicCard[] = [
@@ -36,6 +40,9 @@ export const TOPIC_CARDS: TopicCard[] = [
     citationIds: [1, 2],
     figurePlan:
       "Calibration curve (reliability diagram) showing ideal diagonal vs. uncalibrated (overconfident curve) vs. calibrated (close to diagonal). X-axis: predicted confidence, Y-axis: actual accuracy. Teal for calibrated, orange for uncalibrated.",
+    image: "/images/figures/fig-topic-01-calibrated-confidence.webp",
+    imageAlt:
+      "Split infographic with a reliability diagram showing three curves: ideal diagonal, calibrated model in teal closely following it, and overconfident uncalibrated model curving away in orange with ECE gap shaded. A concrete music attribution example using Imogen Heap demonstrates the difference.",
   },
   {
     id: "uncertainty-vs-confidence",
@@ -48,6 +55,9 @@ export const TOPIC_CARDS: TopicCard[] = [
     citationIds: [3],
     figurePlan:
       "Two-column split. Left (teal): epistemic uncertainty \u2014 shrinks as evidence accumulates. Right (orange): aleatoric uncertainty \u2014 irreducible, inherent ambiguity. Center: confidence score as net result.",
+    image: "/images/figures/fig-topic-02-uncertainty-vs-confidence.webp",
+    imageAlt:
+      "Four-quadrant infographic distinguishing data uncertainty (irreducible), model uncertainty (reducible), incomplete knowledge, and contradicting sources in music attribution. A banner states Confidence does not equal Uncertainty.",
   },
   {
     id: "uncertainty-propagation",
@@ -60,6 +70,9 @@ export const TOPIC_CARDS: TopicCard[] = [
     citationIds: [4],
     figurePlan:
       "Pipeline flow left\u2192right with uncertainty ribbons widening/narrowing at each stage. ETL (narrow) \u2192 Entity Resolution (wider) \u2192 Source Corroboration (narrows) \u2192 Final Score with confidence interval.",
+    image: "/images/figures/fig-topic-03-uncertainty-propagation.webp",
+    imageAlt:
+      "Horizontal pipeline showing uncertainty propagation through four music attribution stages for Hide and Seek by Imogen Heap, with uncertainty ribbons widening at entity resolution and narrowing at source corroboration, settling at 0.91 plus-minus 0.10.",
   },
   {
     id: "conformal-prediction",
@@ -72,6 +85,9 @@ export const TOPIC_CARDS: TopicCard[] = [
     citationIds: [5, 6],
     figurePlan:
       "Concentric arcs with conformal prediction set shown as band around point estimate. Selective prediction threshold shown as red line \u2014 below it, system routes to human review.",
+    image: "/images/figures/fig-topic-04-conformal-prediction.webp",
+    imageAlt:
+      "Three-layer infographic distinguishing conformal prediction (concentric arcs with 90% coverage guarantee), selective prediction (abstention gate with threshold line), and SConU (principled synthesis using conformal p-values). A risk slider shows user-controllable alpha parameter.",
   },
   // ── PIPELINE GROUP (V–VII) ──
   {
@@ -85,6 +101,9 @@ export const TOPIC_CARDS: TopicCard[] = [
     citationIds: [7],
     figurePlan:
       "Five colored source dots converging through a funnel into normalized records. Data quality indicators at each source entry point. Teal for clean data, orange for noisy/missing.",
+    image: "/images/figures/fig-topic-05-etl-pipelines.webp",
+    imageAlt:
+      "Infographic showing five music metadata sources (MusicBrainz, Discogs, AcoustID, Streaming, File Metadata) converging through a harmonization funnel into unified records, with schema characteristics and quality bars ranging from high (teal) to low (orange).",
   },
   {
     id: "entity-resolution",
@@ -97,6 +116,9 @@ export const TOPIC_CARDS: TopicCard[] = [
     citationIds: [18, 19],
     figurePlan:
       "Network graph showing fragmented artist names (orange nodes, disconnected) being resolved into unified entities (teal cluster nodes) via different matching strategies shown as edge types.",
+    image: "/images/figures/fig-topic-06-entity-resolution.webp",
+    imageAlt:
+      "Entity resolution infographic showing how Imogen Heap appears as five different database entries. Fellegi-Sunter match weights per field: ISNI +13.3 bits, name +6.5 bits. Two worked examples: Heap + Frou Frou resolving via shared ISNI (0.92 LINK) and I Megaphone + Heap falling into review (0.58 POSSIBLE LINK).",
   },
   {
     id: "active-learning",
@@ -109,6 +131,9 @@ export const TOPIC_CARDS: TopicCard[] = [
     citationIds: [8, 20],
     figurePlan:
       "Decision boundary visualization. Points near boundary (orange, uncertain) actively selected for review. Points far from boundary (teal, confident) auto-approved. Arrow showing human review moves the boundary.",
+    image: "/images/figures/fig-topic-07-active-learning.webp",
+    imageAlt:
+      "Active learning infographic showing an artist's 200-track catalog split: 170 high-confidence tracks auto-approved (teal) and 30 near-boundary tracks routed to review (orange). Progressive time savings bars show auto-approval rates improving from 85% to 95% across iterations.",
   },
   // ── GOVERNANCE GROUP (VIII–XII) ──
   {
@@ -122,6 +147,9 @@ export const TOPIC_CARDS: TopicCard[] = [
     citationIds: [16, 17],
     figurePlan:
       "Timeline with stable period (teal, flat line) then drift event (orange, diverging lines). Alert threshold shown as red horizontal line. Grafana dashboard mockup in corner.",
+    image: "/images/figures/fig-topic-08-drift-detection.webp",
+    imageAlt:
+      "Drift detection infographic showing four drift types mapped to music attribution: sudden (Spotify API removal), gradual (hyperpop emergence), incremental (LUFS shift), recurring (vinyl revival). AI-generated content inflection point shows bimodal confidence distributions.",
   },
   {
     id: "provenance-lineage",
@@ -134,6 +162,9 @@ export const TOPIC_CARDS: TopicCard[] = [
     citationIds: [9, 10],
     figurePlan:
       'Vertical timeline (teal) showing provenance events accumulating. Left: "Attribution-by-Design" (solid chain). Right: "Post-Hoc" (dotted chain). Red "Oracle Boundary" divider between them.',
+    image: "/images/figures/fig-topic-09-provenance-lineage.webp",
+    imageAlt:
+      "Provenance infographic split by an Oracle Boundary. Left: attribution-by-design with Hide and Seek as a solid provenance chain (CREATE, REGISTER, DISTRIBUTE, DERIVE, AI CONSENT). Right: post-hoc attribution hitting three epistemic barriers. Deterrence equation below.",
   },
   {
     id: "mcp-permissions",
@@ -146,6 +177,9 @@ export const TOPIC_CARDS: TopicCard[] = [
     citationIds: [11, 12],
     figurePlan:
       "Bauhaus grid showing permission matrix. Rows: usage types (stream, train, clone, remix). Columns: consent states (allow/deny/ask). MCP protocol as connecting layer. Auth stack below.",
+    image: "/images/figures/fig-topic-10-mcp-permissions.webp",
+    imageAlt:
+      "MCP permission infrastructure infographic showing a four-step consent flow with JSON-RPC query and response, a nuanced consent matrix for three Imogen Heap tracks across five use types, and an assurance gate mapping A0-A3 to permission granularity.",
   },
   {
     id: "voice-cloning",
@@ -158,6 +192,9 @@ export const TOPIC_CARDS: TopicCard[] = [
     citationIds: [14, 15],
     figurePlan:
       'Artist silhouette (teal, original) with voice waveform. Arrow to cloned voice (orange, copy). Red warning: "3\u201315 seconds sufficient." MCP permission query blocking unauthorized cloning.',
+    image: "/images/figures/fig-topic-11-voice-cloning.webp",
+    imageAlt:
+      "Voice cloning infographic showing the collapsing audio barrier from 10+ minutes to 3 seconds. Three case studies spanning the consent spectrum: Holly+ (A3 consent-first), Grimes Elf.Tech (A2 permissive), Drake/Weeknd deepfake (A0 adversarial). ELVIS Act highlighted.",
   },
   {
     id: "mlsecops-trust",
@@ -170,6 +207,9 @@ export const TOPIC_CARDS: TopicCard[] = [
     citationIds: [21, 22],
     figurePlan:
       "Pyramid: infrastructure (grey) \u2192 SOC2 (orange) \u2192 ISO 27001 (teal) \u2192 ISO 42001 (teal). Trust center dashboard mockup. Multi-tenant isolation as separate colored columns.",
+    image: "/images/figures/fig-topic-12-mlsecops-trust.webp",
+    imageAlt:
+      "MLSecOps infographic with asset-threat-layer table mapping five protected assets to music-specific threats. Security pyramid with certification tiers. Trust center dashboard showing 99.97% uptime, assurance distribution, and consent query metrics.",
   },
 ];
 
@@ -182,6 +222,9 @@ export const TOPIC_GROUPS: TopicGroup[] = [
       "uncertainty-propagation",
       "conformal-prediction",
     ],
+    image: "/images/figures/fig-group-01-confidence-uncertainty.webp",
+    imageAlt:
+      "Narrow portrait overview of calibration curve, reducible vs irreducible uncertainty, pipeline uncertainty ribbon, and conformal prediction set with abstention threshold.",
   },
   {
     label: "Pipeline & Data",
@@ -190,6 +233,9 @@ export const TOPIC_GROUPS: TopicGroup[] = [
       "entity-resolution",
       "active-learning",
     ],
+    image: "/images/figures/fig-group-02-pipeline-data.webp",
+    imageAlt:
+      "Narrow portrait overview of five data sources converging through ETL, entity resolution linking fragmented identities, and active learning decision boundary for human review.",
   },
   {
     label: "Governance & Security",
@@ -200,5 +246,8 @@ export const TOPIC_GROUPS: TopicGroup[] = [
       "voice-cloning",
       "mlsecops-trust",
     ],
+    image: "/images/figures/fig-group-03-governance-security.webp",
+    imageAlt:
+      "Narrow portrait overview of drift detection, solid vs broken provenance chains, consent matrix, voice cloning protection, and security pyramid.",
   },
 ];
