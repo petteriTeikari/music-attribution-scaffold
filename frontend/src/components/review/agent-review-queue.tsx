@@ -72,10 +72,10 @@ export function AgentReviewQueue({
   return (
     <div>
       {/* Agent narration header */}
-      <div className="mb-[var(--space-6)] flex items-center gap-[var(--space-3)] py-[var(--space-3)] border-b border-[var(--color-border)]">
+      <div className="mb-6 flex items-center gap-3 py-3 border-b border-border">
         <div className="accent-square-sm" aria-hidden="true" />
-        <p className="text-sm text-[var(--color-body)]">
-          <span className="font-semibold text-[var(--color-heading)]">Agent:</span>{" "}
+        <p className="text-sm text-body">
+          <span className="font-semibold text-heading">Agent:</span>{" "}
           {pendingWorks.length > 0
             ? `I've analyzed ${pendingWorks.length} attribution${pendingWorks.length !== 1 ? "s" : ""} and generated suggestions. Items are sorted by review priority.`
             : "All attributions have been reviewed. Great work!"}
@@ -83,23 +83,23 @@ export function AgentReviewQueue({
       </div>
 
       {/* Progress bar */}
-      <div className="mb-[var(--space-4)] flex items-center gap-[var(--space-4)]">
-        <div className="flex-1 h-px bg-[var(--color-border)] relative">
+      <div className="mb-4 flex items-center gap-4">
+        <div className="flex-1 h-px bg-border relative">
           <div
-            className="h-px absolute top-0 left-0 transition-all duration-[var(--transition-slow)]"
+            className="h-px absolute top-0 left-0 transition-all duration-300"
             style={{
               width: works.length > 0 ? `${(approvedCount / works.length) * 100}%` : "0%",
               backgroundColor: "var(--color-confidence-high)",
             }}
           />
         </div>
-        <span className="text-xs text-[var(--color-muted)] data-mono">
+        <span className="text-xs text-muted data-mono">
           {approvedCount}/{works.length}
         </span>
         {pendingWorks.length > 0 && (
           <button
             onClick={onApproveAll}
-            className="editorial-caps text-xs text-[var(--color-heading)] underline underline-offset-4 decoration-[var(--color-accent)] decoration-2 hover:text-[var(--color-accent)] transition-colors duration-[var(--transition-fast)]"
+            className="editorial-caps text-xs text-heading underline underline-offset-4 decoration-accent decoration-2 hover:text-accent transition-colors duration-150"
           >
             Approve All
           </button>
@@ -107,20 +107,20 @@ export function AgentReviewQueue({
       </div>
 
       {/* Review items */}
-      <div className="divide-y divide-[var(--color-border)]">
+      <div className="divide-y divide-border">
         {pendingWorks.map((work, index) => {
           const suggestions = generateAgentSuggestions(work);
           const isExpanded = expandedId === work.attribution_id;
 
           return (
-            <div key={work.attribution_id} className="py-[var(--space-5)]">
-              <div className="flex items-start gap-[var(--space-4)]">
+            <div key={work.attribution_id} className="py-5">
+              <div className="flex items-start gap-4">
                 {/* Roman numeral index */}
-                <span className="editorial-caps text-xs text-[var(--color-muted)] w-8 pt-1 data-mono">
+                <span className="editorial-caps text-xs text-muted w-8 pt-1 data-mono">
                   {toRoman(index + 1)}
                 </span>
 
-                <div className="flex items-center gap-[var(--space-3)]">
+                <div className="flex items-center gap-3">
                   <ConfidenceGauge score={work.confidence_score} size="sm" showLabel={false} />
                 </div>
 
@@ -129,47 +129,47 @@ export function AgentReviewQueue({
                     onClick={() => onSelectWork(work)}
                     className="text-left"
                   >
-                    <div className="flex items-center gap-[var(--space-3)]">
-                      <h3 className="text-base font-semibold text-[var(--color-heading)] hover:text-[var(--color-accent)] transition-colors">
+                    <div className="flex items-center gap-3">
+                      <h3 className="text-base font-semibold text-heading hover:text-accent transition-colors">
                         {work.work_title}
                       </h3>
                       <AssuranceBadge level={work.assurance_level} />
                     </div>
                   </button>
-                  <p className="mt-[var(--space-1)] text-sm text-[var(--color-label)]">
+                  <p className="mt-1 text-sm text-label">
                     {work.artist_name}
                   </p>
 
                   {/* Agent suggestions */}
                   {suggestions.length > 0 && (
-                    <div className="mt-[var(--space-3)]">
+                    <div className="mt-3">
                       <button
                         onClick={() => setExpandedId(isExpanded ? null : work.attribution_id)}
-                        className="editorial-caps text-xs text-[var(--color-accent)] underline underline-offset-2"
+                        className="editorial-caps text-xs text-accent underline underline-offset-2"
                       >
                         {isExpanded ? "Hide" : `${suggestions.length} suggestion${suggestions.length !== 1 ? "s" : ""}`}
                       </button>
 
                       {isExpanded && (
-                        <div className="mt-[var(--space-3)] space-y-[var(--space-3)]">
+                        <div className="mt-3 space-y-3">
                           {suggestions.map((s, i) => (
                             <div
                               key={i}
-                              className="pl-[var(--space-4)] border-l-2 border-[var(--color-accent-muted)]"
+                              className="pl-4 border-l-2 border-accent-muted"
                             >
-                              <div className="flex items-center gap-[var(--space-3)] text-sm">
-                                <span className="text-[var(--color-confidence-low)] line-through">
+                              <div className="flex items-center gap-3 text-sm">
+                                <span className="text-confidence-low line-through">
                                   {s.current}
                                 </span>
-                                <span className="text-[var(--color-accent)]">&rarr;</span>
-                                <span className="text-[var(--color-confidence-high)] font-medium">
+                                <span className="text-accent">&rarr;</span>
+                                <span className="text-confidence-high font-medium">
                                   {s.suggested}
                                 </span>
-                                <span className="text-xs text-[var(--color-muted)] data-mono">
+                                <span className="text-xs text-muted data-mono">
                                   ({Math.round(s.confidence * 100)}%)
                                 </span>
                               </div>
-                              <p className="mt-[var(--space-1)] text-xs text-[var(--color-label)]">
+                              <p className="mt-1 text-xs text-label">
                                 {s.reason}
                               </p>
                             </div>
@@ -182,7 +182,7 @@ export function AgentReviewQueue({
 
                 <button
                   onClick={() => onApprove(work.attribution_id)}
-                  className="flex-shrink-0 editorial-caps text-xs border-b-2 border-[var(--color-confidence-high)] pb-[var(--space-1)] transition-colors duration-[var(--transition-fast)] hover:text-[var(--color-confidence-high)]"
+                  className="flex-shrink-0 editorial-caps text-xs border-b-2 border-confidence-high pb-1 transition-colors duration-150 hover:text-confidence-high"
                   style={{ color: "var(--color-confidence-high)" }}
                 >
                   Approve

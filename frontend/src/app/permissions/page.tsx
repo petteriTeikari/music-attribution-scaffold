@@ -34,23 +34,23 @@ export default function PermissionsPage() {
   }, []);
 
   return (
-    <div className="px-[var(--space-8)] py-[var(--space-10)]">
+    <div className="px-8 py-10">
       {/* Header */}
-      <div className="mb-[var(--space-8)]">
-        <span className="editorial-caps text-xs text-[var(--color-accent)] block mb-[var(--space-2)]">
+      <div className="mb-8">
+        <span className="editorial-caps text-xs text-accent block mb-2">
           Control
         </span>
-        <h1 className="editorial-display text-4xl text-[var(--color-heading)]">
+        <h1 className="editorial-display text-4xl text-heading">
           Your Music, Your Rules
         </h1>
-        <p className="mt-[var(--space-2)] text-[var(--color-label)]">
+        <p className="mt-2 text-label">
           Granular permission control with MCP consent infrastructure.
         </p>
       </div>
 
       {/* Category toggles overview */}
       {permissions && !loading && (
-        <div className="mb-[var(--space-8)] grid gap-[var(--space-4)] sm:grid-cols-3">
+        <div className="mb-8 grid gap-4 sm:grid-cols-3">
           <CategoryCard
             title="Verified AI Partners"
             description="Trusted platforms with attribution agreements"
@@ -73,16 +73,16 @@ export default function PermissionsPage() {
       )}
 
       {/* Tabs — editorial underline style */}
-      <div className="mb-[var(--space-6)]">
-        <div className="flex gap-[var(--space-6)]">
+      <div className="mb-6">
+        <div className="flex gap-6">
           {TABS.map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`editorial-caps text-xs pb-[var(--space-2)] transition-colors duration-[var(--transition-fast)] border-b-2 ${
+              className={`editorial-caps text-xs pb-2 transition-colors duration-150 border-b-2 ${
                 activeTab === tab.id
-                  ? "border-[var(--color-accent)] text-[var(--color-heading)]"
-                  : "border-transparent text-[var(--color-label)] hover:text-[var(--color-heading)]"
+                  ? "border-accent text-heading"
+                  : "border-transparent text-label hover:text-heading"
               }`}
               role="tab"
               aria-selected={activeTab === tab.id}
@@ -96,16 +96,16 @@ export default function PermissionsPage() {
 
       {/* Tab content */}
       {loading ? (
-        <div className="h-64 animate-pulse bg-[var(--color-surface-secondary)]" />
+        <div className="h-64 animate-pulse bg-surface-secondary" />
       ) : (
         <div>
           {activeTab === "permissions" && permissions && (
             <div>
-              <div className="mb-[var(--space-4)] flex items-center justify-between">
-                <h2 className="text-base font-semibold text-[var(--color-heading)]">
+              <div className="mb-4 flex items-center justify-between">
+                <h2 className="text-base font-semibold text-heading">
                   Catalog-Wide Permissions
                 </h2>
-                <span className="text-xs text-[var(--color-muted)] data-mono">
+                <span className="text-xs text-muted data-mono">
                   Default: {permissions.default_permission.replace(/_/g, " ")} | v{permissions.version}
                 </span>
               </div>
@@ -115,7 +115,7 @@ export default function PermissionsPage() {
 
           {activeTab === "mcp" && (
             <div>
-              <h2 className="mb-[var(--space-4)] text-base font-semibold text-[var(--color-heading)]">
+              <h2 className="mb-4 text-base font-semibold text-heading">
                 MCP Permission Query Simulation
               </h2>
               <MCPQueryMockup />
@@ -124,7 +124,7 @@ export default function PermissionsPage() {
 
           {activeTab === "audit" && (
             <div>
-              <h2 className="mb-[var(--space-4)] text-base font-semibold text-[var(--color-heading)]">
+              <h2 className="mb-4 text-base font-semibold text-heading">
                 Permission Audit Log
               </h2>
               <AuditLog entries={auditLog} />
@@ -135,25 +135,25 @@ export default function PermissionsPage() {
 
       {/* Delegation chain */}
       {permissions && !loading && (
-        <div className="mt-[var(--space-8)]">
-          <div className="accent-line mb-[var(--space-6)]" style={{ opacity: 0.2 }} />
-          <span className="editorial-caps text-xs text-[var(--color-accent)] block mb-[var(--space-2)]">
+        <div className="mt-8">
+          <div className="accent-line mb-6" style={{ opacity: 0.2 }} />
+          <span className="editorial-caps text-xs text-accent block mb-2">
             Delegation
           </span>
-          <h2 className="text-base font-semibold text-[var(--color-heading)] mb-[var(--space-4)]">
+          <h2 className="text-base font-semibold text-heading mb-4">
             Delegation Chain
           </h2>
-          <div className="flex items-center gap-[var(--space-4)]">
+          <div className="flex items-center gap-4">
             {permissions.delegation_chain.map((entry, index) => (
-              <div key={entry.entity_id} className="flex items-center gap-[var(--space-4)]">
+              <div key={entry.entity_id} className="flex items-center gap-4">
                 {index > 0 && (
-                  <span className="text-[var(--color-accent)]">→</span>
+                  <span className="text-accent">→</span>
                 )}
-                <div className="border-l-2 border-[var(--color-border)] pl-[var(--space-4)] py-[var(--space-2)]">
-                  <p className="font-medium text-[var(--color-heading)] text-sm">
+                <div className="border-l-2 border-border pl-4 py-2">
+                  <p className="font-medium text-heading text-sm">
                     {entry.entity_name}
                   </p>
-                  <p className="text-xs text-[var(--color-label)]">
+                  <p className="text-xs text-label">
                     {entry.role} {entry.can_modify && "· Can modify"}{" "}
                     {entry.can_delegate && "· Can delegate"}
                   </p>
@@ -179,9 +179,9 @@ function CategoryCard({
   colorVar: string;
 }) {
   return (
-    <div className="border-l-2 pl-[var(--space-4)] py-[var(--space-2)]" style={{ borderColor: colorVar }}>
+    <div className="border-l-2 pl-4 py-2" style={{ borderColor: colorVar }}>
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-semibold text-[var(--color-heading)]">
+        <h3 className="text-sm font-semibold text-heading">
           {title}
         </h3>
         <span
@@ -191,7 +191,7 @@ function CategoryCard({
           {enabled ? "ON" : "OFF"}
         </span>
       </div>
-      <p className="mt-[var(--space-1)] text-xs text-[var(--color-muted)]">
+      <p className="mt-1 text-xs text-muted">
         {description}
       </p>
     </div>

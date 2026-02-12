@@ -27,11 +27,11 @@ export default function WorkDetailPage() {
 
   if (loading) {
     return (
-      <div className="px-[var(--space-8)] py-[var(--space-10)]">
-        <div className="space-y-[var(--space-6)]">
-          <div className="h-8 w-48 animate-pulse bg-[var(--color-surface-secondary)]" />
-          <div className="h-40 animate-pulse bg-[var(--color-surface-secondary)]" />
-          <div className="h-64 animate-pulse bg-[var(--color-surface-secondary)]" />
+      <div className="px-8 py-10">
+        <div className="space-y-6">
+          <div className="h-8 w-48 animate-pulse bg-surface-secondary" />
+          <div className="h-40 animate-pulse bg-surface-secondary" />
+          <div className="h-64 animate-pulse bg-surface-secondary" />
         </div>
       </div>
     );
@@ -39,17 +39,17 @@ export default function WorkDetailPage() {
 
   if (!work) {
     return (
-      <div className="px-[var(--space-8)] py-[var(--space-10)]">
-        <div className="py-[var(--space-20)] text-center">
-          <h2 className="editorial-display text-2xl text-[var(--color-heading)]">
+      <div className="px-8 py-10">
+        <div className="py-20 text-center">
+          <h2 className="editorial-display text-2xl text-heading">
             Work Not Found
           </h2>
-          <p className="mt-[var(--space-2)] text-[var(--color-label)]">
+          <p className="mt-2 text-label">
             No attribution record found for this ID.
           </p>
           <Link
             href="/works"
-            className="mt-[var(--space-4)] inline-block text-sm text-[var(--color-accent)] underline underline-offset-2"
+            className="mt-4 inline-block text-sm text-accent underline underline-offset-2"
           >
             Back to catalog
           </Link>
@@ -59,25 +59,25 @@ export default function WorkDetailPage() {
   }
 
   return (
-    <div className="px-[var(--space-8)] py-[var(--space-10)]">
+    <div className="px-8 py-10">
       {/* Breadcrumb */}
-      <nav className="mb-[var(--space-6)]" aria-label="Breadcrumb">
-        <ol className="flex items-center gap-[var(--space-2)] text-xs editorial-caps text-[var(--color-muted)]">
+      <nav className="mb-6" aria-label="Breadcrumb">
+        <ol className="flex items-center gap-2 text-xs editorial-caps text-muted">
           <li>
             <Link
               href="/works"
-              className="text-[var(--color-accent)] hover:underline"
+              className="text-accent hover:underline"
             >
               Works
             </Link>
           </li>
           <li aria-hidden="true">/</li>
-          <li className="text-[var(--color-label)]">{work.work_title}</li>
+          <li className="text-label">{work.work_title}</li>
         </ol>
       </nav>
 
       {/* Hero section — large confidence + work info */}
-      <div className="grid gap-[var(--space-8)] lg:grid-cols-[auto_1fr] items-start">
+      <div className="grid gap-8 lg:grid-cols-[auto_1fr] items-start">
         {/* Large confidence display */}
         <div className="flex flex-col items-center">
           <ConfidenceGauge score={work.confidence_score} size="lg" />
@@ -85,23 +85,23 @@ export default function WorkDetailPage() {
 
         {/* Work info */}
         <div>
-          <h1 className="editorial-display text-4xl text-[var(--color-heading)]">
+          <h1 className="editorial-display text-4xl text-heading">
             {work.work_title}
           </h1>
-          <p className="mt-[var(--space-2)] text-lg text-[var(--color-label)]">
+          <p className="mt-2 text-lg text-label">
             {work.artist_name}
           </p>
 
-          <div className="mt-[var(--space-4)] flex flex-wrap items-center gap-[var(--space-3)]">
+          <div className="mt-4 flex flex-wrap items-center gap-3">
             <AssuranceBadge level={work.assurance_level} />
             <ConfidenceBadge score={work.confidence_score} />
-            <span className="text-sm text-[var(--color-muted)] data-mono">
+            <span className="text-sm text-muted data-mono">
               Source agreement: {Math.round(work.source_agreement * 100)}%
             </span>
           </div>
 
           {work.needs_review && (
-            <div className="mt-[var(--space-4)] border-l-2 border-[var(--color-confidence-medium)] pl-[var(--space-4)] py-[var(--space-2)]">
+            <div className="mt-4 border-l-2 border-confidence-medium pl-4 py-2">
               <p className="text-sm font-medium" style={{ color: "var(--color-confidence-medium)" }}>
                 This attribution needs review (priority: {Math.round(work.review_priority * 100)}%)
               </p>
@@ -109,46 +109,46 @@ export default function WorkDetailPage() {
           )}
 
           {/* Conformal set info */}
-          <div className="mt-[var(--space-4)] text-sm text-[var(--color-muted)] data-mono">
+          <div className="mt-4 text-sm text-muted data-mono">
             <span>
               Conformal coverage: {Math.round(work.conformal_set.marginal_coverage * 100)}%
               at {Math.round(work.conformal_set.coverage_level * 100)}% level
             </span>
-            <span className="mx-[var(--space-2)]">|</span>
+            <span className="mx-2">|</span>
             <span>
               Calibration error: {work.conformal_set.calibration_error.toFixed(3)}
             </span>
-            <span className="mx-[var(--space-2)]">|</span>
+            <span className="mx-2">|</span>
             <span>v{work.version}</span>
           </div>
         </div>
       </div>
 
-      <div className="accent-line my-[var(--space-8)]" style={{ opacity: 0.3 }} />
+      <div className="accent-line my-8" style={{ opacity: 0.3 }} />
 
       {/* Credits section */}
       <div>
-        <span className="editorial-caps text-xs text-[var(--color-accent)] block mb-[var(--space-2)]">
+        <span className="editorial-caps text-xs text-accent block mb-2">
           Credits
         </span>
         <CreditList credits={work.credits} provenanceEvents={work.provenance_chain} />
       </div>
 
-      <div className="accent-line my-[var(--space-8)]" style={{ opacity: 0.3 }} />
+      <div className="accent-line my-8" style={{ opacity: 0.3 }} />
 
       {/* Provenance sources panel (Perplexity-like) */}
       <div>
         <ProvenancePanel events={work.provenance_chain} />
       </div>
 
-      <div className="accent-line my-[var(--space-8)]" style={{ opacity: 0.3 }} />
+      <div className="accent-line my-8" style={{ opacity: 0.3 }} />
 
       {/* Provenance timeline */}
       <div>
-        <span className="editorial-caps text-xs text-[var(--color-accent)] block mb-[var(--space-2)]">
+        <span className="editorial-caps text-xs text-accent block mb-2">
           Provenance
         </span>
-        <h3 className="editorial-display text-xl text-[var(--color-heading)] mb-[var(--space-4)]">
+        <h3 className="editorial-display text-xl text-heading mb-4">
           Timeline
         </h3>
         <ProvenanceTimeline events={work.provenance_chain} />

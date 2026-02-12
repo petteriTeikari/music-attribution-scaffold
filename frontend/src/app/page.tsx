@@ -126,7 +126,7 @@ export default function HomePage() {
         />
 
         {/* Text content — positioned above the background image */}
-        <div className="relative w-full px-[var(--space-8)] py-[var(--space-20)]">
+        <div className="relative w-full px-8 py-20">
           <motion.div
             initial="hidden"
             animate="visible"
@@ -137,13 +137,13 @@ export default function HomePage() {
               variants={fadeUp}
               transition={{ duration: 0.6, ease: "easeOut" }}
             >
-              <span className="editorial-caps text-xs text-[var(--color-accent)] mb-[var(--space-4)] block">
+              <span className="editorial-caps text-xs text-accent mb-4 block">
                 Open-Source Research Scaffold
               </span>
             </motion.div>
 
             <motion.h1
-              className="editorial-display text-6xl lg:text-7xl text-[var(--color-heading)]"
+              className="editorial-display text-6xl lg:text-7xl text-heading"
               variants={fadeUp}
               transition={{ duration: 0.6, ease: "easeOut" }}
             >
@@ -158,7 +158,7 @@ export default function HomePage() {
             </motion.h1>
 
             <motion.p
-              className="mt-[var(--space-6)] max-w-lg text-lg leading-relaxed text-[var(--color-body)]"
+              className="mt-6 max-w-lg text-lg leading-relaxed text-body"
               variants={fadeUp}
               transition={{ duration: 0.6, ease: "easeOut" }}
             >
@@ -168,13 +168,13 @@ export default function HomePage() {
             </motion.p>
 
             <motion.div
-              className="mt-[var(--space-8)] flex items-center gap-[var(--space-8)]"
+              className="mt-8 flex items-center gap-8"
               variants={fadeUp}
               transition={{ duration: 0.6, ease: "easeOut" }}
             >
               <Link
                 href="/works"
-                className="text-[var(--color-heading)] font-medium underline underline-offset-4 decoration-[var(--color-accent)] decoration-2 hover:text-[var(--color-accent)] transition-colors duration-[var(--transition-fast)]"
+                className="text-heading font-medium underline underline-offset-4 decoration-accent decoration-2 hover:text-accent transition-colors duration-150"
               >
                 Explore the Demo
               </Link>
@@ -182,7 +182,7 @@ export default function HomePage() {
                 href="https://papers.ssrn.com/sol3/papers.cfm?abstract_id=6109087"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-[var(--color-label)] font-medium underline underline-offset-4 decoration-[var(--color-border)] hover:decoration-[var(--color-accent)] hover:text-[var(--color-heading)] transition-colors duration-[var(--transition-fast)]"
+                className="text-label font-medium underline underline-offset-4 decoration-border hover:decoration-accent hover:text-heading transition-colors duration-150"
               >
                 Read the Paper
               </a>
@@ -192,9 +192,9 @@ export default function HomePage() {
       </section>
 
       {/* ──── WAVEFORM BAND ──── */}
-      <section className="relative py-[var(--space-4)]">
+      <section className="relative py-4">
         <div className="accent-line" />
-        <div className="flex items-center gap-[var(--space-4)] py-[var(--space-3)] px-[var(--space-8)] overflow-hidden">
+        <div className="flex items-center gap-4 py-3 px-8 overflow-hidden">
           {Array.from({ length: 64 }).map((_, i) => (
             <div
               key={i}
@@ -216,27 +216,27 @@ export default function HomePage() {
       </section>
 
       {/* ──── HOW IT WORKS ──── */}
-      <section className="px-[var(--space-8)] py-[var(--space-20)]">
+      <section className="px-8 py-20">
         <motion.div
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true, margin: "-100px" }}
           variants={stagger}
-          className="grid gap-[var(--space-12)] lg:grid-cols-[1fr_auto] items-start"
+          className="grid gap-12 lg:grid-cols-[1fr_auto] items-start"
         >
           <div>
             <motion.div variants={fadeUp} transition={{ duration: 0.5 }}>
-              <span className="editorial-caps text-xs text-[var(--color-accent)]">
+              <span className="editorial-caps text-xs text-accent">
                 Process
               </span>
-              <h2 className="editorial-display text-4xl lg:text-5xl text-[var(--color-heading)] mt-[var(--space-3)]">
+              <h2 className="editorial-display text-4xl lg:text-5xl text-heading mt-3">
                 How It Works
               </h2>
             </motion.div>
 
-          <div className="mt-[var(--space-12)]">
+          <div className="mt-12">
             {/* Steps */}
-            <div className="space-y-[var(--space-10)]">
+            <div className="space-y-10">
               {HOW_IT_WORKS.map((item, index) => (
                 <motion.div
                   key={item.label}
@@ -244,20 +244,20 @@ export default function HomePage() {
                   variants={fadeUp}
                   transition={{ duration: 0.5 }}
                 >
-                  <div className="flex items-start gap-[var(--space-6)]">
-                    <div className="accent-square-sm mt-[var(--space-1)]" aria-hidden="true" />
+                  <div className="flex items-start gap-6">
+                    <div className="accent-square-sm mt-1" aria-hidden="true" />
                     <div style={{ paddingLeft: index % 2 === 1 ? "var(--space-12)" : undefined }}>
-                      <h3 className="editorial-caps text-sm text-[var(--color-heading)]">
+                      <h3 className="editorial-caps text-sm text-heading">
                         {item.label}
                       </h3>
-                      <p className="mt-[var(--space-2)] max-w-lg text-base text-[var(--color-body)] leading-relaxed">
+                      <p className="mt-2 max-w-lg text-base text-body leading-relaxed">
                         {item.description}
                       </p>
                     </div>
                   </div>
                   {index < HOW_IT_WORKS.length - 1 && (
                     <div
-                      className="accent-line mt-[var(--space-10)]"
+                      className="accent-line mt-10"
                       style={{ opacity: 0.2 }}
                     />
                   )}
@@ -285,8 +285,8 @@ export default function HomePage() {
       </section>
 
       {/* ──── FEATURES ──── */}
-      <section className="px-[var(--space-8)] py-[var(--space-20)]">
-        <div className="accent-line mb-[var(--space-16)]" style={{ opacity: 0.4 }} aria-hidden="true" />
+      <section className="px-8 py-20">
+        <div className="accent-line mb-16" style={{ opacity: 0.4 }} aria-hidden="true" />
         <motion.div
           initial="hidden"
           whileInView="visible"
@@ -294,38 +294,38 @@ export default function HomePage() {
           variants={stagger}
         >
           <motion.div variants={fadeUp} transition={{ duration: 0.5 }}>
-            <span className="editorial-caps text-xs text-[var(--color-accent)]">
+            <span className="editorial-caps text-xs text-accent">
               Capabilities
             </span>
-            <h2 className="editorial-display text-4xl lg:text-5xl text-[var(--color-heading)] mt-[var(--space-3)]">
+            <h2 className="editorial-display text-4xl lg:text-5xl text-heading mt-3">
               Key Features
             </h2>
           </motion.div>
 
-          <div className="mt-[var(--space-16)] space-y-[var(--space-20)]">
+          <div className="mt-16 space-y-20">
             {FEATURES.map((feature, index) => (
               <motion.div
                 key={feature.title}
-                className={`grid gap-[var(--space-8)] lg:grid-cols-[1fr_1fr] items-start ${
+                className={`grid gap-8 lg:grid-cols-[1fr_1fr] items-start ${
                   index % 2 === 1 ? "lg:direction-rtl" : ""
                 }`}
                 variants={fadeUp}
                 transition={{ duration: 0.5 }}
               >
                 <div className={index % 2 === 1 ? "lg:order-2" : ""}>
-                  <div className="flex items-center gap-[var(--space-4)] mb-[var(--space-4)]">
+                  <div className="flex items-center gap-4 mb-4">
                     <div className="accent-square" aria-hidden="true" />
-                    <span className="editorial-caps text-xs text-[var(--color-muted)]">
+                    <span className="editorial-caps text-xs text-muted">
                       {feature.marker}
                     </span>
                   </div>
-                  <h3 className="editorial-display text-3xl text-[var(--color-heading)]">
+                  <h3 className="editorial-display text-3xl text-heading">
                     {feature.title}
                   </h3>
-                  <p className="mt-[var(--space-4)] text-xl lg:text-2xl text-[var(--color-heading)] leading-snug max-w-lg">
+                  <p className="mt-4 text-xl lg:text-2xl text-heading leading-snug max-w-lg">
                     {feature.description}
                   </p>
-                  <p className="mt-[var(--space-4)] text-sm text-[var(--color-muted)] leading-relaxed max-w-lg">
+                  <p className="mt-4 text-sm text-muted leading-relaxed max-w-lg">
                     {feature.detail}
                   </p>
                 </div>
@@ -351,8 +351,8 @@ export default function HomePage() {
       </section>
 
       {/* ──── ABOUT / PAPER ──── */}
-      <section className="px-[var(--space-8)] py-[var(--space-20)]">
-        <div className="accent-line mb-[var(--space-12)]" style={{ opacity: 0.4 }} />
+      <section className="px-8 py-20">
+        <div className="accent-line mb-12" style={{ opacity: 0.4 }} />
 
         <motion.div
           initial="hidden"
@@ -362,16 +362,16 @@ export default function HomePage() {
           className="max-w-2xl"
         >
           <motion.div variants={fadeUp} transition={{ duration: 0.5 }}>
-            <span className="editorial-caps text-xs text-[var(--color-accent)]">
+            <span className="editorial-caps text-xs text-accent">
               About
             </span>
-            <h2 className="editorial-display text-3xl text-[var(--color-heading)] mt-[var(--space-3)]">
+            <h2 className="editorial-display text-3xl text-heading mt-3">
               Research Scaffold
             </h2>
           </motion.div>
 
           <motion.div
-            className="mt-[var(--space-6)] space-y-[var(--space-4)] text-[var(--color-body)] leading-relaxed"
+            className="mt-6 space-y-4 text-body leading-relaxed"
             variants={fadeUp}
             transition={{ duration: 0.5 }}
           >
@@ -381,7 +381,7 @@ export default function HomePage() {
                 href="https://papers.ssrn.com/sol3/papers.cfm?abstract_id=6109087"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-[var(--color-heading)] underline underline-offset-4 decoration-[var(--color-accent)] decoration-1 hover:decoration-2 transition-all"
+                className="text-heading underline underline-offset-4 decoration-accent decoration-1 hover:decoration-2 transition-all"
               >
                 &ldquo;Governing Generative Music&rdquo;
               </a>{" "}
@@ -396,7 +396,7 @@ export default function HomePage() {
                 href="https://www.forbes.com/sites/georgehoward/2015/07/28/imogen-heap-gets-specific-about-mycelia-a-fair-trade-music-business-inspired-by-blockchain/"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-[var(--color-heading)] underline underline-offset-4 decoration-[var(--color-accent)] decoration-1 hover:decoration-2 transition-all"
+                className="text-heading underline underline-offset-4 decoration-accent decoration-1 hover:decoration-2 transition-all"
               >
                 Mycelia project
               </a>{" "}
@@ -405,13 +405,13 @@ export default function HomePage() {
                 href="https://auracles.io/"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-[var(--color-heading)] underline underline-offset-4 decoration-[var(--color-accent)] decoration-1 hover:decoration-2 transition-all"
+                className="text-heading underline underline-offset-4 decoration-accent decoration-1 hover:decoration-2 transition-all"
               >
                 Auracles.io
               </a>
               . Eight works showcase confidence ranging from 0% to 95%.
             </p>
-            <p className="text-sm text-[var(--color-muted)]">
+            <p className="text-sm text-muted">
               A0–A3 assurance levels map to ISRC/ISWC/ISNI standards.
               Conformal prediction provides calibrated uncertainty.
               Attribution-by-design embeds provenance at creation.

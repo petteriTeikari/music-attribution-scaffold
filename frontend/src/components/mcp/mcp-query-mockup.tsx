@@ -54,15 +54,15 @@ export function MCPQueryMockup() {
   return (
     <div>
       {/* Scenario tabs */}
-      <div className="mb-[var(--space-4)] flex flex-wrap gap-[var(--space-2)]">
+      <div className="mb-4 flex flex-wrap gap-2">
         {MCP_SCENARIOS.map((s, i) => (
           <button
             key={s.id}
             onClick={() => handleScenarioChange(i)}
-            className={`rounded-[var(--radius-md)] px-[var(--space-3)] py-[var(--space-2)] text-xs font-medium transition-colors duration-[var(--transition-fast)] ${
+            className={`rounded-md px-3 py-2 text-xs font-medium transition-colors duration-150 ${
               i === activeScenario
-                ? "bg-[var(--color-primary)] text-white"
-                : "border border-[var(--color-border)] text-[var(--color-label)] hover:bg-[var(--color-surface-secondary)]"
+                ? "bg-primary text-white"
+                : "border border-border text-label hover:bg-surface-secondary"
             }`}
           >
             {s.title}
@@ -70,23 +70,23 @@ export function MCPQueryMockup() {
         ))}
       </div>
 
-      <p className="mb-[var(--space-4)] text-sm text-[var(--color-body)]">
+      <p className="mb-4 text-sm text-body">
         {scenario.description}
       </p>
 
       {/* Split panel */}
-      <div className="grid gap-[var(--space-4)] md:grid-cols-2">
+      <div className="grid gap-4 md:grid-cols-2">
         {/* Request panel */}
-        <div className="rounded-[var(--radius-lg)] border border-[var(--color-border)] bg-[var(--color-surface-elevated)] p-[var(--space-4)]">
-          <div className="mb-[var(--space-3)] flex items-center justify-between">
-            <span className="text-xs font-semibold uppercase tracking-wider text-[var(--color-primary)]">
+        <div className="rounded-lg border border-border bg-surface-elevated p-4">
+          <div className="mb-3 flex items-center justify-between">
+            <span className="text-xs font-semibold uppercase tracking-wider text-primary">
               AI Request
             </span>
-            <span className="text-xs text-[var(--color-muted)]">
+            <span className="text-xs text-muted">
               {scenario.requester}
             </span>
           </div>
-          <pre className="overflow-x-auto rounded-[var(--radius-md)] bg-[var(--color-surface-secondary)] p-[var(--space-3)] text-xs leading-relaxed"
+          <pre className="overflow-x-auto rounded-md bg-surface-secondary p-3 text-xs leading-relaxed"
             style={{ fontFamily: "var(--font-mono)" }}
           >
             {JSON.stringify(scenario.mcpRequest, null, 2)}
@@ -94,8 +94,8 @@ export function MCPQueryMockup() {
         </div>
 
         {/* Response panel */}
-        <div className="rounded-[var(--radius-lg)] border border-[var(--color-border)] bg-[var(--color-surface-elevated)] p-[var(--space-4)]">
-          <div className="mb-[var(--space-3)] flex items-center justify-between">
+        <div className="rounded-lg border border-border bg-surface-elevated p-4">
+          <div className="mb-3 flex items-center justify-between">
             <span
               className="text-xs font-semibold uppercase tracking-wider"
               style={{ color: resultColorVar }}
@@ -104,7 +104,7 @@ export function MCPQueryMockup() {
             </span>
             {phase === "response" && (
               <span
-                className="rounded-[var(--radius-full)] px-[var(--space-2)] py-[var(--space-1)] text-xs font-medium"
+                className="rounded-full px-2 py-1 text-xs font-medium"
                 style={{
                   backgroundColor: `color-mix(in srgb, ${resultColorVar} 12%, transparent)`,
                   color: resultColorVar,
@@ -119,21 +119,21 @@ export function MCPQueryMockup() {
             <div className="flex h-32 items-center justify-center">
               <button
                 onClick={runAnimation}
-                className="rounded-[var(--radius-md)] bg-[var(--color-primary)] px-[var(--space-6)] py-[var(--space-3)] text-sm font-medium text-white hover:bg-[var(--color-primary-hover)] transition-colors duration-[var(--transition-fast)]"
+                className="rounded-md bg-primary px-6 py-3 text-sm font-medium text-white hover:bg-primary-hover transition-colors duration-150"
               >
                 Run Query
               </button>
             </div>
           ) : phase === "request" ? (
             <div className="flex h-32 items-center justify-center">
-              <div className="flex items-center gap-[var(--space-2)] text-[var(--color-primary)]">
+              <div className="flex items-center gap-2 text-primary">
                 <span className="inline-block h-2 w-2 animate-pulse rounded-full bg-current" />
                 <span className="text-sm">Sending request...</span>
               </div>
             </div>
           ) : phase === "checking" ? (
             <div className="flex h-32 items-center justify-center">
-              <div className="flex items-center gap-[var(--space-2)] text-[var(--color-accent)]">
+              <div className="flex items-center gap-2 text-accent">
                 <span className="inline-block h-2 w-2 animate-pulse rounded-full bg-current" />
                 <span className="text-sm">
                   Checking permissions...
@@ -142,7 +142,7 @@ export function MCPQueryMockup() {
             </div>
           ) : (
             <pre
-              className="overflow-x-auto rounded-[var(--radius-md)] bg-[var(--color-surface-secondary)] p-[var(--space-3)] text-xs leading-relaxed"
+              className="overflow-x-auto rounded-md bg-surface-secondary p-3 text-xs leading-relaxed"
               style={{ fontFamily: "var(--font-mono)" }}
             >
               {JSON.stringify(scenario.mcpResponse, null, 2)}

@@ -19,7 +19,7 @@ export function ThemeToggle() {
   return (
     <button
       onClick={() => setTheme(next)}
-      className="flex h-6 w-6 items-center justify-center text-sm text-[var(--color-label)] hover:text-[var(--color-heading)] transition-colors duration-[var(--transition-fast)]"
+      className="flex h-6 w-6 items-center justify-center text-sm text-label hover:text-heading transition-colors duration-150"
       aria-label={`Theme: ${theme}. Click for ${next}`}
     >
       <span aria-hidden="true">{ICONS[theme]}</span>
