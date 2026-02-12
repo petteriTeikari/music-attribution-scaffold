@@ -13,24 +13,6 @@ from music_attribution.schemas.enums import EvidenceTypeEnum, ReviewerRoleEnum
 from music_attribution.schemas.feedback import Correction, FeedbackCard
 
 
-def _register_sqlite_type_compilers() -> None:
-    """Register JSONB and HALFVEC compilation for SQLite dialect (test-only)."""
-    from pgvector.sqlalchemy import HALFVEC
-    from sqlalchemy.dialects.postgresql import JSONB
-    from sqlalchemy.ext.compiler import compiles
-
-    @compiles(JSONB, "sqlite")  # type: ignore[misc]
-    def _compile_jsonb_sqlite(type_, compiler, **kw):  # noqa: ARG001
-        return "JSON"
-
-    @compiles(HALFVEC, "sqlite")  # type: ignore[misc]
-    def _compile_halfvec_sqlite(type_, compiler, **kw):  # noqa: ARG001
-        return "TEXT"
-
-
-_register_sqlite_type_compilers()
-
-
 def _make_card(
     *,
     attribution_id: uuid.UUID | None = None,

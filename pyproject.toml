@@ -102,6 +102,7 @@ select = [
 ignore = [
     "E501",  # line too long (handled by formatter)
     "B008",  # do not perform function calls in argument defaults
+    "UP046",  # Pydantic BaseModel + Generic[T] is the standard pattern
 ]
 
 [tool.ruff.lint.per-file-ignores]
