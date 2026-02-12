@@ -43,49 +43,6 @@ const ASSURANCE_LEVELS = [
   { level: "A3", type: "Identity-verified", evidence: "Full provenance chain", identifier: "ISNI" },
 ];
 
-const FEATURES = [
-  {
-    title: "Confidence Scoring",
-    description:
-      "Every attribution comes with a calibrated confidence score from conformal prediction. Know exactly how reliable each credit is.",
-    detail:
-      "Conformal prediction provides a mathematical guarantee: when the system says \u201c90% confident,\u201d the data is correct 90% of the time \u2014 not a heuristic, but a provable bound. Evidence is stratified across assurance levels (A0 unverified \u2192 A3 artist-verified), mapped to industry standards like ISRC, ISWC, and ISNI. Continuous monitoring detects calibration drift, triggering automatic alerts when confidence distributions shift.",
-    marker: "I",
-    image: "/images/figures/fig-feature-01-confidence-arc.webp",
-    alt: "Concentric arcs representing conformal, Bayesian, and calibrated confidence scoring methods with a large 95% score",
-  },
-  {
-    title: "Provenance Lineage",
-    description:
-      "See how confidence was built over time \u2014 from initial fetch through entity resolution to expert review. Full audit trail.",
-    detail:
-      "Attribution-by-design embeds provenance at creation rather than computing it retrospectively. Every event \u2014 metadata fetch, entity resolution match, source corroboration, artist confirmation \u2014 is recorded as an immutable audit entry with timestamps and source identifiers. Confidence grows with each verified touchpoint, giving artists and platforms ironclad proof of authorship that licensing authorities can trust.",
-    marker: "II",
-    image: "/images/figures/fig-feature-02-provenance-flow.webp",
-    alt: "Constructivist data flow diagram showing provenance events connected by lines with a confidence gradient bar",
-  },
-  {
-    title: "MCP Permission Patchbay",
-    description:
-      "Machine-readable permissions for AI platforms. Define granular rules: who can train on your music, who can clone your voice.",
-    detail:
-      "When an AI system wants to use your creative data \u2014 voice, lyrics, compositions, or metadata \u2014 it must first query your permission settings via the Model Context Protocol. Set rules per use type: allow streaming but deny training, permit non-commercial generation but require attribution, restrict voice cloning entirely. Every request is logged and archived, making compliance automatic for ethical platforms and violations auditable for legal recourse.",
-    marker: "III",
-    image: "/images/figures/fig-feature-03-mcp-patchbay.webp",
-    alt: "Bauhaus-inspired grid of colored squares representing AI permission states for music usage types",
-  },
-  {
-    title: "Dual-Role Interface",
-    description:
-      "Artist mode for editing and approving credits. Query mode for browsing and searching. One interface, two perspectives.",
-    detail:
-      "Artists get a private workspace: claim credits, verify collaborators, upload evidence, and approve or deny AI usage requests with bulk editing and real-time approval queues. Platforms and researchers get a read-only gateway that respects permission boundaries, with access tiers scaled from full internal to rate-limited public. The same identity serves both roles \u2014 switch between creation and consumption with a single toggle.",
-    marker: "IV",
-    image: "/images/figures/fig-feature-04-dual-role.webp",
-    alt: "Split composition with warm gold artist panel and cool blue query panel divided by a coral accent line",
-  },
-];
-
 const fadeUp = {
   hidden: { opacity: 0, y: 24 },
   visible: { opacity: 1, y: 0 },
@@ -179,7 +136,14 @@ export default function HomePage() {
               variants={fadeUp}
               transition={{ duration: 0.6, ease: "easeOut" }}
             >
-              Teikari, P. (2026)
+              <a
+                href="https://doi.org/10.2139/ssrn.6109087"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="underline underline-offset-4 decoration-border hover:decoration-accent hover:text-heading transition-colors duration-150"
+              >
+                Petteri Teikari (2026)
+              </a>
             </motion.p>
 
             <motion.p
@@ -205,7 +169,7 @@ export default function HomePage() {
                 Explore the Demo
               </Link>
               <a
-                href="https://papers.ssrn.com/sol3/papers.cfm?abstract_id=6109087"
+                href="https://doi.org/10.2139/ssrn.6109087"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-label font-medium underline underline-offset-4 decoration-border hover:decoration-accent hover:text-heading transition-colors duration-150"
@@ -296,9 +260,9 @@ export default function HomePage() {
             </div>
           </div>
 
-          {/* Process figure — portrait signal chain diagram, top-aligned with section */}
+          {/* Process figure — portrait signal chain diagram */}
           <motion.div
-            className="hidden lg:block max-w-[760px]"
+            className="max-w-xs mx-auto lg:mx-0 lg:max-w-sm"
             variants={fadeUp}
             transition={{ duration: 0.5 }}
           >
@@ -310,72 +274,6 @@ export default function HomePage() {
               className="w-full h-auto"
             />
           </motion.div>
-        </motion.div>
-      </section>
-
-      {/* ──── FEATURES (teaser figures) ──── */}
-      <section className="px-8 py-20">
-        <div className="accent-line mb-16" style={{ opacity: 0.4 }} aria-hidden="true" />
-        <motion.div
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, margin: "-100px" }}
-          variants={stagger}
-        >
-          <motion.div variants={fadeUp} transition={{ duration: 0.5 }}>
-            <span className="editorial-caps text-xs text-accent">
-              Capabilities
-            </span>
-            <h2 className="editorial-display text-4xl lg:text-5xl text-heading mt-3">
-              Key Features
-            </h2>
-          </motion.div>
-
-          <div className="mt-16 space-y-20">
-            {FEATURES.map((feature, index) => (
-              <motion.div
-                key={feature.title}
-                className={`grid gap-8 lg:grid-cols-[1fr_1fr] items-start ${
-                  index % 2 === 1 ? "lg:direction-rtl" : ""
-                }`}
-                variants={fadeUp}
-                transition={{ duration: 0.5 }}
-              >
-                <div className={index % 2 === 1 ? "lg:order-2" : ""}>
-                  <div className="flex items-center gap-4 mb-4">
-                    <div className="accent-square" aria-hidden="true" />
-                    <span className="editorial-caps text-xs text-muted">
-                      {feature.marker}
-                    </span>
-                  </div>
-                  <h3 className="editorial-display text-3xl text-heading">
-                    {feature.title}
-                  </h3>
-                  <p className="mt-4 text-xl lg:text-2xl text-heading leading-snug max-w-lg">
-                    {feature.description}
-                  </p>
-                  <p className="mt-4 text-sm text-muted leading-relaxed max-w-lg">
-                    {feature.detail}
-                  </p>
-                </div>
-
-                {/* Feature figure */}
-                <div
-                  className={`overflow-hidden ${
-                    index % 2 === 1 ? "lg:order-1" : ""
-                  }`}
-                >
-                  <Image
-                    src={feature.image}
-                    alt={feature.alt}
-                    width={1600}
-                    height={1195}
-                    className="w-full h-auto"
-                  />
-                </div>
-              </motion.div>
-            ))}
-          </div>
         </motion.div>
       </section>
 
@@ -407,23 +305,41 @@ export default function HomePage() {
                 <h3 className="editorial-caps text-xs text-muted mb-6 pb-3 border-b border-border">
                   {group.label}
                 </h3>
-                <div className="divide-y divide-border">
-                  {group.cardIds.map((cardId) => {
-                    const card = TOPIC_CARDS.find((c) => c.id === cardId);
-                    if (!card) return null;
-                    return (
-                      <CitationOverlay
-                        key={card.id}
-                        title={card.title}
-                        marker={card.marker}
-                        summary={card.summary}
-                        detail={card.detail}
-                        citationIds={card.citationIds}
-                        figurePlan={card.figurePlan}
-                        citations={CITATIONS}
+                <div className="grid gap-8 lg:grid-cols-[1fr_auto] items-start">
+                  {/* Topic cards */}
+                  <div className="divide-y divide-border min-w-0">
+                    {group.cardIds.map((cardId) => {
+                      const card = TOPIC_CARDS.find((c) => c.id === cardId);
+                      if (!card) return null;
+                      return (
+                        <CitationOverlay
+                          key={card.id}
+                          title={card.title}
+                          marker={card.marker}
+                          summary={card.summary}
+                          detail={card.detail}
+                          citationIds={card.citationIds}
+                          figurePlan={card.figurePlan}
+                          citations={CITATIONS}
+                          image={card.image}
+                          imageAlt={card.imageAlt}
+                        />
+                      );
+                    })}
+                  </div>
+
+                  {/* Group overview figure — narrow portrait beside cards */}
+                  {group.image && (
+                    <div className="hidden lg:block w-96 flex-shrink-0">
+                      <Image
+                        src={group.image}
+                        alt={group.imageAlt || ""}
+                        width={600}
+                        height={1200}
+                        className="w-full h-auto sticky top-8"
                       />
-                    );
-                  })}
+                    </div>
+                  )}
                 </div>
               </motion.div>
             ))}
@@ -491,6 +407,21 @@ export default function HomePage() {
             ISNI (International Standard Name Identifier) identifies the creator themselves.
             Critical limitation: audio cannot reliably achieve A3 in adversarial settings due to the analogue hole.
           </motion.p>
+
+          {/* Assurance levels landscape figure */}
+          <motion.div
+            className="mt-10 max-w-3xl"
+            variants={fadeUp}
+            transition={{ duration: 0.5 }}
+          >
+            <Image
+              src="/images/figures/fig-section-assurance-levels.webp"
+              alt="Wide landscape infographic showing A0-A3 assurance level progression: A0 self-declared (gray), A1 recorded with ISRC (amber), A2 composed with ISWC (blue), A3 identity-verified with ISNI (green). Visual density increases left to right."
+              width={1800}
+              height={600}
+              className="w-full h-auto"
+            />
+          </motion.div>
         </motion.div>
       </section>
 
