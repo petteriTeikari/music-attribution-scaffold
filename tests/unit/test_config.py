@@ -135,3 +135,23 @@ class TestSettings:
         monkeypatch.delenv("MUSICBRAINZ_USER_AGENT", raising=False)
         settings = Settings()
         assert settings.musicbrainz_user_agent is None
+
+    def test_env_example_has_all_settings_fields(self) -> None:
+        """Parse .env.example and verify every Settings field is documented."""
+        from pathlib import Path
+
+        env_example = Path(".env.example")
+        assert env_example.exists(), ".env.example file must exist"
+
+        content = env_example.read_text(encoding="utf-8")
+        env_keys = set()
+        for line in content.splitlines():
+            line = line.strip()
+            if line and not line.startswith("#") and "=" in line:
+                key = line.split("=", 1)[0].strip()
+                env_keys.add(key.upper())
+
+        # All Settings fields should be documented in .env.example
+        settings_fields = set(Settings.model_fields.keys())
+        for field_name in settings_fields:
+            assert field_name.upper() in env_keys, f"Settings field '{field_name}' is not documented in .env.example"
