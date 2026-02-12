@@ -91,7 +91,7 @@ jobs:
         run: npm run lint --prefix frontend
 
       - name: Type check
-        run: npx --prefix frontend tsc --noEmit
+        run: cd frontend && npx tsc --noEmit
 
       - name: Run Vitest
         run: npm test --prefix frontend
@@ -117,13 +117,13 @@ jobs:
         run: npm ci --prefix frontend
 
       - name: Install Playwright browsers
-        run: npx --prefix frontend playwright install --with-deps chromium
+        run: cd frontend && npx playwright install --with-deps chromium
 
       - name: Build frontend
         run: npm run build --prefix frontend
 
       - name: Run Playwright E2E tests
-        run: npx --prefix frontend playwright test
+        run: cd frontend && npx playwright test
         env:
           CI: true
 
