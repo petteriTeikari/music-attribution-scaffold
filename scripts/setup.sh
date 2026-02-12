@@ -151,7 +151,7 @@ from music_attribution.seed.imogen_heap import seed_imogen_heap
 
 async def main():
     engine = create_async_engine(
-        'postgresql+psycopg://musicattr:musicattr_dev@localhost:5432/music_attribution',
+        'postgresql+psycopg://musicattr:musicattr_dev@localhost:5432/music_attribution',  # pragma: allowlist secret
         echo=False,
     )
     factory = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)

@@ -59,17 +59,17 @@ def _make_deps() -> AgentDeps:
 class TestAgentCreation:
     """Tests for agent creation and configuration."""
 
-    @patch.dict(os.environ, {"ANTHROPIC_API_KEY": "test-key"})
+    @patch.dict(os.environ, {"ANTHROPIC_API_KEY": "test-key"})  # pragma: allowlist secret
     def test_agent_created(self) -> None:
         agent = create_attribution_agent()
         assert agent is not None
 
-    @patch.dict(os.environ, {"ANTHROPIC_API_KEY": "test-key"})
+    @patch.dict(os.environ, {"ANTHROPIC_API_KEY": "test-key"})  # pragma: allowlist secret
     def test_agent_has_system_prompt(self) -> None:
         agent = create_attribution_agent()
         assert len(agent._system_prompts) > 0
 
-    @patch.dict(os.environ, {"ANTHROPIC_API_KEY": "test-key"})
+    @patch.dict(os.environ, {"ANTHROPIC_API_KEY": "test-key"})  # pragma: allowlist secret
     def test_agent_has_tools(self) -> None:
         agent = create_attribution_agent()
         tool_names = set(agent._function_toolset.tools.keys())
