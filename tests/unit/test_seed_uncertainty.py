@@ -46,9 +46,9 @@ class TestSeedUncertainty:
         for rec in records:
             indexes = [e.citation_index for e in rec.provenance_chain if e.citation_index is not None]
             if indexes:
-                assert indexes == list(
-                    range(1, len(indexes) + 1)
-                ), f"Record {rec.attribution_id}: citation_indexes not sequential: {indexes}"
+                assert indexes == list(range(1, len(indexes) + 1)), (
+                    f"Record {rec.attribution_id}: citation_indexes not sequential: {indexes}"
+                )
 
     def test_source_contributions_match_credits(self) -> None:
         """Each record's source_contributions list covers its credit sources."""
