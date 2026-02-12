@@ -1,3 +1,5 @@
+// TODO: Component not yet integrated — wire up during UI fine-tuning
+
 interface SkeletonProps {
   className?: string;
 }

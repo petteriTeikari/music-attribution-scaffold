@@ -1,22 +1,9 @@
-"""Tests for database engine factory (sync + async) with pool hardening."""
+"""Tests for database engine factory (async) with pool hardening."""
 
 from __future__ import annotations
 
 import pytest
-from sqlalchemy import Engine
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker
-
-
-class TestSyncEngine:
-    """Tests for the existing sync engine (regression)."""
-
-    def test_sync_engine_still_works(self) -> None:
-        """Sync engine creation returns Engine type."""
-        from music_attribution.db.engine import create_sync_engine
-
-        engine = create_sync_engine("sqlite:///")
-        assert isinstance(engine, Engine)
-        engine.dispose()
 
 
 class TestAsyncEngineFactory:

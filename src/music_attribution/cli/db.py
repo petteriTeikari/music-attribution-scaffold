@@ -61,14 +61,13 @@ async def run_status(factory: async_sessionmaker[AsyncSession]) -> dict[str, int
 
 def _main() -> None:
     """Entry point for CLI usage."""
-    import os
-
+    from music_attribution.config import Settings
     from music_attribution.db.engine import async_session_factory, create_async_engine_factory
 
     logging.basicConfig(level=logging.INFO)
 
-    database_url = os.environ.get("DATABASE_URL", "postgresql+psycopg://music:music@localhost:5432/music_attribution")
-    engine = create_async_engine_factory(database_url)
+    settings = Settings()  # type: ignore[call-arg]
+    engine = create_async_engine_factory(settings.database_url)
     factory = async_session_factory(engine)
 
     if len(sys.argv) < 2:

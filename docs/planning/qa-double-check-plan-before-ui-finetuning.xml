@@ -1,0 +1,514 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  QA Double-Check Plan Before UI Fine-Tuning
+  ===========================================================================
+  Branch: fix/qa-double-check
+  Created: 2026-02-12
+  Context: Pre-UI-polish cleanup — ensure single source of truth for all
+           config, remove dead/duplicate code, eliminate maintenance hazards.
+
+  Reference architecture: foundation-PLR (Hydra + Pydantic Settings + .env)
+  Decision inputs: 5 parallel audit agents (frontend config, backend config,
+                   Docker completeness, dead code, foundation-PLR reference)
+
+  User prompt (verbatim):
+  ========================
+  "And let's then plan with reviewer agents the next PR from branch
+  fix/qa-double-check to docs/planning/qa-double-check-plan-before-ui-finetuning.xml
+  which as the name implies should make sure that we have a perfect decoupling of
+  config, data and code, both for the frontend and backend. Especially I now want
+  to make sure that same things are not defined in multiple places in our frontend
+  as I want to make some work for it, and if I ask you to modify some settings
+  from UI, I want to make sure that those modifications actually have an effect
+  and nothing is over-riding the initial change! Same obviously should be then
+  checked for the whole repo, including the backend, with no dead or duplicate
+  code available (only remove dead code that is 100% dead code)! We should double,
+  and triple-check that the Docker approach is optimal and there is no SQLIte
+  fallbacks or any other fallbacks for approaches for which there should be only
+  Docker-native approach! There should be zero fallback options, and the burden to
+  having to maintain all the sqlite and other fallbacks? Does this double-checking
+  and aggressive or critical code review you make sense at this point? Hunt for
+  any suboptimal that would make the maintenance of this repo hard, and competing
+  multiple code defining essentially the same settings? Ask me multi-answer
+  questions for clarifications, and save this prompt verbatim to the created plan"
+
+  Follow-up instruction:
+  "Single-source of truth for config-driven pipeline should be of highest
+  priority as we had for my previous repo here:
+  /home/petteri/Dropbox/github-personal/foundation-PLR/foundation_PLR"
+
+  User decisions (from clarification questions):
+  ===============================================
+  1. Config SOT:      "Yes, full centralization" — Settings as single source
+  2. Dead code:       "Keep all, just flag" — add TODO comments, don't delete
+  3. Dict fallback:   "Remove completely" — no in-memory dict in routes
+  4. Docker services: "Keep both, fix healthcheck" — pgbouncer + valkey stay
+-->
+
+<plan version="1.0" branch="fix/qa-double-check">
+
+  <metadata>
+    <title>QA Double-Check: Config SOT + Dead Code Flagging + Fallback Removal</title>
+    <description>
+      Ensure single source of truth for all configuration (like foundation-PLR),
+      remove in-memory dict fallbacks from routes, flag dead code, fix Docker
+      services, and eliminate duplicate utility code.
+    </description>
+    <total_tasks>12</total_tasks>
+    <phases>5</phases>
+    <estimated_test_impact>
+      Backend: ~351 unit tests (some will need fixture changes)
+      Integration: ~42 tests (should remain green)
+      Frontend: ~265 tests (no impact expected)
+    </estimated_test_impact>
+  </metadata>
+
+  <!-- ================================================================== -->
+  <!-- PHASE 0: CONFIG SINGLE SOURCE OF TRUTH (HIGHEST PRIORITY)          -->
+  <!-- Reference: foundation-PLR's Pydantic Settings + .env pattern       -->
+  <!-- ================================================================== -->
+
+  <phase id="0" name="Config Single Source of Truth">
+    <description>
+      Make config.py Settings class the ONLY place environment variables are
+      read. All consumers import from Settings. Create .env.example.
+      Pattern: foundation-PLR's centralized Pydantic BaseSettings.
+    </description>
+
+    <task id="0.1" title="Expand Settings class with all env vars">
+      <description>
+        Add missing fields to Settings class in config.py:
+        - cors_origins (str, default "http://localhost:3000")
+        - attribution_agent_model (str, default "anthropic:claude-haiku-4-5")
+        - api_host (str, default "0.0.0.0")
+        - api_port (int, default 8000)
+        Remove musicbrainz_user_agent as required (make optional with None default)
+        since it's not used anywhere in current codebase yet.
+        Fix pyproject.toml: target-version = "py311" → "py313".
+      </description>
+      <files>
+        <file action="modify">src/music_attribution/config.py</file>
+        <file action="modify">pyproject.toml</file>
+      </files>
+      <tdd_spec>
+        <test_file>tests/unit/test_config.py</test_file>
+        <tests>
+          <test>test_settings_loads_from_env — monkeypatch all required vars</test>
+          <test>test_settings_defaults — verify all default values match spec</test>
+          <test>test_cors_origins_field — verify cors_origins field exists</test>
+          <test>test_agent_model_field — verify attribution_agent_model field exists</test>
+          <test>test_settings_ignores_extra — extra env vars don't cause errors</test>
+        </tests>
+      </tdd_spec>
+    </task>
+
+    <task id="0.2" title="Wire app.py to use Settings">
+      <description>
+        Replace all os.environ calls in app.py with Settings instance.
+        Lifespan creates Settings() once and stores on app.state.settings.
+        DATABASE_URL, CORS_ORIGINS read from settings, not os.environ.
+        Remove the "in-memory" log message (misleading after Docker-native).
+      </description>
+      <files>
+        <file action="modify">src/music_attribution/api/app.py</file>
+      </files>
+      <tdd_spec>
+        <test_file>tests/unit/test_api_app.py</test_file>
+        <tests>
+          <test>test_create_app_uses_settings — verify Settings is instantiated</test>
+          <test>test_cors_from_settings — verify CORS reads from Settings</test>
+          <test>test_missing_database_url_raises — RuntimeError without DATABASE_URL</test>
+        </tests>
+      </tdd_spec>
+      <depends_on>0.1</depends_on>
+    </task>
+
+    <task id="0.3" title="Wire cli/db.py and chat/agent.py to use Settings">
+      <description>
+        Replace os.environ.get("DATABASE_URL", ...) in cli/db.py with Settings.
+        Replace os.environ.get("ATTRIBUTION_AGENT_MODEL", ...) in agent.py
+        with Settings.attribution_agent_model.
+        Ensure both import from config.py, not os.environ directly.
+      </description>
+      <files>
+        <file action="modify">src/music_attribution/cli/db.py</file>
+        <file action="modify">src/music_attribution/chat/agent.py</file>
+      </files>
+      <tdd_spec>
+        <test_file>tests/unit/test_cli_db.py</test_file>
+        <tests>
+          <test>test_cli_uses_settings_database_url — no hardcoded fallback</test>
+        </tests>
+      </tdd_spec>
+      <depends_on>0.1</depends_on>
+    </task>
+
+    <task id="0.4" title="Create .env.example with all env vars">
+      <description>
+        Create .env.example documenting every environment variable from Settings.
+        Include comments grouping by category (Database, API, LLM, etc.).
+        Verify .env is in .gitignore.
+        Update frontend/.env.local.example to include NEXT_PUBLIC_API_URL.
+      </description>
+      <files>
+        <file action="create">.env.example</file>
+        <file action="verify">.gitignore</file>
+        <file action="modify">frontend/.env.local.example</file>
+      </files>
+      <tdd_spec>
+        <test_file>tests/unit/test_config.py</test_file>
+        <tests>
+          <test>test_env_example_has_all_settings_fields — parse .env.example and verify every Settings field is documented</test>
+        </tests>
+      </tdd_spec>
+      <depends_on>0.1</depends_on>
+    </task>
+
+    <task id="0.5" title="Consolidate frontend API_URL to shared config">
+      <description>
+        Create frontend/src/lib/config.ts as single source of truth for
+        NEXT_PUBLIC_API_URL. Both api-client.ts and copilot-provider.tsx
+        import from this module instead of reading process.env directly.
+      </description>
+      <files>
+        <file action="create">frontend/src/lib/config.ts</file>
+        <file action="modify">frontend/src/lib/api/api-client.ts</file>
+        <file action="modify">frontend/src/lib/copilot/copilot-provider.tsx</file>
+      </files>
+      <tdd_spec>
+        <test_file>frontend/src/__tests__/config.test.ts</test_file>
+        <tests>
+          <test>exports API_URL from single module</test>
+          <test>api-client imports from config, not process.env</test>
+          <test>copilot-provider imports from config, not process.env</test>
+        </tests>
+      </tdd_spec>
+    </task>
+
+  </phase>
+
+  <!-- ================================================================== -->
+  <!-- PHASE 1: REMOVE IN-MEMORY DICT FALLBACK                           -->
+  <!-- User decision: "Remove completely"                                  -->
+  <!-- ================================================================== -->
+
+  <phase id="1" name="Remove In-Memory Dict Fallback">
+    <description>
+      Remove app.state.attributions dict and all fallback code paths.
+      Routes only use async_session_factory (PostgreSQL).
+      Update unit tests to use mock session factories instead of dict.
+    </description>
+
+    <task id="1.1" title="Remove fallback from attribution routes">
+      <description>
+        In attribution.py: remove all `if hasattr(..., "async_session_factory")`
+        guards and fallback code blocks. Routes should always use the DB path.
+        Remove `app.state.attributions = {}` from app.py create_app().
+        Remove attributions dict from agui_endpoint.py.
+        This is 10+ locations across 3 files.
+      </description>
+      <files>
+        <file action="modify">src/music_attribution/api/routes/attribution.py</file>
+        <file action="modify">src/music_attribution/api/app.py</file>
+        <file action="modify">src/music_attribution/chat/agui_endpoint.py</file>
+      </files>
+      <tdd_spec>
+        <test_file>tests/unit/api/test_attribution_endpoints.py</test_file>
+        <tests>
+          <test>test_routes_require_session_factory — routes raise if no session_factory</test>
+          <test>test_no_attributions_dict — app.state has no attributions attribute</test>
+        </tests>
+      </tdd_spec>
+      <depends_on>0.2</depends_on>
+    </task>
+
+    <task id="1.2" title="Update unit tests to use mock session factory">
+      <description>
+        tests/unit/api/test_attribution_endpoints.py currently uses
+        app.state.attributions dict. Convert to use a mock
+        async_session_factory that returns mock data.
+        tests/unit/test_agui_endpoint.py also sets attributions dict — update.
+      </description>
+      <files>
+        <file action="modify">tests/unit/api/test_attribution_endpoints.py</file>
+        <file action="modify">tests/unit/test_agui_endpoint.py</file>
+      </files>
+      <tdd_spec>
+        <tests>
+          <test>All existing tests in both files pass with mock session factory</test>
+        </tests>
+      </tdd_spec>
+      <depends_on>1.1</depends_on>
+    </task>
+
+  </phase>
+
+  <!-- ================================================================== -->
+  <!-- PHASE 2: ELIMINATE DUPLICATE CODE                                   -->
+  <!-- ================================================================== -->
+
+  <phase id="2" name="Eliminate Duplicate Code">
+    <description>
+      DRY up duplicated utilities: SQLite type compilers (13 files),
+      persistence helpers (_ensure_utc, _parse_jsonb in 3 modules).
+    </description>
+
+    <task id="2.1" title="Extract _register_sqlite_type_compilers to conftest">
+      <description>
+        Move the _register_sqlite_type_compilers() function to
+        tests/unit/conftest.py as a session-scoped autouse fixture.
+        Remove the 13 duplicate copies from individual test files.
+        All unit tests that need SQLite type compilers get them automatically.
+      </description>
+      <files>
+        <file action="modify">tests/unit/conftest.py</file>
+        <file action="modify">tests/unit/test_api_attribution_routes_pg.py</file>
+        <file action="modify">tests/unit/test_seed_imogen_heap.py</file>
+        <file action="modify">tests/unit/test_permissions_persistence.py</file>
+        <file action="modify">tests/unit/test_text_search.py</file>
+        <file action="modify">tests/unit/test_vector_search.py</file>
+        <file action="modify">tests/unit/test_cli_db.py</file>
+        <file action="modify">tests/unit/test_feedback_persistence.py</file>
+        <file action="modify">tests/unit/test_attribution_persistence_pg.py</file>
+        <file action="modify">tests/unit/test_embedding_service.py</file>
+        <file action="modify">tests/unit/test_hybrid_search.py</file>
+        <file action="modify">tests/unit/test_db_engine.py</file>
+        <file action="modify">tests/unit/test_provenance_api.py</file>
+        <file action="modify">tests/unit/test_api_permission_routes.py</file>
+        <file action="modify">tests/unit/test_edge_repository.py</file>
+      </files>
+      <tdd_spec>
+        <tests>
+          <test>All 351 unit tests still pass after extraction</test>
+          <test>No file in tests/unit/ contains _register_sqlite_type_compilers (except conftest)</test>
+        </tests>
+      </tdd_spec>
+    </task>
+
+    <task id="2.2" title="Extract _ensure_utc and _parse_jsonb to db/utils.py">
+      <description>
+        Create src/music_attribution/db/utils.py with _ensure_utc() and
+        _parse_jsonb() functions. Update imports in:
+        - attribution/persistence.py
+        - feedback/persistence.py
+        - permissions/persistence.py
+        Delete the local copies from each module.
+      </description>
+      <files>
+        <file action="create">src/music_attribution/db/utils.py</file>
+        <file action="modify">src/music_attribution/attribution/persistence.py</file>
+        <file action="modify">src/music_attribution/feedback/persistence.py</file>
+        <file action="modify">src/music_attribution/permissions/persistence.py</file>
+      </files>
+      <tdd_spec>
+        <test_file>tests/unit/test_db_utils.py</test_file>
+        <tests>
+          <test>test_ensure_utc_with_naive_datetime</test>
+          <test>test_ensure_utc_with_utc_datetime</test>
+          <test>test_ensure_utc_with_string</test>
+          <test>test_parse_jsonb_with_dict</test>
+          <test>test_parse_jsonb_with_string</test>
+          <test>test_parse_jsonb_with_list</test>
+        </tests>
+      </tdd_spec>
+    </task>
+
+    <task id="2.3" title="Remove dead backend functions">
+      <description>
+        Remove hello() from core.py (100% dead — never called).
+        Investigate create_sync_engine() in db/engine.py — if not called
+        by alembic or any CLI, remove it.
+        Remove unused pillow and hypothesis from pyproject.toml dev deps.
+      </description>
+      <files>
+        <file action="modify">src/music_attribution/core.py</file>
+        <file action="modify">src/music_attribution/db/engine.py</file>
+        <file action="modify">pyproject.toml</file>
+      </files>
+      <tdd_spec>
+        <tests>
+          <test>test_core_module_exists — verify core.py still importable</test>
+          <test>Existing tests pass without hello() and create_sync_engine()</test>
+        </tests>
+      </tdd_spec>
+    </task>
+
+  </phase>
+
+  <!-- ================================================================== -->
+  <!-- PHASE 3: FLAG DEAD FRONTEND CODE + DOCKER FIXES                    -->
+  <!-- User decision: "Keep all, just flag" for components                 -->
+  <!-- User decision: "Keep both, fix healthcheck" for Docker              -->
+  <!-- ================================================================== -->
+
+  <phase id="3" name="Flag Dead Code + Docker Fixes">
+    <description>
+      Add TODO comments to unused frontend components.
+      Fix pgbouncer healthcheck. Document valkey future use.
+      Flag unused Jotai atoms.
+    </description>
+
+    <task id="3.1" title="Flag unused frontend components with TODO">
+      <description>
+        Add "// TODO: Component not yet integrated — wire up when needed"
+        to the top of each unused component file:
+        - credit-editor.tsx
+        - empty-state.tsx
+        - error-boundary.tsx
+        - voice-agent-banner.tsx
+        - adaptive-tooltip.tsx
+        - confidence-explanation.tsx
+        - skeleton.tsx
+
+        Add "// TODO: Atom not yet used in any component" to:
+        - resolvedThemeAtom in theme.ts
+        - selectedWorkAtom in works.ts
+      </description>
+      <files>
+        <file action="modify">frontend/src/components/editor/credit-editor.tsx</file>
+        <file action="modify">frontend/src/components/states/empty-state.tsx</file>
+        <file action="modify">frontend/src/components/states/error-boundary.tsx</file>
+        <file action="modify">frontend/src/components/pro/voice-agent-banner.tsx</file>
+        <file action="modify">frontend/src/components/ui/adaptive-tooltip.tsx</file>
+        <file action="modify">frontend/src/components/confidence/confidence-explanation.tsx</file>
+        <file action="modify">frontend/src/components/states/skeleton.tsx</file>
+        <file action="modify">frontend/src/lib/stores/theme.ts</file>
+        <file action="modify">frontend/src/lib/stores/works.ts</file>
+      </files>
+      <tdd_spec>
+        <tests>
+          <test>Frontend lint passes (no TypeScript errors introduced)</test>
+          <test>All 265 frontend tests pass</test>
+        </tests>
+      </tdd_spec>
+    </task>
+
+    <task id="3.2" title="Fix pgbouncer healthcheck and document services">
+      <description>
+        Fix pgbouncer healthcheck: change port from 5432 to 6432.
+        Add comments documenting why pgbouncer and valkey are present
+        (future production architecture).
+        Remove disabled ci-docker.yml workflow (100% dead).
+      </description>
+      <files>
+        <file action="modify">docker-compose.dev.yml</file>
+        <file action="modify">.github/workflows/ci-docker.yml</file>
+      </files>
+      <tdd_spec>
+        <tests>
+          <test>docker compose -f docker-compose.dev.yml config validates</test>
+        </tests>
+      </tdd_spec>
+    </task>
+
+  </phase>
+
+  <!-- ================================================================== -->
+  <!-- PHASE 4: VERIFICATION                                               -->
+  <!-- ================================================================== -->
+
+  <phase id="4" name="Verification">
+    <description>
+      Run all test suites, pre-commit, and Docker compose to verify
+      nothing is broken after the cleanup.
+    </description>
+
+    <task id="4.1" title="Full verification suite">
+      <description>
+        1. pre-commit run --all-files (ruff check + format + mypy + secrets)
+        2. .venv/bin/python -m pytest tests/ -x -q (351+ unit tests)
+        3. make test-integration (42 integration tests via testcontainers)
+        4. cd frontend &amp;&amp; npm test (265 Vitest tests)
+        5. docker compose -f docker-compose.dev.yml config (validates compose)
+        6. Verify no os.environ calls remain in src/ (except __init__.py or test helpers)
+        7. Verify no _register_sqlite_type_compilers in any unit test file
+        8. Verify .env.example has all Settings fields
+      </description>
+      <files>
+        <file action="verify">All modified files</file>
+      </files>
+      <depends_on>0.2,0.3,0.4,0.5,1.2,2.1,2.2,2.3,3.1,3.2</depends_on>
+    </task>
+
+  </phase>
+
+  <!-- ================================================================== -->
+  <!-- DEPENDENCY DAG                                                      -->
+  <!-- ================================================================== -->
+
+  <dependency_dag>
+    <!--
+    0.1 (Settings class) ──┬── 0.2 (app.py) ──── 1.1 (remove fallback) ──── 1.2 (update unit tests)
+                           ├── 0.3 (cli + agent)
+                           └── 0.4 (.env.example)
+    0.5 (frontend config) ── independent
+
+    2.1 (sqlite compilers) ── independent
+    2.2 (db/utils.py) ── independent
+    2.3 (dead functions) ── independent
+
+    3.1 (flag components) ── independent
+    3.2 (Docker fixes) ── independent
+
+    4.1 (verification) ◄── all others
+    -->
+    <edge from="0.1" to="0.2"/>
+    <edge from="0.1" to="0.3"/>
+    <edge from="0.1" to="0.4"/>
+    <edge from="0.2" to="1.1"/>
+    <edge from="1.1" to="1.2"/>
+    <edge from="0.2" to="4.1"/>
+    <edge from="0.3" to="4.1"/>
+    <edge from="0.4" to="4.1"/>
+    <edge from="0.5" to="4.1"/>
+    <edge from="1.2" to="4.1"/>
+    <edge from="2.1" to="4.1"/>
+    <edge from="2.2" to="4.1"/>
+    <edge from="2.3" to="4.1"/>
+    <edge from="3.1" to="4.1"/>
+    <edge from="3.2" to="4.1"/>
+  </dependency_dag>
+
+  <!-- ================================================================== -->
+  <!-- AUDIT FINDINGS REFERENCE                                            -->
+  <!-- ================================================================== -->
+
+  <audit_findings>
+    <finding id="F1" severity="CRITICAL" status="PLANNED" task="0.1,0.2,0.3">
+      Settings class exists in config.py but is UNUSED. 4 files use raw
+      os.environ instead. DATABASE_URL defined/defaulted in 7 locations.
+    </finding>
+    <finding id="F2" severity="HIGH" status="PLANNED" task="1.1,1.2">
+      app.state.attributions in-memory dict fallback in 10+ locations.
+      Maintenance burden: every route has two code paths.
+    </finding>
+    <finding id="F3" severity="HIGH" status="OUT_OF_SCOPE">
+      80+ Tailwind v4 [var(--*)] anti-pattern instances in 22 frontend files.
+      Flagged for separate UI fine-tuning PR (too large for this QA scope).
+    </finding>
+    <finding id="F4" severity="MEDIUM" status="PLANNED" task="2.1">
+      _register_sqlite_type_compilers() copied in 13 unit test files.
+    </finding>
+    <finding id="F5" severity="MEDIUM" status="PLANNED" task="2.2">
+      _ensure_utc() and _parse_jsonb() duplicated in 3 persistence modules.
+    </finding>
+    <finding id="F6" severity="MEDIUM" status="PLANNED" task="3.1">
+      7 dead frontend components, 2 dead Jotai atoms. User chose: flag, don't delete.
+    </finding>
+    <finding id="F7" severity="MEDIUM" status="PLANNED" task="2.3">
+      Dead hello() in core.py, likely dead create_sync_engine() in engine.py,
+      unused pillow and hypothesis dependencies.
+    </finding>
+    <finding id="F8" severity="LOW" status="PLANNED" task="0.5">
+      NEXT_PUBLIC_API_URL read in 2 frontend files independently.
+    </finding>
+    <finding id="F9" severity="LOW" status="PLANNED" task="3.2">
+      pgbouncer healthcheck probes port 5432 (postgres) instead of 6432.
+      Disabled ci-docker.yml workflow still checked in.
+    </finding>
+    <finding id="F10" severity="LOW" status="PLANNED" task="0.1">
+      pyproject.toml: target-version = "py311" but requires-python >= 3.13.
+    </finding>
+  </audit_findings>
+
+</plan>

@@ -1,5 +1,7 @@
 "use client";
 
+// TODO: Component not yet integrated — wire up during UI fine-tuning
+
 import { useState, useRef, useEffect } from "react";
 import type { Credit } from "@/lib/types/attribution";
 import { CreditRole } from "@/lib/types/enums";

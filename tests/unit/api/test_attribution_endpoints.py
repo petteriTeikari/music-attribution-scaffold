@@ -2,8 +2,11 @@
 
 from __future__ import annotations
 
+import ast
 import uuid
 from datetime import UTC, datetime
+from pathlib import Path
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from fastapi.testclient import TestClient
@@ -55,11 +58,52 @@ def _make_attribution(
     )
 
 
+def _mock_session_factory(repo_mock: MagicMock) -> MagicMock:
+    """Create a mock async_session_factory for tests.
+
+    The mock session supports async context manager usage and
+    the repo_mock is patched externally via @patch.
+    """
+    mock_session = AsyncMock()
+    factory = MagicMock()
+    factory.return_value.__aenter__ = AsyncMock(return_value=mock_session)
+    factory.return_value.__aexit__ = AsyncMock(return_value=False)
+    return factory
+
+
 @pytest.fixture
 def client() -> TestClient:
-    """Create a test client with mocked repository."""
+    """Create a test client with mock session factory (no in-memory dict)."""
     app = create_app()
+    app.state.async_session_factory = _mock_session_factory(MagicMock())
     return TestClient(app)
+
+
+class TestNoFallbackCode:
+    """Verify that in-memory dict fallback code has been removed."""
+
+    def test_no_attributions_dict_on_app_state(self) -> None:
+        """app.state must NOT have an 'attributions' attribute after create_app()."""
+        app = create_app()
+        assert not hasattr(app.state, "attributions"), "app.state.attributions still exists — remove the in-memory dict"
+
+    def test_no_hasattr_guards_in_attribution_routes(self) -> None:
+        """attribution.py must not contain hasattr(..., 'async_session_factory') guards."""
+        source_path = (
+            Path(__file__).resolve().parents[3] / "src" / "music_attribution" / "api" / "routes" / "attribution.py"
+        )
+        source = source_path.read_text(encoding="utf-8")
+        tree = ast.parse(source)
+        for node in ast.walk(tree):
+            if isinstance(node, ast.Call) and isinstance(node.func, ast.Name) and node.func.id == "hasattr":
+                pytest.fail("attribution.py still contains hasattr() calls — remove fallback guards")
+
+    def test_agent_deps_has_no_attributions_field(self) -> None:
+        """AgentDeps must not have an 'attributions' field."""
+        from music_attribution.chat.agent import AgentDeps
+
+        field_names = [f.name for f in AgentDeps.__dataclass_fields__.values()]
+        assert "attributions" not in field_names, "AgentDeps still has 'attributions' field — remove it"
 
 
 class TestAttributionEndpoints:
@@ -72,24 +116,24 @@ class TestAttributionEndpoints:
         data = response.json()
         assert data["status"] == "healthy"
 
-    def test_get_attribution_by_work_id(self, client) -> None:
+    @patch("music_attribution.api.routes.attribution.AsyncAttributionRepository")
+    def test_get_attribution_by_work_id(self, mock_repo_cls, client) -> None:
         """Test getting attribution by work entity ID."""
         work_id = uuid.uuid4()
         attr = _make_attribution(work_id=work_id)
-
-        # Store in the in-memory repo via app state
-        client.app.state.attributions[work_id] = attr
+        mock_repo_cls.return_value.find_by_work_entity_id = AsyncMock(return_value=attr)
 
         response = client.get(f"/api/v1/attributions/work/{work_id}")
         assert response.status_code == 200
         data = response.json()
         assert data["work_entity_id"] == str(work_id)
 
-    def test_attribution_response_includes_confidence(self, client) -> None:
+    @patch("music_attribution.api.routes.attribution.AsyncAttributionRepository")
+    def test_attribution_response_includes_confidence(self, mock_repo_cls, client) -> None:
         """Test that response includes confidence score."""
         work_id = uuid.uuid4()
         attr = _make_attribution(work_id=work_id, confidence=0.85)
-        client.app.state.attributions[work_id] = attr
+        mock_repo_cls.return_value.find_by_work_entity_id = AsyncMock(return_value=attr)
 
         response = client.get(f"/api/v1/attributions/work/{work_id}")
         assert response.status_code == 200
@@ -97,11 +141,12 @@ class TestAttributionEndpoints:
         assert "confidence_score" in data
         assert data["confidence_score"] == 0.85
 
-    def test_attribution_response_includes_assurance_level(self, client) -> None:
+    @patch("music_attribution.api.routes.attribution.AsyncAttributionRepository")
+    def test_attribution_response_includes_assurance_level(self, mock_repo_cls, client) -> None:
         """Test that response includes assurance level."""
         work_id = uuid.uuid4()
         attr = _make_attribution(work_id=work_id)
-        client.app.state.attributions[work_id] = attr
+        mock_repo_cls.return_value.find_by_work_entity_id = AsyncMock(return_value=attr)
 
         response = client.get(f"/api/v1/attributions/work/{work_id}")
         assert response.status_code == 200
@@ -109,17 +154,20 @@ class TestAttributionEndpoints:
         assert "assurance_level" in data
         assert data["assurance_level"] == "LEVEL_2"
 
-    def test_not_found_returns_404(self, client) -> None:
+    @patch("music_attribution.api.routes.attribution.AsyncAttributionRepository")
+    def test_not_found_returns_404(self, mock_repo_cls, client) -> None:
         """Test that nonexistent attribution returns 404."""
+        mock_repo_cls.return_value.find_by_work_entity_id = AsyncMock(return_value=None)
+
         fake_id = uuid.uuid4()
         response = client.get(f"/api/v1/attributions/work/{fake_id}")
         assert response.status_code == 404
 
-    def test_search_attributions_returns_list(self, client) -> None:
-        """Test that search returns a list of attributions."""
-        for _ in range(3):
-            work_id = uuid.uuid4()
-            client.app.state.attributions[work_id] = _make_attribution(work_id=work_id)
+    @patch("music_attribution.api.routes.attribution.AsyncAttributionRepository")
+    def test_list_attributions_returns_list(self, mock_repo_cls, client) -> None:
+        """Test that list returns attribution records."""
+        records = [_make_attribution() for _ in range(3)]
+        mock_repo_cls.return_value.list_all = AsyncMock(return_value=records)
 
         response = client.get("/api/v1/attributions/")
         assert response.status_code == 200
@@ -127,11 +175,11 @@ class TestAttributionEndpoints:
         assert isinstance(data, list)
         assert len(data) == 3
 
-    def test_pagination_works(self, client) -> None:
+    @patch("music_attribution.api.routes.attribution.AsyncAttributionRepository")
+    def test_pagination_works(self, mock_repo_cls, client) -> None:
         """Test that pagination limits results."""
-        for _ in range(10):
-            work_id = uuid.uuid4()
-            client.app.state.attributions[work_id] = _make_attribution(work_id=work_id)
+        records = [_make_attribution() for _ in range(3)]
+        mock_repo_cls.return_value.list_all = AsyncMock(return_value=records)
 
         response = client.get("/api/v1/attributions/?limit=3&offset=0")
         assert response.status_code == 200

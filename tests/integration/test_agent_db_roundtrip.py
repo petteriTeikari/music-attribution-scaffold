@@ -46,14 +46,13 @@ class TestExplainConfidenceWithDB:
         assert record.artist_name == "Imogen Heap"
         assert record.attribution_id == work_id
 
-    async def test_agent_deps_has_db_true(self, pg_session_factory) -> None:
-        """AgentDeps.has_db is True when session_factory is provided."""
+    async def test_agent_deps_has_session_factory(self, pg_session_factory) -> None:
+        """AgentDeps.session_factory is set when provided."""
         deps = AgentDeps(
-            attributions={},
             state=AttributionAgentState(),
             session_factory=pg_session_factory,
         )
-        assert deps.has_db is True
+        assert deps.session_factory is not None
 
     async def test_explain_reads_real_data(self, pg_session_factory) -> None:
         """The explain_confidence DB path reads correct fields from seeded data."""
