@@ -126,55 +126,65 @@ export default function HomePage() {
         />
 
         {/* Text content — positioned above the background image */}
-        <div className="relative w-full px-[var(--space-8)] py-[var(--space-20)]">
+        <div className="relative w-full px-8 py-20">
           <motion.div
             initial="hidden"
             animate="visible"
             variants={stagger}
-            className="max-w-xl"
+            className="max-w-2xl"
           >
             <motion.div
               variants={fadeUp}
               transition={{ duration: 0.6, ease: "easeOut" }}
             >
-              <span className="editorial-caps text-xs text-[var(--color-accent)] mb-[var(--space-4)] block">
-                Open-Source Research Scaffold
+              <span className="editorial-caps text-xs text-accent mb-4 block">
+                SSRN No. 6109087
               </span>
             </motion.div>
 
             <motion.h1
-              className="editorial-display text-6xl lg:text-7xl text-[var(--color-heading)]"
+              className="editorial-display text-5xl lg:text-6xl text-heading"
               variants={fadeUp}
               transition={{ duration: 0.6, ease: "easeOut" }}
             >
-              Music Attribution
-              <br />
-              with{" "}
-              <em className="editorial-display-italic" style={{ color: "var(--color-accent)" }}>
-                Transparent
-              </em>
-              <br />
-              Confidence
+              Governing Generative Music
             </motion.h1>
 
             <motion.p
-              className="mt-[var(--space-6)] max-w-lg text-lg leading-relaxed text-[var(--color-body)]"
+              className="mt-3 text-xl lg:text-2xl text-heading leading-snug max-w-2xl"
               variants={fadeUp}
               transition={{ duration: 0.6, ease: "easeOut" }}
             >
-              Know exactly who contributed to a recording — and how certain we
-              are about it. Calibrated confidence scoring, provenance lineage,
-              and MCP permission infrastructure.
+              Attribution Limits, Platform Incentives, and the Future of Creator Income
+            </motion.p>
+
+            <motion.p
+              className="mt-2 text-sm text-muted"
+              variants={fadeUp}
+              transition={{ duration: 0.6, ease: "easeOut" }}
+            >
+              Teikari, P. (2026)
+            </motion.p>
+
+            <motion.p
+              className="mt-6 max-w-2xl text-base leading-relaxed text-body"
+              variants={fadeUp}
+              transition={{ duration: 0.6, ease: "easeOut" }}
+            >
+              Your favourite song may have already trained the AI that will replace its creator.
+              We propose a two-friction taxonomy, tiered attribution framework (A0&ndash;A3),
+              and governance that functions despite imperfect attribution: contractible provenance,
+              competitive licensing rails, and clear property rights.
             </motion.p>
 
             <motion.div
-              className="mt-[var(--space-8)] flex items-center gap-[var(--space-8)]"
+              className="mt-8 flex items-center gap-8"
               variants={fadeUp}
               transition={{ duration: 0.6, ease: "easeOut" }}
             >
               <Link
                 href="/works"
-                className="text-[var(--color-heading)] font-medium underline underline-offset-4 decoration-[var(--color-accent)] decoration-2 hover:text-[var(--color-accent)] transition-colors duration-[var(--transition-fast)]"
+                className="text-heading font-medium underline underline-offset-4 decoration-accent decoration-2 hover:text-accent transition-colors duration-150"
               >
                 Explore the Demo
               </Link>
@@ -182,7 +192,7 @@ export default function HomePage() {
                 href="https://papers.ssrn.com/sol3/papers.cfm?abstract_id=6109087"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-[var(--color-label)] font-medium underline underline-offset-4 decoration-[var(--color-border)] hover:decoration-[var(--color-accent)] hover:text-[var(--color-heading)] transition-colors duration-[var(--transition-fast)]"
+                className="text-label font-medium underline underline-offset-4 decoration-border hover:decoration-accent hover:text-heading transition-colors duration-150"
               >
                 Read the Paper
               </a>
