@@ -51,6 +51,6 @@ class TestSetupScript:
         """Script uses 'already running' or idempotent patterns."""
         content = SETUP_SCRIPT.read_text(encoding="utf-8")
         # Should check if services are already running or use idempotent commands
-        assert (
-            "already" in content.lower() or "if" in content.lower()
-        ), "setup.sh should be idempotent (check if services are already running)"
+        assert "already" in content.lower() or "if" in content.lower(), (
+            "setup.sh should be idempotent (check if services are already running)"
+        )
