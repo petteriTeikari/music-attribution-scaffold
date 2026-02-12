@@ -1,0 +1,134 @@
+# Audio Metadata Library
+#
+# Which library extracts metadata (ID3, Vorbis, FLAC, MP4) from audio files.
+# Critical for the file_metadata ETL pipeline. License compatibility with
+# MIT project license is a hard constraint.
+
+decision_id: audio_metadata_library
+title: "Audio Metadata Library"
+description: >
+  Selects the Python library for reading embedded audio file metadata
+  (ID3v2 tags, Vorbis comments, FLAC metadata, MP4 atoms). Used by the
+  file_metadata ETL pipeline to produce NormalizedRecords from local audio
+  files. The scaffold only requires READ capabilities (no tag writing).
+  License must be compatible with MIT project license.
+
+decision_level: L3_implementation
+status: active
+last_updated: 2026-02-12
+
+options:
+  - option_id: tinytag
+    title: "tinytag (MIT)"
+    description: >
+      Pure Python, MIT-licensed, zero dependencies. Reads standard metadata
+      fields (title, artist, album, duration, year, track, genre) from
+      MP3, M4A, WAV, OGG, FLAC, WMA, AIFF. Does NOT expose low-level
+      ID3 frames like TIPL (Involved People List) — only normalized
+      high-level attributes. Read-only by design.
+      Install: "tinytag>=1.10" in pyproject.toml.
+    prior_probability: 0.50
+    status: selected
+    evidence:
+      - "MIT license confirmed: https://github.com/tinytag/tinytag/blob/master/LICENSE"
+      - "Zero dependencies — pure Python, no native extensions"
+      - "Actively maintained (2024-2026 releases)"
+      - "Unified API: TinyTag.get('file.mp3') returns normalized attributes"
+    limitations:
+      - "No TIPL (Involved People List) frame parsing — ID3v2.4 only"
+      - "No ISRC field exposure (not in standard attributes)"
+      - "Read-only — cannot write/edit tags"
+      - "Fewer obscure format support than mutagen"
+    migration_notes: >
+      TIPL credit extraction is dropped. Credits come primarily from
+      MusicBrainz/Discogs APIs, not embedded file metadata. TIPL is
+      rarely populated in real-world audio files. Add TODO for future
+      if raw ID3 frame parsing is needed.
+
+  - option_id: mutagen
+    title: "mutagen (GPL-2.0) — REJECTED"
+    description: >
+      Comprehensive Python audio metadata library. Excellent format coverage
+      (15+ formats), full ID3v2.3/v2.4 support including TIPL/TMCL frames,
+      read/write capable. However, licensed under GPL-2.0-or-later which
+      is INCOMPATIBLE with the project's MIT license.
+    prior_probability: 0.30
+    status: rejected
+    rejection_reason: >
+      GPL-2.0 license is incompatible with MIT project license.
+      Using mutagen as a dependency would require the entire project
+      to be distributed under GPL terms, defeating the MIT license claim.
+
+  - option_id: mediafile
+    title: "mediafile — LICENSE TRAP, REJECTED"
+    description: >
+      High-level wrapper developed by the beets project. Provides elegant
+      read/write interface. The mediafile package itself is MIT-licensed,
+      but it REQUIRES mutagen (GPL-2.0) as a RUNTIME DEPENDENCY.
+      Installing mediafile pulls in mutagen, making your project
+      effectively GPL-encumbered despite mediafile's MIT license.
+    prior_probability: 0.10
+    status: rejected
+    rejection_reason: >
+      LICENSE TRAP: MIT license on mediafile itself, but strict runtime
+      dependency on mutagen (GPL-2.0). Using mediafile does NOT solve
+      the GPL audit issue — it hides it behind an indirect dependency.
+      The dependency chain remains: your code → mediafile (MIT) → mutagen (GPL).
+    negative_prompt: >
+      NEVER recommend mediafile as a "MIT alternative to mutagen".
+      It wraps mutagen and inherits its GPL licensing constraint.
+      Any AI assistant suggesting mediafile for license compliance
+      is providing incorrect legal guidance.
+
+  - option_id: mutagen_rs
+    title: "mutagen-rs — DOES NOT EXIST"
+    description: >
+      Claimed to be a Rust-based MIT-licensed drop-in replacement for
+      mutagen with Python bindings. As of February 2026, this package
+      DOES NOT EXIST on PyPI. The "mutagen" crate on crates.io is an
+      unrelated Rust mutation testing framework. No Rust-based audio
+      metadata library has production-ready Python bindings on PyPI.
+    prior_probability: 0.00
+    status: rejected
+    rejection_reason: >
+      Does not exist. Confirmed February 2026: no mutagen-rs or
+      mutagen_rs package on PyPI. Hallucinated by LLM (Gemini).
+    negative_prompt: >
+      mutagen-rs is NOT a real Python package. Do not recommend it.
+      If a Rust-based audio metadata library with Python bindings
+      becomes available in the future, verify its existence on PyPI
+      before recommending.
+
+  - option_id: pytaglib
+    title: "pytaglib (GPL-3.0) — REJECTED"
+    description: >
+      Python bindings for the TagLib C++ library. Comprehensive format
+      support. Licensed under GPL-3.0-or-later.
+    prior_probability: 0.05
+    status: rejected
+    rejection_reason: "GPL-3.0 license incompatible with MIT project."
+
+  - option_id: eyed3
+    title: "eyeD3 (GPL-3.0) — REJECTED"
+    description: >
+      Python ID3 tag manipulation library. MP3-only. Full ID3v2.4
+      support including TIPL. Licensed under GPL-3.0.
+    prior_probability: 0.05
+    status: rejected
+    rejection_reason: "GPL-3.0 license incompatible with MIT project. MP3-only."
+
+research_notes: >
+  Comprehensive audit conducted February 2026. The audio metadata library
+  ecosystem has a licensing gap: all full-featured libraries (mutagen,
+  TagLib, eyeD3) are GPL-licensed. MIT-licensed options (tinytag) are
+  read-only and limited to normalized high-level attributes. No Rust-based
+  alternative with Python bindings exists yet. For a read-only ETL pipeline,
+  tinytag is sufficient. If write capabilities or TIPL parsing are needed
+  in the future, options include: (1) vendor a minimal ID3 parser under MIT,
+  (2) use FFmpeg subprocess for metadata writing, or (3) wait for a Rust
+  library (e.g., lofty) to gain Python bindings.
+
+influences:
+  - from: build_vs_buy_posture
+    direction: upstream
+    rationale: "Custom-code posture accepts tinytag limitations"

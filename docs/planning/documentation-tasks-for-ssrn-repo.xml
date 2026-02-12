@@ -1,0 +1,269 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  SSRN Repo Documentation Plan (Coarse)
+  Execute AFTER all code tasks in ssrn-repo-mvp-gate-planning.xml are done.
+
+  Rationale for doing docs LAST:
+    1. Code changes may invalidate docs (test counts, API routes, etc.)
+    2. Documentation references final project structure
+    3. README screenshots/examples need working frontend
+    4. Manuscript-to-code mapping needs stable file paths
+    5. Token budget: docs are text-heavy; save for fresh quota
+
+  Target: A PhD student reading the SSRN preprint can clone this repo,
+  run it in < 5 minutes, and verify every claim in the paper.
+-->
+<plan version="1.0" project="music-attribution-scaffold">
+  <metadata>
+    <title>SSRN Repo Documentation Tasks</title>
+    <branch>docs/ssrn-release</branch>
+    <estimated_tasks>7</estimated_tasks>
+    <execute_after>ssrn-repo-mvp-gate-planning.xml</execute_after>
+    <token_strategy>text-heavy — schedule for fresh quota</token_strategy>
+  </metadata>
+
+  <!-- =================================================================== -->
+  <!-- Phase D0: README.md Expansion (P0, highest impact)                   -->
+  <!-- Current: 41 lines with bibtex + TODO. Target: ~250 lines.           -->
+  <!-- =================================================================== -->
+
+  <task id="D0.1" status="PENDING">
+    <title>Expand README.md to full project documentation</title>
+    <priority>P0</priority>
+    <token_cost>high</token_cost>
+    <files>
+      <modify>README.md</modify>
+    </files>
+    <sections>
+      <section name="Header">
+        Project title, one-line description, CI badge, license badge, SSRN link.
+        "Companion code to: Teikari, P. (2026). Music Attribution with
+        Transparent Confidence. SSRN No. 6109087."
+      </section>
+      <section name="Quick Start">
+        3 commands: git clone → make setup → make dev-frontend.
+        Expected output: "Open http://localhost:3000 to see 8 Imogen Heap
+        attribution records with confidence scoring."
+      </section>
+      <section name="Prerequisites">
+        Docker (for PostgreSQL), Python 3.13, uv, Node.js 22+.
+        One-liner install checks.
+      </section>
+      <section name="Architecture Overview">
+        5-pipeline diagram (text-based, not mermaid — renders on GitHub):
+        ETL → Entity Resolution → Attribution Engine → API/MCP → Chat.
+        Link to docs/architecture/README.md for full diagrams.
+      </section>
+      <section name="Project Structure">
+        Directory tree of src/music_attribution/ with one-line descriptions.
+        frontend/src/ structure. docs/ structure.
+      </section>
+      <section name="Running the Stack">
+        Backend: make agent (FastAPI on :8000).
+        Frontend: make dev-frontend (Next.js on :3000).
+        Full stack: make setup → make agent &amp; make dev-frontend.
+        Docker: docker compose -f docker-compose.dev.yml up.
+      </section>
+      <section name="API Examples">
+        3-5 curl commands with expected JSON output:
+        - List works: GET /api/v1/attributions/
+        - Get work: GET /api/v1/attributions/work/{id}
+        - Search: GET /api/v1/attributions/search?q=vocoder
+        - Check permission: POST /api/v1/permissions/check
+        Link to docs/api-examples.md for more.
+      </section>
+      <section name="Running Tests">
+        make test-local (fast, no Docker).
+        make test (Docker, CI-parity).
+        make test-frontend (Vitest).
+        Current counts: ~350 backend + ~270 frontend.
+      </section>
+      <section name="Sample Data">
+        8 Imogen Heap works spanning 0.0–0.95 confidence.
+        Table: work title, confidence, assurance level, needs_review.
+        Deterministic UUIDs for reproducibility.
+      </section>
+      <section name="Reproducing the Paper">
+        Link to docs/reproducing-the-paper.md.
+        Brief mapping: "Section 3 → src/music_attribution/attribution/".
+      </section>
+      <section name="Key Concepts">
+        Brief definitions: A0-A3 assurance levels, Oracle Problem,
+        conformal prediction, source agreement, MCP consent.
+        Link to paper for details.
+      </section>
+      <section name="Technology Stack">
+        Table: Backend (Python 3.13, FastAPI, PostgreSQL+pgvector,
+        PydanticAI, SQLAlchemy), Frontend (Next.js 15, Tailwind v4,
+        CopilotKit, Jotai, PostHog).
+      </section>
+      <section name="License">
+        MIT. All dependencies verified MIT/Apache/BSD compatible.
+        Remove the TODO.
+      </section>
+      <section name="Citation">
+        BibTeX block (already exists, keep).
+      </section>
+    </sections>
+  </task>
+
+  <!-- =================================================================== -->
+  <!-- Phase D1: Manuscript-to-Code Mapping (P0, SSRN-specific)            -->
+  <!-- =================================================================== -->
+
+  <task id="D1.1" status="PENDING">
+    <title>Create docs/reproducing-the-paper.md</title>
+    <priority>P0</priority>
+    <token_cost>high</token_cost>
+    <files>
+      <create>docs/reproducing-the-paper.md</create>
+    </files>
+    <sections>
+      <section name="Introduction">
+        Purpose: map manuscript claims to code files, tests, and demo commands.
+        "If you read Section X of the paper, here's where to find the code."
+      </section>
+      <section name="Section-by-section mapping">
+        Table format: Paper Section | Claim | Implementation | Test File | Demo Command.
+        Cover all major sections: ETL, entity resolution, attribution engine,
+        confidence scoring, conformal prediction, MCP permissions, agentic UI.
+      </section>
+      <section name="Figures and Tables">
+        Map paper figures to code that generates equivalent data:
+        - Confidence distribution → seed data spans 0.0-0.95
+        - Assurance level breakdown → A0-A3 in seed data
+        - Source agreement → per-work source_agreement values
+      </section>
+      <section name="Limitations">
+        What the scaffold demonstrates vs what a production system would need.
+        Explicit: "This is a research scaffold, not a production system."
+      </section>
+    </sections>
+  </task>
+
+  <!-- =================================================================== -->
+  <!-- Phase D2: API Documentation (P1)                                     -->
+  <!-- =================================================================== -->
+
+  <task id="D2.1" status="PENDING">
+    <title>Create docs/api-examples.md with working curl commands</title>
+    <priority>P1</priority>
+    <token_cost>medium</token_cost>
+    <files>
+      <create>docs/api-examples.md</create>
+    </files>
+    <content>
+      5-8 curl examples with actual JSON responses (captured from running API):
+      1. Health check
+      2. List all attributions (paginated)
+      3. Get specific work by ID (Hide and Seek)
+      4. Filter needs_review=true
+      5. Search by keyword
+      6. Check permission (streaming → ALLOW)
+      7. Check permission (voice cloning → DENY)
+      Each with expected status code and truncated JSON response.
+    </content>
+  </task>
+
+  <!-- =================================================================== -->
+  <!-- Phase D3: Environment Documentation (P1)                             -->
+  <!-- =================================================================== -->
+
+  <task id="D3.1" status="PENDING">
+    <title>Document environment variables and .env.example</title>
+    <priority>P1</priority>
+    <token_cost>low</token_cost>
+    <files>
+      <modify>.env.example</modify>
+    </files>
+    <content>
+      Verify .env.example has all required variables with descriptions:
+      - DATABASE_URL
+      - NEXT_PUBLIC_API_URL
+      - ANTHROPIC_API_KEY (optional, for agent)
+      - POSTHOG_KEY (optional, for analytics)
+      Add inline comments explaining each.
+    </content>
+  </task>
+
+  <!-- =================================================================== -->
+  <!-- Phase D4: Troubleshooting (P1)                                       -->
+  <!-- =================================================================== -->
+
+  <task id="D4.1" status="PENDING">
+    <title>Create docs/troubleshooting.md</title>
+    <priority>P1</priority>
+    <token_cost>medium</token_cost>
+    <files>
+      <create>docs/troubleshooting.md</create>
+    </files>
+    <content>
+      Top 8 issues external users will hit:
+      1. Docker daemon not running → make setup fails
+      2. Port 5432 already in use → PostgreSQL conflict
+      3. Port 3000 already in use → Next.js conflict
+      4. uv not installed → pip not allowed
+      5. Node version too old → Next.js 15 needs 18.18+
+      6. pgvector extension missing → CREATE EXTENSION vector
+      7. ANTHROPIC_API_KEY not set → agent sidebar shows error
+      8. DNS resolution fails → systemd-resolved Docker issue
+      Each with symptom, cause, and fix command.
+    </content>
+  </task>
+
+  <!-- =================================================================== -->
+  <!-- Phase D5: License Documentation (P0)                                 -->
+  <!-- =================================================================== -->
+
+  <task id="D5.1" status="PENDING">
+    <title>Complete license audit and update README</title>
+    <priority>P0</priority>
+    <token_cost>medium</token_cost>
+    <files>
+      <modify>README.md</modify>
+    </files>
+    <content>
+      After mutagen→tinytag swap (#29), audit remaining deps:
+      - Run: uv pip list --format=columns and check licenses
+      - Confirm all are MIT/Apache/BSD/PSF compatible
+      - Remove README TODO about license checking
+      - Add "All dependencies are MIT/Apache/BSD compatible" statement
+    </content>
+    <depends_on>ssrn-repo-mvp-gate Task 2.1 (tinytag swap)</depends_on>
+  </task>
+
+  <!-- =================================================================== -->
+  <!-- Phase D6: Frontend README (P1)                                       -->
+  <!-- =================================================================== -->
+
+  <task id="D6.1" status="PENDING">
+    <title>Create frontend/README.md</title>
+    <priority>P1</priority>
+    <token_cost>low</token_cost>
+    <files>
+      <create>frontend/README.md</create>
+    </files>
+    <content>
+      Brief frontend-specific documentation:
+      - Prerequisites (Node.js 22+)
+      - npm install &amp;&amp; npm run dev
+      - Design system overview (link to .claude/rules/10-*.md)
+      - Test: npm test (Vitest)
+      - Build: npm run build
+      - Environment: NEXT_PUBLIC_API_URL for backend connection
+    </content>
+  </task>
+
+  <!-- =================================================================== -->
+  <!-- Execution Order                                                      -->
+  <!--                                                                     -->
+  <!-- D0.1 (README) ──── highest impact, do first                         -->
+  <!-- D1.1 (paper map) ── SSRN-specific, do second                        -->
+  <!-- D5.1 (license) ─── depends on code task 2.1                         -->
+  <!-- D2.1 (API examples) ── needs running backend                        -->
+  <!-- D3.1 (.env docs) ── quick                                           -->
+  <!-- D4.1 (troubleshooting) ── based on experience                       -->
+  <!-- D6.1 (frontend README) ── quick                                     -->
+  <!-- =================================================================== -->
+
+</plan>

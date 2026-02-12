@@ -1,0 +1,353 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  SSRN Repo MVP Gate — Code Tasks (P0-P1)
+  Branch: feat/ssrn-mvp-gate
+  Closes: #39, #29, #35
+  Updates: PRD decision nodes (audio metadata library, observability)
+
+  Token-Aware Ordering:
+    Tasks are ordered by determinism and token cost. Mechanical edits and
+    config changes come first (low tokens, high confidence). Text-heavy
+    refactoring and CI config come later. Documentation is in a SEPARATE
+    plan (documentation-tasks-for-ssrn-repo.xml) and should be done LAST
+    after all code is stable.
+
+  Context:
+    PR #38 merged (wire mocks to real backends). The codebase is functionally
+    complete but has 3 blocking issues before SSRN public release:
+    1. Display fields lost on DB round-trip (#39)
+    2. mutagen is GPL-2.0, incompatible with MIT license claim (#29)
+    3. Pre-commit detect-secrets false positives make hooks look broken
+    Plus P1 items: CI integration tests (#35), PRD updates.
+
+  Key Discovery:
+    mutagen-rs does NOT exist on PyPI (Gemini hallucination). tinytag (MIT,
+    pure Python, zero deps) is the correct replacement. TIPL frame parsing
+    is dropped (unused by demo data, add TODO for future).
+    mediafile is a LICENSE TRAP — wraps mutagen (GPL) despite MIT license.
+-->
+<plan version="1.0" project="music-attribution-scaffold">
+  <metadata>
+    <title>SSRN Repo MVP Gate — Code Tasks</title>
+    <branch>feat/ssrn-mvp-gate</branch>
+    <closes_issues>39, 29</closes_issues>
+    <related_issues>35</related_issues>
+    <estimated_tasks>10</estimated_tasks>
+    <token_strategy>deterministic-first</token_strategy>
+  </metadata>
+
+  <!-- =================================================================== -->
+  <!-- Phase 0: Quick Mechanical Fixes (< 5 min each, very low tokens)     -->
+  <!-- Pure find-and-edit tasks with zero ambiguity.                        -->
+  <!-- =================================================================== -->
+
+  <task id="0.1" status="PENDING">
+    <title>Fix detect-secrets false positives</title>
+    <rationale>Pre-commit hooks show red on every run due to 2 false positives.
+    Fixing makes the repo look maintained and pre-commit fully green.</rationale>
+    <token_cost>very_low</token_cost>
+    <files>
+      <modify>tests/unit/test_chat_agent.py</modify>
+      <modify>scripts/setup.sh</modify>
+    </files>
+    <tdd_spec>
+      <test_cases>
+        <case>pre-commit run --all-files exits 0</case>
+      </test_cases>
+    </tdd_spec>
+    <implementation>
+      <step>Add "# pragma: allowlist secret" comment after ANTHROPIC_API_KEY test fixture (line 62)</step>
+      <step>Add "# pragma: allowlist secret" comment after basic auth URL in setup.sh (line 154)</step>
+      <step>Run: pre-commit run --all-files → must exit 0</step>
+    </implementation>
+  </task>
+
+  <task id="0.2" status="PENDING">
+    <title>Remove private development context from CLAUDE.md</title>
+    <rationale>Lines 92-101 of CLAUDE.md contain "CV-driven development" language
+    and say "Remove this section before making the repo public".</rationale>
+    <token_cost>very_low</token_cost>
+    <files>
+      <modify>CLAUDE.md</modify>
+    </files>
+    <tdd_spec>
+      <test_cases>
+        <case>grep "CV-driven" CLAUDE.md returns no matches</case>
+        <case>grep "Remove this section" CLAUDE.md returns no matches</case>
+      </test_cases>
+    </tdd_spec>
+    <implementation>
+      <step>Delete the "## Private Development Context" section (lines 92-101)</step>
+    </implementation>
+  </task>
+
+  <!-- =================================================================== -->
+  <!-- Phase 1: Display Field DB Persistence (#39)                         -->
+  <!-- Add 3 columns to AttributionRecordModel, Alembic migration,         -->
+  <!-- update _record_to_model / _model_to_record. Deterministic.          -->
+  <!-- =================================================================== -->
+
+  <task id="1.1" status="PENDING">
+    <title>Add work_title, artist_name columns to AttributionRecordModel</title>
+    <rationale>Display fields default to "" after DB round-trip because the ORM
+    model has no columns for them. Frontend shows blank cards.</rationale>
+    <token_cost>low</token_cost>
+    <closes>39</closes>
+    <files>
+      <modify>src/music_attribution/db/models.py</modify>
+    </files>
+    <tdd_spec>
+      <test_file>tests/unit/test_attribution_display_fields.py</test_file>
+      <test_cases>
+        <case>test_model_has_work_title_column</case>
+        <case>test_model_has_artist_name_column</case>
+      </test_cases>
+    </tdd_spec>
+    <implementation>
+      <step>Add work_title: Mapped[str] = mapped_column(String(500), default="") to AttributionRecordModel</step>
+      <step>Add artist_name: Mapped[str] = mapped_column(String(500), default="") to AttributionRecordModel</step>
+    </implementation>
+  </task>
+
+  <task id="1.2" status="PENDING">
+    <title>Create Alembic migration for display field columns</title>
+    <token_cost>low</token_cost>
+    <depends_on>1.1</depends_on>
+    <files>
+      <create>alembic/versions/004_add_display_fields.py</create>
+    </files>
+    <tdd_spec>
+      <test_cases>
+        <case>alembic upgrade head succeeds</case>
+        <case>alembic downgrade -1 succeeds</case>
+      </test_cases>
+    </tdd_spec>
+    <implementation>
+      <step>alembic revision --autogenerate -m "add work_title artist_name display fields"</step>
+      <step>Verify migration adds work_title, artist_name columns with server_default=""</step>
+    </implementation>
+  </task>
+
+  <task id="1.3" status="PENDING">
+    <title>Update _record_to_model and _model_to_record with display fields</title>
+    <token_cost>low</token_cost>
+    <depends_on>1.1</depends_on>
+    <files>
+      <modify>src/music_attribution/attribution/persistence.py</modify>
+    </files>
+    <tdd_spec>
+      <test_file>tests/integration/test_agent_db_roundtrip.py</test_file>
+      <test_cases>
+        <case>test_work_title_survives_db_roundtrip</case>
+        <case>test_artist_name_survives_db_roundtrip</case>
+      </test_cases>
+    </tdd_spec>
+    <implementation>
+      <step>In _record_to_model: add work_title=record.work_title, artist_name=record.artist_name</step>
+      <step>In _model_to_record: add work_title=model.work_title, artist_name=model.artist_name</step>
+    </implementation>
+  </task>
+
+  <task id="1.4" status="PENDING">
+    <title>Update integration tests for display field round-trip</title>
+    <token_cost>low</token_cost>
+    <depends_on>1.3</depends_on>
+    <files>
+      <modify>tests/integration/test_agent_db_roundtrip.py</modify>
+      <modify>tests/integration/test_full_stack.py</modify>
+    </files>
+    <tdd_spec>
+      <test_cases>
+        <case>test_find_hide_and_seek_by_id asserts work_title == "Hide and Seek"</case>
+        <case>test_list_works_returns_titles (full stack)</case>
+      </test_cases>
+    </tdd_spec>
+  </task>
+
+  <!-- =================================================================== -->
+  <!-- Phase 2: License Audit — mutagen → tinytag (#29)                    -->
+  <!-- Read-only metadata extraction. TIPL dropped (unused by demo).       -->
+  <!-- tinytag is MIT, pure Python, zero dependencies.                     -->
+  <!--                                                                     -->
+  <!-- WARNING: mediafile is a LICENSE TRAP — MIT license but requires      -->
+  <!-- mutagen (GPL) as runtime dependency. NEVER use mediafile.            -->
+  <!-- WARNING: mutagen-rs does NOT exist on PyPI (hallucinated).          -->
+  <!-- =================================================================== -->
+
+  <task id="2.1" status="PENDING">
+    <title>Swap mutagen for tinytag in pyproject.toml</title>
+    <rationale>mutagen is GPL-2.0, incompatible with MIT license. tinytag is MIT,
+    pure Python, zero deps. Only used for reading metadata (no writes).</rationale>
+    <token_cost>very_low</token_cost>
+    <closes>29</closes>
+    <files>
+      <modify>pyproject.toml</modify>
+    </files>
+    <tdd_spec>
+      <test_cases>
+        <case>grep mutagen pyproject.toml returns no matches</case>
+        <case>grep tinytag pyproject.toml returns a match</case>
+        <case>uv sync succeeds</case>
+      </test_cases>
+    </tdd_spec>
+    <implementation>
+      <step>Replace "mutagen>=1.47" with "tinytag>=1.10" in pyproject.toml dependencies</step>
+      <step>Add tinytag to mypy overrides if needed</step>
+      <step>Run uv sync to update lock file</step>
+    </implementation>
+  </task>
+
+  <task id="2.2" status="PENDING">
+    <title>Rewrite FileMetadataReader to use tinytag</title>
+    <token_cost>medium</token_cost>
+    <depends_on>2.1</depends_on>
+    <files>
+      <modify>src/music_attribution/etl/file_metadata.py</modify>
+    </files>
+    <tdd_spec>
+      <test_file>tests/unit/etl/test_file_metadata.py</test_file>
+      <test_cases>
+        <case>test_read_mp3_returns_title_artist_duration</case>
+        <case>test_read_unrecognized_file_returns_minimal_record</case>
+        <case>test_read_file_with_no_tags_returns_filename_as_title</case>
+        <case>test_isrc_extracted_when_present</case>
+      </test_cases>
+    </tdd_spec>
+    <implementation>
+      <step>Replace "import mutagen" with "from tinytag import TinyTag"</step>
+      <step>Rewrite read() to use TinyTag.get(str(file_path))</step>
+      <step>Map TinyTag attributes: tag.title, tag.artist, tag.album, tag.duration, tag.year</step>
+      <step>ISRC: tinytag may not expose ISRC — check and handle gracefully</step>
+      <step>Drop _extract_credits (TIPL not available in tinytag) — add TODO comment</step>
+      <step>Keep _minimal_record for unreadable files</step>
+      <step>Wrap TinyTag.get() in try/except for graceful degradation</step>
+    </implementation>
+    <notes>
+      TIPL (Involved People List) parsing is dropped. tinytag does not expose
+      ID3v2.4 TIPL frames. This is acceptable because:
+      1. Seed data does not use TIPL (credits come from MusicBrainz/Discogs APIs)
+      2. TIPL is rarely populated in real-world audio files
+      3. TODO added for future: re-add via raw ID3 parser if needed
+    </notes>
+  </task>
+
+  <task id="2.3" status="PENDING">
+    <title>Update file_metadata tests for tinytag API</title>
+    <token_cost>low</token_cost>
+    <depends_on>2.2</depends_on>
+    <files>
+      <modify>tests/unit/etl/test_file_metadata.py</modify>
+    </files>
+    <tdd_spec>
+      <test_cases>
+        <case>All existing tests adapted for tinytag mock interface</case>
+        <case>test_graceful_degradation_on_unreadable_file</case>
+      </test_cases>
+    </tdd_spec>
+  </task>
+
+  <!-- =================================================================== -->
+  <!-- Phase 3: PRD Updates                                                 -->
+  <!-- Record tinytag decision + mediafile warning in decision network.     -->
+  <!-- =================================================================== -->
+
+  <task id="3.1" status="PENDING">
+    <title>Update PRD: audio metadata library decision + mediafile warning</title>
+    <token_cost>medium</token_cost>
+    <depends_on>2.1</depends_on>
+    <files>
+      <modify>docs/prd/decisions/L3-implementation/audio-metadata-library.decision.yaml</modify>
+    </files>
+    <tdd_spec>
+      <test_cases>
+        <case>YAML is valid</case>
+        <case>tinytag option exists with status: selected</case>
+        <case>mediafile option has negative_prompt warning</case>
+      </test_cases>
+    </tdd_spec>
+    <implementation>
+      <step>Create decision node if it doesn't exist, or update existing</step>
+      <step>Options: mutagen (GPL, rejected), tinytag (MIT, selected), mediafile (LICENSE_TRAP, rejected)</step>
+      <step>Add research_notes: mutagen-rs does NOT exist (confirmed Feb 2026)</step>
+      <step>Add negative_prompt on mediafile: "MIT license but requires mutagen (GPL) as runtime dep"</step>
+    </implementation>
+    <notes>
+      This is a new PRD decision node. The audio metadata library choice was
+      implicit before (mutagen was just a dependency). Making it explicit
+      documents the GPL trap for future contributors.
+    </notes>
+  </task>
+
+  <task id="3.2" status="PENDING">
+    <title>Update PRD network: add audio_metadata_library node + edges</title>
+    <token_cost>low</token_cost>
+    <depends_on>3.1</depends_on>
+    <files>
+      <modify>docs/prd/decisions/_network.yaml</modify>
+    </files>
+    <tdd_spec>
+      <test_cases>
+        <case>YAML is valid</case>
+        <case>audio_metadata_library node exists</case>
+        <case>Network version bumped</case>
+      </test_cases>
+    </tdd_spec>
+  </task>
+
+  <!-- =================================================================== -->
+  <!-- Phase 4: CI Integration Tests (#35)                                  -->
+  <!-- Longest-running task (Docker in CI). Token cost is low but wall      -->
+  <!-- clock time is high. Good to kick off then context-switch.            -->
+  <!-- =================================================================== -->
+
+  <task id="4.1" status="PENDING">
+    <title>Add integration test job to GitHub Actions CI</title>
+    <rationale>Integration tests exist (43 skipped) but never run in CI.
+    testcontainers-python manages PostgreSQL lifecycle.</rationale>
+    <token_cost>medium</token_cost>
+    <closes>35</closes>
+    <files>
+      <modify>.github/workflows/ci.yml</modify>
+    </files>
+    <tdd_spec>
+      <test_cases>
+        <case>CI workflow has integration-test job</case>
+        <case>Integration tests run with -m integration marker</case>
+        <case>PostgreSQL service or testcontainers available</case>
+      </test_cases>
+    </tdd_spec>
+    <implementation>
+      <step>Add integration-test job to ci.yml after the test job</step>
+      <step>Use services: postgres with pgvector image, or testcontainers</step>
+      <step>Run: pytest tests/integration/ -m integration</step>
+      <step>Allow failure initially (some tests need real pgvector)</step>
+    </implementation>
+    <notes>
+      Some integration tests use SQLite (test_full_stack, test_agent_db_roundtrip)
+      and will pass without pgvector. Others need real PostgreSQL with pgvector
+      extension. The CI job should at minimum run SQLite-based integration tests.
+    </notes>
+  </task>
+
+  <!-- =================================================================== -->
+  <!-- Dependency DAG                                                       -->
+  <!--                                                                     -->
+  <!-- 0.1 ─────┐                                                         -->
+  <!-- 0.2 ─────┤ (independent, can parallelize)                           -->
+  <!--          │                                                          -->
+  <!-- 1.1 ────┐│                                                         -->
+  <!-- 1.2 ◄─ 1.1                                                         -->
+  <!-- 1.3 ◄─ 1.1                                                         -->
+  <!-- 1.4 ◄─ 1.3                                                         -->
+  <!--          │                                                          -->
+  <!-- 2.1 ────┐│ (independent of Phase 1)                                 -->
+  <!-- 2.2 ◄─ 2.1                                                         -->
+  <!-- 2.3 ◄─ 2.2                                                         -->
+  <!--          │                                                          -->
+  <!-- 3.1 ◄─ 2.1                                                         -->
+  <!-- 3.2 ◄─ 3.1                                                         -->
+  <!--          │                                                          -->
+  <!-- 4.1 ────── (independent of all above)                               -->
+  <!-- =================================================================== -->
+
+</plan>

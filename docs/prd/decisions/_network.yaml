@@ -12,8 +12,8 @@
 
 network:
   name: "Probabilistic PRD Decision Network"
-  version: "1.6.0"
-  last_updated: 2026-02-11
+  version: "1.7.0"
+  last_updated: 2026-02-12
   description: >
     Bayesian decision network for the Music Attribution Scaffold.
     5-level hierarchy (L1 Business → L5 Operations) with conditional
@@ -134,6 +134,11 @@ nodes:
     level: L3_implementation
     file: L3-implementation/llm-routing-strategy.decision.yaml
     title: "LLM Routing Strategy"
+
+  - id: audio_metadata_library
+    level: L3_implementation
+    file: L3-implementation/audio-metadata-library.decision.yaml
+    title: "Audio Metadata Library"
 
   # L4: Deployment Decisions
   - id: compute_platform
@@ -575,3 +580,17 @@ edges:
     to: observability_stack
     influence: moderate
     rationale: "Gateway routing layers provide LLM cost tracking and usage observability"
+
+  # --- Audio Metadata Library edges ---
+
+  # L1 → L3 edges (build posture → audio metadata)
+  - from: build_vs_buy_posture
+    to: audio_metadata_library
+    influence: moderate
+    rationale: "Custom-code posture accepts tinytag limitations over GPL mutagen"
+
+  # L2 → L3 edges (data model → audio metadata)
+  - from: data_model_complexity
+    to: audio_metadata_library
+    influence: weak
+    rationale: "Complex data models may need richer metadata extraction (TIPL credits) but standard fields suffice for MVP"
