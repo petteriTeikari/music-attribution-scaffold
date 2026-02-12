@@ -128,6 +128,42 @@ class TestAttributionRecordDisplayFields:
 
 
 @pytest.mark.unit
+class TestAttributionRecordModelDisplayColumns:
+    """Tests that the ORM model has work_title and artist_name columns."""
+
+    def test_model_has_work_title_column(self) -> None:
+        """AttributionRecordModel has a work_title column."""
+        from music_attribution.db.models import AttributionRecordModel
+
+        assert hasattr(AttributionRecordModel, "work_title")
+
+    def test_model_has_artist_name_column(self) -> None:
+        """AttributionRecordModel has an artist_name column."""
+        from music_attribution.db.models import AttributionRecordModel
+
+        assert hasattr(AttributionRecordModel, "artist_name")
+
+    def test_record_to_model_includes_display_fields(self) -> None:
+        """_record_to_model copies display fields to model."""
+        from music_attribution.attribution.persistence import _record_to_model
+
+        record = _make_minimal_record(work_title="Hide and Seek", artist_name="Imogen Heap")
+        model = _record_to_model(record)
+        assert model.work_title == "Hide and Seek"
+        assert model.artist_name == "Imogen Heap"
+
+    def test_model_to_record_restores_display_fields(self) -> None:
+        """_model_to_record reads display fields from model."""
+        from music_attribution.attribution.persistence import _model_to_record, _record_to_model
+
+        record = _make_minimal_record(work_title="Goodnight and Go", artist_name="Imogen Heap")
+        model = _record_to_model(record)
+        restored = _model_to_record(model)
+        assert restored.work_title == "Goodnight and Go"
+        assert restored.artist_name == "Imogen Heap"
+
+
+@pytest.mark.unit
 class TestSeedDataDisplayFields:
     """Tests that seed data populates display fields."""
 

@@ -91,6 +91,8 @@ class AttributionRecordModel(Base):
     attribution_id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
     schema_version: Mapped[str] = mapped_column(String(20), default="1.0.0")
     work_entity_id: Mapped[uuid.UUID] = mapped_column(Uuid, nullable=False)
+    work_title: Mapped[str] = mapped_column(String(500), default="")
+    artist_name: Mapped[str] = mapped_column(String(500), default="")
     credits: Mapped[dict] = mapped_column(JSONB, nullable=False)
     assurance_level: Mapped[str] = mapped_column(String(20), nullable=False)
     confidence_score: Mapped[float] = mapped_column(Float, nullable=False)

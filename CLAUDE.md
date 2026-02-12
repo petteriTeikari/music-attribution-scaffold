@@ -89,17 +89,6 @@ This repo is the companion code to a chain of academic manuscripts. Always consu
 
 This repo is **not** a single-architecture implementation. It is a **scaffold** — a general framework that could be instantiated by teams with very different constraints (engineer-heavy vs. musician-heavy, custom-code vs. low-code, Hetzner vs. Render vs. big-three clouds). The probabilistic PRD captures these branching paths.
 
-## Private Development Context
-
-This scaffold serves dual purposes:
-
-1. **Research companion**: Provides reproducible code for the SSRN preprint on music attribution
-2. **CV-driven development**: Demonstrates practical software engineering skills (Python packaging, CI/CD, Docker, testing, documentation architecture) in a domain with genuine research value
-
-The knowledge base, PRDs, and architecture docs showcase the ability to synthesize complex domain knowledge into actionable engineering artifacts. The project structure itself is the deliverable — showing how to scaffold a non-trivial attribution system from research to implementation.
-
-**Remove this section before making the repo public.**
-
 ## See Also
 
 - [.claude/CLAUDE.md](.claude/CLAUDE.md) - Detailed behavior contract
