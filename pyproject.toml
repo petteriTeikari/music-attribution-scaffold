@@ -22,7 +22,7 @@ dependencies = [
     "loguru>=0.7.0",
     "mcp>=1.0",
     "musicbrainzngs>=0.7",
-    "mutagen>=1.47",
+    "tinytag>=1.10",
     "pandera>=0.22",
     "pgvector>=0.4",
     "polars>=1.0",
@@ -127,7 +127,7 @@ exclude = [
 ]
 
 [[tool.mypy.overrides]]
-module = ["musicbrainzngs", "musicbrainzngs.*", "discogs_client", "discogs_client.*", "acoustid", "acoustid.*", "jellyfish", "jellyfish.*", "thefuzz", "thefuzz.*", "pandas", "pandas.*", "splink", "splink.*", "pgvector", "pgvector.*", "sse_starlette", "sse_starlette.*", "pydantic_ai", "pydantic_ai.*"]
+module = ["musicbrainzngs", "musicbrainzngs.*", "discogs_client", "discogs_client.*", "acoustid", "acoustid.*", "jellyfish", "jellyfish.*", "thefuzz", "thefuzz.*", "pandas", "pandas.*", "splink", "splink.*", "pgvector", "pgvector.*", "sse_starlette", "sse_starlette.*", "pydantic_ai", "pydantic_ai.*", "tinytag", "tinytag.*"]
 ignore_missing_imports = true
 follow_untyped_imports = true
 
