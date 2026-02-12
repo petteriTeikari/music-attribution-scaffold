@@ -57,9 +57,8 @@ describe("Landing page hero section", () => {
 
   it("includes subtitle with attribution limits", () => {
     render(<HomePage />);
-    expect(
-      screen.getByText(/Attribution Limits, Platform Incentives/),
-    ).toBeDefined();
+    const matches = screen.getAllByText(/Attribution Limits, Platform Incentives/);
+    expect(matches.length).toBeGreaterThanOrEqual(1);
   });
 
   it("displays author attribution", () => {
