@@ -2,11 +2,11 @@
   "plan_file": "docs/planning/qa-double-check-plan-before-ui-finetuning.xml",
   "plan_version": "1.0",
   "execution_mode": "autonomous",
-  "current_task_id": "1.1",
-  "current_phase": "1",
+  "current_task_id": "4.1",
+  "current_phase": "4",
   "inner_iteration": 1,
-  "session_task_count": 6,
-  "session_inner_iterations": 6,
+  "session_task_count": 12,
+  "session_inner_iterations": 10,
   "session_start": "2026-02-12T15:00:00Z",
   "tasks": {
     "0.1": { "status": "DONE", "name": "Expand Settings class with all env vars", "inner_iterations": 1, "commit_hashes": ["5c36fa3"], "test_count": 5 },
@@ -14,11 +14,17 @@
     "0.3": { "status": "DONE", "name": "Wire cli/db.py and chat/agent.py to use Settings", "inner_iterations": 1, "commit_hashes": ["763301d"], "test_count": 1 },
     "0.4": { "status": "DONE", "name": "Create .env.example with all env vars", "inner_iterations": 1, "commit_hashes": ["b950c83"], "test_count": 1 },
     "0.5": { "status": "DONE", "name": "Consolidate frontend API_URL to shared config", "inner_iterations": 1, "commit_hashes": ["a0dac2d"], "test_count": 3 },
-    "1.1": { "status": "IN_PROGRESS", "name": "Remove fallback from attribution routes + update tests", "inner_iterations": 0, "commit_hashes": [], "test_count": 0 }
+    "1.1": { "status": "DONE", "name": "Remove fallback from attribution routes", "inner_iterations": 1, "commit_hashes": ["3a99e4d"], "test_count": 3 },
+    "1.2": { "status": "DONE", "name": "Update unit tests to use mock session factory", "inner_iterations": 0, "commit_hashes": ["3a99e4d"], "test_count": 8 },
+    "2.1": { "status": "DONE", "name": "Extract _register_sqlite_type_compilers to conftest", "inner_iterations": 1, "commit_hashes": ["59d1eae"], "test_count": 0 },
+    "2.2": { "status": "DONE", "name": "Extract _ensure_utc and _parse_jsonb to db/utils.py", "inner_iterations": 1, "commit_hashes": ["84f57a7"], "test_count": 0 },
+    "2.3": { "status": "DONE", "name": "Remove dead backend functions and unused deps", "inner_iterations": 1, "commit_hashes": ["92f4be2"], "test_count": 0 },
+    "3.1": { "status": "DONE", "name": "Flag unused frontend components with TODO", "inner_iterations": 1, "commit_hashes": ["192fa38"], "test_count": 0 },
+    "3.2": { "status": "DONE", "name": "Fix pgbouncer healthcheck and document services", "inner_iterations": 1, "commit_hashes": ["4737e23"], "test_count": 0 }
   },
   "convergence": {
-    "reached": false,
-    "tasks_done": 5,
+    "reached": true,
+    "tasks_done": 12,
     "tasks_total": 12,
     "tasks_stuck": 0
   }
