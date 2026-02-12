@@ -10,7 +10,6 @@ Provides 4 tools for CopilotKit frontend interaction via AG-UI protocol:
 from __future__ import annotations
 
 import logging
-import os
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
 
@@ -45,7 +44,13 @@ while being precise for technical users.
 Be concise. Prefer bullet points. Reference specific data sources by name.
 """
 
-MODEL = os.environ.get("ATTRIBUTION_AGENT_MODEL", "anthropic:claude-haiku-4-5")
+
+def _get_agent_model() -> str:
+    """Get the agent model string from Settings."""
+    from music_attribution.config import Settings
+
+    settings = Settings()  # type: ignore[call-arg]
+    return settings.attribution_agent_model
 
 
 @dataclass
@@ -117,7 +122,7 @@ def create_attribution_agent() -> Agent[AgentDeps, str]:
         Configured PydanticAI Agent with 4 domain tools.
     """
     agent = Agent(
-        MODEL,
+        _get_agent_model(),
         system_prompt=SYSTEM_PROMPT,
         deps_type=AgentDeps,
         retries=2,
