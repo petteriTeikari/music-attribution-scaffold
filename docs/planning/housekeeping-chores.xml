@@ -1,0 +1,356 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Housekeeping Chores Plan
+  Branch: chore/housekeeping
+  Generated: 2026-02-12
+  Skill: self-learning-iterative-coder
+
+  Two workstreams:
+    A) Deep code review fixes (P0→P2)
+    B) Frontend CI + Playwright E2E smoke tests
+
+  Crash-resistant: state tracked in .claude/skills/self-learning-iterative-coder/state/tdd-state.json
+-->
+<plan version="1.0">
+  <metadata>
+    <title>Housekeeping: Code Review Fixes + Frontend CI</title>
+    <branch>chore/housekeeping</branch>
+    <closes_issues></closes_issues>
+    <estimated_tasks>14</estimated_tasks>
+  </metadata>
+
+  <!-- ═══════════════════════════════════════════════════════ -->
+  <!-- PHASE 0: P0 BLOCKERS — Fix broken tests + CSS vars     -->
+  <!-- ═══════════════════════════════════════════════════════ -->
+
+  <task id="0.1" priority="P0">
+    <name>Fix 2 failing landing-hero tests</name>
+    <description>
+      PR #50 changed author text from "Teikari, P. (2026)" to "Petteri Teikari (2026)"
+      and switched the paper link from ssrn.com to doi.org. Tests in
+      frontend/src/__tests__/landing-hero.test.tsx need updating to match.
+    </description>
+    <tdd_spec>
+      <red>Update test expectations: author text → "Petteri Teikari (2026)", link → "doi.org"</red>
+      <green>Fix the 2 assertions in landing-hero.test.tsx</green>
+      <verify>npm test --prefix frontend → 276/276 pass, 0 failures</verify>
+    </tdd_spec>
+    <files>
+      <file>frontend/src/__tests__/landing-hero.test.tsx</file>
+    </files>
+  </task>
+
+  <task id="0.2" priority="P0">
+    <name>Fix undefined CSS vars (--color-text, --color-text-muted)</name>
+    <description>
+      inline-citation.tsx and provenance-panel.tsx reference --color-text and
+      --color-text-muted which DO NOT EXIST in globals.css. These should be
+      --color-heading / --color-body and --color-muted respectively.
+      3 instances in inline-citation.tsx, 8+ instances in provenance-panel.tsx.
+    </description>
+    <tdd_spec>
+      <red>Write test: grep for "var(--color-text)" in all .tsx files → expect zero matches (excluding "var(--color-text-" patterns that are valid prefixes of other tokens)</red>
+      <green>Replace --color-text with --color-heading, --color-text-muted with --color-muted</green>
+      <verify>CSS token lint test passes. All vitest passes. Visual check: text renders correctly.</verify>
+    </tdd_spec>
+    <files>
+      <file>frontend/src/components/citations/inline-citation.tsx</file>
+      <file>frontend/src/components/citations/provenance-panel.tsx</file>
+    </files>
+  </task>
+
+  <!-- ═══════════════════════════════════════════════════════ -->
+  <!-- PHASE 1: FRONTEND CI — Add to GitHub Actions            -->
+  <!-- ═══════════════════════════════════════════════════════ -->
+
+  <task id="1.1" priority="P1">
+    <name>Add .nvmrc and pin Node 22</name>
+    <description>
+      Docker compose uses node:22-slim but no .nvmrc exists.
+      Add .nvmrc with "22" for consistency between local dev and CI.
+    </description>
+    <tdd_spec>
+      <red>N/A — config file only</red>
+      <green>Create frontend/.nvmrc with content "22"</green>
+      <verify>File exists, CI can reference it</verify>
+    </tdd_spec>
+    <files>
+      <file>frontend/.nvmrc</file>
+    </files>
+  </task>
+
+  <task id="1.2" priority="P1" depends_on="0.1 0.2 1.1">
+    <name>Add frontend-test job to CI workflow</name>
+    <description>
+      Add a new job to .github/workflows/ci.yml that runs:
+      1. npm ci --prefix frontend
+      2. npm run lint --prefix frontend (next lint)
+      3. npm run build --prefix frontend (next build)
+      4. npm test --prefix frontend (vitest run)
+      Use actions/setup-node@v4 with node-version-file: frontend/.nvmrc
+      and npm cache. Run in parallel with backend test job (no depends).
+    </description>
+    <tdd_spec>
+      <red>N/A — CI config</red>
+      <green>Add frontend-test job to ci.yml with lint + build + test steps</green>
+      <verify>Push branch, check GitHub Actions runs both backend + frontend jobs</verify>
+    </tdd_spec>
+    <files>
+      <file>.github/workflows/ci.yml</file>
+    </files>
+  </task>
+
+  <!-- ═══════════════════════════════════════════════════════ -->
+  <!-- PHASE 2: PLAYWRIGHT E2E SMOKE TESTS                     -->
+  <!-- ═══════════════════════════════════════════════════════ -->
+
+  <task id="2.1" priority="P1">
+    <name>Install Playwright and create config</name>
+    <description>
+      Install @playwright/test and @axe-core/playwright as dev dependencies.
+      Create playwright.config.ts with:
+      - baseURL: http://localhost:3000
+      - webServer: npm run dev (auto-start Next.js)
+      - projects: chromium only (fast CI)
+      - timeout: 30s per test
+      - retries: 1 in CI
+      Create tests/e2e/ directory structure.
+    </description>
+    <tdd_spec>
+      <red>N/A — infrastructure</red>
+      <green>Install deps, create config, verify `npx playwright test --list` works</green>
+      <verify>npx playwright test --list shows 0 tests (no test files yet)</verify>
+    </tdd_spec>
+    <files>
+      <file>frontend/package.json</file>
+      <file>frontend/playwright.config.ts</file>
+      <file>frontend/tests/e2e/.gitkeep</file>
+    </files>
+  </task>
+
+  <task id="2.2" priority="P1" depends_on="2.1">
+    <name>Write landing page smoke test with WCAG check</name>
+    <description>
+      Create frontend/tests/e2e/landing.spec.ts:
+      1. Page loads (status 200, title rendered)
+      2. Hero section visible with paper title
+      3. "Explore the Demo" and "Read the Paper" links present
+      4. Key Concepts section has 12 topic cards
+      5. A0-A3 assurance table renders
+      6. References section renders
+      7. axe-core WCAG 2.1 AA scan — no critical violations
+      Keep it fast: single page, no navigation.
+    </description>
+    <tdd_spec>
+      <red>Write test first → expect all assertions defined</red>
+      <green>Tests pass against running dev server</green>
+      <verify>npx playwright test tests/e2e/landing.spec.ts → all pass</verify>
+    </tdd_spec>
+    <files>
+      <file>frontend/tests/e2e/landing.spec.ts</file>
+    </files>
+  </task>
+
+  <task id="2.3" priority="P1" depends_on="2.1">
+    <name>Write works page smoke test</name>
+    <description>
+      Create frontend/tests/e2e/works.spec.ts:
+      1. /works page loads
+      2. 8 work cards rendered (Imogen Heap mock data)
+      3. Click a work → navigates to /works/[id]
+      4. Work detail page shows confidence gauge, credits, provenance
+      5. axe-core WCAG 2.1 AA scan on both pages
+    </description>
+    <tdd_spec>
+      <red>Write test first</red>
+      <green>Tests pass against dev server with mock data</green>
+      <verify>npx playwright test tests/e2e/works.spec.ts → all pass</verify>
+    </tdd_spec>
+    <files>
+      <file>frontend/tests/e2e/works.spec.ts</file>
+    </files>
+  </task>
+
+  <task id="2.4" priority="P2" depends_on="2.2 2.3">
+    <name>Add Playwright E2E job to CI workflow</name>
+    <description>
+      Add e2e-test job to .github/workflows/ci.yml:
+      - depends on frontend-test passing
+      - Install Playwright browsers (npx playwright install --with-deps chromium)
+      - Build frontend first (next build), then start (next start)
+      - Run playwright test
+      - Upload test-results/ as artifact on failure
+      Keep it lightweight: chromium only, 1 retry, 60s timeout.
+    </description>
+    <tdd_spec>
+      <red>N/A — CI config</red>
+      <green>Add e2e-test job referencing Playwright tests</green>
+      <verify>CI runs E2E tests after frontend-test passes</verify>
+    </tdd_spec>
+    <files>
+      <file>.github/workflows/ci.yml</file>
+    </files>
+  </task>
+
+  <!-- ═══════════════════════════════════════════════════════ -->
+  <!-- PHASE 3: P1 CODE REVIEW FIXES                           -->
+  <!-- ═══════════════════════════════════════════════════════ -->
+
+  <task id="3.1" priority="P1">
+    <name>Fix WCAG color contrast violations</name>
+    <description>
+      amber (#E09F3E) on cream (#f6f3e6) = 2.8:1 contrast (needs 4.5:1 for AA).
+      Files affected:
+      - agent-feedback-flow.tsx line ~163: "Center bias detected" uses --color-confidence-medium
+      - work-card.tsx: "Review" badge uses medium amber
+
+      Fix: either darken the amber text or add a contrasting background.
+      Best approach: use font-semibold to get 3:1 (large text threshold)
+      or switch to a darker shade of the confidence-medium color.
+    </description>
+    <tdd_spec>
+      <red>Add vitest-axe checks to existing component tests (or create new ones) that validate contrast</red>
+      <green>Darken --color-confidence-medium or add font-weight/background to pass AA</green>
+      <verify>vitest-axe checks pass, visual review confirms readability</verify>
+    </tdd_spec>
+    <files>
+      <file>frontend/src/components/feedback/agent-feedback-flow.tsx</file>
+      <file>frontend/src/components/works/work-card.tsx</file>
+      <file>frontend/src/app/globals.css</file>
+    </files>
+  </task>
+
+  <task id="3.2" priority="P1">
+    <name>Add error handling to async page components</name>
+    <description>
+      Several page components have unhandled API failures:
+      - /works/[workId]/page.tsx: getWorkById() error not caught
+      - /permissions/page.tsx: Promise.all() has no .catch()
+      - /review/page.tsx: getWorks() error not caught
+
+      Add try-catch with error state display for each.
+      Use the existing error-boundary pattern or simple error state.
+    </description>
+    <tdd_spec>
+      <red>Write tests that mock API failure → verify error UI appears</red>
+      <green>Add try-catch + error state to each page component</green>
+      <verify>Tests pass, error states render correctly</verify>
+    </tdd_spec>
+    <files>
+      <file>frontend/src/app/works/[workId]/page.tsx</file>
+      <file>frontend/src/app/permissions/page.tsx</file>
+      <file>frontend/src/app/review/page.tsx</file>
+    </files>
+  </task>
+
+  <!-- ═══════════════════════════════════════════════════════ -->
+  <!-- PHASE 4: P2 CLEANUP                                     -->
+  <!-- ═══════════════════════════════════════════════════════ -->
+
+  <task id="4.1" priority="P2">
+    <name>Remove stale TODO comments from integrated components</name>
+    <description>
+      4 components have stale "Component not yet integrated" comments:
+      - error-boundary.tsx line 3 (IS integrated)
+      - voice-agent-banner.tsx line 3 (IS integrated)
+      - adaptive-tooltip.tsx line 3 (IS integrated)
+      - empty-state.tsx line 1 (IS integrated)
+      Remove these outdated comments.
+    </description>
+    <tdd_spec>
+      <red>Grep for "not yet integrated" in frontend/src/ → expect 0 matches after fix</red>
+      <green>Remove the stale comments</green>
+      <verify>grep returns no matches</verify>
+    </tdd_spec>
+    <files>
+      <file>frontend/src/components/states/error-boundary.tsx</file>
+      <file>frontend/src/components/pro/voice-agent-banner.tsx</file>
+      <file>frontend/src/components/ui/adaptive-tooltip.tsx</file>
+      <file>frontend/src/components/states/empty-state.tsx</file>
+    </files>
+  </task>
+
+  <task id="4.2" priority="P2">
+    <name>Add Makefile targets for Playwright</name>
+    <description>
+      Add convenience targets:
+      - make test-e2e: run Playwright tests locally
+      - make test-e2e-ui: run Playwright in UI mode (interactive debugging)
+      Update Makefile header comments.
+    </description>
+    <tdd_spec>
+      <red>N/A — Makefile</red>
+      <green>Add targets, verify they run</green>
+      <verify>make test-e2e runs Playwright tests</verify>
+    </tdd_spec>
+    <files>
+      <file>Makefile</file>
+    </files>
+  </task>
+
+  <task id="4.3" priority="P2">
+    <name>Add css-token-lint rule for --color-text pattern</name>
+    <description>
+      The existing css-token-lint.test.ts catches hardcoded hex colors.
+      Add a new rule that catches references to non-existent CSS vars
+      like --color-text (should be --color-heading/--color-body/--color-muted).
+      This prevents the P0 issue from recurring.
+    </description>
+    <tdd_spec>
+      <red>Add test case that scans for "var(--color-text)" (exact, not prefix of longer token) → expect 0 matches</red>
+      <green>Test already passes after task 0.2 fixed the instances</green>
+      <verify>npm test --prefix frontend → css-token-lint passes with new rule</verify>
+    </tdd_spec>
+    <files>
+      <file>frontend/src/__tests__/css-token-lint.test.ts</file>
+    </files>
+  </task>
+
+  <task id="4.4" priority="P2" depends_on="0.1 0.2 1.2 2.4 3.1 3.2 4.1 4.2 4.3">
+    <name>Final verification and commit</name>
+    <description>
+      Run full verification:
+      1. pre-commit run --all-files
+      2. Backend: .venv/bin/python -m pytest tests/ -x -q
+      3. Frontend: npm test --prefix frontend (all vitest)
+      4. Frontend: npm run build --prefix frontend
+      5. Playwright: npx playwright test (if dev server available)
+      Ensure everything green before push.
+    </description>
+    <tdd_spec>
+      <red>N/A — verification only</red>
+      <green>All gates pass</green>
+      <verify>All tests pass, all lints clean, build succeeds</verify>
+    </tdd_spec>
+    <files></files>
+  </task>
+
+  <!-- ═══════════════════════════════════════════════════════ -->
+  <!-- DEPENDENCY DAG                                           -->
+  <!-- ═══════════════════════════════════════════════════════ -->
+  <!--
+    Phase 0 (P0 blockers):
+      0.1 (fix tests) ─────────────────────┐
+      0.2 (fix CSS vars) ──────────────────┤
+                                            │
+    Phase 1 (Frontend CI):                  │
+      1.1 (.nvmrc) ────────────────────────┤
+      1.2 (CI job) ◄─── 0.1, 0.2, 1.1     │
+                                            │
+    Phase 2 (Playwright):                   │
+      2.1 (install/config) ────────────────┤
+      2.2 (landing test) ◄─── 2.1          │
+      2.3 (works test) ◄─── 2.1            │
+      2.4 (CI E2E job) ◄─── 2.2, 2.3      │
+                                            │
+    Phase 3 (P1 fixes):                    │
+      3.1 (contrast) ─────────────────────┤
+      3.2 (error handling) ───────────────┤
+                                            │
+    Phase 4 (P2 cleanup):                  │
+      4.1 (stale TODOs) ─────────────────┤
+      4.2 (Makefile) ────────────────────┤
+      4.3 (lint rule) ───────────────────┤
+      4.4 (verification) ◄─── ALL        ▼
+  -->
+</plan>
