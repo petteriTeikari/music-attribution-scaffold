@@ -39,8 +39,8 @@ env/
 # =============================================================================
 # Frontend (Next.js)
 # =============================================================================
-frontend/node_modules/
-frontend/.next/
+node_modules/
+.next/
 frontend/out/
 frontend/coverage/
 
