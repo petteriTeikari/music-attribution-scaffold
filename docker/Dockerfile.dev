@@ -1,0 +1,46 @@
+# Dockerfile.dev - Development environment with hot-reload
+#
+# Builds a backend container that:
+#   1. Runs Alembic migrations on startup
+#   2. Seeds demo data (Imogen Heap)
+#   3. Starts uvicorn with --reload for live code changes
+#
+# Source code is bind-mounted (not COPY'd) for hot-reload.
+
+ARG PYTHON_VERSION=3.13
+FROM python:${PYTHON_VERSION}-slim
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    git \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install uv
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
+
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    UV_LINK_MODE=copy
+
+WORKDIR /app
+
+# Copy dependency files first (Docker layer caching)
+COPY pyproject.toml uv.lock* README.md ./
+
+# Install ALL dependency groups (dev + test)
+RUN uv sync --frozen --group dev --group test
+
+# Copy alembic config (needed for migrations at startup)
+COPY alembic/ ./alembic/
+COPY alembic.ini ./
+
+# Copy entrypoint script
+COPY docker/entrypoint.dev.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
+# Source code is bind-mounted at runtime, but copy for layer fallback
+COPY src/ ./src/
+
+EXPOSE 8000
+
+ENTRYPOINT ["/entrypoint.sh"]

@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<plan version="1.0" title="Docker-Native Development — Issue #45">
+  <metadata>
+    <branch>fix/docker-native-dev</branch>
+    <closes>45</closes>
+    <created>2026-02-12</created>
+    <status>complete</status>
+  </metadata>
+
+  <phases>
+    <phase id="0" name="Infrastructure (Compose + Dockerfiles)">
+      <task id="0.1" status="done">
+        <title>Create docker/Dockerfile.dev (backend with hot-reload)</title>
+        <files>
+          <file action="create">docker/Dockerfile.dev</file>
+          <file action="create">docker/entrypoint.dev.sh</file>
+        </files>
+        <description>
+          python:3.13-slim base, uv install, all dep groups.
+          Entrypoint: alembic upgrade head → seed data → uvicorn --reload.
+          Source code bind-mounted for hot-reload.
+        </description>
+      </task>
+      <task id="0.2" status="done">
+        <title>Add backend service to docker-compose.dev.yml</title>
+        <files>
+          <file action="modify">docker-compose.dev.yml</file>
+        </files>
+        <description>
+          Builds from docker/Dockerfile.dev, volumes for src hot-reload,
+          depends on postgres (healthy), port 8000, healthcheck on /health.
+        </description>
+      </task>
+      <task id="0.3" status="done">
+        <title>Add frontend service to docker-compose.dev.yml</title>
+        <files>
+          <file action="modify">docker-compose.dev.yml</file>
+        </files>
+        <description>
+          node:22-slim, bind mount ./frontend, named volume for node_modules,
+          port 3000, depends on backend (healthy).
+        </description>
+      </task>
+    </phase>
+
+    <phase id="1" name="Config Fixes (Fail Loudly)">
+      <task id="1.1" status="done">
+        <title>Remove SQLite fallback from app.py</title>
+        <files>
+          <file action="modify">src/music_attribution/api/app.py</file>
+          <file action="modify">tests/conftest.py</file>
+        </files>
+        <description>
+          Changed os.environ.get("DATABASE_URL", "sqlite+aiosqlite://")
+          to os.environ["DATABASE_URL"] with clear RuntimeError message.
+          Root conftest sets DATABASE_URL=sqlite+aiosqlite:// for unit tests.
+        </description>
+      </task>
+      <task id="1.2" status="done">
+        <title>Make alembic use DATABASE_URL from environment</title>
+        <files>
+          <file action="modify">alembic/env.py</file>
+        </files>
+        <description>
+          Override sqlalchemy.url from DATABASE_URL when it contains "postgresql".
+          Non-PostgreSQL URLs (sqlite from test fixtures) are ignored.
+          alembic.ini value serves as documentation only.
+        </description>
+      </task>
+    </phase>
+
+    <phase id="2" name="Integration Test Conversion (SQLite → PostgreSQL)">
+      <task id="2.1" status="done">
+        <title>Create shared PostgreSQL fixture in tests/integration/conftest.py</title>
+        <files>
+          <file action="create">tests/integration/conftest.py</file>
+        </files>
+        <description>
+          Session-scoped testcontainers PostgresContainer (pgvector:pg17),
+          extensions, Alembic migrations, Imogen Heap seed data (attribution
+          records + resolved entity + permission bundle).
+          Function-scoped pg_session_factory for test isolation.
+        </description>
+      </task>
+      <task id="2.2" status="done">
+        <title>Convert test_full_stack.py from SQLite to PostgreSQL</title>
+        <files>
+          <file action="modify">tests/integration/test_full_stack.py</file>
+        </files>
+        <description>
+          Removed _register_sqlite_type_compilers(), manual table creation.
+          Uses shared pg_session_factory from conftest.
+          All 8 tests pass against real PostgreSQL.
+        </description>
+      </task>
+      <task id="2.3" status="done">
+        <title>Convert test_agent_db_roundtrip.py from SQLite to PostgreSQL</title>
+        <files>
+          <file action="modify">tests/integration/test_agent_db_roundtrip.py</file>
+        </files>
+        <description>
+          Removed SQLite shims, uses shared pg_session_factory.
+          All 6 tests pass against real PostgreSQL.
+        </description>
+      </task>
+      <task id="2.4" status="done">
+        <title>Convert test_provenance_e2e.py from SQLite to PostgreSQL</title>
+        <files>
+          <file action="modify">tests/integration/test_provenance_e2e.py</file>
+        </files>
+        <description>
+          Removed SQLite shims including HALFVEC bind_processor patch.
+          Uses shared pg_session_factory from conftest.
+          All 4 tests pass against real PostgreSQL.
+        </description>
+      </task>
+    </phase>
+
+    <phase id="3" name="CI and Makefile Updates">
+      <task id="3.1" status="done">
+        <title>Update CI integration-test job</title>
+        <files>
+          <file action="modify">.github/workflows/ci.yml</file>
+        </files>
+        <description>
+          Removed "SQLite-based" step and "Docker-based (continue-on-error)" step.
+          Single step: pytest tests/integration/ -m integration -v --timeout=120.
+          All integration tests use testcontainers (Docker-in-Docker on GHA).
+        </description>
+      </task>
+      <task id="3.2" status="done">
+        <title>Update Makefile for Docker-native clarity</title>
+        <files>
+          <file action="modify">Makefile</file>
+        </files>
+        <description>
+          Added: make dev (docker compose up), make dev-down, make dev-logs.
+          agent target now sets DATABASE_URL explicitly.
+          docker-clean also cleans dev compose volumes.
+        </description>
+      </task>
+    </phase>
+
+    <phase id="4" name="Verification">
+      <task id="4.1" status="done">
+        <title>End-to-end Docker verification</title>
+        <description>
+          docker compose up: postgres healthy, backend runs migrations + seed + uvicorn.
+          API: /health returns healthy, /api/v1/attributions returns 8 records.
+          351 unit tests pass, 42 integration tests pass (1 xfail).
+          Pre-commit hooks all pass.
+        </description>
+      </task>
+    </phase>
+  </phases>
+
+  <verification>
+    <check name="unit-tests" result="pass">351 passed in 45s</check>
+    <check name="integration-tests" result="pass">42 passed, 1 xfailed in 20s</check>
+    <check name="pre-commit" result="pass">All 13 hooks passed</check>
+    <check name="docker-compose-up" result="pass">Backend healthy, API serving data</check>
+    <check name="api-health" result="pass">/health returns healthy</check>
+    <check name="api-data" result="pass">/api/v1/attributions returns 8 Imogen Heap records</check>
+  </verification>
+</plan>

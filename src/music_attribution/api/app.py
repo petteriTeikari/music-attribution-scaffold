@@ -22,7 +22,15 @@ logger = logging.getLogger(__name__)
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     """Manage async engine lifecycle: create on startup, dispose on shutdown."""
-    database_url = os.environ.get("DATABASE_URL", "sqlite+aiosqlite://")
+    try:
+        database_url = os.environ["DATABASE_URL"]
+    except KeyError:
+        msg = (
+            "DATABASE_URL environment variable is required. "
+            "Set it to a PostgreSQL connection string, e.g.: "
+            "postgresql+psycopg://user:pass@localhost:5432/music_attribution"  # pragma: allowlist secret
+        )
+        raise RuntimeError(msg) from None
 
     engine = create_async_engine_factory(database_url)
     factory = async_session_factory(engine)

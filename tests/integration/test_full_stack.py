@@ -1,120 +1,33 @@
-"""Full-stack integration tests: FastAPI → SQLite → seed data → API responses.
+"""Full-stack integration tests: FastAPI → PostgreSQL → seed data → API responses.
 
 Verifies the complete data flow from HTTP request through the API layer
-to the database and back. Uses SQLite for fast CI without Docker.
+to the database and back. Uses testcontainers PostgreSQL for real DB testing.
 Mark with @pytest.mark.integration for selective running.
 """
 
 from __future__ import annotations
 
-import json
-
 import httpx
 import pytest
 from fastapi import FastAPI
 from httpx import ASGITransport
-from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
-
-def _register_sqlite_type_compilers() -> None:
-    """Register JSONB and HALFVEC compilation for SQLite dialect (test-only)."""
-    from pgvector.sqlalchemy import HALFVEC
-    from sqlalchemy.dialects.postgresql import JSONB
-    from sqlalchemy.ext.compiler import compiles
-
-    @compiles(JSONB, "sqlite")  # type: ignore[misc]
-    def _compile_jsonb_sqlite(type_, compiler, **kw):  # noqa: ARG001
-        return "JSON"
-
-    @compiles(HALFVEC, "sqlite")  # type: ignore[misc]
-    def _compile_halfvec_sqlite(type_, compiler, **kw):  # noqa: ARG001
-        return "TEXT"
-
-
-_register_sqlite_type_compilers()
-
-pytestmark = pytest.mark.integration
+pytestmark = [
+    pytest.mark.integration,
+]
 
 
 @pytest.fixture
-async def test_client():
-    """Create a FastAPI test client backed by a seeded SQLite database."""
-    from datetime import UTC, datetime
-
+async def test_client(pg_session_factory):
+    """Create a FastAPI test client backed by seeded PostgreSQL."""
     from music_attribution.api.routes.attribution import router as attribution_router
     from music_attribution.api.routes.permissions import router as permissions_router
-    from music_attribution.db.models import (
-        AttributionRecordModel,
-        AuditLogModel,
-        EdgeModel,
-        EntityEmbeddingModel,
-        PermissionBundleModel,
-        ResolvedEntityModel,
-    )
-    from music_attribution.seed.imogen_heap import deterministic_uuid, seed_imogen_heap
 
-    engine = create_async_engine("sqlite+aiosqlite://", echo=False)
-    async with engine.begin() as conn:
-        await conn.run_sync(AttributionRecordModel.__table__.create)
-        await conn.run_sync(ResolvedEntityModel.__table__.create)
-        await conn.run_sync(PermissionBundleModel.__table__.create)
-        await conn.run_sync(AuditLogModel.__table__.create)
-        await conn.run_sync(EntityEmbeddingModel.__table__.create)
-        await conn.run_sync(EdgeModel.__table__.create)
-
-    factory = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
-
-    async with factory() as session:
-        # Seed attribution records
-        await seed_imogen_heap(session)
-
-        # Seed resolved entity for Imogen Heap (needed for permission FK)
-        ih_id = deterministic_uuid("artist-imogen-heap")
-        entity = ResolvedEntityModel(
-            entity_id=ih_id,
-            entity_type="ARTIST",
-            canonical_name="Imogen Heap",
-            alternative_names=json.dumps([]),
-            identifiers=json.dumps({}),
-            source_records=json.dumps([{"source": "test", "record_id": str(ih_id)}]),
-            resolution_method="test",
-            resolution_confidence=0.9,
-            resolution_details=json.dumps({}),
-            assurance_level="LEVEL_3",
-            conflicts=json.dumps([]),
-            needs_review=False,
-            resolved_at=datetime.now(UTC),
-        )
-        session.add(entity)
-
-        # Seed permission bundle: streaming=ALLOW, voice_cloning=DENY
-        perm_bundle = PermissionBundleModel(
-            entity_id=ih_id,
-            scope="CATALOG",
-            permissions=json.dumps(
-                [
-                    {"permission_type": "STREAM", "value": "ALLOW", "conditions": []},
-                    {"permission_type": "VOICE_CLONING", "value": "DENY", "conditions": []},
-                    {"permission_type": "AI_TRAINING", "value": "ASK", "conditions": []},
-                ]
-            ),
-            effective_from=datetime.now(UTC),
-            delegation_chain=json.dumps([]),
-            default_permission="ASK",
-            created_by=ih_id,
-            updated_at=datetime.now(UTC),
-            version=1,
-        )
-        session.add(perm_bundle)
-        await session.commit()
-
-    # Create FastAPI app with both routers
     app = FastAPI()
     app.include_router(attribution_router)
     app.include_router(permissions_router)
-    app.state.async_session_factory = factory
+    app.state.async_session_factory = pg_session_factory
 
-    # Add health endpoint
     @app.get("/health")
     async def health() -> dict:
         return {"status": "healthy"}
@@ -122,8 +35,6 @@ async def test_client():
     transport = ASGITransport(app=app)
     async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
         yield client
-
-    await engine.dispose()
 
 
 class TestFullStackIntegration:

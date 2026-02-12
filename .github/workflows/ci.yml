@@ -74,12 +74,8 @@ jobs:
       - name: Install dependencies
         run: uv sync --frozen --group dev --group test
 
-      - name: Run SQLite-based integration tests
-        run: uv run pytest tests/integration/ -m integration -v --ignore=tests/integration/etl
-
-      - name: Run Docker-based integration tests (testcontainers)
-        run: uv run pytest tests/integration/ -m integration -v -k "testcontainers or real_pg or database_setup"
-        continue-on-error: true
+      - name: Run integration tests (testcontainers PostgreSQL)
+        run: uv run pytest tests/integration/ -m integration -v --timeout=120
 
   validate-guardrails:
     runs-on: ubuntu-latest
