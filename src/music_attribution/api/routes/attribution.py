@@ -8,7 +8,6 @@ from fastapi import APIRouter, HTTPException, Query, Request
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from music_attribution.attribution.persistence import AsyncAttributionRepository
-from music_attribution.schemas.attribution import AttributionRecord
 
 router = APIRouter()
 
@@ -33,20 +32,12 @@ async def get_attribution_by_work_id(
     Returns:
         Attribution record as JSON.
     """
-    # Try database first, fall back to in-memory for backward compatibility
-    if hasattr(request.app.state, "async_session_factory"):
-        repo = AsyncAttributionRepository()
-        async with await _get_session(request) as session:
-            record = await repo.find_by_work_entity_id(work_id, session)
-            if record is not None:
-                return record.model_dump(mode="json")
-
-    # Fallback: in-memory dict (legacy tests)
-    attributions: dict[uuid.UUID, AttributionRecord] = getattr(request.app.state, "attributions", {})
-    fallback_record = attributions.get(work_id)
-    if fallback_record is None:
-        raise HTTPException(status_code=404, detail="Attribution not found")
-    return fallback_record.model_dump(mode="json")
+    repo = AsyncAttributionRepository()
+    async with await _get_session(request) as session:
+        record = await repo.find_by_work_entity_id(work_id, session)
+        if record is None:
+            raise HTTPException(status_code=404, detail="Attribution not found")
+        return record.model_dump(mode="json")
 
 
 @router.get("/attributions/")
@@ -69,29 +60,22 @@ async def list_attributions(
     Returns:
         List of attribution records sorted by confidence descending.
     """
-    if hasattr(request.app.state, "async_session_factory"):
-        repo = AsyncAttributionRepository()
-        async with await _get_session(request) as session:
-            if needs_review is True:
-                records = await repo.find_needs_review(limit=limit, session=session)
-                return [r.model_dump(mode="json") for r in records]
+    repo = AsyncAttributionRepository()
+    async with await _get_session(request) as session:
+        if needs_review is True:
+            records = await repo.find_needs_review(limit=limit, session=session)
+            return [r.model_dump(mode="json") for r in records]
 
-            all_records = await repo.list_all(offset=offset, limit=limit, session=session)
+        all_records = await repo.list_all(offset=offset, limit=limit, session=session)
 
-            # Apply assurance_level filter if specified
-            if assurance_level is not None:
-                all_records = [r for r in all_records if r.assurance_level.value == assurance_level]
+        # Apply assurance_level filter if specified
+        if assurance_level is not None:
+            all_records = [r for r in all_records if r.assurance_level.value == assurance_level]
 
-            # Sort by confidence descending
-            all_records.sort(key=lambda r: r.confidence_score, reverse=True)
+        # Sort by confidence descending
+        all_records.sort(key=lambda r: r.confidence_score, reverse=True)
 
-            return [r.model_dump(mode="json") for r in all_records]
-
-    # Fallback: in-memory dict (legacy tests)
-    attributions = getattr(request.app.state, "attributions", {})
-    records = list(attributions.values())
-    paginated = records[offset : offset + limit]
-    return [r.model_dump(mode="json") for r in paginated]
+        return [r.model_dump(mode="json") for r in all_records]
 
 
 @router.get("/attributions/{attribution_id}/provenance")
@@ -111,32 +95,18 @@ async def get_provenance(
     Returns:
         Provenance chain with uncertainty metadata.
     """
-    if hasattr(request.app.state, "async_session_factory"):
-        repo = AsyncAttributionRepository()
-        async with await _get_session(request) as session:
-            record = await repo.find_by_id(attribution_id, session)
-            if record is not None:
-                return {
-                    "attribution_id": str(record.attribution_id),
-                    "provenance_chain": [e.model_dump(mode="json") for e in record.provenance_chain],
-                    "uncertainty_summary": (
-                        record.uncertainty_summary.model_dump(mode="json") if record.uncertainty_summary else None
-                    ),
-                }
-
-    # Fallback: in-memory dict (legacy tests)
-    attributions: dict[uuid.UUID, AttributionRecord] = getattr(request.app.state, "attributions", {})
-    for record in attributions.values():
-        if record.attribution_id == attribution_id:
-            return {
-                "attribution_id": str(record.attribution_id),
-                "provenance_chain": [e.model_dump(mode="json") for e in record.provenance_chain],
-                "uncertainty_summary": (
-                    record.uncertainty_summary.model_dump(mode="json") if record.uncertainty_summary else None
-                ),
-            }
-
-    raise HTTPException(status_code=404, detail="Attribution not found")
+    repo = AsyncAttributionRepository()
+    async with await _get_session(request) as session:
+        record = await repo.find_by_id(attribution_id, session)
+        if record is None:
+            raise HTTPException(status_code=404, detail="Attribution not found")
+        return {
+            "attribution_id": str(record.attribution_id),
+            "provenance_chain": [e.model_dump(mode="json") for e in record.provenance_chain],
+            "uncertainty_summary": (
+                record.uncertainty_summary.model_dump(mode="json") if record.uncertainty_summary else None
+            ),
+        }
 
 
 @router.get("/attributions/search")

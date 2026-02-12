@@ -37,9 +37,8 @@ def _get_agent():
 async def _generate_sse_events(
     messages: list[dict],
     state: AttributionAgentState,
-    attributions: dict[str, dict],
     session_factory: Any = None,
-) -> AsyncGenerator[str, None]:
+) -> AsyncGenerator[str]:
     """Generate SSE events from the agent response.
 
     This is a simplified AG-UI adapter that streams text message events.
@@ -49,7 +48,7 @@ async def _generate_sse_events(
     Args:
         messages: Conversation messages from CopilotKit.
         state: Current agent state.
-        attributions: Attribution records to search.
+        session_factory: Async session factory for database access.
 
     Yields:
         SSE-formatted event strings.
@@ -86,7 +85,7 @@ async def _generate_sse_events(
         user_message = "Hello"
 
     # Run agent (simplified — in production would stream token by token)
-    deps = AgentDeps(attributions=attributions, state=state, session_factory=session_factory)
+    deps = AgentDeps(state=state, session_factory=session_factory)
     agent = _get_agent()
 
     try:
@@ -150,18 +149,11 @@ async def copilotkit_endpoint(request: Request) -> StreamingResponse:
     # Get or create state
     state = AttributionAgentState()
 
-    # Use in-memory attributions from app state (populated by seed data)
-    attributions: dict[str, dict] = {}
-    if hasattr(request.app.state, "attributions"):
-        raw = request.app.state.attributions
-        if isinstance(raw, dict):
-            attributions = raw
-
-    # Extract async session factory for real DB access
+    # Extract async session factory for DB access
     session_factory: Any = getattr(request.app.state, "async_session_factory", None)
 
     return StreamingResponse(
-        _generate_sse_events(messages, state, attributions, session_factory),
+        _generate_sse_events(messages, state, session_factory),
         media_type="text/event-stream",
         headers={
             "Cache-Control": "no-cache",

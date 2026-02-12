@@ -117,7 +117,7 @@ def async_session_factory(
 
 async def get_async_session(
     factory: async_sessionmaker[AsyncSession],
-) -> AsyncGenerator[AsyncSession, None]:
+) -> AsyncGenerator[AsyncSession]:
     """Yield an async session and ensure cleanup.
 
     Usage as a FastAPI dependency::

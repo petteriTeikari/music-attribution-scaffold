@@ -64,9 +64,6 @@ def create_app() -> FastAPI:
         allow_headers=["*"],
     )
 
-    # Kept for backward compatibility with existing tests
-    app.state.attributions = {}
-
     app.include_router(health_router)
     app.include_router(attribution_router, prefix="/api/v1")
     app.include_router(permissions_router, prefix="/api/v1")
