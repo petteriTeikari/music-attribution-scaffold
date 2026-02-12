@@ -4,70 +4,43 @@ import Image from "next/image";
 import Link from "next/link";
 import { motion } from "motion/react";
 
-const FEATURES = [
-  {
-    title: "Confidence Scoring",
-    description:
-      "Every attribution comes with a calibrated confidence score from conformal prediction. Know exactly how reliable each credit is.",
-    detail:
-      "Conformal prediction provides a mathematical guarantee: when the system says \u201c90% confident,\u201d the data is correct 90% of the time \u2014 not a heuristic, but a provable bound. Evidence is stratified across assurance levels (A0 unverified \u2192 A3 artist-verified), mapped to industry standards like ISRC, ISWC, and ISNI. Continuous monitoring detects calibration drift, triggering automatic alerts when confidence distributions shift.",
-    marker: "I",
-    image: "/images/figures/fig-feature-01-confidence-arc.webp",
-    alt: "Concentric arcs representing conformal, Bayesian, and calibrated confidence scoring methods with a large 95% score",
-  },
-  {
-    title: "Provenance Lineage",
-    description:
-      "See how confidence was built over time \u2014 from initial fetch through entity resolution to expert review. Full audit trail.",
-    detail:
-      "Attribution-by-design embeds provenance at creation rather than computing it retrospectively. Every event \u2014 metadata fetch, entity resolution match, source corroboration, artist confirmation \u2014 is recorded as an immutable audit entry with timestamps and source identifiers. Confidence grows with each verified touchpoint, giving artists and platforms ironclad proof of authorship that licensing authorities can trust.",
-    marker: "II",
-    image: "/images/figures/fig-feature-02-provenance-flow.webp",
-    alt: "Constructivist data flow diagram showing provenance events connected by lines with a confidence gradient bar",
-  },
-  {
-    title: "MCP Permission Patchbay",
-    description:
-      "Machine-readable permissions for AI platforms. Define granular rules: who can train on your music, who can clone your voice.",
-    detail:
-      "When an AI system wants to use your creative data \u2014 voice, lyrics, compositions, or metadata \u2014 it must first query your permission settings via the Model Context Protocol. Set rules per use type: allow streaming but deny training, permit non-commercial generation but require attribution, restrict voice cloning entirely. Every request is logged and archived, making compliance automatic for ethical platforms and violations auditable for legal recourse.",
-    marker: "III",
-    image: "/images/figures/fig-feature-03-mcp-patchbay.webp",
-    alt: "Bauhaus-inspired grid of colored squares representing AI permission states for music usage types",
-  },
-  {
-    title: "Dual-Role Interface",
-    description:
-      "Artist mode for editing and approving credits. Query mode for browsing and searching. One interface, two perspectives.",
-    detail:
-      "Artists get a private workspace: claim credits, verify collaborators, upload evidence, and approve or deny AI usage requests with bulk editing and real-time approval queues. Platforms and researchers get a read-only gateway that respects permission boundaries, with access tiers scaled from full internal to rate-limited public. The same identity serves both roles \u2014 switch between creation and consumption with a single toggle.",
-    marker: "IV",
-    image: "/images/figures/fig-feature-04-dual-role.webp",
-    alt: "Split composition with warm gold artist panel and cool blue query panel divided by a coral accent line",
-  },
-];
+import { CitationOverlay } from "@/components/citations/citation-overlay";
+import { CitationRefList } from "@/components/citations/citation-ref";
+import { CITATIONS } from "@/lib/data/citations";
+import { TOPIC_CARDS, TOPIC_GROUPS } from "@/lib/data/topic-cards";
 
 const HOW_IT_WORKS = [
   {
     label: "FETCH & NORMALIZE",
     description:
       "ETL pipelines pull from MusicBrainz, Discogs, AcoustID, and file metadata into normalized records.",
+    citationLabel: "[7]",
   },
   {
     label: "RESOLVE ENTITIES",
     description:
       "Entity resolution links records across sources using identifiers, string similarity, embeddings, and graph analysis.",
+    citationLabel: "[18, 19]",
   },
   {
     label: "SCORE & CALIBRATE",
     description:
       "Attribution engine aggregates evidence, produces conformal prediction sets, and assigns calibrated confidence.",
+    citationLabel: "[5, 6]",
   },
   {
     label: "REVIEW & IMPROVE",
     description:
       "Domain experts provide feedback via structured FeedbackCards. Confidence updates automatically through Bayesian calibration.",
+    citationLabel: "[8, 20]",
   },
+];
+
+const ASSURANCE_LEVELS = [
+  { level: "A0", type: "Self-declared", evidence: "\u201cI wrote this\u201d", identifier: "None" },
+  { level: "A1", type: "Recorded", evidence: "ISRC assigned", identifier: "ISRC" },
+  { level: "A2", type: "Composed", evidence: "ISRC + ISWC linked", identifier: "ISWC" },
+  { level: "A3", type: "Identity-verified", evidence: "Full provenance chain", identifier: "ISNI" },
 ];
 
 const fadeUp = {
@@ -131,40 +104,57 @@ export default function HomePage() {
             initial="hidden"
             animate="visible"
             variants={stagger}
-            className="max-w-xl"
+            className="max-w-2xl"
           >
             <motion.div
               variants={fadeUp}
               transition={{ duration: 0.6, ease: "easeOut" }}
             >
               <span className="editorial-caps text-xs text-accent mb-4 block">
-                Open-Source Research Scaffold
+                SSRN No. 6109087
               </span>
             </motion.div>
 
             <motion.h1
-              className="editorial-display text-6xl lg:text-7xl text-heading"
+              className="editorial-display text-5xl lg:text-6xl text-heading"
               variants={fadeUp}
               transition={{ duration: 0.6, ease: "easeOut" }}
             >
-              Music Attribution
-              <br />
-              with{" "}
-              <em className="editorial-display-italic" style={{ color: "var(--color-accent)" }}>
-                Transparent
-              </em>
-              <br />
-              Confidence
+              Governing Generative Music
             </motion.h1>
 
             <motion.p
-              className="mt-6 max-w-lg text-lg leading-relaxed text-body"
+              className="mt-3 text-xl lg:text-2xl text-heading leading-snug max-w-2xl"
               variants={fadeUp}
               transition={{ duration: 0.6, ease: "easeOut" }}
             >
-              Know exactly who contributed to a recording — and how certain we
-              are about it. Calibrated confidence scoring, provenance lineage,
-              and MCP permission infrastructure.
+              Attribution Limits, Platform Incentives, and the Future of Creator Income
+            </motion.p>
+
+            <motion.p
+              className="mt-2 text-sm text-muted"
+              variants={fadeUp}
+              transition={{ duration: 0.6, ease: "easeOut" }}
+            >
+              <a
+                href="https://doi.org/10.2139/ssrn.6109087"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="underline underline-offset-4 decoration-border hover:decoration-accent hover:text-heading transition-colors duration-150"
+              >
+                Petteri Teikari (2026)
+              </a>
+            </motion.p>
+
+            <motion.p
+              className="mt-6 max-w-2xl text-base leading-relaxed text-body"
+              variants={fadeUp}
+              transition={{ duration: 0.6, ease: "easeOut" }}
+            >
+              Your favourite song may have already trained the AI that will replace its creator.
+              We propose a two-friction taxonomy, tiered attribution framework (A0&ndash;A3),
+              and governance that functions despite imperfect attribution: contractible provenance,
+              competitive licensing rails, and clear property rights.
             </motion.p>
 
             <motion.div
@@ -179,7 +169,7 @@ export default function HomePage() {
                 Explore the Demo
               </Link>
               <a
-                href="https://papers.ssrn.com/sol3/papers.cfm?abstract_id=6109087"
+                href="https://doi.org/10.2139/ssrn.6109087"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-label font-medium underline underline-offset-4 decoration-border hover:decoration-accent hover:text-heading transition-colors duration-150"
@@ -234,42 +224,45 @@ export default function HomePage() {
               </h2>
             </motion.div>
 
-          <div className="mt-12">
-            {/* Steps */}
-            <div className="space-y-10">
-              {HOW_IT_WORKS.map((item, index) => (
-                <motion.div
-                  key={item.label}
-                  className="relative"
-                  variants={fadeUp}
-                  transition={{ duration: 0.5 }}
-                >
-                  <div className="flex items-start gap-6">
-                    <div className="accent-square-sm mt-1" aria-hidden="true" />
-                    <div style={{ paddingLeft: index % 2 === 1 ? "var(--space-12)" : undefined }}>
-                      <h3 className="editorial-caps text-sm text-heading">
-                        {item.label}
-                      </h3>
-                      <p className="mt-2 max-w-lg text-base text-body leading-relaxed">
-                        {item.description}
-                      </p>
+            <div className="mt-12">
+              {/* Steps */}
+              <div className="space-y-10">
+                {HOW_IT_WORKS.map((item, index) => (
+                  <motion.div
+                    key={item.label}
+                    className="relative"
+                    variants={fadeUp}
+                    transition={{ duration: 0.5 }}
+                  >
+                    <div className="flex items-start gap-6">
+                      <div className="accent-square-sm mt-1" aria-hidden="true" />
+                      <div style={{ paddingLeft: index % 2 === 1 ? "var(--space-12)" : undefined }}>
+                        <h3 className="editorial-caps text-sm text-heading">
+                          {item.label}
+                        </h3>
+                        <p className="mt-2 max-w-lg text-base text-body leading-relaxed">
+                          {item.description}{" "}
+                          <span className="text-xs text-accent data-mono font-medium">
+                            {item.citationLabel}
+                          </span>
+                        </p>
+                      </div>
                     </div>
-                  </div>
-                  {index < HOW_IT_WORKS.length - 1 && (
-                    <div
-                      className="accent-line mt-10"
-                      style={{ opacity: 0.2 }}
-                    />
-                  )}
-                </motion.div>
-              ))}
+                    {index < HOW_IT_WORKS.length - 1 && (
+                      <div
+                        className="accent-line mt-10"
+                        style={{ opacity: 0.2 }}
+                      />
+                    )}
+                  </motion.div>
+                ))}
+              </div>
             </div>
           </div>
-          </div>
 
-          {/* Process figure — portrait signal chain diagram, top-aligned with section */}
+          {/* Process figure — portrait signal chain diagram */}
           <motion.div
-            className="hidden lg:block max-w-[760px]"
+            className="max-w-xs mx-auto lg:mx-0 lg:max-w-sm"
             variants={fadeUp}
             transition={{ duration: 0.5 }}
           >
@@ -284,7 +277,7 @@ export default function HomePage() {
         </motion.div>
       </section>
 
-      {/* ──── FEATURES ──── */}
+      {/* ──── KEY CONCEPTS (12 citation topic cards) ──── */}
       <section className="px-8 py-20">
         <div className="accent-line mb-16" style={{ opacity: 0.4 }} aria-hidden="true" />
         <motion.div
@@ -295,58 +288,140 @@ export default function HomePage() {
         >
           <motion.div variants={fadeUp} transition={{ duration: 0.5 }}>
             <span className="editorial-caps text-xs text-accent">
-              Capabilities
+              Research Foundations
             </span>
             <h2 className="editorial-display text-4xl lg:text-5xl text-heading mt-3">
-              Key Features
+              Key Concepts
             </h2>
           </motion.div>
 
-          <div className="mt-16 space-y-20">
-            {FEATURES.map((feature, index) => (
+          <div className="mt-12 space-y-16">
+            {TOPIC_GROUPS.map((group) => (
               <motion.div
-                key={feature.title}
-                className={`grid gap-8 lg:grid-cols-[1fr_1fr] items-start ${
-                  index % 2 === 1 ? "lg:direction-rtl" : ""
-                }`}
+                key={group.label}
                 variants={fadeUp}
                 transition={{ duration: 0.5 }}
               >
-                <div className={index % 2 === 1 ? "lg:order-2" : ""}>
-                  <div className="flex items-center gap-4 mb-4">
-                    <div className="accent-square" aria-hidden="true" />
-                    <span className="editorial-caps text-xs text-muted">
-                      {feature.marker}
-                    </span>
+                <h3 className="editorial-caps text-xs text-muted mb-6 pb-3 border-b border-border">
+                  {group.label}
+                </h3>
+                <div className="grid gap-8 lg:grid-cols-[1fr_auto] items-start">
+                  {/* Topic cards */}
+                  <div className="divide-y divide-border min-w-0">
+                    {group.cardIds.map((cardId) => {
+                      const card = TOPIC_CARDS.find((c) => c.id === cardId);
+                      if (!card) return null;
+                      return (
+                        <CitationOverlay
+                          key={card.id}
+                          title={card.title}
+                          marker={card.marker}
+                          summary={card.summary}
+                          detail={card.detail}
+                          citationIds={card.citationIds}
+                          figurePlan={card.figurePlan}
+                          citations={CITATIONS}
+                          image={card.image}
+                          imageAlt={card.imageAlt}
+                        />
+                      );
+                    })}
                   </div>
-                  <h3 className="editorial-display text-3xl text-heading">
-                    {feature.title}
-                  </h3>
-                  <p className="mt-4 text-xl lg:text-2xl text-heading leading-snug max-w-lg">
-                    {feature.description}
-                  </p>
-                  <p className="mt-4 text-sm text-muted leading-relaxed max-w-lg">
-                    {feature.detail}
-                  </p>
-                </div>
 
-                {/* Feature figure */}
-                <div
-                  className={`overflow-hidden ${
-                    index % 2 === 1 ? "lg:order-1" : ""
-                  }`}
-                >
-                  <Image
-                    src={feature.image}
-                    alt={feature.alt}
-                    width={1600}
-                    height={1195}
-                    className="w-full h-auto"
-                  />
+                  {/* Group overview figure — narrow portrait beside cards */}
+                  {group.image && (
+                    <div className="hidden lg:block w-96 flex-shrink-0">
+                      <Image
+                        src={group.image}
+                        alt={group.imageAlt || ""}
+                        width={600}
+                        height={1200}
+                        className="w-full h-auto sticky top-8"
+                      />
+                    </div>
+                  )}
                 </div>
               </motion.div>
             ))}
           </div>
+        </motion.div>
+      </section>
+
+      {/* ──── A0-A3 ASSURANCE LEVELS ──── */}
+      <section className="px-8 py-20">
+        <div className="accent-line mb-12" style={{ opacity: 0.4 }} />
+        <motion.div
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-100px" }}
+          variants={stagger}
+        >
+          <motion.div variants={fadeUp} transition={{ duration: 0.5 }}>
+            <span className="editorial-caps text-xs text-accent">
+              Provenance Framework
+            </span>
+            <h2 className="editorial-display text-3xl lg:text-4xl text-heading mt-3">
+              Assurance Levels
+            </h2>
+            <p className="mt-4 max-w-2xl text-base text-body leading-relaxed">
+              Attribution claims are stratified across four assurance levels, mapped to existing
+              industry identifiers (ISRC, ISWC, ISNI).{" "}
+              <span className="text-xs text-accent data-mono font-medium">[12, 23, 24, 25]</span>
+            </p>
+          </motion.div>
+
+          <motion.div
+            className="mt-8 overflow-x-auto"
+            variants={fadeUp}
+            transition={{ duration: 0.5 }}
+          >
+            <table className="w-full max-w-3xl text-sm">
+              <thead>
+                <tr className="border-b-2 border-accent">
+                  <th className="editorial-caps text-xs text-muted text-left py-3 pr-6">Level</th>
+                  <th className="editorial-caps text-xs text-muted text-left py-3 pr-6">Type</th>
+                  <th className="editorial-caps text-xs text-muted text-left py-3 pr-6">Evidence</th>
+                  <th className="editorial-caps text-xs text-muted text-left py-3">Identifier</th>
+                </tr>
+              </thead>
+              <tbody>
+                {ASSURANCE_LEVELS.map((row) => (
+                  <tr key={row.level} className="border-b border-border">
+                    <td className="py-3 pr-6 data-mono font-semibold text-heading">{row.level}</td>
+                    <td className="py-3 pr-6 text-body">{row.type}</td>
+                    <td className="py-3 pr-6 text-body">{row.evidence}</td>
+                    <td className="py-3 data-mono text-accent">{row.identifier}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </motion.div>
+
+          <motion.p
+            className="mt-4 text-xs text-muted max-w-2xl leading-relaxed"
+            variants={fadeUp}
+            transition={{ duration: 0.5 }}
+          >
+            ISRC (International Standard Recording Code) identifies a specific audio recording.
+            ISWC (International Standard Musical Work Code) identifies the underlying composition.
+            ISNI (International Standard Name Identifier) identifies the creator themselves.
+            Critical limitation: audio cannot reliably achieve A3 in adversarial settings due to the analogue hole.
+          </motion.p>
+
+          {/* Assurance levels landscape figure */}
+          <motion.div
+            className="mt-10 max-w-3xl"
+            variants={fadeUp}
+            transition={{ duration: 0.5 }}
+          >
+            <Image
+              src="/images/figures/fig-section-assurance-levels.webp"
+              alt="Wide landscape infographic showing A0-A3 assurance level progression: A0 self-declared (gray), A1 recorded with ISRC (amber), A2 composed with ISWC (blue), A3 identity-verified with ISNI (green). Visual density increases left to right."
+              width={1800}
+              height={600}
+              className="w-full h-auto"
+            />
+          </motion.div>
         </motion.div>
       </section>
 
@@ -411,11 +486,21 @@ export default function HomePage() {
               </a>
               . Eight works showcase confidence ranging from 0% to 95%.
             </p>
-            <p className="text-sm text-muted">
-              A0–A3 assurance levels map to ISRC/ISWC/ISNI standards.
-              Conformal prediction provides calibrated uncertainty.
-              Attribution-by-design embeds provenance at creation.
-            </p>
+          </motion.div>
+        </motion.div>
+      </section>
+
+      {/* ──── REFERENCES ──── */}
+      <section className="px-8 py-20">
+        <div className="accent-line mb-12" style={{ opacity: 0.4 }} />
+        <motion.div
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-100px" }}
+          variants={stagger}
+        >
+          <motion.div variants={fadeUp} transition={{ duration: 0.5 }}>
+            <CitationRefList citations={CITATIONS} />
           </motion.div>
         </motion.div>
       </section>
