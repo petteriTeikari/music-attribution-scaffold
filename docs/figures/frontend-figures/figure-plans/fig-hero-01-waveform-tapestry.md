@@ -1,11 +1,11 @@
-# fig-hero-01: Waveform Tapestry — Spectrogram Meets Provenance
+# fig-hero-01: MFCC Landscape — Sculptural Audio Topography
 
 ## Metadata
 
 | Field | Value |
 |-------|-------|
 | **ID** | fig-hero-01 |
-| **Title** | Waveform Tapestry — Where Sound Data Meets Attribution |
+| **Title** | MFCC Landscape — Sound as Sculptural Terrain |
 | **Audience** | General (landing page visitors) |
 | **Complexity** | L3 (hero — highest visual impact) |
 | **Location** | Landing page hero section (full-width background behind text) |
@@ -14,113 +14,124 @@
 
 ## Purpose & Key Message
 
-A stunning full-width hero image that communicates the core concept: **stylized audio waveforms meeting data attribution networks**. The image blends three visual languages — vintage Phonodeik-style oscilloscope waveforms, old-school wireframe 3D spectrograms, and constructivist provenance flow lines — into a single mixed-media composition.
+A stunning full-width hero image showing a **3D MFCC spectrogram rendered as a sculptural landscape** — as if sound had physical topography. The surface undulates with mel-frequency coefficient peaks and valleys, rendered with smooth gradients and soft depth rather than wireframe grids. Think the cover of Wallpaper* or Dezeen, not a matplotlib plot. The aesthetic is matte ceramic, Scandinavian minimalism, or architectural model photography.
 
-Communicates: "Music data is beautiful. Attribution is an art form. This is serious science with soul."
+**No text. No labels. No annotations. Pure visual.**
 
-## Critical Layout Constraint: Left-to-Right Opacity Gradient
+Communicates: "This is sound made physical. This is data made beautiful."
+
+## Critical Layout Constraint: Left-to-Right Density Gradient
 
 **This image sits BEHIND hero text on the left side.** The visual density MUST increase from left to right:
 
-- **Left 30%**: Near-empty. Faint hints only — ghostly wireframe grid lines, sparse dots, very low opacity. The cream background (#f6f3e6) must dominate so overlaid text is fully legible.
-- **Middle 30%**: Transitional. Waveform shapes begin to emerge. Thin provenance connection lines appear. Medium opacity — the transition zone.
-- **Right 40%**: Full intensity. Dense, vivid, stunning. 3D wireframe spectrogram peaks, rich Phonodeik-style waveform bands, coral red accent lines, constructivist flow nodes. This is the visual payoff.
+- **Left 30%**: Near-empty. The cream background (#f6f3e6) dominates. Only the faintest suggestion of the 3D surface beginning — like a flat plane starting to ripple. Very low opacity. Text overlay must be fully legible.
+- **Middle 30%**: The surface begins to rise. Gentle undulations emerge. Color begins to appear — teal tones in the valleys, warm gray on the mid-slopes. The terrain gains subtle depth and shadow.
+- **Right 40%**: Full sculptural intensity. Dramatic peaks and ridges. Rich color: teal valleys, coral ridgelines catching light, navy in the deep shadows. Soft ambient occlusion. The surface looks like it could be touched — matte, physical, real.
 
-## Visual Concept (ASCII Layout)
+## Visual Concept: 3D Stylized MFCC Spectrogram
+
+An MFCC (Mel-Frequency Cepstral Coefficient) spectrogram encodes audio as a matrix: time along one axis, mel-frequency bands along the other, energy as height. When rendered as a 3D surface, it becomes a landscape — ridges for formants, valleys for silence, peaks for transients.
+
+**This is NOT**:
+- A wireframe mesh (removed — too technical)
+- A line chart or waveform
+- A scatter plot with nodes
+- A network graph
+
+**This IS**:
+- A smooth, continuous 3D surface — like terrain, like sand dunes, like ceramic
+- Rendered with soft lighting and matte material — not glossy, not metallic
+- Color-mapped by elevation: teal (#2E7D7B) in valleys → warm cream on mid-slopes → coral (#E84C4F) on ridgelines and peaks
+- Viewed from a low oblique angle (15–25° elevation) to emphasize the terrain quality
+- Subtle ambient occlusion and soft shadows for depth
+- The underlying "data" nature is visible in the regularity of the ridges (mel bands create parallel undulations) but the rendering is artistic, not scientific
+
+### ASCII Layout
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────┐
 │                         │                        │                      │
-│  [TEXT OVERLAY ZONE]    │   Waveforms emerging   │  FULL INTENSITY      │
+│  [TEXT OVERLAY ZONE]    │   Surface emerging     │  FULL SCULPTURAL     │
 │                         │                        │                      │
-│  Nearly empty.          │   ···═══~~~═══···     │  ╔══╗  ┌──┐          │
-│  Ghost wireframe grid   │   Thin flow lines     │  ║3D║══╡••╞══●──●   │
-│  at 5-10% opacity.      │   connecting nodes     │  ║SP║  └──┘  │  │   │
-│  Scattered dots.        │   Vintage waveform     │  ╚══╝  ~~~~  ●──●   │
-│                         │   oscillations          │  Phonodeik bands    │
-│  Cream background       │                        │  Coral accent lines │
-│  must dominate.         │                        │  Dense, vivid       │
+│  Nearly flat plane.     │   ~~╱╲~~╱╲~~          │  ╱╲╱╲╱╲╱╲╱╲╱╲      │
+│  Cream background       │  Gentle undulations    │ ╱  ╲╱╲  ╲╱╲  ╲     │
+│  with faintest ripple.  │  Teal in valleys,      │╱    ╲  ╲  ╲   ╲    │
+│                         │  warm gray slopes      │ Deep valleys, high   │
+│  5-10% opacity max.     │                        │ peaks. Teal base,    │
+│                         │  20-50% opacity        │ coral ridgelines,    │
+│                         │                        │ navy shadows.        │
+│                         │                        │ Matte, touchable.    │
 │                         │                        │                      │
 └─────────────────────────────────────────────────────────────────────────┘
-  ← LOW CONTRAST                                      HIGH CONTRAST →
+  ← FLAT / EMPTY                                      SCULPTURAL / VIVID →
 ```
 
-## Visual References & Synthesis
+### Design Magazine References
 
-### Source 1: Old-school wireframe 3D spectrogram (Image #13)
-- Isometric wireframe mesh surface with peaks and valleys
-- Layered stacked planes with dot-matrix texture beneath
-- Monochrome warm tone on cream
-- **Use**: The wireframe grid as ghostly background structure (left side fading in), building to visible 3D peaks (right side)
+The aesthetic should evoke:
+- **Zaha Hadid Architects** parametric surfaces — smooth, flowing, computational geometry made physical
+- **Olafur Eliasson** topographic installations — data as landscape, science as art
+- **Junya Ishigami** architectural models — impossibly delicate terrain with soft natural light
+- **Neri Oxman** material ecology — gradient color transitions that feel organic, not digital
+- **Wallpaper* magazine** cover aesthetic — one hero object, vast negative space, matte finish, editorial restraint
 
-### Source 2: Vintage Phonodeik waveforms (Image #14)
-- Oscilloscope-captured sound traces on dark strips
-- Dense, organic waveform patterns — voice, orchestra, bell
-- Scientific/archival quality — hand-labeled, precise time markers
-- **Use**: Horizontal waveform bands running across the composition as the primary foreground motif. On the right side these are vivid and detailed; on the left they dissolve into faint traces.
+### What Makes It MFCC (Not Generic Terrain)
 
-### Source 3: Constructivist provenance flow (existing fig-feature-02)
-- Connected nodes with thin lines representing data lineage
-- Coral red squares as process markers
-- **Use**: Provenance connection lines threading through and between the waveform layers, suggesting that the audio data is being tracked, attributed, scored. Small coral squares as attribution nodes.
-
-### Synthesis / "Latent Space Interpolation"
-
-The three visual languages should feel like they **bleed into each other**, not like separate layers pasted together:
-
-- The wireframe grid lines of the spectrogram morph into the connection lines of the provenance flow
-- The 3D spectrogram peaks are made of the same material as the Phonodeik waveform oscillations
-- Dots from the wireframe dot-matrix become attribution nodes
-- The vintage waveform bands slice horizontally through the 3D wireframe space
-- Color transitions: faint warm gray (left) → navy and warm gray (middle) → coral red, navy, teal accents (right)
+The surface should have visible regularity that hints at its origin as audio data:
+- **Parallel ridgelines** running roughly left-to-right (these are mel-frequency bands — each band is a horizontal strip of undulating surface)
+- **Rhythmic peaks** along each ridge (these are temporal energy patterns — beats, transients, vocal onsets)
+- **13–20 visible parallel ridges** in the right portion (MFCC typically uses 13–40 coefficients)
+- The regularity should feel like dunes shaped by wind — natural-looking but with an underlying mathematical order
+- Valleys between ridges are deeper on the right (more dynamic range where the data is rich)
 
 ## Content Elements
 
 | Element | Semantic Tag | Description |
 |---------|-------------|-------------|
-| Wireframe grid | `structure_grid` | Isometric wireframe mesh, ghostly on left, visible on right |
-| 3D spectrogram peaks | `data_spectrogram` | Wireframe surface with audio-frequency peaks, right half |
-| Phonodeik waveform bands | `data_waveform` | 2-3 horizontal bands of vintage oscilloscope-style waveforms |
-| Provenance flow lines | `line_provenance` | Thin connecting lines between attribution nodes |
-| Attribution nodes | `node_attribution` | Small coral red squares at connection points |
-| Dot-matrix texture | `texture_dots` | Scattered dots beneath wireframe layers |
-| Coral accent lines | `line_accent` | 1-2 thin horizontal coral lines running full width |
-| Roman numerals | `label_editorial` | Optional: I-VIII as faint markers along bottom edge (tracks) |
+| 3D MFCC surface | `surface_primary` | Smooth continuous terrain with mel-band ridges and temporal peaks |
+| Valley color | `color_teal` | Teal (#2E7D7B) in the lowest elevations — like water in a topographic map |
+| Slope color | `color_cream` | Warm cream/off-white on mid-elevation slopes |
+| Ridgeline color | `color_coral` | Coral (#E84C4F) along the highest ridgelines and peaks — like sunlit mountaintops |
+| Shadow color | `color_navy` | Navy (#1E3A5F) in deep shadow areas between ridges |
+| Ambient occlusion | `lighting_soft` | Soft shadows in concavities for depth — NOT harsh directional light |
+| Left fade | `gradient_opacity` | Surface fades to near-invisible on the left 30% |
+| Subtle grain | `texture_grain` | Very faint noise/grain overlay (3-5% opacity) for matte print feel |
 
-## Color Palette (for this figure)
+## Color Palette (matching topic figures)
 
 | Element | Color | Opacity Range |
 |---------|-------|---------------|
 | Background | #f6f3e6 (cream) | 100% everywhere |
-| Wireframe grid | #8B7E6A (warm gray) | 5% (left) → 40% (right) |
-| Spectrogram peaks | #1E3A5F (navy) | 0% (left) → 80% (right) |
-| Waveform bands | #1E3A5F (navy) + #8B7E6A (warm gray) | 8% (left) → 90% (right) |
-| Provenance lines | #2E7D7B (teal) | 0% (left) → 60% (right) |
-| Attribution nodes | #E84C4F (coral red) | 0% (left) → 100% (right) |
-| Accent lines | #E84C4F (coral red) | 15% (left) → 80% (right) |
+| Valley / low elevation | #2E7D7B (teal) | 0% (left) → 70% (right) |
+| Mid-slope | #f6f3e6 → #eeeadb (cream gradient) | Continuous |
+| Ridgeline / peak | #E84C4F (coral) | 0% (left) → 90% (right) |
+| Deep shadow | #1E3A5F (navy) | 0% (left) → 50% (right) |
+| Warm shadow | #8B7E6A (warm gray) | 5% (left) → 30% (right) |
 
 ## Nano Banana Pro Prompts
 
 ### Style prompt
-Old-school wireframe 3D spectrogram meets vintage Phonodeik oscilloscope waveforms meets constructivist data flow diagram. Mixed media composition on warm cream background (#f6f3e6). Warp Records aesthetic meets scientific data visualization. Halftone grain texture. Isometric wireframe mesh with peaks. Dense vintage audio waveform oscillation bands. Thin connecting lines between small red square nodes. Matte finish, editorial art direction. Duotone navy (#1E3A5F) and coral red (#E84C4F) with warm gray. NOT digital, NOT glossy — feels like a risograph print of analog instruments. Ultra-wide landscape composition 8:3 ratio.
+3D sculptural MFCC spectrogram rendered as smooth terrain landscape on warm cream background (#f6f3e6). Matte ceramic finish, soft ambient occlusion lighting, NOT wireframe, NOT glossy. Zaha Hadid parametric surface aesthetic. Neri Oxman organic color gradient. Wallpaper magazine cover quality. Low oblique camera angle (15-25 degrees elevation). Color-mapped by elevation: teal (#2E7D7B) in valleys, warm cream on slopes, coral red (#E84C4F) on ridgelines and peaks, navy (#1E3A5F) in deep shadows. Subtle halftone grain texture. Matte risograph print feel. Scandinavian minimalism. Ultra-wide landscape 8:3 ratio.
 
 ### Content prompt
-Ultra-wide landscape composition (2400x900). Left-to-right density gradient: LEFT THIRD is nearly empty cream with only the faintest ghost of a wireframe grid at 5% opacity and scattered dots. MIDDLE THIRD has vintage audio waveforms beginning to emerge as horizontal bands, thin provenance lines connecting sparse nodes. RIGHT THIRD is the visual climax: vivid 3D wireframe spectrogram peaks rising from an isometric grid, dense Phonodeik-style oscilloscope waveform bands in navy and warm gray, coral red squares marking attribution nodes connected by teal lines, thin coral horizontal accent lines threading through. The three visual languages (wireframe spectrogram, vintage waveform, provenance flow) should morph into each other — grid lines becoming flow lines, spectrogram peaks made of waveform oscillations, dots becoming nodes. Roman numerals I-VIII as very faint markers along the bottom right.
+Ultra-wide landscape composition (2400x900). A 3D surface representing an MFCC spectrogram rendered as sculptural terrain — NOT wireframe mesh, NOT engineering visualization. Smooth continuous surface with 13-20 parallel ridges running left to right (mel-frequency bands). Rhythmic peaks along each ridge from audio energy patterns. LEFT THIRD: nearly flat, the terrain barely emerges from the cream background at 5-10% opacity — just the faintest ripple. MIDDLE THIRD: gentle undulations rise, teal appears in forming valleys, warm gray shadows begin. RIGHT THIRD: dramatic sculptural peaks and deep valleys, rich teal in low areas, coral catching light on ridgelines, navy in deep shadow crevices. The surface looks like it could be a physical ceramic model photographed with soft studio lighting. Matte finish. No wireframe grid. No dots. No nodes. No connecting lines. No text. No labels. Pure sculptural surface.
 
 ### Negative prompt
---no text labels, font names, generic bar chart, symmetric layout, centered composition, gradient fills, neon glow, dark background, photorealistic, 3D render, glossy finish, stock photography, music notes, treble clef, musical instruments, faces, screenshots, UI elements, pure black, uniform density across width
+--no wireframe, mesh grid, network graph, nodes, connecting lines, dots, scatter plot, text, labels, annotations, font names, bar chart, pie chart, UI elements, screenshots, neon glow, glossy finish, metallic, dark background, pure black, symmetric, centered, photorealistic faces, musical instruments, music notes, treble clef, stock photography, engineering plot, matplotlib, axes, tick marks, legend
 
 ## Anti-Hallucination Rules
 
 These are INTERNAL instructions for the image generator. They must NEVER appear as visible text in the output:
 
-1. **Font names are internal** — "Instrument Serif", "Plus Jakarta Sans", "IBM Plex Mono" are CSS references. Do NOT render them.
-2. **Color names are internal** — "cream", "coral red", "navy" are palette descriptions. Do NOT render them as labels.
-3. **Semantic tags are internal** — `data_spectrogram`, `line_provenance`, etc. Do NOT render them.
-4. **Technical terms are internal** — "Phonodeik", "provenance", "attribution" are concept references. Do NOT render them.
-5. The only text that MAY appear: Roman numerals I-VIII as very small, faint markers. All other text is BANNED.
-6. **Left 30% MUST be nearly empty** — this is non-negotiable. Text will overlay this area. If the left side has dense visual elements, the image fails its purpose.
+1. **Font names are internal** — do NOT render any text whatsoever.
+2. **Color names are internal** — "cream", "coral", "teal", "navy" are palette descriptions. Do NOT render them.
+3. **Semantic tags are internal** — `surface_primary`, `color_teal`, etc. Do NOT render them.
+4. **Technical terms are internal** — "MFCC", "spectrogram", "mel-frequency" are concept references. Do NOT render them.
+5. **NO TEXT OF ANY KIND** — no Roman numerals, no labels, no markers, no annotations. This is a pure visual.
+6. **Left 30% MUST be nearly empty** — this is non-negotiable. Text will overlay this area.
+7. **NO wireframe, NO mesh, NO grid lines** — the surface must be smooth and continuous.
+8. **Pixel sizes and rendering instructions are internal** — do NOT render.
 
 ## Alt Text
 
-Wide landscape mixed-media composition blending three visual languages: a ghostly wireframe 3D spectrogram grid, vintage oscilloscope-style audio waveform bands, and constructivist data flow connections with coral red nodes. Visual density increases dramatically from left to right — the left side is nearly empty cream, while the right side builds to a vivid climax of intersecting waveforms, wireframe peaks, and attribution flow lines in navy, warm gray, and coral red.
+Wide landscape 3D surface resembling sculptural terrain, derived from an MFCC audio spectrogram. The smooth, matte surface features parallel ridges representing mel-frequency bands with rhythmic peaks from audio energy patterns. Visual density increases dramatically from left to right: the left portion is nearly empty cream, the middle shows gentle undulations with teal emerging in valleys, and the right builds to dramatic sculptural peaks with teal valleys, coral-highlighted ridgelines, and navy shadows in deep crevices. The rendering has a matte ceramic quality with soft ambient lighting, evoking architectural model photography rather than scientific visualization.
