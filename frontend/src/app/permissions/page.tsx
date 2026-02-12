@@ -19,18 +19,22 @@ export default function PermissionsPage() {
   const [permissions, setPermissions] = useState<PermissionBundle | null>(null);
   const [auditLog, setAuditLog] = useState<AuditLogEntry[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<TabId>("permissions");
 
   useEffect(() => {
-    // Default entity for demo — Imogen Heap artist entity
     const entityId = "artist-imogen-heap";
+    setError(null);
     Promise.all([apiClient.getPermissions(entityId), apiClient.getAuditLog()]).then(
       ([perms, log]) => {
         setPermissions(perms);
         setAuditLog(log);
         setLoading(false);
       }
-    );
+    ).catch(() => {
+      setError("Failed to load permissions data. Please try again.");
+      setLoading(false);
+    });
   }, []);
 
   return (
@@ -48,8 +52,21 @@ export default function PermissionsPage() {
         </p>
       </div>
 
+      {/* Error state */}
+      {error && (
+        <div className="py-20 text-center">
+          <p className="editorial-display text-2xl text-heading">{error}</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="mt-4 text-sm text-accent underline underline-offset-2"
+          >
+            Retry
+          </button>
+        </div>
+      )}
+
       {/* Category toggles overview */}
-      {permissions && !loading && (
+      {permissions && !loading && !error && (
         <div className="mb-8 grid gap-4 sm:grid-cols-3">
           <CategoryCard
             title="Verified AI Partners"
