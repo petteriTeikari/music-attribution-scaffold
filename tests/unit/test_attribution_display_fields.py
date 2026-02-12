@@ -190,6 +190,6 @@ class TestSeedDataDisplayFields:
         records = build_imogen_heap_records()
         for record in records:
             for credit in record.credits:
-                assert credit.entity_name != "", (
-                    f"entity_name empty for credit {credit.entity_id} in record {record.attribution_id}"
-                )
+                assert (
+                    credit.entity_name != ""
+                ), f"entity_name empty for credit {credit.entity_id} in record {record.attribution_id}"
