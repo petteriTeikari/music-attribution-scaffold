@@ -2,7 +2,14 @@
 
 from __future__ import annotations
 
+import os
+
 import pytest
+
+# Ensure DATABASE_URL is set for any test that imports create_app().
+# Unit tests use SQLite (fast, no Docker); integration tests override
+# with real PostgreSQL via testcontainers.
+os.environ.setdefault("DATABASE_URL", "sqlite+aiosqlite://")
 
 
 def pytest_collection_modifyitems(config: pytest.Config, items: list[pytest.Item]) -> None:

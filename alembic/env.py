@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 from logging.config import fileConfig
 
 from alembic import context
@@ -13,6 +14,14 @@ config = context.config
 
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
+
+# Override sqlalchemy.url from environment when DATABASE_URL is a PostgreSQL URL.
+# This is the single source of truth for production database connection strings.
+# The alembic.ini value serves as documentation only.
+# Non-PostgreSQL URLs (e.g. sqlite from test fixtures) are ignored.
+database_url = os.environ.get("DATABASE_URL")
+if database_url and "postgresql" in database_url:
+    config.set_main_option("sqlalchemy.url", database_url)
 
 target_metadata = Base.metadata
 

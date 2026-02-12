@@ -145,8 +145,7 @@ def upgrade() -> None:
         "ON normalized_records USING gin (to_tsvector('english', canonical_name))"
     )
     op.execute(
-        "CREATE INDEX ix_resolved_entities_fts "
-        "ON resolved_entities USING gin (to_tsvector('english', canonical_name))"
+        "CREATE INDEX ix_resolved_entities_fts ON resolved_entities USING gin (to_tsvector('english', canonical_name))"
     )
 
     # ── JSONB GIN indexes ──
