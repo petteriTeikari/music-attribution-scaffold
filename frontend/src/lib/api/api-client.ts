@@ -5,12 +5,10 @@
  * Falls back to mock data when the API is unavailable.
  */
 
+import { API_BASE } from "@/lib/config";
 import type { AttributionRecord } from "@/lib/types/attribution";
 import type { PermissionBundle, AuditLogEntry } from "@/lib/types/permissions";
 import type { ProvenanceResponse } from "@/lib/types/uncertainty";
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "";
-const API_BASE = API_URL ? `${API_URL}/api/v1` : "";
 
 export interface SearchResult {
   attribution: AttributionRecord;

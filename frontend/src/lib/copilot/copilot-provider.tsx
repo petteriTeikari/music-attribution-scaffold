@@ -1,17 +1,16 @@
 "use client";
 
 import { CopilotKit } from "@copilotkit/react-core";
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL;
+import { COPILOT_RUNTIME_URL } from "@/lib/config";
 
 export function CopilotProvider({ children }: { children: React.ReactNode }) {
-  if (!API_URL) {
+  if (!COPILOT_RUNTIME_URL) {
     // Graceful degradation — no agent backend configured
     return <>{children}</>;
   }
 
   return (
-    <CopilotKit runtimeUrl={`${API_URL}/api/v1/copilotkit`}>
+    <CopilotKit runtimeUrl={COPILOT_RUNTIME_URL}>
       {children}
     </CopilotKit>
   );
