@@ -1,0 +1,27 @@
+/* Music Attribution Scaffold — MkDocs Extra Styles */
+
+/* Coral accent for admonitions and highlights */
+:root {
+  --md-accent-fg-color: #E84C4F;
+}
+
+/* Wider content area for editorial feel */
+.md-grid {
+  max-width: 1440px;
+}
+
+/* Mermaid diagram styling */
+.mermaid {
+  text-align: center;
+  margin: 1.5rem 0;
+}
+
+/* Code block improvements */
+.highlight code {
+  font-size: 0.85rem;
+}
+
+/* Table improvements */
+.md-typeset table:not([class]) th {
+  background-color: var(--md-default-fg-color--lightest);
+}

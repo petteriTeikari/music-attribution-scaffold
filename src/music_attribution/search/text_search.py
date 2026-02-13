@@ -1,9 +1,23 @@
 """Text search service for attribution records.
 
-Provides LIKE-based text search across attribution record JSONB fields.
-On PostgreSQL, this could be upgraded to use tsvector + GIN indexes
-for much better performance. The LIKE fallback works on both
-PostgreSQL and SQLite for development/testing.
+Provides LIKE-based text search across attribution record JSONB fields
+(credits and provenance_chain). This is the simplest search modality
+in the hybrid search stack, designed for cross-database compatibility.
+
+On PostgreSQL, this could be upgraded to use ``tsvector`` + GIN indexes
+for significantly better performance on large datasets. The current
+LIKE-based approach works identically on both PostgreSQL and SQLite,
+ensuring consistent behaviour between production and unit tests.
+
+Classes
+-------
+TextSearchService
+    Async search service with paginated LIKE queries.
+
+See Also
+--------
+music_attribution.search.hybrid_search : Uses this as modality 1.
+music_attribution.search.vector_search : Complementary vector modality.
 """
 
 from __future__ import annotations
@@ -22,10 +36,19 @@ logger = logging.getLogger(__name__)
 
 
 class TextSearchService:
-    """Text search across attribution records.
+    """Text search across attribution records using LIKE queries.
 
-    Uses LIKE queries on JSONB fields for cross-database compatibility.
-    Searches through credits (role_detail) and provenance_chain text.
+    Searches through the stringified JSONB ``credits`` and
+    ``provenance_chain`` columns for substring matches. Results are
+    sorted by confidence score descending with pagination support.
+
+    This service is stateless and can be instantiated freely.
+
+    Notes
+    -----
+    The LIKE approach has O(n) performance on the full table. For
+    production datasets, upgrade to PostgreSQL ``tsvector`` columns
+    with GIN indexes and ``ts_rank`` scoring.
     """
 
     async def search(
@@ -38,14 +61,27 @@ class TextSearchService:
     ) -> list[AttributionRecord]:
         """Search attribution records by text query.
 
-        Args:
-            query: Search string (empty returns all records).
-            limit: Maximum results to return.
-            offset: Number of results to skip.
-            session: Active async database session.
+        An empty query returns all records (useful for browsing).
+        Non-empty queries perform case-sensitive LIKE matching on the
+        stringified ``credits`` and ``provenance_chain`` JSONB columns.
 
-        Returns:
-            Matching attribution records sorted by confidence descending.
+        Parameters
+        ----------
+        query : str
+            Search string. Empty string returns all records with
+            pagination.
+        limit : int, optional
+            Maximum number of results to return. Default is 50.
+        offset : int, optional
+            Number of results to skip for pagination. Default is 0.
+        session : AsyncSession
+            Active async database session.
+
+        Returns
+        -------
+        list[AttributionRecord]
+            Matching attribution records (Pydantic BO-3 objects)
+            sorted by confidence score descending.
         """
         if not query.strip():
             # Empty query: return all records with pagination

@@ -1,8 +1,34 @@
 """Splink probabilistic record linkage for entity resolution.
 
-Implements Fellegi-Sunter probabilistic record linkage at scale. Estimates
-match/non-match probability distributions and produces calibrated linkage
-scores. Uses DuckDB backend for performance.
+Stage 4 of the resolution cascade. Implements Fellegi-Sunter probabilistic
+record linkage at scale using the Splink library. Estimates match/non-match
+probability distributions via expectation-maximization and produces
+calibrated linkage scores. Uses DuckDB backend for performance.
+
+The Fellegi-Sunter model treats record comparison as a binary classification
+problem: for each pair of records, it estimates the probability that they
+refer to the same entity based on agreement/disagreement patterns across
+comparison fields. The model parameters (m-probabilities for matches,
+u-probabilities for non-matches) are estimated from the data using EM.
+
+When Splink is not available (e.g., in lightweight test environments), the
+matcher falls back to a simple exact-match heuristic on comparison columns.
+
+Notes
+-----
+This module implements the probabilistic record linkage layer described in
+Teikari (2026), Section 4.4. Splink v4 API is used (``from splink import
+block_on``, not ``splink.blocking_rules_library``).
+
+References
+----------
+.. [1] Fellegi, I. P., & Sunter, A. B. (1969). "A Theory for Record Linkage."
+   Journal of the American Statistical Association, 64(328), 1183-1210.
+
+See Also
+--------
+music_attribution.resolution.embedding_match : Stage 3 (runs before this).
+music_attribution.resolution.graph_resolution : Stage 5 (runs after this).
 """
 
 from __future__ import annotations
@@ -18,10 +44,29 @@ logger = logging.getLogger(__name__)
 
 
 class SplinkMatcher:
-    """Probabilistic record linkage using Splink.
+    """Probabilistic record linkage using the Splink library.
 
-    Uses Fellegi-Sunter model with configurable comparison columns
-    and blocking rules to efficiently link records.
+    Uses the Fellegi-Sunter model with configurable comparison columns
+    and blocking rules to efficiently link records at scale. The workflow
+    is:
+
+    1. ``configure_model()`` -- define comparison columns.
+    2. ``estimate_parameters()`` -- learn m/u probabilities from data.
+    3. ``predict()`` -- compute match probabilities for all candidate pairs.
+    4. ``cluster()`` -- group records by match probability threshold.
+
+    Parameters
+    ----------
+    None
+
+    Attributes
+    ----------
+    _model_configured : bool
+        Whether ``configure_model()`` has been called.
+    _comparison_columns : list[str]
+        Column names used for record comparison.
+    _linker : Any
+        The Splink ``Linker`` instance (``None`` until parameters are estimated).
     """
 
     def __init__(self) -> None:
@@ -32,8 +77,14 @@ class SplinkMatcher:
     def configure_model(self, comparison_columns: list[str]) -> None:
         """Configure the Splink model with comparison columns.
 
-        Args:
-            comparison_columns: List of column names to compare.
+        Must be called before ``estimate_parameters()``. Each column
+        will be compared using exact-match comparisons with term
+        frequency adjustments.
+
+        Parameters
+        ----------
+        comparison_columns : list[str]
+            Column names to compare (e.g., ``["canonical_name", "isrc"]``).
         """
         self._comparison_columns = comparison_columns
         self._model_configured = True
@@ -41,8 +92,27 @@ class SplinkMatcher:
     def estimate_parameters(self, records: pd.DataFrame) -> None:
         """Estimate Fellegi-Sunter m/u parameters from data.
 
-        Args:
-            records: DataFrame with columns: unique_id + comparison columns.
+        Uses random sampling to estimate u-probabilities (probability of
+        agreement among non-matches) and expectation-maximization to
+        estimate m-probabilities (probability of agreement among matches)
+        for each comparison column.
+
+        Parameters
+        ----------
+        records : pd.DataFrame
+            DataFrame with a ``unique_id`` column plus all configured
+            comparison columns.
+
+        Raises
+        ------
+        RuntimeError
+            If ``configure_model()`` has not been called first.
+
+        Notes
+        -----
+        If Splink is not installed, falls back to ``None`` linker and
+        subsequent calls to ``predict()`` will use the simple exact-match
+        fallback.
         """
         if not self._model_configured:
             msg = "Model not configured. Call configure_model() first."
@@ -80,13 +150,22 @@ class SplinkMatcher:
             self._linker = None
 
     def predict(self, records: pd.DataFrame) -> pd.DataFrame:
-        """Predict match probabilities for record pairs.
+        """Predict match probabilities for all candidate record pairs.
 
-        Args:
-            records: DataFrame with comparison columns.
+        If the Splink linker is available, uses the trained model to
+        predict. Otherwise, falls back to a simple exact-match heuristic
+        on the comparison columns.
 
-        Returns:
-            DataFrame with columns: unique_id_l, unique_id_r, match_probability.
+        Parameters
+        ----------
+        records : pd.DataFrame
+            DataFrame with comparison columns (used only in fallback mode).
+
+        Returns
+        -------
+        pd.DataFrame
+            DataFrame with columns ``unique_id_l``, ``unique_id_r``,
+            and ``match_probability`` (float in [0, 1]).
         """
         if self._linker is not None:
             try:
@@ -104,14 +183,25 @@ class SplinkMatcher:
         predictions: pd.DataFrame,
         threshold: float = 0.85,
     ) -> list[list[int]]:
-        """Cluster records based on match predictions.
+        """Cluster records into entity groups based on match predictions.
 
-        Args:
-            predictions: DataFrame with match probabilities.
-            threshold: Minimum probability to consider a match.
+        Uses union-find with path compression to transitively merge
+        records connected by match probabilities above the threshold.
 
-        Returns:
-            List of clusters (each cluster is a list of unique_ids).
+        Parameters
+        ----------
+        predictions : pd.DataFrame
+            DataFrame with columns ``unique_id_l``, ``unique_id_r``,
+            and ``match_probability``.
+        threshold : float, optional
+            Minimum match probability to consider a pair as linked.
+            Default is 0.85.
+
+        Returns
+        -------
+        list[list[int]]
+            Clusters of ``unique_id`` values. Each cluster represents
+            records believed to be the same entity.
         """
         # Filter predictions above threshold
         above = predictions[predictions["match_probability"] >= threshold]
@@ -154,7 +244,23 @@ class SplinkMatcher:
         return list(groups.values())
 
     def _fallback_predict(self, records: pd.DataFrame) -> pd.DataFrame:
-        """Fallback prediction using exact matching on comparison columns."""
+        """Fallback prediction using exact matching on comparison columns.
+
+        Used when Splink is not available or fails. Computes match
+        probability as the fraction of comparison columns with exact
+        agreement between each record pair.
+
+        Parameters
+        ----------
+        records : pd.DataFrame
+            DataFrame with ``unique_id`` column and comparison columns.
+
+        Returns
+        -------
+        pd.DataFrame
+            DataFrame with columns ``unique_id_l``, ``unique_id_r``,
+            ``match_probability``.
+        """
         pairs = []
         n = len(records)
         for i in range(n):

@@ -1,4 +1,20 @@
-"""FastAPI application factory for attribution API."""
+"""FastAPI application factory for the Music Attribution API.
+
+Provides the ``create_app`` factory function and the ``lifespan`` async
+context manager that boots the async database engine on startup and
+disposes it on shutdown.  All route modules (attribution, permissions,
+health, metrics, CopilotKit) are registered here.
+
+The application follows the *attribution-by-design* philosophy described
+in the companion paper (Teikari 2026, Section 4) — provenance metadata
+is embedded at creation time rather than retrofitted post-hoc.
+
+Notes
+-----
+CORS origins are read from ``Settings.cors_origins`` (comma-separated).
+The database engine is stored on ``app.state`` so that route-level
+dependencies can access it without global singletons.
+"""
 
 from __future__ import annotations
 
@@ -22,7 +38,22 @@ logger = logging.getLogger(__name__)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
-    """Manage async engine lifecycle: create on startup, dispose on shutdown."""
+    """Manage the async database engine lifecycle.
+
+    Creates the SQLAlchemy async engine and session factory on startup,
+    attaches them to ``app.state``, and disposes the engine on shutdown.
+
+    Parameters
+    ----------
+    app : FastAPI
+        The FastAPI application instance whose ``state`` will be populated
+        with ``async_engine``, ``async_session_factory``, and ``settings``.
+
+    Yields
+    ------
+    None
+        Control is yielded to the application between startup and shutdown.
+    """
     settings = Settings()  # type: ignore[call-arg]
 
     engine = create_async_engine_factory(settings.database_url)
@@ -44,8 +75,31 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
 def create_app() -> FastAPI:
     """Create and configure the FastAPI application.
 
-    Returns:
-        Configured FastAPI application.
+    Instantiates the FastAPI app with metadata, CORS middleware, and all
+    route modules.  The ``lifespan`` context manager handles database
+    engine startup and shutdown.
+
+    Returns
+    -------
+    FastAPI
+        Fully configured FastAPI application ready to serve.
+
+    Notes
+    -----
+    Route prefixes:
+
+    * ``/health`` — health check (no prefix)
+    * ``/metrics`` — Prometheus metrics (no prefix)
+    * ``/api/v1/attributions/`` — attribution CRUD
+    * ``/api/v1/permissions/`` — permission checks
+    * ``/api/v1/copilotkit`` — AG-UI / CopilotKit SSE endpoint
+
+    Examples
+    --------
+    >>> from music_attribution.api.app import create_app
+    >>> app = create_app()
+    >>> app.title
+    'Music Attribution API'
     """
     settings = Settings()  # type: ignore[call-arg]
 

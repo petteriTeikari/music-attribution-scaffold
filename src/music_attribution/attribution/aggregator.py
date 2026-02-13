@@ -1,8 +1,30 @@
 """Multi-source credit aggregation for attribution.
 
-Aggregates credits from multiple ResolvedEntities into a single
-AttributionRecord. Handles disagreements between sources using
-weighted voting based on source reliability.
+Core component of Pipeline 3 (Attribution Engine). Aggregates credits from
+multiple ``ResolvedEntity`` objects into a single ``AttributionRecord``.
+Handles disagreements between sources using weighted voting based on
+source reliability.
+
+Default source reliability weights (from ``constants.SOURCE_RELIABILITY_WEIGHTS``):
+
+- **MusicBrainz** -- highest weight (community-curated, structured data)
+- **Discogs** -- medium weight (community-curated, less structured)
+- **AcoustID** -- medium weight (acoustic fingerprint-based)
+- **File metadata** -- lowest weight (often incomplete or incorrect)
+- **Artist input** -- high weight (authoritative but potentially biased)
+
+Notes
+-----
+Implements the multi-source aggregation described in Teikari (2026),
+Section 5.1. The weighted voting approach ensures that higher-quality
+sources have more influence on the final attribution, while still
+incorporating evidence from all available sources.
+
+See Also
+--------
+music_attribution.attribution.conformal : Calibration of aggregated scores.
+music_attribution.attribution.persistence : Storage of attribution records.
+music_attribution.constants : Source reliability weight definitions.
 """
 
 from __future__ import annotations
@@ -34,7 +56,24 @@ class CreditAggregator:
     """Aggregate credits from resolved entities into attribution records.
 
     Uses weighted voting based on source reliability to handle
-    disagreements between sources.
+    disagreements between sources. Produces a complete ``AttributionRecord``
+    with credits, confidence, assurance level, and provenance chain.
+
+    Parameters
+    ----------
+    source_weights : dict[SourceEnum, float] | None, optional
+        Per-source reliability weight overrides. If ``None``, uses
+        ``SOURCE_RELIABILITY_WEIGHTS`` from ``constants``.
+
+    Attributes
+    ----------
+    _source_weights : dict[SourceEnum, float]
+        Active source reliability weights.
+
+    See Also
+    --------
+    music_attribution.attribution.conformal.ConformalScorer : Calibrate the aggregated score.
+    music_attribution.attribution.priority_queue.ReviewPriorityQueue : Prioritize records for review.
     """
 
     def __init__(self, source_weights: dict[SourceEnum, float] | None = None) -> None:
@@ -48,13 +87,33 @@ class CreditAggregator:
     ) -> AttributionRecord:
         """Aggregate resolved entities into a single AttributionRecord.
 
-        Args:
-            work_entity: The work/recording entity.
-            contributor_entities: List of contributing entities (artists, etc.).
-            roles: Mapping of entity_id to credit role.
+        Builds per-credit confidence scores from source reliability weights,
+        computes overall attribution confidence and source agreement, and
+        initializes the provenance chain with a SCORE event.
 
-        Returns:
-            Complete AttributionRecord.
+        Records with confidence below ``REVIEW_THRESHOLD`` are automatically
+        flagged for human review with priority = ``1.0 - confidence``.
+
+        Parameters
+        ----------
+        work_entity : ResolvedEntity
+            The work or recording entity being attributed.
+        contributor_entities : list[ResolvedEntity]
+            Resolved contributor entities (artists, producers, etc.).
+        roles : dict[uuid.UUID, CreditRoleEnum]
+            Mapping of contributor ``entity_id`` to their credit role
+            (e.g., PERFORMER, COMPOSER, PRODUCER).
+
+        Returns
+        -------
+        AttributionRecord
+            Complete attribution record with credits, confidence,
+            assurance level, conformal set placeholder, and provenance.
+
+        See Also
+        --------
+        music_attribution.attribution.conformal.ConformalScorer.score :
+            Apply conformal calibration to the aggregated record.
         """
         now = datetime.now(UTC)
 
@@ -110,7 +169,25 @@ class CreditAggregator:
         entities: list[ResolvedEntity],
         roles: dict[uuid.UUID, CreditRoleEnum],
     ) -> list[Credit]:
-        """Build credit list from entities and their roles."""
+        """Build credit list from entities and their roles.
+
+        For each contributor entity, computes a per-credit confidence
+        score weighted by the reliability of the entity's contributing
+        sources.
+
+        Parameters
+        ----------
+        entities : list[ResolvedEntity]
+            Contributor entities.
+        roles : dict[uuid.UUID, CreditRoleEnum]
+            Entity ID to role mapping. Defaults to ``PERFORMER`` if
+            the entity ID is not found in the mapping.
+
+        Returns
+        -------
+        list[Credit]
+            One ``Credit`` per contributor entity.
+        """
         credits: list[Credit] = []
         for entity in entities:
             role = roles.get(entity.entity_id, CreditRoleEnum.PERFORMER)
@@ -132,7 +209,26 @@ class CreditAggregator:
         entity: ResolvedEntity,
         sources: list[SourceEnum],
     ) -> float:
-        """Compute weighted confidence from source reliabilities."""
+        """Compute weighted confidence from source reliabilities.
+
+        Multiplies the entity's resolution confidence by each source's
+        reliability weight, then normalizes by total weight. This ensures
+        that entities confirmed by higher-quality sources receive higher
+        credit confidence.
+
+        Parameters
+        ----------
+        entity : ResolvedEntity
+            The contributor entity.
+        sources : list[SourceEnum]
+            Data sources that contributed to this entity's resolution.
+
+        Returns
+        -------
+        float
+            Weighted confidence in range [0.0, 1.0]. Falls back to
+            raw ``resolution_confidence`` if no sources are provided.
+        """
         if not sources:
             return entity.resolution_confidence
 
@@ -146,13 +242,40 @@ class CreditAggregator:
         return weighted_sum / total_weight if total_weight > 0 else 0.0
 
     def _compute_confidence(self, credits: list[Credit]) -> float:
-        """Compute overall attribution confidence."""
+        """Compute overall attribution confidence as mean of credit confidences.
+
+        Parameters
+        ----------
+        credits : list[Credit]
+            Per-contributor credit entries.
+
+        Returns
+        -------
+        float
+            Mean confidence across all credits, or 0.0 if empty.
+        """
         if not credits:
             return 0.0
         return sum(c.confidence for c in credits) / len(credits)
 
     def _compute_source_agreement(self, entities: list[ResolvedEntity]) -> float:
-        """Compute inter-source agreement score."""
+        """Compute inter-source agreement score.
+
+        A simplified measure of how well sources agree on attribution.
+        For single entities, returns the entity's resolution confidence.
+        For multiple entities, returns the mean resolution confidence
+        (capped at 1.0).
+
+        Parameters
+        ----------
+        entities : list[ResolvedEntity]
+            Contributor entities to measure agreement across.
+
+        Returns
+        -------
+        float
+            Agreement score in range [0.0, 1.0].
+        """
         if len(entities) <= 1:
             # Single entity — agreement with itself
             return entities[0].resolution_confidence if entities else 0.0
@@ -163,7 +286,23 @@ class CreditAggregator:
         return min(avg, 1.0)
 
     def _compute_assurance(self, entities: list[ResolvedEntity]) -> AssuranceLevelEnum:
-        """Compute minimum assurance level across all contributors."""
+        """Compute minimum assurance level across all contributors.
+
+        The overall attribution is only as strong as its weakest link.
+        If any contributor has A0 (no data), the entire attribution
+        is rated A0.
+
+        Parameters
+        ----------
+        entities : list[ResolvedEntity]
+            Contributor entities.
+
+        Returns
+        -------
+        AssuranceLevelEnum
+            Minimum assurance level found across all contributors.
+            Returns ``LEVEL_0`` if the entity list is empty.
+        """
         if not entities:
             return AssuranceLevelEnum.LEVEL_0
 

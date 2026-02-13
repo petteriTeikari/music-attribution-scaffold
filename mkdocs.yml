@@ -1,0 +1,193 @@
+# MkDocs Configuration for Music Attribution Scaffold
+# Companion code to: Teikari, P. (2026). Music Attribution with Transparent Confidence. SSRN No. 6109087.
+#
+# Deployment: GitHub Pages (deploy-docs.yml workflow)
+# Local preview: uv run mkdocs serve
+# Build: uv run mkdocs build --strict
+
+strict: true
+
+site_name: Music Attribution Scaffold
+site_description: Open-source research scaffold for music attribution with transparent confidence scoring
+site_author: Petteri Teikari
+site_url: https://petteriTeikari.github.io/music-attribution-scaffold/
+
+repo_name: music-attribution-scaffold
+repo_url: https://github.com/petteriTeikari/music-attribution-scaffold
+
+docs_dir: docs/site
+
+# Theme configuration
+theme:
+  name: material
+  language: en
+
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: indigo
+      accent: deep-orange
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: indigo
+      accent: deep-orange
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.expand
+    - navigation.top
+    - navigation.indexes
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+    - content.code.annotate
+    - toc.follow
+
+  icon:
+    repo: fontawesome/brands/github
+
+# Extensions
+markdown_extensions:
+  # Python Markdown
+  - abbr
+  - admonition
+  - attr_list
+  - def_list
+  - footnotes
+  - md_in_html
+  - tables
+  - toc:
+      permalink: true
+      toc_depth: 3
+
+  # PyMdown Extensions
+  - pymdownx.arithmatex:
+      generic: true
+  - pymdownx.betterem
+  - pymdownx.caret
+  - pymdownx.details
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.keys
+  - pymdownx.mark
+  - pymdownx.smartsymbols
+  - pymdownx.snippets
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - pymdownx.tilde
+
+# Plugins
+plugins:
+  - search:
+      separator: '[\s\-,:!=\[\]()"/]+|(?!\b)(?=[A-Z][a-z])|\.(?!\d)|&[lg]t;'
+
+  # Auto-generate API docs from docstrings
+  - mkdocstrings:
+      default_handler: python
+      enabled: !ENV [ENABLE_MKDOCSTRINGS, true]
+      handlers:
+        python:
+          paths: [src]
+          options:
+            docstring_style: numpy
+            docstring_section_style: spacy
+            show_source: true
+            show_root_heading: true
+            show_root_full_path: false
+            show_symbol_type_heading: true
+            show_symbol_type_toc: true
+            members_order: source
+            merge_init_into_class: true
+            separate_signature: true
+            signature_crossrefs: true
+            show_signature_annotations: true
+            allow_inspection: true
+
+  # Git revision dates
+  - git-revision-date-localized:
+      enable_creation_date: true
+      type: timeago
+      fallback_to_build_date: true
+
+  # Mermaid diagrams
+  - mermaid2
+
+# Extra JavaScript for math rendering
+extra_javascript:
+  - javascripts/mathjax.js
+  - https://unpkg.com/mathjax@3/es5/tex-mml-chtml.js
+
+# Extra CSS
+extra_css:
+  - stylesheets/extra.css
+
+# Navigation structure
+nav:
+  - Home: index.md
+
+  - Getting Started:
+    - getting-started/index.md
+    - Installation: getting-started/installation.md
+    - Quick Start: getting-started/quickstart.md
+
+  - Concepts:
+    - concepts/index.md
+    - Oracle Problem: concepts/oracle-problem.md
+    - Assurance Levels (A0-A3): concepts/assurance-levels.md
+    - Two-Friction Taxonomy: concepts/two-friction-taxonomy.md
+    - Conformal Prediction: concepts/conformal-prediction.md
+    - MCP Consent Infrastructure: concepts/mcp-consent.md
+    - Entity Resolution: concepts/entity-resolution.md
+
+  - User Guide:
+    - user-guide/index.md
+    - Architecture Overview: user-guide/architecture.md
+    - Backend: user-guide/backend.md
+    - Frontend: user-guide/frontend.md
+    - Agentic UI: user-guide/agent.md
+
+  - API Reference:
+    - api-reference/index.md
+    - Schemas: api-reference/schemas.md
+    - ETL Pipeline: api-reference/etl.md
+    - Entity Resolution: api-reference/resolution.md
+    - Attribution Engine: api-reference/attribution.md
+    - REST API: api-reference/api.md
+    - Chat Agent: api-reference/chat.md
+    - MCP Server: api-reference/mcp.md
+
+  - Tutorials:
+    - tutorials/index.md
+    - Reproducing the Paper: tutorials/reproducing-the-paper.md
+    - Adding Data Sources: tutorials/adding-data-sources.md
+    - API Examples: tutorials/api-examples.md
+
+  - Troubleshooting: troubleshooting.md
+
+# Footer
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/petteriTeikari/music-attribution-scaffold
+    - icon: fontawesome/solid/file-lines
+      link: https://papers.ssrn.com/sol3/papers.cfm?abstract_id=6109087

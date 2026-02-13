@@ -1,8 +1,32 @@
 """Graph-based entity resolution via relationship evidence.
 
-Uses relationship graph traversals to resolve entities based on shared
-connections. Two artist records sharing 3+ album relationships are likely
-the same artist, even if names differ slightly.
+Stage 5 of the resolution cascade. Uses relationship graph traversals to
+resolve entities based on shared connections. Two artist records sharing
+3+ album relationships are likely the same artist, even if their names
+differ slightly.
+
+The graph resolver computes confidence from two complementary signals:
+
+- **Jaccard coefficient** of shared neighbor sets (structural similarity).
+- **Absolute shared count** with diminishing returns (3+ shared neighbors
+  is strong evidence regardless of total degree).
+
+The in-memory adjacency graph is suitable for development and testing.
+In production, Apache AGE (PostgreSQL graph extension) provides the same
+traversal semantics with persistent storage and ACID guarantees.
+
+Notes
+-----
+This module implements the graph-based resolution layer described in
+Teikari (2026), Section 4.5. Graph evidence is particularly valuable
+for resolving entities with common names (e.g., "John Smith") where
+string similarity alone is insufficient.
+
+See Also
+--------
+music_attribution.resolution.splink_linkage : Stage 4 (runs before this).
+music_attribution.resolution.llm_disambiguation : Stage 6 (runs after this).
+music_attribution.resolution.graph_store : Persistent graph storage.
 """
 
 from __future__ import annotations
@@ -16,8 +40,21 @@ logger = logging.getLogger(__name__)
 class GraphResolver:
     """Resolve entities using relationship graph evidence.
 
-    Maintains an in-memory adjacency graph of entity relationships.
-    In production, this would query Apache AGE or similar graph database.
+    Maintains an in-memory adjacency graph of entity relationships. Each
+    entity is a node, and relationships (PERFORMED_ON, WROTE, PRODUCED,
+    etc.) form bidirectional edges.
+
+    In production, this would query Apache AGE or a similar graph database.
+    The in-memory implementation provides the same API for testing and
+    development.
+
+    Attributes
+    ----------
+    _graph : dict[str, set[tuple[str, str]]]
+        Adjacency list mapping entity IDs to sets of
+        ``(neighbor_id, relationship_type)`` tuples.
+    _test_ids : dict[str, str]
+        Optional test-only ID mapping for deterministic tests.
     """
 
     def __init__(self) -> None:
@@ -26,12 +63,19 @@ class GraphResolver:
         self._test_ids: dict[str, str] = {}
 
     def add_relationship(self, from_id: str, to_id: str, rel_type: str) -> None:
-        """Add a relationship to the graph.
+        """Add a bidirectional relationship to the graph.
 
-        Args:
-            from_id: Source entity ID.
-            to_id: Target entity ID.
-            rel_type: Relationship type (e.g., PERFORMED_ON, WROTE).
+        Both directions are stored so that neighbor lookups work
+        regardless of edge direction.
+
+        Parameters
+        ----------
+        from_id : str
+            Source entity ID.
+        to_id : str
+            Target entity ID.
+        rel_type : str
+            Relationship type (e.g., ``"PERFORMED_ON"``, ``"WROTE"``).
         """
         self._graph[from_id].add((to_id, rel_type))
         self._graph[to_id].add((from_id, rel_type))
@@ -41,17 +85,27 @@ class GraphResolver:
         entity_id: str,
         min_shared: int = 2,
     ) -> list[tuple[str, float]]:
-        """Find candidate entity matches based on shared relationships.
+        """Find candidate entity matches based on shared neighbor relationships.
 
-        Two entities that share many neighbors (e.g., albums) are likely
-        the same entity or closely related.
+        Two entities that share many neighbors (e.g., both performed on the
+        same albums) are likely the same entity or closely related. The
+        confidence score combines the ratio of shared-to-total neighbors
+        with an absolute shared-count bonus.
 
-        Args:
-            entity_id: Entity to find matches for.
-            min_shared: Minimum shared neighbors to qualify as candidate.
+        Parameters
+        ----------
+        entity_id : str
+            Entity ID to find matches for.
+        min_shared : int, optional
+            Minimum number of shared neighbors to qualify as a candidate.
+            Default is 2.
 
-        Returns:
-            List of (candidate_id, confidence) tuples, sorted descending.
+        Returns
+        -------
+        list[tuple[str, float]]
+            Candidate matches as ``(entity_id, confidence)`` tuples,
+            sorted by confidence descending. Empty list if the entity
+            has no graph relationships.
         """
         if entity_id not in self._graph:
             return []
@@ -79,12 +133,26 @@ class GraphResolver:
     async def score_graph_evidence(self, entity_a: str, entity_b: str) -> float:
         """Score the graph evidence that two entities are the same.
 
-        Args:
-            entity_a: First entity ID.
-            entity_b: Second entity ID.
+        Combines two complementary signals:
 
-        Returns:
-            Confidence score between 0.0 and 1.0.
+        - **Jaccard coefficient**: ``|shared| / |union|`` of neighbor sets.
+        - **Shared count bonus**: ``min(|shared| / 3, 1.0)`` (diminishing
+          returns -- 3+ shared is strong evidence).
+
+        The final score is the average of both signals, capped at 1.0.
+
+        Parameters
+        ----------
+        entity_a : str
+            First entity ID.
+        entity_b : str
+            Second entity ID.
+
+        Returns
+        -------
+        float
+            Confidence score in range [0.0, 1.0]. Returns 0.0 if either
+            entity has no graph relationships or they share no neighbors.
         """
         if entity_a not in self._graph or entity_b not in self._graph:
             return 0.0
@@ -109,12 +177,20 @@ class GraphResolver:
     def _compute_confidence(shared_count: int, total_neighbors: int) -> float:
         """Compute confidence from shared relationship count.
 
-        Args:
-            shared_count: Number of shared neighbors.
-            total_neighbors: Total neighbors of the query entity.
+        Combines the shared-to-total ratio with an absolute count factor
+        (3+ shared neighbors is treated as strong evidence).
 
-        Returns:
-            Confidence score between 0.0 and 1.0.
+        Parameters
+        ----------
+        shared_count : int
+            Number of shared neighbors between query and candidate.
+        total_neighbors : int
+            Total neighbors of the query entity.
+
+        Returns
+        -------
+        float
+            Confidence score in range [0.0, 1.0].
         """
         if total_neighbors == 0:
             return 0.0

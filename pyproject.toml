@@ -59,7 +59,7 @@ dependencies = [
 [project.urls]
 Homepage = "https://doi.org/10.2139/ssrn.6109087"
 Repository = "https://github.com/petteriTeikari/music-attribution-scaffold"
-Documentation = "https://github.com/petteriTeikari/music-attribution-scaffold#readme"
+Documentation = "https://petteriTeikari.github.io/music-attribution-scaffold/"
 "Bug Tracker" = "https://github.com/petteriTeikari/music-attribution-scaffold/issues"
 
 [dependency-groups]
@@ -76,6 +76,14 @@ test = [
     "pytest-cov>=6.0.0",
     "pytest-timeout>=2.3.0",
     "pytest-asyncio>=0.25.0",
+]
+docs = [
+    "mkdocs>=1.6.1",
+    "mkdocs-material>=9.7.1",
+    "mkdocstrings>=1.0.2",
+    "mkdocstrings-python>=2.0.1",
+    "mkdocs-git-revision-date-localized-plugin>=1.5.1",
+    "mkdocs-mermaid2-plugin>=1.2.3",
 ]
 
 [build-system]

@@ -1,11 +1,34 @@
 """Hybrid search with Reciprocal Rank Fusion (RRF).
 
-Combines three search modalities:
-1. Full-text search (LIKE on JSONB fields)
-2. Vector similarity search (cosine distance on entity embeddings)
-3. Graph context (edge neighbors of matched entities)
+Combines three search modalities into a single ranked result set:
 
-Results are fused using RRF: score = Σ(1 / (k + rank_i)) across modalities.
+1. **Text search** -- LIKE queries on JSONB credits and provenance
+   fields (via ``TextSearchService``).
+2. **Vector similarity** -- cosine distance on entity embeddings
+   (via ``EmbeddingMatcher``), mapped back to attribution records.
+3. **Graph context** -- 1-hop edge neighbours of vector-matched
+   entities, providing relational context expansion.
+
+Results from each modality are fused using Reciprocal Rank Fusion::
+
+    RRF_score(d) = sum(1 / (k + rank_i(d))) for each modality i
+
+where ``k = 60`` (standard value from Cormack et al., 2009). This
+produces a robust combined ranking that is insensitive to score
+scale differences between modalities.
+
+Classes
+-------
+HybridSearchResult
+    Named tuple pairing an ``AttributionRecord`` with its RRF score.
+HybridSearchService
+    Orchestrates the three modalities and performs RRF fusion.
+
+See Also
+--------
+music_attribution.search.text_search : Text modality.
+music_attribution.search.vector_search : Vector modality.
+music_attribution.db.models.EdgeModel : Graph edges for context.
 """
 
 from __future__ import annotations
@@ -30,14 +53,40 @@ RRF_K = 60
 
 
 class HybridSearchResult(NamedTuple):
-    """A single hybrid search result with fused score."""
+    """A single hybrid search result with fused RRF score.
+
+    Attributes
+    ----------
+    record : AttributionRecord
+        Full attribution record (BO-3 boundary object).
+    rrf_score : float
+        Reciprocal Rank Fusion score (higher = more relevant).
+        Not bounded to [0, 1]; maximum theoretical value is
+        ``3 / (k + 1)`` when a document ranks first in all modalities.
+    """
 
     record: AttributionRecord
     rrf_score: float
 
 
 class HybridSearchService:
-    """Hybrid search combining text, vector, and graph modalities via RRF."""
+    """Hybrid search combining text, vector, and graph modalities via RRF.
+
+    Orchestrates three independent search modalities and fuses their
+    rankings using Reciprocal Rank Fusion. Each modality produces a
+    ranked list of attribution record IDs; the RRF algorithm combines
+    these into a single ranking without requiring score normalisation.
+
+    The service is stateless -- each ``search()`` call runs all three
+    modalities independently and fuses the results.
+
+    Attributes
+    ----------
+    _text_search : TextSearchService
+        LIKE-based text search on JSONB fields.
+    _matcher : EmbeddingMatcher
+        Embedding model for query vectorisation.
+    """
 
     def __init__(self) -> None:
         self._text_search = TextSearchService()
@@ -50,15 +99,33 @@ class HybridSearchService:
         limit: int = 50,
         session: AsyncSession,
     ) -> list[HybridSearchResult]:
-        """Run hybrid search across all modalities.
+        """Run hybrid search across all three modalities with RRF fusion.
 
-        Args:
-            query: Search query text.
-            limit: Maximum results to return.
-            session: Active async database session.
+        Execution order:
 
-        Returns:
-            Ranked list of HybridSearchResult sorted by RRF score descending.
+        1. Text search (LIKE on credits and provenance JSONB).
+        2. Vector search (embed query, cosine similarity on entity
+           embeddings, map entity IDs to attribution IDs).
+        3. Graph context (1-hop neighbours of vector-matched entities,
+           mapped to attribution IDs).
+        4. RRF fusion across all modalities.
+        5. Fetch full ``AttributionRecord`` objects for top results.
+
+        Parameters
+        ----------
+        query : str
+            Free-text search query.
+        limit : int, optional
+            Maximum number of results to return. Default is 50.
+        session : AsyncSession
+            Active async database session for all queries.
+
+        Returns
+        -------
+        list[HybridSearchResult]
+            Ranked list of results sorted by RRF score descending.
+            Each result pairs an ``AttributionRecord`` with its
+            fused score.
         """
         # Collect per-attribution_id rank from each modality
         # rank is 1-based position in that modality's result list
@@ -144,10 +211,26 @@ class HybridSearchService:
         limit: int,
         session: AsyncSession,
     ) -> list[tuple[uuid.UUID, float]]:
-        """Embed query text and find similar entity embeddings.
+        """Embed the query text and find similar entity embeddings.
 
-        Returns:
-            List of (entity_id, similarity) sorted by similarity descending.
+        Uses the ``EmbeddingMatcher`` to vectorise the query, then
+        computes cosine similarity against all entity embeddings in
+        the database. Similarity scores are clamped to [0.0, 1.0].
+
+        Parameters
+        ----------
+        query : str
+            Search query text to embed.
+        limit : int
+            Maximum number of similar entities to return.
+        session : AsyncSession
+            Active async database session.
+
+        Returns
+        -------
+        list[tuple[uuid.UUID, float]]
+            List of ``(entity_id, similarity)`` sorted by similarity
+            descending, truncated to ``limit``.
         """
         query_embedding = await self._matcher.embed(query)
 
@@ -172,11 +255,30 @@ class HybridSearchService:
         *,
         session: AsyncSession,
     ) -> list[uuid.UUID]:
-        """Map entity IDs to attribution record IDs.
+        """Map resolved entity IDs to attribution record IDs.
 
-        An entity appears in attribution records via the credits JSONB
-        (as entity_id in credit entries) or as work_entity_id.
-        For efficiency, we check work_entity_id and credits text.
+        An entity can appear in attribution records in two places:
+
+        1. As ``work_entity_id`` (the work itself).
+        2. Inside the ``credits`` JSONB array (as ``entity_id`` in
+           individual credit entries).
+
+        For cross-database compatibility, the credits check uses
+        ``LIKE`` on the stringified JSONB rather than PostgreSQL-specific
+        JSONB operators.
+
+        Parameters
+        ----------
+        entity_ids : list[uuid.UUID]
+            Entity UUIDs to map.
+        session : AsyncSession
+            Active async database session.
+
+        Returns
+        -------
+        list[uuid.UUID]
+            Attribution record UUIDs that reference any of the given
+            entities, ordered by confidence score descending.
         """
         if not entity_ids:
             return []
@@ -205,7 +307,24 @@ class HybridSearchService:
         *,
         session: AsyncSession,
     ) -> set[uuid.UUID]:
-        """Find 1-hop graph neighbors of the given entities."""
+        """Find 1-hop graph neighbours of the given entities.
+
+        Queries the ``edges`` table for any edge where the given
+        entities appear as either source or target. Returns the set
+        of neighbour entity IDs, excluding the input entities.
+
+        Parameters
+        ----------
+        entity_ids : set[uuid.UUID]
+            Seed entity UUIDs to expand.
+        session : AsyncSession
+            Active async database session.
+
+        Returns
+        -------
+        set[uuid.UUID]
+            Neighbour entity UUIDs (excluding the input set).
+        """
         if not entity_ids:
             return set()
 

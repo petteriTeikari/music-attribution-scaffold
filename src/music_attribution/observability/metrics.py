@@ -1,13 +1,42 @@
 """Prometheus application metrics for the attribution scaffold.
 
-Domain-specific metrics that teach what matters in a music attribution
-system: confidence distributions, source agreement rates, drift events,
-agent latency, and center-bias detections.
+Defines domain-specific metrics that capture what matters in a music
+attribution system: confidence distributions, source agreement rates,
+drift events, agent tool latency, and center-bias detections.
 
-Usage:
-    from music_attribution.observability.metrics import get_metrics
-    metrics = get_metrics()
-    metrics.attribution_requests.labels(method="GET", endpoint="/api/v1/attributions", status="200").inc()
+The module provides two usage patterns:
+
+1. **Production**: Use ``get_metrics()`` to obtain a singleton
+   ``AppMetrics`` instance backed by the default Prometheus registry.
+2. **Testing**: Use ``create_metrics(CollectorRegistry())`` to obtain
+   an isolated instance that does not conflict with other tests.
+
+Usage
+-----
+>>> from music_attribution.observability.metrics import get_metrics
+>>> metrics = get_metrics()
+>>> metrics.attribution_requests.labels(method="GET", endpoint="/api/v1/attributions", status="200").inc()
+
+Metric Instruments
+------------------
+attribution_requests_total : Counter
+    Total HTTP requests to attribution endpoints, labelled by
+    method, endpoint, and status.
+attribution_confidence_score : Histogram
+    Distribution of attribution confidence scores (0.0--1.0 in
+    0.05 increments), labelled by assurance level.
+agent_response_latency_seconds : Histogram
+    Agent tool call response latency, labelled by tool name.
+drift_detected_total : Counter
+    Number of drift events detected by ``DriftDetector``, labelled
+    by drift type.
+center_bias_detections_total : Counter
+    Number of center-bias flags raised in feedback cards.
+
+See Also
+--------
+music_attribution.quality.drift_detector : Increments ``drift_detected``.
+music_attribution.chat.agent : Observed by ``agent_latency``.
 """
 
 from __future__ import annotations
@@ -34,8 +63,25 @@ _CONFIDENCE_BUCKETS = tuple(i / 20 for i in range(21))
 class AppMetrics:
     """Container for all application Prometheus metrics.
 
-    Using a dataclass rather than module-level globals allows
-    isolated registries in tests and prevents collector conflicts.
+    Using a frozen dataclass rather than module-level globals allows
+    isolated registries in tests (preventing collector name conflicts)
+    and makes the set of metrics explicit and type-safe.
+
+    Attributes
+    ----------
+    attribution_requests : Counter
+        Total HTTP requests to attribution endpoints. Labels:
+        ``method``, ``endpoint``, ``status``.
+    confidence_histogram : Histogram
+        Distribution of attribution confidence scores. Labels:
+        ``assurance_level``. Buckets: 0.0--1.0 in 0.05 steps.
+    agent_latency : Histogram
+        Agent tool call response latency in seconds. Labels: ``tool``.
+        Buckets: 10ms to 10s (logarithmic).
+    drift_detected : Counter
+        Number of drift events detected. Labels: ``drift_type``.
+    center_bias_detections : Counter
+        Number of center-bias flags raised (no labels).
     """
 
     attribution_requests: Counter
@@ -46,14 +92,24 @@ class AppMetrics:
 
 
 def create_metrics(registry: CollectorRegistry | None = None) -> AppMetrics:
-    """Create a fresh set of application metrics.
+    """Create a fresh set of application Prometheus metrics.
 
-    Args:
-        registry: Prometheus CollectorRegistry. Uses a new registry if
-                  None is provided (useful for testing).
+    Each call creates new metric instruments registered with the
+    given (or a new) ``CollectorRegistry``. For production, pass the
+    default Prometheus ``REGISTRY``; for tests, pass a fresh
+    ``CollectorRegistry()`` to avoid name collisions.
 
-    Returns:
-        AppMetrics dataclass with all metric instruments.
+    Parameters
+    ----------
+    registry : CollectorRegistry | None, optional
+        Prometheus collector registry to register metrics with.
+        If ``None``, a new isolated registry is created (useful for
+        testing).
+
+    Returns
+    -------
+    AppMetrics
+        Frozen dataclass containing all metric instruments.
     """
     if registry is None:
         registry = CollectorRegistry()
@@ -103,8 +159,15 @@ _default_metrics: AppMetrics | None = None
 def get_metrics() -> AppMetrics:
     """Get or create the default application metrics singleton.
 
-    Returns:
-        AppMetrics instance using the default Prometheus registry.
+    Uses module-level caching to ensure metrics are registered exactly
+    once with the default Prometheus ``REGISTRY``. Subsequent calls
+    return the same ``AppMetrics`` instance.
+
+    Returns
+    -------
+    AppMetrics
+        Singleton ``AppMetrics`` instance using the default Prometheus
+        registry.
     """
     global _default_metrics  # noqa: PLW0603
     if _default_metrics is None:
