@@ -1,0 +1,167 @@
+# ML Model Monitoring
+#
+# Monitoring confidence calibration and model drift in production.
+
+decision_id: ml_monitoring
+title: "ML Model Monitoring"
+description: >
+  Determines how attribution confidence scores are monitored for calibration
+  drift, distribution shift, and degradation over time. The scaffold already
+  includes a DriftDetector cross-cutting concern; this decision covers whether
+  to adopt a dedicated ML monitoring framework or extend the custom approach.
+
+decision_level: L5_operations
+status: open
+last_updated: 2026-02-13
+
+options:
+  - option_id: none
+    title: "No Dedicated ML Monitoring"
+    description: >
+      Rely on application-level logging and observability stack for confidence
+      score tracking. No dedicated ML monitoring framework. Acceptable when
+      attribution models are simple or infrequently updated.
+    prior_probability: 0.30
+    status: viable
+
+  - option_id: evidently
+    title: "Evidently AI"
+    description: >
+      Open-source ML monitoring with data drift detection, model performance
+      tracking, and HTML report generation. Python-native, integrates with
+      pandas DataFrames. Supports custom metrics for confidence calibration.
+      Free self-hosted, paid cloud dashboard.
+    prior_probability: 0.30
+    status: viable
+
+  - option_id: whylogs
+    title: "WhyLogs (WhyLabs)"
+    description: >
+      Lightweight data logging library that profiles datasets and detects
+      drift via statistical tests. Approximate profiling keeps memory usage
+      constant regardless of data size. WhyLabs platform for visualization.
+    prior_probability: 0.15
+    status: viable
+    constraints:
+      - "WhyLabs platform for full visualization"
+      - "Less rich custom metric support than Evidently"
+
+  - option_id: custom_drift
+    title: "Custom DriftDetector (Current Scaffold)"
+    description: >
+      Extend the existing DriftDetector cross-cutting concern with conformal
+      prediction calibration checks, PSI/KL-divergence for distribution shift,
+      and alerting via the observability stack. No external dependency, full
+      control over attribution-specific drift metrics.
+    prior_probability: 0.25
+    status: recommended
+
+conditional_on:
+  - parent_decision_id: ai_framework_strategy
+    influence_strength: moderate
+    conditional_table:
+      - given_parent_option: direct_api_pydantic
+        then_probabilities:
+          none: 0.20
+          evidently: 0.30
+          whylogs: 0.15
+          custom_drift: 0.35
+      - given_parent_option: lightweight_sdk
+        then_probabilities:
+          none: 0.25
+          evidently: 0.30
+          whylogs: 0.15
+          custom_drift: 0.30
+      - given_parent_option: orchestration_framework
+        then_probabilities:
+          none: 0.15
+          evidently: 0.35
+          whylogs: 0.20
+          custom_drift: 0.30
+      - given_parent_option: no_llm
+        then_probabilities:
+          none: 0.45
+          evidently: 0.20
+          whylogs: 0.15
+          custom_drift: 0.20
+
+  - parent_decision_id: observability_stack
+    influence_strength: moderate
+    conditional_table:
+      - given_parent_option: langfuse_plus_platform
+        then_probabilities:
+          none: 0.25
+          evidently: 0.25
+          whylogs: 0.15
+          custom_drift: 0.35
+      - given_parent_option: grafana_stack
+        then_probabilities:
+          none: 0.20
+          evidently: 0.35
+          whylogs: 0.15
+          custom_drift: 0.30
+      - given_parent_option: posthog_sentry
+        then_probabilities:
+          none: 0.25
+          evidently: 0.30
+          whylogs: 0.15
+          custom_drift: 0.30
+      - given_parent_option: minimal_logging
+        then_probabilities:
+          none: 0.45
+          evidently: 0.15
+          whylogs: 0.10
+          custom_drift: 0.30
+
+archetype_weights:
+  engineer_heavy_startup:
+    probability_overrides:
+      none: 0.10
+      evidently: 0.35
+      whylogs: 0.20
+      custom_drift: 0.35
+    rationale: "Engineers appreciate Evidently's data science tooling and extend custom DriftDetector."
+
+  musician_first_team:
+    probability_overrides:
+      none: 0.50
+      evidently: 0.20
+      whylogs: 0.05
+      custom_drift: 0.25
+    rationale: "ML monitoring is low priority; custom DriftDetector provides minimal viable coverage."
+
+  solo_hacker:
+    probability_overrides:
+      none: 0.45
+      evidently: 0.15
+      whylogs: 0.05
+      custom_drift: 0.35
+    rationale: "Extend existing DriftDetector rather than adding framework overhead."
+
+  well_funded_startup:
+    probability_overrides:
+      none: 0.10
+      evidently: 0.40
+      whylogs: 0.20
+      custom_drift: 0.30
+    rationale: "Invest in Evidently for production ML monitoring with proper dashboards."
+
+volatility:
+  classification: evolving
+  last_assessed: 2026-02-13
+  next_review: 2026-05-13
+  change_drivers:
+    - "Evidently AI feature roadmap"
+    - "Conformal prediction calibration becoming standard practice"
+    - "Integration with LLM observability tools (Langfuse)"
+
+domain_applicability:
+  music_attribution: 1.0
+  dpp_traceability: 0.8
+  generic_graph_rag: 0.6
+
+tags:
+  - operations
+  - ml-monitoring
+  - drift-detection
+  - confidence-calibration

@@ -1,0 +1,186 @@
+# EthicsOps & Governance-as-Code
+#
+# Automated ethics review and governance for attribution systems.
+
+decision_id: ethics_governance
+title: "EthicsOps & Governance-as-Code"
+description: >
+  Determines the approach to systematic ethics review and governance
+  documentation for attribution and confidence scoring systems. Music
+  attribution directly affects artist livelihoods — miscalibrated confidence
+  scores or biased entity resolution can cause real financial harm. This
+  decision covers model cards, calibration audits, and governance workflows.
+
+decision_level: L5_operations
+status: open
+last_updated: 2026-02-13
+
+options:
+  - option_id: none
+    title: "No Formal Governance"
+    description: >
+      Ethics considerations handled ad-hoc through code review and team
+      discussion. No structured documentation of model behavior, bias
+      analysis, or calibration audits. Acceptable for early-stage internal
+      tooling with limited external impact.
+    prior_probability: 0.35
+    status: viable
+
+  - option_id: model_cards
+    title: "Model Cards + Calibration Docs"
+    description: >
+      Publish model cards (Mitchell et al., 2019) for each attribution
+      component documenting intended use, limitations, bias analysis, and
+      performance metrics. Include conformal prediction calibration reports
+      showing coverage guarantees and confidence interval accuracy. Maps
+      directly to A0-A3 assurance level documentation requirements.
+    prior_probability: 0.35
+    status: recommended
+    subtypes:
+      - id: model_cards_only
+        title: "Model Cards Only"
+        description: >
+          Standard model cards documenting intended use, training data,
+          and performance across demographic groups.
+        maps_to: "Conformal prediction calibration documentation in attribution engine"
+      - id: model_cards_plus_calibration
+        title: "Model Cards + Calibration Reports"
+        description: >
+          Model cards extended with conformal prediction calibration
+          reports, coverage probability audits, and A0-A3 assurance
+          level compliance documentation.
+
+  - option_id: full_governance
+    title: "Full Governance Framework"
+    description: >
+      Comprehensive governance-as-code: model cards, automated bias testing
+      in CI, calibration regression tests, ethics review board workflow
+      (GitHub issue template + approval gates), data lineage documentation,
+      and EU AI Act compliance artifacts. Significant overhead but provides
+      defensible governance posture for regulated markets.
+    prior_probability: 0.30
+    status: viable
+    constraints:
+      - "Dedicated governance staffing or rotating review duty"
+      - "CI pipeline time increase for bias/calibration checks"
+      - "Template and workflow maintenance overhead"
+
+conditional_on:
+  - parent_decision_id: regulatory_posture
+    influence_strength: strong
+    conditional_table:
+      - given_parent_option: minimal_compliance
+        then_probabilities:
+          none: 0.55
+          model_cards: 0.30
+          full_governance: 0.15
+      - given_parent_option: proactive_compliance
+        then_probabilities:
+          none: 0.15
+          model_cards: 0.45
+          full_governance: 0.40
+      - given_parent_option: compliance_first
+        then_probabilities:
+          none: 0.05
+          model_cards: 0.30
+          full_governance: 0.65
+
+  - parent_decision_id: target_market_segment
+    influence_strength: moderate
+    conditional_table:
+      - given_parent_option: independent_creators
+        then_probabilities:
+          none: 0.40
+          model_cards: 0.35
+          full_governance: 0.25
+      - given_parent_option: mid_tier_labels
+        then_probabilities:
+          none: 0.30
+          model_cards: 0.40
+          full_governance: 0.30
+      - given_parent_option: enterprise_rights_orgs
+        then_probabilities:
+          none: 0.10
+          model_cards: 0.35
+          full_governance: 0.55
+      - given_parent_option: ai_platform_consumers
+        then_probabilities:
+          none: 0.20
+          model_cards: 0.40
+          full_governance: 0.40
+
+  - parent_decision_id: provenance_strategy
+    influence_strength: moderate
+    conditional_table:
+      - given_parent_option: metadata_only
+        then_probabilities:
+          none: 0.45
+          model_cards: 0.35
+          full_governance: 0.20
+      - given_parent_option: citation_graph
+        then_probabilities:
+          none: 0.25
+          model_cards: 0.40
+          full_governance: 0.35
+      - given_parent_option: full_provenance_chain
+        then_probabilities:
+          none: 0.10
+          model_cards: 0.30
+          full_governance: 0.60
+
+archetype_weights:
+  engineer_heavy_startup:
+    probability_overrides:
+      none: 0.20
+      model_cards: 0.40
+      full_governance: 0.40
+    rationale: "Engineers build governance into CI — calibration tests and automated model cards."
+
+  musician_first_team:
+    probability_overrides:
+      none: 0.30
+      model_cards: 0.45
+      full_governance: 0.25
+    rationale: "Artists care deeply about fairness — model cards document who benefits and who is harmed."
+
+  solo_hacker:
+    probability_overrides:
+      none: 0.55
+      model_cards: 0.30
+      full_governance: 0.15
+    rationale: "Lightweight model cards as conscience check; full governance is overhead."
+
+  well_funded_startup:
+    probability_overrides:
+      none: 0.10
+      model_cards: 0.35
+      full_governance: 0.55
+    rationale: "Full governance framework for investor confidence and regulatory readiness."
+
+volatility:
+  classification: evolving
+  last_assessed: 2026-02-13
+  next_review: 2026-05-13
+  change_drivers:
+    - "EU AI Act enforcement timeline (high-risk system classification)"
+    - "Industry model card standardization"
+    - "Conformal prediction adoption in production ML"
+    - "Public scrutiny of AI attribution fairness"
+
+domain_applicability:
+  music_attribution: 1.0
+  dpp_traceability: 0.9
+  generic_graph_rag: 0.7
+
+tags:
+  - operations
+  - ethics
+  - governance
+  - model-cards
+  - calibration
+  - eu-ai-act
+
+references:
+  - "Mitchell et al. (2019) Model Cards for Model Reporting"
+  - "A0-A3 assurance levels in SSRN No. 6109087"
+  - "../schemas/confidence-scoring.md"

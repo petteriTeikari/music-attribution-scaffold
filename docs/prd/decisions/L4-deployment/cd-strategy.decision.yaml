@@ -1,0 +1,156 @@
+# Continuous Deployment Strategy
+#
+# How code changes are deployed to production environments.
+
+decision_id: cd_strategy
+title: "Continuous Deployment Strategy"
+description: >
+  Determines how validated code changes reach production. Distinct from
+  CI/CD pipeline tooling (ci_cd_pipeline) — this decision covers the
+  deployment mechanism itself: push-based vs pull-based (GitOps), rollback
+  strategy, and environment promotion flow.
+
+decision_level: L4_deployment
+status: open
+last_updated: 2026-02-13
+
+options:
+  - option_id: github_actions_deploy
+    title: "GitHub Actions Deploy"
+    description: >
+      Push-based deployment triggered by GitHub Actions workflows on merge
+      to main. Docker build, push to registry, deploy via SSH/API call.
+      Simple, well-understood, works with any hosting platform.
+    prior_probability: 0.40
+    status: recommended
+
+  - option_id: platform_native
+    title: "Platform Native Auto-Deploy"
+    description: >
+      Git-push triggers automatic deployment via Render, Railway, Vercel,
+      or Fly.io native integrations. Zero deployment config — the platform
+      watches the repo. Fast iteration but limited rollback granularity.
+    prior_probability: 0.30
+    status: viable
+
+  - option_id: argocd
+    title: "Argo CD (GitOps)"
+    description: >
+      Pull-based GitOps deployment for Kubernetes. Declarative desired state
+      in Git, Argo CD reconciles cluster to match. Excellent audit trail,
+      drift detection, and multi-environment promotion. Requires Kubernetes.
+    prior_probability: 0.20
+    status: viable
+    constraints:
+      - "Kubernetes cluster required"
+      - "GitOps manifest management overhead"
+      - "Argo CD server deployment and maintenance"
+
+  - option_id: flux
+    title: "Flux CD (GitOps)"
+    description: >
+      CNCF GitOps toolkit for Kubernetes. Lighter weight than Argo CD,
+      controller-based reconciliation, Helm and Kustomize native support.
+      Less UI polish than Argo CD but tighter Kubernetes integration.
+    prior_probability: 0.10
+    status: viable
+    constraints:
+      - "Kubernetes cluster required"
+      - "Less visual UI than Argo CD"
+
+conditional_on:
+  - parent_decision_id: compute_platform
+    influence_strength: strong
+    conditional_table:
+      - given_parent_option: hetzner_vps
+        then_probabilities:
+          github_actions_deploy: 0.55
+          platform_native: 0.05
+          argocd: 0.25
+          flux: 0.15
+      - given_parent_option: render_railway
+        then_probabilities:
+          github_actions_deploy: 0.20
+          platform_native: 0.65
+          argocd: 0.05
+          flux: 0.10
+      - given_parent_option: fly_io
+        then_probabilities:
+          github_actions_deploy: 0.40
+          platform_native: 0.40
+          argocd: 0.10
+          flux: 0.10
+      - given_parent_option: aws_gcp_azure
+        then_probabilities:
+          github_actions_deploy: 0.30
+          platform_native: 0.10
+          argocd: 0.35
+          flux: 0.25
+
+  - parent_decision_id: container_strategy
+    influence_strength: moderate
+    conditional_table:
+      - given_parent_option: docker_compose
+        then_probabilities:
+          github_actions_deploy: 0.50
+          platform_native: 0.30
+          argocd: 0.10
+          flux: 0.10
+      - given_parent_option: kubernetes
+        then_probabilities:
+          github_actions_deploy: 0.15
+          platform_native: 0.05
+          argocd: 0.45
+          flux: 0.35
+
+archetype_weights:
+  engineer_heavy_startup:
+    probability_overrides:
+      github_actions_deploy: 0.30
+      platform_native: 0.10
+      argocd: 0.35
+      flux: 0.25
+    rationale: "Engineers favor GitOps for reproducibility and audit trail."
+
+  musician_first_team:
+    probability_overrides:
+      github_actions_deploy: 0.30
+      platform_native: 0.55
+      argocd: 0.10
+      flux: 0.05
+    rationale: "Platform auto-deploy eliminates deployment operations entirely."
+
+  solo_hacker:
+    probability_overrides:
+      github_actions_deploy: 0.35
+      platform_native: 0.55
+      argocd: 0.05
+      flux: 0.05
+    rationale: "Auto-deploy for speed. GitHub Actions when custom steps needed."
+
+  well_funded_startup:
+    probability_overrides:
+      github_actions_deploy: 0.30
+      platform_native: 0.15
+      argocd: 0.35
+      flux: 0.20
+    rationale: "GitOps for production environments, platform native for staging."
+
+volatility:
+  classification: stable
+  last_assessed: 2026-02-13
+  next_review: 2026-05-13
+  change_drivers:
+    - "Migration to Kubernetes"
+    - "Multi-environment promotion requirements"
+    - "Compliance audit trail needs"
+
+domain_applicability:
+  music_attribution: 1.0
+  dpp_traceability: 1.0
+  generic_graph_rag: 1.0
+
+tags:
+  - deployment
+  - cd
+  - gitops
