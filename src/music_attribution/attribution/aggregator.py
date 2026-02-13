@@ -11,6 +11,7 @@ import logging
 import uuid
 from datetime import UTC, datetime
 
+from music_attribution.constants import REVIEW_THRESHOLD, SOURCE_RELIABILITY_WEIGHTS
 from music_attribution.schemas.attribution import (
     AttributionRecord,
     ConformalSet,
@@ -28,15 +29,6 @@ from music_attribution.schemas.resolved import ResolvedEntity
 
 logger = logging.getLogger(__name__)
 
-# Default source reliability weights (0.0-1.0)
-_SOURCE_WEIGHTS: dict[SourceEnum, float] = {
-    SourceEnum.MUSICBRAINZ: 0.95,
-    SourceEnum.DISCOGS: 0.85,
-    SourceEnum.ACOUSTID: 0.80,
-    SourceEnum.FILE_METADATA: 0.70,
-    SourceEnum.ARTIST_INPUT: 0.60,
-}
-
 
 class CreditAggregator:
     """Aggregate credits from resolved entities into attribution records.
@@ -46,7 +38,7 @@ class CreditAggregator:
     """
 
     def __init__(self, source_weights: dict[SourceEnum, float] | None = None) -> None:
-        self._source_weights = source_weights or _SOURCE_WEIGHTS
+        self._source_weights = source_weights or SOURCE_RELIABILITY_WEIGHTS
 
     async def aggregate(
         self,
@@ -106,7 +98,7 @@ class CreditAggregator:
             conformal_set=conformal,
             source_agreement=agreement,
             provenance_chain=provenance,
-            needs_review=confidence < 0.5,
+            needs_review=confidence < REVIEW_THRESHOLD,
             review_priority=1.0 - confidence,
             created_at=now,
             updated_at=now,

@@ -12,7 +12,7 @@
 
 network:
   name: "Probabilistic PRD Decision Network"
-  version: "1.9.0"
+  version: "2.0.0"
   last_updated: 2026-02-13
   description: >
     Bayesian decision network for the Music Attribution Scaffold.
@@ -160,6 +160,16 @@ nodes:
     level: L3_components
     file: L3-components/external-registry-integration.decision.yaml
     title: "External Registry Integration"
+
+  - id: compliance_framework_mapping
+    level: L3_components
+    file: L3-components/compliance-framework-mapping.decision.yaml
+    title: "Compliance Framework Mapping (ISO 42001 vs EU AI Act)"
+
+  - id: tdm_rights_reservation
+    level: L3_components
+    file: L3-components/tdm-rights-reservation.decision.yaml
+    title: "TDM Rights Reservation Infrastructure"
 
   # L4: Deployment Decisions
   - id: compute_platform
@@ -696,6 +706,44 @@ edges:
     to: external_registry_integration
     influence: moderate
     rationale: "Registry integrations require engineering investment and commercial agreements"
+
+  # --- Regulatory/Compliance Framework edges (v2.0.0) ---
+
+  # L1 → L3 edges (compliance framework mapping)
+  - from: regulatory_posture
+    to: compliance_framework_mapping
+    influence: strong
+    rationale: "Regulatory posture determines which compliance frameworks to adopt"
+
+  # L3 → L5 edges (compliance framework → ethics governance)
+  - from: compliance_framework_mapping
+    to: ethics_governance
+    influence: moderate
+    rationale: "Framework mapping (ISO 42001 vs EU AI Act) informs governance-as-code"
+
+  # L3 → L5 edges (compliance framework → policy as code)
+  - from: compliance_framework_mapping
+    to: policy_as_code
+    influence: moderate
+    rationale: "Dual-framework compliance requires policy-as-code for automated checks"
+
+  # L1 → L3 edges (TDM rights reservation)
+  - from: regulatory_posture
+    to: tdm_rights_reservation
+    influence: strong
+    rationale: "Regulatory posture determines depth of TDM reservation infrastructure"
+
+  # L2 → L3 edges (provenance → TDM)
+  - from: provenance_strategy
+    to: tdm_rights_reservation
+    influence: moderate
+    rationale: "Provenance strategy determines how rights reservations are tracked"
+
+  # L3 → L3 edges (rights management → TDM)
+  - from: rights_management_scope
+    to: tdm_rights_reservation
+    influence: moderate
+    rationale: "Rights scope determines granularity of TDM reservations (recording vs full bundle)"
 
   # --- xOps Expansion Edges (v1.9.0) ---
 

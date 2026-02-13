@@ -4,3 +4,5 @@ Defines the 5-stage attribution pipeline as a Pydantic model
 (data, not code) with a generic runner that validates and executes
 stages in topological order.
 """
+
+from __future__ import annotations

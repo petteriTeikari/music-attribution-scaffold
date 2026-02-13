@@ -293,3 +293,56 @@ class RevenueModelEnum(StrEnum):
     PRO_RATA_MONTHLY = "PRO_RATA_MONTHLY"
     PER_GENERATION = "PER_GENERATION"
     INFLUENCE_BASED = "INFLUENCE_BASED"
+
+
+# --- Regulatory/Compliance Enums (ISO 42001 vs EU AI Act) ---
+
+
+class RegulatoryFrameworkEnum(StrEnum):
+    """Applicable regulatory and governance frameworks.
+
+    ISO 42001 defines internal AI governance roles; EU AI Act defines
+    supply chain liability actors. They have zero terminological overlap
+    and must be tracked separately.
+    """
+
+    ISO_42001 = "ISO_42001"
+    EU_AI_ACT = "EU_AI_ACT"
+    GPAI_CODE_OF_PRACTICE = "GPAI_CODE_OF_PRACTICE"
+    DSM_DIRECTIVE = "DSM_DIRECTIVE"
+    ESPR_DPP = "ESPR_DPP"
+    GDPR = "GDPR"
+
+
+class ComplianceActorEnum(StrEnum):
+    """EU AI Act supply chain actors (Art. 3).
+
+    These are distinct from ISO 42001 internal governance roles (Top
+    Management, AI System Owner, Internal Audit). An organization may
+    simultaneously hold multiple actor classifications across different
+    AI systems.
+    """
+
+    PROVIDER = "PROVIDER"
+    DEPLOYER = "DEPLOYER"
+    AUTHORISED_REPRESENTATIVE = "AUTHORISED_REPRESENTATIVE"
+    IMPORTER = "IMPORTER"
+    DISTRIBUTOR = "DISTRIBUTOR"
+    PRODUCT_MANUFACTURER = "PRODUCT_MANUFACTURER"
+
+
+class TdmReservationMethodEnum(StrEnum):
+    """Text-and-data-mining rights reservation methods.
+
+    Under EU DSM Directive Art. 4, copyright holders can opt out of TDM
+    via machine-readable reservation. The GPAI Code of Practice (July 2025)
+    requires providers to respect robots.txt and emerging protocols.
+    Music has a structural gap: robots.txt is web-only and does not cover
+    audio content accessed via APIs or streaming platforms.
+    """
+
+    ROBOTS_TXT = "ROBOTS_TXT"
+    LLMS_TXT = "LLMS_TXT"
+    MACHINE_READABLE_TAG = "MACHINE_READABLE_TAG"
+    RIGHTS_RESERVATION_API = "RIGHTS_RESERVATION_API"
+    MCP_PERMISSION_QUERY = "MCP_PERMISSION_QUERY"

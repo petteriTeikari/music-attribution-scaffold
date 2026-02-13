@@ -14,6 +14,7 @@ from music_attribution.schemas.enums import (
     AttributionMethodEnum,
     CalibrationStatusEnum,
     CertificationTypeEnum,
+    ComplianceActorEnum,
     ConfidenceMethodEnum,
     ConfidenceTrendEnum,
     ConflictSeverityEnum,
@@ -27,12 +28,14 @@ from music_attribution.schemas.enums import (
     PermissionValueEnum,
     PipelineFeedbackTypeEnum,
     ProvenanceEventTypeEnum,
+    RegulatoryFrameworkEnum,
     RelationshipTypeEnum,
     ResolutionMethodEnum,
     RevenueModelEnum,
     ReviewerRoleEnum,
     RightsTypeEnum,
     SourceEnum,
+    TdmReservationMethodEnum,
     UncertaintyDimensionEnum,
     UncertaintySourceEnum,
     WatermarkTypeEnum,
@@ -135,10 +138,10 @@ class TestRevenueModelEnum:
 
 
 class TestAllNewEnumsAreStrEnum:
-    """Verify all 6 new enums inherit from StrEnum (Task B1)."""
+    """Verify all new enums inherit from StrEnum."""
 
     def test_all_new_enums_are_str_enum(self) -> None:
-        """All 6 new enums must be StrEnum subclasses."""
+        """All new enums must be StrEnum subclasses."""
         new_enums = [
             AttributionMethodEnum,
             RightsTypeEnum,
@@ -146,6 +149,9 @@ class TestAllNewEnumsAreStrEnum:
             CertificationTypeEnum,
             WatermarkTypeEnum,
             RevenueModelEnum,
+            RegulatoryFrameworkEnum,
+            ComplianceActorEnum,
+            TdmReservationMethodEnum,
         ]
         for enum_cls in new_enums:
             assert issubclass(enum_cls, StrEnum), f"{enum_cls.__name__} is not a StrEnum"
@@ -206,3 +212,68 @@ class TestPermissionTypeFinegrainedAI:
             "DERIVATIVE_WORK",
         }
         assert original <= values, f"Missing original values: {original - values}"
+
+
+# --- Regulatory/Compliance Enum Tests ---
+
+
+class TestRegulatoryFrameworkEnum:
+    """Tests for RegulatoryFrameworkEnum (ISO 42001 vs EU AI Act)."""
+
+    def test_regulatory_framework_enum_values(self) -> None:
+        """Verify all regulatory framework values exist."""
+        expected = {
+            "ISO_42001",
+            "EU_AI_ACT",
+            "GPAI_CODE_OF_PRACTICE",
+            "DSM_DIRECTIVE",
+            "ESPR_DPP",
+            "GDPR",
+        }
+        actual = {e.value for e in RegulatoryFrameworkEnum}
+        assert expected <= actual, f"Missing values: {expected - actual}"
+
+    def test_is_str_enum(self) -> None:
+        """RegulatoryFrameworkEnum must be StrEnum."""
+        assert issubclass(RegulatoryFrameworkEnum, StrEnum)
+
+
+class TestComplianceActorEnum:
+    """Tests for ComplianceActorEnum (EU AI Act supply chain actors)."""
+
+    def test_compliance_actor_enum_values(self) -> None:
+        """Verify all EU AI Act actor values exist."""
+        expected = {
+            "PROVIDER",
+            "DEPLOYER",
+            "AUTHORISED_REPRESENTATIVE",
+            "IMPORTER",
+            "DISTRIBUTOR",
+            "PRODUCT_MANUFACTURER",
+        }
+        actual = {e.value for e in ComplianceActorEnum}
+        assert expected <= actual, f"Missing values: {expected - actual}"
+
+    def test_is_str_enum(self) -> None:
+        """ComplianceActorEnum must be StrEnum."""
+        assert issubclass(ComplianceActorEnum, StrEnum)
+
+
+class TestTdmReservationMethodEnum:
+    """Tests for TdmReservationMethodEnum (DSM Directive TDM opt-out)."""
+
+    def test_tdm_reservation_method_enum_values(self) -> None:
+        """Verify all TDM reservation method values exist."""
+        expected = {
+            "ROBOTS_TXT",
+            "LLMS_TXT",
+            "MACHINE_READABLE_TAG",
+            "RIGHTS_RESERVATION_API",
+            "MCP_PERMISSION_QUERY",
+        }
+        actual = {e.value for e in TdmReservationMethodEnum}
+        assert expected <= actual, f"Missing values: {expected - actual}"
+
+    def test_is_str_enum(self) -> None:
+        """TdmReservationMethodEnum must be StrEnum."""
+        assert issubclass(TdmReservationMethodEnum, StrEnum)

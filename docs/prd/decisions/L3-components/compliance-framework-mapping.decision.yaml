@@ -1,0 +1,103 @@
+# Compliance Framework Mapping
+#
+# Whether and how the scaffold maps between internal AI governance (ISO 42001)
+# and supply chain liability (EU AI Act) roles. These frameworks have zero
+# terminological overlap — different questions, different consequences.
+
+decision_id: compliance_framework_mapping
+title: "Compliance Framework Mapping"
+description: >
+  Determines the approach to mapping between AI governance frameworks.
+  ISO 42001 defines internal management system roles (Top Management,
+  AI System Owner, Internal Audit) while the EU AI Act defines supply chain
+  liability actors (Provider, Deployer, Authorised Representative, Importer,
+  Distributor). There is zero native terminological overlap — ISO 42001 asks
+  "who governs AI internally?" while the EU AI Act asks "who is legally liable
+  in the supply chain?" Organizations need both, separately, with a bridging
+  layer. ISO 42001 covers ~40-50% of EU AI Act high-level requirements but
+  leaves conformity assessment, CE marking, EU database registration,
+  post-market surveillance, and serious incident reporting as explicit gaps.
+
+decision_level: L3_components
+status: stub
+last_updated: 2026-02-13
+
+options:
+  - option_id: iso_42001_only
+    title: "ISO 42001 Only"
+    description: >
+      Implement ISO 42001 AI Management System Standard as the primary
+      governance framework. Covers risk assessment, documentation, competence,
+      third-party management. Does NOT cover EU AI Act supply chain obligations
+      (conformity assessment, CE marking, post-market surveillance, incident
+      reporting). Acceptable for non-EU or pre-revenue MVP.
+    prior_probability: 0.25
+    status: viable
+
+  - option_id: dual_framework
+    title: "Dual Framework (ISO 42001 + EU AI Act)"
+    description: >
+      Maintain a dual-axis compliance map: ISO 42001 for internal governance
+      and EU AI Act for supply chain liability. Each AI system gets both an
+      internal role assignment (AI Producer/Provider/Customer per ISO 22989)
+      and an EU AI Act actor classification (Provider/Deployer/Importer per
+      Art. 3). Bridging layer maps ISO 42001 Annex A controls to EU AI Act
+      articles. Recommended by ISACA (2025) and GloCert guidance.
+    prior_probability: 0.55
+    status: recommended
+
+  - option_id: eu_ai_act_only
+    title: "EU AI Act Compliance Only"
+    description: >
+      Focus exclusively on EU AI Act supply chain obligations without formal
+      ISO 42001 management system. Covers legal liability but lacks structured
+      internal governance. Risk of fragmented internal practices. May suffice
+      for deployer-only organizations using third-party AI.
+    prior_probability: 0.20
+    status: viable
+
+research_notes: >
+  Key insight from Achim Korten (LinkedIn, Feb 2026): ISO 42001 roles and
+  EU AI Act actors have zero overlap. ISO 42001 asks "who governs AI
+  internally?" — EU AI Act asks "who is legally liable in the supply chain?"
+  Your AI System Owner (ISO) has no equivalent in the EU AI Act. Your Provider
+  obligations (EU AI Act) have no equivalent in ISO 42001.
+
+  ISO 42001 gaps for EU AI Act compliance (GloCert 2025):
+    - Conformity assessment procedures
+    - CE marking
+    - EU database registration
+    - Post-market surveillance reporting
+    - Serious incident reporting to authorities
+    - Instructions for use (detailed content specifications)
+
+  The GPAI Code of Practice (finalized July 10, 2025; approved August 1, 2025)
+  provides operational bridge guidance between ISO 42001 controls and EU AI Act
+  obligations, particularly for transparency and copyright compliance.
+
+  Digital Omnibus (November 19, 2025) delays high-risk system obligations:
+    - Annex III high-risk: Aug 2026 → Dec 2027 (16-month delay)
+    - Annex I high-risk: Aug 2026 → Aug 2028 (24-month delay)
+    - Art. 50 AI-generated content marking: Aug 2026 → Feb 2027
+
+influences:
+  - from: regulatory_posture
+    direction: upstream
+    rationale: "Regulatory posture determines which compliance frameworks to adopt"
+  - from: ethics_governance
+    direction: downstream
+    rationale: "Framework mapping informs governance-as-code implementation"
+
+references:
+  - "ISACA (2025) ISO/IEC 42001 and EU AI Act: A Practical Pairing"
+  - "GloCert (2025) EU AI Act Preparation Using ISO 42001 Mapping Guide"
+  - "Schellman (2025) Understanding Your AI Role in ISO 42001"
+  - "Korten, A. (2026) LinkedIn: ISO 42001 roles vs EU AI Act actors"
+  - "SSRN No. 6109087 — A0-A3 assurance levels"
+
+tags:
+  - compliance
+  - iso-42001
+  - eu-ai-act
+  - governance
+  - regulatory
