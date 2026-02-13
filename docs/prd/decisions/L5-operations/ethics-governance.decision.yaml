@@ -162,10 +162,13 @@ volatility:
   last_assessed: 2026-02-13
   next_review: 2026-05-13
   change_drivers:
-    - "EU AI Act enforcement timeline (high-risk system classification)"
+    - "EU Digital Omnibus delays high-risk system classification to Dec 2027"
+    - "GPAI Code of Practice enforcement from August 2026"
+    - "ISO 42001 certification provides ~40-50% EU AI Act overlap but NOT full compliance"
     - "Industry model card standardization"
     - "Conformal prediction adoption in production ML"
     - "Public scrutiny of AI attribution fairness"
+    - "Digital Omnibus weakens AI literacy requirements (Art. 9 now non-binding)"
 
 domain_applicability:
   music_attribution: 1.0
@@ -184,3 +187,6 @@ references:
   - "Mitchell et al. (2019) Model Cards for Model Reporting"
   - "A0-A3 assurance levels in SSRN No. 6109087"
   - "../schemas/confidence-scoring.md"
+  - "ISO/IEC 42001:2023 AI Management System Standard"
+  - "ISACA (2025) ISO 42001 and EU AI Act: A Practical Pairing"
+  - "GPAI Code of Practice (July 2025) — transparency and copyright chapters"

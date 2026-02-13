@@ -15,12 +15,25 @@ description: >
 
   Key regulations: EU AI Act (transparency, risk classification),
   GDPR (data residency, right to erasure), DSA (platform obligations),
-  and sector-specific rules (music: collective management directives;
-  DPP: EU ESPR digital product passport mandates).
+  EU DSM Directive (TDM opt-out for copyright holders), and sector-specific
+  rules (music: collective management directives; DPP: EU ESPR digital
+  product passport mandates).
+
+  Critical 2025-2026 regulatory shifts:
+  - EU Digital Omnibus (Nov 2025) delays high-risk AI obligations: Annex III
+    to Dec 2027, Annex I to Aug 2028, Art. 50 marking to Feb 2027
+  - Omnibus I (Dec 2025) narrows CSRD scope to >1,000 employees AND >EUR 450M
+    turnover; CSDDD to >5,000 employees AND >EUR 1.5B turnover
+  - GPAI Code of Practice (July 2025) creates copyright/transparency obligations
+    for general-purpose AI providers, enforceable from Aug 2026
+  - Digital Omnibus GDPR amendments propose legitimate interest basis for AI
+    training with unconditional opt-out right (Art. 88c)
+  - SME/SMC compliance relief: simplified QMS, proportional fines, sandboxes
+  - ISO 42001 and EU AI Act have zero role overlap — must be tracked separately
 
 decision_level: L1_business
 status: active
-last_updated: 2026-02-10
+last_updated: 2026-02-13
 
 options:
   - option_id: best_effort
@@ -130,14 +143,17 @@ archetype_weights:
 
 volatility:
   classification: volatile
-  last_assessed: 2026-02-10
-  next_review: 2026-03-10
+  last_assessed: 2026-02-13
+  next_review: 2026-05-13
   change_drivers:
-    - "EU AI Act enforcement timeline (August 2026 provisions)"
+    - "EU Digital Omnibus delays high-risk AI obligations to Dec 2027/Aug 2028"
+    - "GPAI Code of Practice enforcement from August 2026 (fines up to 3% turnover)"
+    - "Digital Omnibus GDPR Art. 88c legitimate interest for AI training (pending)"
+    - "Omnibus I CSRD/CSDDD scope reduction (finalized Dec 2025)"
     - "GDPR enforcement actions against AI training data"
     - "EU ESPR digital product passport mandates (2027+)"
+    - "TDM rights reservation protocol standardization (Commission consultation Dec 2025)"
     - "US state-level AI transparency laws"
-    - "Industry self-regulation initiatives"
 
 domain_applicability:
   music_attribution: 1.0
@@ -160,3 +176,7 @@ rationale: >
 references:
   - "../security/toc-security.md"
   - "../mcp-server/permissions-api.md"
+  - "EU Digital Omnibus (Nov 2025) — AI Act amendments"
+  - "Omnibus I (Dec 2025) — CSRD/CSDDD scope reduction"
+  - "GPAI Code of Practice (July 2025) — copyright and transparency"
+  - "Korten, A. (2026) ISO 42001 roles vs EU AI Act actors"

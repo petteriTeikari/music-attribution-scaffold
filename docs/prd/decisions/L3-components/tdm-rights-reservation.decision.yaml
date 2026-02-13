@@ -1,0 +1,107 @@
+# TDM Rights Reservation Infrastructure
+#
+# How the scaffold enables music rights holders to express and enforce
+# text-and-data-mining opt-out reservations under the EU DSM Directive
+# and GPAI Code of Practice.
+
+decision_id: tdm_rights_reservation
+title: "TDM Rights Reservation Infrastructure"
+description: >
+  Determines the infrastructure for expressing and enforcing text-and-data-mining
+  (TDM) rights reservations for music content. Under the EU DSM Directive
+  (2019/790), copyright holders can opt out of TDM by expressing rights
+  reservations in a "machine-readable" way. The GPAI Code of Practice
+  (finalized July 2025) requires AI providers to identify and respect these
+  reservations, including robots.txt and emerging standards like llms.txt.
+
+  Music has a structural disadvantage: robots.txt is a web-crawling protocol
+  that does not naturally extend to audio content accessed via APIs or streaming
+  platforms. The GPAI training data template (mandatory since August 2025)
+  requires only "brief narratives" and "most relevant online domains" — too
+  coarse for track-level attribution. This gap is exactly what the Permission
+  Patchbay (MCP consent infrastructure) is designed to bridge.
+
+decision_level: L3_components
+status: stub
+last_updated: 2026-02-13
+
+options:
+  - option_id: robots_txt_only
+    title: "robots.txt/llms.txt Only"
+    description: >
+      Rely on standard web protocols for TDM opt-out: robots.txt for web
+      crawlers, emerging llms.txt for LLM-specific signals. Simple to
+      implement but structurally inadequate for audio content not served
+      via web pages. Music on streaming platforms is invisible to robots.txt.
+    prior_probability: 0.25
+    status: viable
+
+  - option_id: machine_readable_extended
+    title: "Extended Machine-Readable Signals"
+    description: >
+      Implement multiple machine-readable reservation methods: robots.txt
+      for web content, structured metadata tags in audio files (ID3v2,
+      Vorbis comments), MCP-compatible permission endpoints for API-mediated
+      content. Maps to the Permission Patchbay architecture described in
+      SSRN No. 6109087. Medium implementation cost, good coverage.
+    prior_probability: 0.50
+    status: recommended
+
+  - option_id: proactive_reservation_api
+    title: "Proactive Reservation API"
+    description: >
+      Full reservation infrastructure: a public API where rights holders
+      register TDM reservations per-work (ISRC/ISWC-level granularity),
+      queryable by AI providers before training. Effectively a "consent
+      registry" — aligns with the manuscript's MCP Permission Patchbay
+      vision. Highest implementation cost but solves the audio-specific gap.
+    prior_probability: 0.25
+    status: candidate
+
+research_notes: >
+  EU Commission consultation on TDM reservation protocols (Dec 1, 2025 -
+  Jan 9, 2026) sought input on machine-readable protocols. No finalized
+  universal standard yet for audio content. Clifford Chance (Oct 2025)
+  analysis confirms that the Code of Practice references robots.txt and
+  "additional appropriate means" but leaves music-specific protocols
+  underdeveloped.
+
+  Bruegel (2025): GPAI training data template creates "the illusion of
+  full transparency" — small publishers and independent music rights holders
+  may be entirely omitted due to high transaction costs. Enforcement gap:
+  AI Office fines up to 3% of global turnover or EUR 15M, but the Oracle
+  Problem means violations may be technically undetectable.
+
+  Digital Omnibus GDPR amendments (proposed Nov 2025): new legitimate
+  interest basis for AI training (Art. 88c) with unconditional opt-out
+  right. If adopted, voice samples, performance metadata, and artist
+  biographical data could be processed for AI training under legitimate
+  interest, shifting the burden to the data subject to opt out.
+
+influences:
+  - from: regulatory_posture
+    direction: upstream
+    rationale: "Regulatory posture determines depth of TDM reservation infrastructure"
+  - from: provenance_strategy
+    direction: upstream
+    rationale: "Provenance strategy determines how rights reservations are tracked"
+  - from: rights_management_scope
+    direction: peer
+    rationale: "Rights scope determines granularity of TDM reservations (recording vs full bundle)"
+
+references:
+  - "EU DSM Directive 2019/790 Art. 4 — TDM exception with opt-out"
+  - "GPAI Code of Practice (July 2025) Chapter 2: Copyright"
+  - "Clifford Chance (Oct 2025) Copyright Compliance Under EU AI Act"
+  - "Bruegel (2025) European Union Still Caught in an AI Copyright Bind"
+  - "EU Commission (Dec 2025) Consultation on TDM Reservation Protocols"
+  - "SSRN No. 6109087 — MCP Permission Patchbay, Oracle Problem"
+  - "IAPP (2025) GDPR Amendments for AI Training Miss the Mark"
+
+tags:
+  - compliance
+  - copyright
+  - tdm
+  - dsm-directive
+  - permission-patchbay
+  - gpai
