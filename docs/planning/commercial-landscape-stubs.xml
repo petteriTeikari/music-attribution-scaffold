@@ -1,0 +1,199 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  PR-B: Commercial Landscape Stubs — Schema enums, stub models, PRD nodes, docs
+  Branch: feat/commercial-landscape-stubs
+  Parent plan: remaining-final-tasks-before-ssrn-repo.md Section 4
+
+  These tasks add SCHEMA STUBS and DOCUMENTATION ONLY — no business logic.
+  Prepares the scaffold for commercial feature parity with:
+  Auracles, Musical AI, Sureel, ProRata, Vermillio, SoundExchange, Fairly Trained.
+-->
+<plan version="1.0" project="music-attribution-scaffold">
+  <metadata>
+    <title>PR-B: Commercial Landscape Stubs</title>
+    <branch>feat/commercial-landscape-stubs</branch>
+    <estimated_tasks>6</estimated_tasks>
+    <mode>maintenance</mode>
+  </metadata>
+
+  <!-- =================================================================== -->
+  <!-- Task B1: New enums in schemas/enums.py                              -->
+  <!-- 6 new StrEnums for TDA, rights, media, certification, watermarks    -->
+  <!-- =================================================================== -->
+
+  <task id="B1" status="PENDING">
+    <title>Add 6 future-readiness enums to schemas/enums.py</title>
+    <priority>P0</priority>
+    <phase>1</phase>
+    <files>
+      <modify>src/music_attribution/schemas/enums.py</modify>
+    </files>
+    <tdd_spec>
+      <test_file>tests/unit/test_landscape_enums.py</test_file>
+      <test_cases>
+        <case>test_attribution_method_enum_values — verify TRAINING_TIME_INFLUENCE, UNLEARNING_BASED, INFLUENCE_FUNCTIONS, EMBEDDING_SIMILARITY, WATERMARK_DETECTION, INFERENCE_TIME_CONDITIONING in AttributionMethodEnum</case>
+        <case>test_rights_type_enum_values — verify MASTER_RECORDING, COMPOSITION_PUBLISHING, PERFORMANCE, MECHANICAL, SYNC in RightsTypeEnum</case>
+        <case>test_media_type_enum_values — verify AUDIO, IMAGE, VIDEO, TEXT, SYMBOLIC_MUSIC, MULTIMODAL in MediaTypeEnum</case>
+        <case>test_certification_type_enum_values — verify FAIRLY_TRAINED_LICENSED, C2PA_PROVENANCE, EU_AI_ACT_COMPLIANT, CMO_APPROVED in CertificationTypeEnum</case>
+        <case>test_watermark_type_enum_values — verify SYNTHID, AUDIOSEAL, WAVMARK, DIGIMARC in WatermarkTypeEnum</case>
+        <case>test_revenue_model_enum_values — verify FLAT_FEE_UPFRONT, PRO_RATA_MONTHLY, PER_GENERATION, INFLUENCE_BASED in RevenueModelEnum</case>
+        <case>test_all_new_enums_are_str_enum — verify all 6 inherit from StrEnum</case>
+        <case>test_existing_enums_unchanged — verify SourceEnum, EntityTypeEnum etc. still have original values</case>
+      </test_cases>
+    </tdd_spec>
+    <implementation>
+      Append 6 new StrEnum classes after existing enums:
+      1. AttributionMethodEnum — TDA methods (Musical AI, Sureel, Sony)
+      2. RightsTypeEnum — Compositional vs recording rights (Sureel patent)
+      3. MediaTypeEnum — Multi-modal attribution (Sureel, ProRata)
+      4. CertificationTypeEnum — External certifications (Fairly Trained, C2PA, EU AI Act)
+      5. WatermarkTypeEnum — Audio watermark types (SynthID, AudioSeal, Digimarc)
+      6. RevenueModelEnum — Revenue sharing models (LANDR, Kits AI, Musical AI)
+    </implementation>
+  </task>
+
+  <!-- =================================================================== -->
+  <!-- Task B2: Extend PermissionTypeEnum with fine-grained AI training    -->
+  <!-- =================================================================== -->
+
+  <task id="B2" status="PENDING">
+    <title>Extend PermissionTypeEnum with fine-grained AI training permissions</title>
+    <priority>P0</priority>
+    <phase>1</phase>
+    <files>
+      <modify>src/music_attribution/schemas/enums.py</modify>
+    </files>
+    <tdd_spec>
+      <test_file>tests/unit/test_landscape_enums.py</test_file>
+      <test_cases>
+        <case>test_permission_type_has_fine_grained_ai — verify AI_TRAINING_COMPOSITION, AI_TRAINING_RECORDING, AI_TRAINING_STYLE, DATASET_INCLUSION exist in PermissionTypeEnum</case>
+        <case>test_permission_type_keeps_original — verify original values (STREAM, AI_TRAINING etc.) still exist</case>
+      </test_cases>
+    </tdd_spec>
+    <implementation>
+      Add 4 values to existing PermissionTypeEnum:
+      - AI_TRAINING_COMPOSITION (publishing rights only)
+      - AI_TRAINING_RECORDING (master rights only)
+      - AI_TRAINING_STYLE (style learning without sampling)
+      - DATASET_INCLUSION (inclusion in licensed training datasets)
+    </implementation>
+  </task>
+
+  <!-- =================================================================== -->
+  <!-- Task B3: Stub schema files (training_attribution.py, compliance.py) -->
+  <!-- =================================================================== -->
+
+  <task id="B3" status="PENDING" depends_on="B1">
+    <title>Create stub schema files for TDA and compliance</title>
+    <priority>P1</priority>
+    <phase>2</phase>
+    <files>
+      <create>src/music_attribution/schemas/training_attribution.py</create>
+      <create>src/music_attribution/schemas/compliance.py</create>
+    </files>
+    <tdd_spec>
+      <test_file>tests/unit/test_landscape_stubs.py</test_file>
+      <test_cases>
+        <case>test_training_influence_model_creates — verify TrainingInfluence can be instantiated with valid data</case>
+        <case>test_temporal_segment_model_creates — verify TemporalSegment can be instantiated</case>
+        <case>test_stem_influence_model_creates — verify StemInfluence can be instantiated</case>
+        <case>test_compliance_attestation_model_creates — verify ComplianceAttestation can be instantiated</case>
+        <case>test_training_influence_validates_percentage — verify influence_percentage must be 0-100</case>
+        <case>test_training_influence_validates_confidence — verify confidence must be 0-1</case>
+      </test_cases>
+    </tdd_spec>
+    <implementation>
+      Create two stub schema files with Pydantic models:
+      1. training_attribution.py: TrainingInfluence, TemporalSegment, StemInfluence
+      2. compliance.py: ComplianceAttestation
+      All models are stubs — no business logic, just schema definitions.
+    </implementation>
+  </task>
+
+  <!-- =================================================================== -->
+  <!-- Task B4: PRD decision network extensions (4 new nodes)              -->
+  <!-- =================================================================== -->
+
+  <task id="B4" status="PENDING">
+    <title>Add 4 PRD nodes for commercial landscape</title>
+    <priority>P1</priority>
+    <phase>2</phase>
+    <files>
+      <modify>docs/prd/decisions/_network.yaml</modify>
+      <create>docs/prd/decisions/L3-components/training-attribution-integration.decision.yaml</create>
+      <create>docs/prd/decisions/L3-components/rights-management-scope.decision.yaml</create>
+      <create>docs/prd/decisions/L3-components/provenance-verification.decision.yaml</create>
+      <create>docs/prd/decisions/L3-components/external-registry-integration.decision.yaml</create>
+    </files>
+    <tdd_spec>
+      <test_file>tests/unit/test_prd_network.py</test_file>
+      <test_cases>
+        <case>test_network_yaml_has_new_nodes — verify _network.yaml contains training_attribution_integration, rights_management_scope, provenance_verification, external_registry_integration</case>
+        <case>test_new_decision_files_exist — verify all 4 .decision.yaml files exist and are valid YAML</case>
+        <case>test_network_version_bumped — verify network version is >= 1.8.0</case>
+      </test_cases>
+    </tdd_spec>
+    <implementation>
+      1. Bump _network.yaml version to 1.8.0
+      2. Add 4 L3 nodes with edges from relevant L2 parents
+      3. Create 4 decision YAML files with options:
+         - training_attribution_integration: none | partner_api | self_hosted
+         - rights_management_scope: recording_only | full_bundle
+         - provenance_verification: metadata_only | watermark_detection | cryptographic
+         - external_registry_integration: none | soundexchange | multi_registry
+    </implementation>
+  </task>
+
+  <!-- =================================================================== -->
+  <!-- Task B5: MCP roadmap + multi-modal domain overlay                   -->
+  <!-- =================================================================== -->
+
+  <task id="B5" status="PENDING">
+    <title>Create MCP roadmap doc and multi-modal domain overlay</title>
+    <priority>P1</priority>
+    <phase>2</phase>
+    <files>
+      <create>docs/api/mcp-roadmap.md</create>
+      <create>docs/prd/domains/multimodal-attribution.yaml</create>
+    </files>
+    <tdd_spec>
+      <test_file>tests/unit/test_landscape_docs.py</test_file>
+      <test_cases>
+        <case>test_mcp_roadmap_exists — verify docs/api/mcp-roadmap.md exists</case>
+        <case>test_mcp_roadmap_mentions_tools — verify mentions query_training_influence, check_registry_status</case>
+        <case>test_multimodal_overlay_exists — verify docs/prd/domains/multimodal-attribution.yaml exists</case>
+        <case>test_multimodal_overlay_valid_yaml — verify it parses as valid YAML</case>
+      </test_cases>
+    </tdd_spec>
+    <implementation>
+      1. docs/api/mcp-roadmap.md: Document implemented tools + 4 future tools
+      2. docs/prd/domains/multimodal-attribution.yaml: Domain overlay stub
+    </implementation>
+  </task>
+
+  <!-- =================================================================== -->
+  <!-- Task B6: Music tech landscape doc updates                           -->
+  <!-- =================================================================== -->
+
+  <task id="B6" status="PENDING">
+    <title>Update music tech landscape documentation</title>
+    <priority>P2</priority>
+    <phase>3</phase>
+    <files>
+      <modify>docs/planning/music-tech-landscape/01-attribution-companies.md</modify>
+    </files>
+    <tdd_spec>
+      <test_file>tests/unit/test_landscape_docs.py</test_file>
+      <test_cases>
+        <case>test_landscape_mentions_auracles — verify Auracles in 01-attribution-companies.md</case>
+        <case>test_landscape_mentions_musical_ai — verify Musical AI in 01-attribution-companies.md</case>
+        <case>test_landscape_mentions_sureel — verify Sureel in 01-attribution-companies.md</case>
+      </test_cases>
+    </tdd_spec>
+    <implementation>
+      Update 01-attribution-companies.md with latest intelligence on:
+      Auracles, Musical AI, Sureel, ProRata, Vermillio, SoundExchange AI Registry, Fairly Trained
+    </implementation>
+  </task>
+
+</plan>

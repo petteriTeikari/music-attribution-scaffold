@@ -1,0 +1,58 @@
+# External Registry Integration
+#
+# Whether and how the scaffold integrates with external music rights
+# registries (SoundExchange, ISRC agencies, CMO databases).
+
+decision_id: external_registry_integration
+title: "External Registry Integration"
+description: >
+  Determines the integration scope with external music rights registries.
+  Ranges from no integration (self-contained metadata) to multi-registry
+  lookup across SoundExchange, ISRC agencies, and CMO databases.
+
+decision_level: L3_components
+status: stub
+last_updated: 2026-02-13
+
+options:
+  - option_id: none
+    title: "No External Registry"
+    description: >
+      Self-contained metadata from MusicBrainz, Discogs, and file metadata.
+      No integration with commercial rights registries. Suitable for
+      research scaffold and academic demonstration.
+    prior_probability: 0.50
+    status: selected
+
+  - option_id: soundexchange
+    title: "SoundExchange Integration"
+    description: >
+      Integrate with SoundExchange AI music registry for recording rights
+      verification. SoundExchange announced an AI music registry initiative
+      for tracking AI-generated content using human-created recordings.
+    prior_probability: 0.30
+    status: candidate
+
+  - option_id: multi_registry
+    title: "Multi-Registry Integration"
+    description: >
+      Integrate with multiple registries: SoundExchange (recordings),
+      HFA/MLC (mechanical), ASCAP/BMI (performance), ISNI (identifiers).
+      Full rights chain verification across the music industry ecosystem.
+    prior_probability: 0.20
+    status: candidate
+
+research_notes: >
+  SoundExchange announced an AI music registry in 2025 for tracking
+  how AI models use human-created recordings. The Mechanical Licensing
+  Collective (MLC) handles mechanical rights in the US. ISNI provides
+  unique identifiers for creators. Integration requires commercial
+  agreements and API access.
+
+influences:
+  - from: data_model_complexity
+    direction: upstream
+    rationale: "Multi-registry requires complex entity resolution across identifiers"
+  - from: build_vs_buy_posture
+    direction: upstream
+    rationale: "Registry integrations require engineering investment"

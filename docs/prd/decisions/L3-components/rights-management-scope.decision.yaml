@@ -1,0 +1,49 @@
+# Rights Management Scope
+#
+# Whether the scaffold tracks recording rights only or the full bundle
+# (composition/publishing, performance, mechanical, sync).
+
+decision_id: rights_management_scope
+title: "Rights Management Scope"
+description: >
+  Determines the scope of rights tracking in the permission patchbay.
+  Music rights are split between recording (master) and composition
+  (publishing). AI training may touch both differently — Sureel's patent
+  specifically separates compositional vs recording attribution.
+
+decision_level: L3_components
+status: stub
+last_updated: 2026-02-13
+
+options:
+  - option_id: recording_only
+    title: "Recording Rights Only"
+    description: >
+      Track only master recording rights (ISRC-level). Simpler model
+      but misses composition/publishing rights which are separately owned
+      and licensed. Suitable for MVP.
+    prior_probability: 0.40
+    status: selected
+
+  - option_id: full_bundle
+    title: "Full Rights Bundle"
+    description: >
+      Track recording (ISRC), composition (ISWC), performance, mechanical,
+      and sync rights separately. Maps to real-world rights structures
+      (CMOs, publishers, labels). Required for production deployment.
+    prior_probability: 0.60
+    status: candidate
+
+research_notes: >
+  Sureel's patent portfolio specifically covers compositional vs recording
+  separation as a technical innovation. STIM (Swedish CMO) partnership
+  validates the full-bundle approach. SoundExchange handles recording
+  rights; ASCAP/BMI/SESAC handle composition.
+
+influences:
+  - from: data_model_complexity
+    direction: upstream
+    rationale: "Full bundle requires graph-enriched data model"
+  - from: regulatory_posture
+    direction: upstream
+    rationale: "EU AI Act may require full rights provenance chain"
