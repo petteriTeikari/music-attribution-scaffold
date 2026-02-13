@@ -1,0 +1,79 @@
+# Multi-Modal Attribution Domain Overlay
+#
+# Extends the music attribution scaffold to support cross-media attribution
+# (audio, image, text, video, symbolic music). Stub overlay for future
+# implementation based on Sureel and ProRata multi-modal capabilities.
+
+domain:
+  name: multimodal-attribution
+  version: "0.1.0"
+  status: stub
+  description: >
+    Domain overlay enabling attribution across multiple media types.
+    Extends audio-only attribution to image, text, video, and symbolic
+    music modalities. Based on commercial landscape analysis of Sureel
+    (multi-modal patent portfolio) and ProRata (cross-media attribution).
+
+media_types:
+  audio:
+    description: "Core modality — music recordings and sound effects"
+    attribution_methods:
+      - embedding_similarity
+      - influence_functions
+      - watermark_detection
+    identifiers: [ISRC, AcoustID]
+    status: implemented
+
+  symbolic_music:
+    description: "MIDI, MusicXML, ABC notation — compositional structure"
+    attribution_methods:
+      - embedding_similarity
+      - melodic_similarity
+    identifiers: [ISWC]
+    status: planned
+
+  image:
+    description: "Album artwork, promotional materials, visualizers"
+    attribution_methods:
+      - embedding_similarity
+      - watermark_detection
+    identifiers: [IPTC, C2PA]
+    status: future
+
+  text:
+    description: "Lyrics, liner notes, metadata descriptions"
+    attribution_methods:
+      - embedding_similarity
+      - influence_functions
+    identifiers: [ISTC]
+    status: future
+
+  video:
+    description: "Music videos, live performance recordings"
+    attribution_methods:
+      - embedding_similarity
+      - watermark_detection
+    identifiers: [ISAN, ISRC]
+    status: future
+
+cross_modal_attribution:
+  description: >
+    Attribution across modalities — e.g., determining if a music video's
+    visual style was influenced by a specific album artwork, or if an
+    AI-generated song's melody was influenced by a MIDI composition.
+  status: research
+  references:
+    - "ProRata cross-media attribution engine"
+    - "Sureel multi-modal patent (image + audio attribution)"
+
+decision_overrides:
+  training_attribution_integration:
+    notes: "Multi-modal requires partner_api or self_hosted — metadata_only insufficient"
+  provenance_verification:
+    notes: "Cross-modal provenance requires C2PA or equivalent across all media types"
+
+schema_extensions:
+  - module: schemas.training_attribution
+    additions:
+      - "Add media_type field to TrainingInfluence model"
+      - "Add cross_modal_references list for multi-modal attribution chains"

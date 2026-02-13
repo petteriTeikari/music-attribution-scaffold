@@ -371,3 +371,72 @@ ProRata has the strongest financial backing among pure attribution companies. Th
 Pex is a content identification and licensing platform that has published analysis on navigating AI music tools and copyright. They position adjacent to attribution with existing content ID infrastructure but are not yet a direct attribution competitor.
 
 Source: [Pex Blog](https://pex.com/blog/navigating-ai-music-tools-and-copyright-an-overview-for-rightsholders/)
+
+---
+
+## Auracles
+
+### Company Profile
+
+| Attribute | Details |
+|-----------|---------|
+| **HQ** | London, UK |
+| **Website** | [auracles.io](https://auracles.io/) |
+| **Focus** | Sovereign identity and verifiable credentials for music |
+| **Approach** | W3C DID + Verifiable Credentials for artist identity |
+
+### Core Concept
+
+Auracles positions as **identity infrastructure** for the music industry. Rather than attribution of AI-generated content, they focus on establishing verified creator identity using W3C Decentralized Identifiers (DIDs) and Verifiable Credentials. This maps to the A0-A3 assurance level framework: Auracles provides the identity verification layer (A1-A3) that attribution systems depend on.
+
+### Relevance to Scaffold
+
+- **Identity layer**: Provides verified creator identities that attribution systems reference
+- **W3C standards**: DID and Verifiable Credentials are open standards, not proprietary
+- **Composable**: Can be layered under Musical AI, Sureel, or any attribution engine
+- **A0-A3 mapping**: Auracles addresses the identity verification gap in current attribution approaches
+
+---
+
+## SoundExchange AI Registry
+
+### Overview
+
+SoundExchange, the US digital performance rights organization, announced an **AI music registry** initiative for tracking how AI models use human-created recordings. The registry aims to:
+
+1. Establish a centralized database of recordings used in AI training
+2. Enable rights holders to track AI usage of their catalog
+3. Provide transparency into AI model training data provenance
+
+### Relevance to Scaffold
+
+- **Recording rights focus**: Maps to `RightsTypeEnum.MASTER_RECORDING`
+- **Registry integration**: Maps to `external_registry_integration` PRD decision
+- **Industry standard**: As a statutory organization, SoundExchange carries regulatory weight
+
+---
+
+## Fairly Trained
+
+### Overview
+
+| Attribute | Details |
+|-----------|---------|
+| **Website** | [fairlytrained.org](https://www.fairlytrained.org/) |
+| **Founded** | 2024 |
+| **Founder** | Ed Newton-Rex (ex-Suno VP of Audio) |
+| **Certification** | "Licensed Model" mark for AI trained on licensed data |
+
+### Certification Model
+
+Fairly Trained provides a **certification mark** ("Licensed Model") for AI companies that train exclusively on licensed or authorized data. Musical AI was among the first certified companies. The certification process involves:
+
+1. Audit of training data provenance
+2. Verification of licensing agreements
+3. Ongoing compliance monitoring
+
+### Relevance to Scaffold
+
+- **Certification type**: Maps to `CertificationTypeEnum.FAIRLY_TRAINED_LICENSED`
+- **Compliance attestation**: Maps to `ComplianceAttestation` schema
+- **Trust signal**: Provides A2-level assurance for training data provenance

@@ -12,8 +12,8 @@
 
 network:
   name: "Probabilistic PRD Decision Network"
-  version: "1.7.0"
-  last_updated: 2026-02-12
+  version: "1.8.0"
+  last_updated: 2026-02-13
   description: >
     Bayesian decision network for the Music Attribution Scaffold.
     5-level hierarchy (L1 Business → L5 Operations) with conditional
@@ -139,6 +139,27 @@ nodes:
     level: L3_implementation
     file: L3-implementation/audio-metadata-library.decision.yaml
     title: "Audio Metadata Library"
+
+  # L3: Component Decisions (commercial landscape stubs)
+  - id: training_attribution_integration
+    level: L3_components
+    file: L3-components/training-attribution-integration.decision.yaml
+    title: "Training Attribution Integration"
+
+  - id: rights_management_scope
+    level: L3_components
+    file: L3-components/rights-management-scope.decision.yaml
+    title: "Rights Management Scope"
+
+  - id: provenance_verification
+    level: L3_components
+    file: L3-components/provenance-verification.decision.yaml
+    title: "Provenance Verification"
+
+  - id: external_registry_integration
+    level: L3_components
+    file: L3-components/external-registry-integration.decision.yaml
+    title: "External Registry Integration"
 
   # L4: Deployment Decisions
   - id: compute_platform
@@ -594,3 +615,49 @@ edges:
     to: audio_metadata_library
     influence: weak
     rationale: "Complex data models may need richer metadata extraction (TIPL credits) but standard fields suffice for MVP"
+
+  # --- Commercial Landscape Component edges ---
+
+  # L2 → L3 edges (training attribution integration)
+  - from: ai_framework_strategy
+    to: training_attribution_integration
+    influence: moderate
+    rationale: "AI framework determines whether TDA computation is feasible"
+
+  - from: build_vs_buy_posture
+    to: training_attribution_integration
+    influence: moderate
+    rationale: "Custom builders may self-host influence engines; SaaS teams use partner APIs"
+
+  # L2 → L3 edges (rights management scope)
+  - from: data_model_complexity
+    to: rights_management_scope
+    influence: strong
+    rationale: "Full rights bundle requires graph-enriched data model with separate composition/recording entities"
+
+  - from: regulatory_posture
+    to: rights_management_scope
+    influence: moderate
+    rationale: "EU AI Act compliance may require full rights provenance chain"
+
+  # L2 → L3 edges (provenance verification)
+  - from: provenance_strategy
+    to: provenance_verification
+    influence: strong
+    rationale: "L2 provenance strategy directly shapes verification depth and methods"
+
+  - from: regulatory_posture
+    to: provenance_verification
+    influence: moderate
+    rationale: "EU AI Act requires AI-generated content labeling, driving watermark/C2PA adoption"
+
+  # L2 → L3 edges (external registry integration)
+  - from: data_model_complexity
+    to: external_registry_integration
+    influence: moderate
+    rationale: "Multi-registry requires complex entity resolution across identifier systems"
+
+  - from: build_vs_buy_posture
+    to: external_registry_integration
+    influence: moderate
+    rationale: "Registry integrations require engineering investment and commercial agreements"

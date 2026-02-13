@@ -1,0 +1,60 @@
+# Provenance Verification
+#
+# How the scaffold verifies the provenance of AI-generated or
+# human-created audio content.
+
+decision_id: provenance_verification
+title: "Provenance Verification"
+description: >
+  Determines the depth of provenance verification for audio content.
+  Ranges from metadata-only checks (existing ISRC/ISWC lookup) to
+  watermark detection (SynthID, AudioSeal) and cryptographic provenance
+  (C2PA content credentials).
+
+decision_level: L3_components
+status: stub
+last_updated: 2026-02-13
+
+options:
+  - option_id: metadata_only
+    title: "Metadata-Only Verification"
+    description: >
+      Verify provenance through metadata lookup (ISRC, ISWC, MusicBrainz
+      cross-reference). No audio signal analysis. Fast and lightweight
+      but cannot detect AI-generated content or tampered metadata.
+    prior_probability: 0.50
+    status: selected
+
+  - option_id: watermark_detection
+    title: "Watermark Detection"
+    description: >
+      Detect embedded audio watermarks (Google SynthID, Meta AudioSeal,
+      WavMark, Digimarc). Can identify AI-generated content and trace
+      to specific models. Requires signal processing capabilities.
+    prior_probability: 0.30
+    status: candidate
+
+  - option_id: cryptographic
+    title: "Cryptographic Provenance (C2PA)"
+    description: >
+      Full C2PA content credentials with cryptographic signatures.
+      Provides tamper-evident provenance chain from creation through
+      distribution. Highest assurance level (A3) but requires
+      PKI infrastructure and industry adoption.
+    prior_probability: 0.20
+    status: candidate
+
+research_notes: >
+  C2PA (Coalition for Content Provenance and Authenticity) is backed by
+  Adobe, Microsoft, and BBC. SynthID is Google's watermarking for generative
+  audio. AudioSeal is Meta's proactive watermarking. The EU AI Act requires
+  AI-generated content labeling, which may drive cryptographic provenance
+  adoption.
+
+influences:
+  - from: provenance_strategy
+    direction: upstream
+    rationale: "L2 provenance strategy directly shapes verification depth"
+  - from: regulatory_posture
+    direction: upstream
+    rationale: "EU AI Act compliance may require watermark detection or C2PA"

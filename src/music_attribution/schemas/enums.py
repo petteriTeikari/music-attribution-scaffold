@@ -135,6 +135,10 @@ class PermissionTypeEnum(StrEnum):
     DOWNLOAD = "DOWNLOAD"
     SYNC_LICENSE = "SYNC_LICENSE"
     AI_TRAINING = "AI_TRAINING"
+    AI_TRAINING_COMPOSITION = "AI_TRAINING_COMPOSITION"
+    AI_TRAINING_RECORDING = "AI_TRAINING_RECORDING"
+    AI_TRAINING_STYLE = "AI_TRAINING_STYLE"
+    DATASET_INCLUSION = "DATASET_INCLUSION"
     VOICE_CLONING = "VOICE_CLONING"
     STYLE_LEARNING = "STYLE_LEARNING"
     LYRICS_IN_CHATBOTS = "LYRICS_IN_CHATBOTS"
@@ -227,3 +231,65 @@ class ConfidenceTrendEnum(StrEnum):
     DECREASING = "DECREASING"
     STABLE = "STABLE"
     VOLATILE = "VOLATILE"
+
+
+# --- Commercial Landscape Enums (future-readiness stubs) ---
+
+
+class AttributionMethodEnum(StrEnum):
+    """Training data attribution methods (Musical AI, Sureel, Sony)."""
+
+    TRAINING_TIME_INFLUENCE = "TRAINING_TIME_INFLUENCE"
+    UNLEARNING_BASED = "UNLEARNING_BASED"
+    INFLUENCE_FUNCTIONS = "INFLUENCE_FUNCTIONS"
+    EMBEDDING_SIMILARITY = "EMBEDDING_SIMILARITY"
+    WATERMARK_DETECTION = "WATERMARK_DETECTION"
+    INFERENCE_TIME_CONDITIONING = "INFERENCE_TIME_CONDITIONING"
+
+
+class RightsTypeEnum(StrEnum):
+    """Compositional vs recording rights (Sureel patent, LANDR)."""
+
+    MASTER_RECORDING = "MASTER_RECORDING"
+    COMPOSITION_PUBLISHING = "COMPOSITION_PUBLISHING"
+    PERFORMANCE = "PERFORMANCE"
+    MECHANICAL = "MECHANICAL"
+    SYNC = "SYNC"
+
+
+class MediaTypeEnum(StrEnum):
+    """Multi-modal attribution media types (Sureel, ProRata)."""
+
+    AUDIO = "AUDIO"
+    IMAGE = "IMAGE"
+    VIDEO = "VIDEO"
+    TEXT = "TEXT"
+    SYMBOLIC_MUSIC = "SYMBOLIC_MUSIC"
+    MULTIMODAL = "MULTIMODAL"
+
+
+class CertificationTypeEnum(StrEnum):
+    """External certification types (Fairly Trained, C2PA, EU AI Act)."""
+
+    FAIRLY_TRAINED_LICENSED = "FAIRLY_TRAINED_LICENSED"
+    C2PA_PROVENANCE = "C2PA_PROVENANCE"
+    EU_AI_ACT_COMPLIANT = "EU_AI_ACT_COMPLIANT"
+    CMO_APPROVED = "CMO_APPROVED"
+
+
+class WatermarkTypeEnum(StrEnum):
+    """Audio watermark types (SynthID, AudioSeal, Digimarc)."""
+
+    SYNTHID = "SYNTHID"
+    AUDIOSEAL = "AUDIOSEAL"
+    WAVMARK = "WAVMARK"
+    DIGIMARC = "DIGIMARC"
+
+
+class RevenueModelEnum(StrEnum):
+    """Revenue sharing models (LANDR, Kits AI, Musical AI)."""
+
+    FLAT_FEE_UPFRONT = "FLAT_FEE_UPFRONT"
+    PRO_RATA_MONTHLY = "PRO_RATA_MONTHLY"
+    PER_GENERATION = "PER_GENERATION"
+    INFLUENCE_BASED = "INFLUENCE_BASED"

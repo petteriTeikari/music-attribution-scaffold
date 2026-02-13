@@ -1,0 +1,58 @@
+# Training Attribution Integration
+#
+# Whether and how the scaffold integrates with external TDA (Training Data
+# Attribution) systems like Musical AI, Sureel, or self-hosted influence
+# function engines.
+
+decision_id: training_attribution_integration
+title: "Training Attribution Integration"
+description: >
+  Determines the integration strategy for training data attribution (TDA)
+  systems. TDA quantifies how much a specific piece of training data
+  influenced a generative model's output. Options range from no integration
+  (metadata-only attribution) to deep self-hosted influence computation.
+
+decision_level: L3_components
+status: stub
+last_updated: 2026-02-13
+
+options:
+  - option_id: none
+    title: "None — Metadata-Only Attribution"
+    description: >
+      No TDA integration. Attribution is based solely on metadata matching
+      (MusicBrainz, Discogs, file metadata) and human input. This is the
+      current scaffold state.
+    prior_probability: 0.50
+    status: selected
+
+  - option_id: partner_api
+    title: "Partner API Integration"
+    description: >
+      Integrate with external TDA provider APIs (Musical AI royalty sheets,
+      Sureel attribution graphs). The scaffold sends queries and receives
+      influence percentages. Requires API key and commercial agreement.
+    prior_probability: 0.35
+    status: candidate
+
+  - option_id: self_hosted
+    title: "Self-Hosted Influence Engine"
+    description: >
+      Run influence function computation locally (DataInf, TRAK, TracIn).
+      Maximum control and privacy but requires GPU resources and ML expertise.
+      Only viable for teams with significant engineering capacity.
+    prior_probability: 0.15
+    status: candidate
+
+research_notes: >
+  Musical AI requires training-time integration (no post-hoc). Sureel offers
+  decoupled (lighter) and integrated (full) modes. Self-hosted options like
+  DataInf and TRAK are research-grade and require GPU clusters.
+
+influences:
+  - from: ai_framework_strategy
+    direction: upstream
+    rationale: "AI framework determines whether TDA computation is feasible"
+  - from: build_vs_buy_posture
+    direction: upstream
+    rationale: "Custom builders may self-host; SaaS teams use partner APIs"
