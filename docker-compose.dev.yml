@@ -20,7 +20,7 @@ services:
   # Connection pooler — production architecture requires pgbouncer between
   # application and PostgreSQL for connection multiplexing under load.
   pgbouncer:
-    image: edoburu/pgbouncer:latest
+    image: edoburu/pgbouncer:1.23.1
     environment:
       DATABASE_URL: postgres://musicattr:musicattr_dev@postgres:5432/music_attribution
       POOL_MODE: transaction

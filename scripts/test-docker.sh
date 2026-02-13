@@ -39,9 +39,6 @@ for arg in "$@"; do
         --build)
             BUILD_FLAG="--build"
             ;;
-        py311)
-            SERVICE="test-py311"
-            ;;
         lint)
             SERVICE="lint"
             ;;
@@ -50,7 +47,7 @@ for arg in "$@"; do
             ;;
         *)
             echo -e "${YELLOW}Unknown argument: $arg${NC}"
-            echo "Usage: $0 [py311|lint|ci] [--build]"
+            echo "Usage: $0 [lint|ci] [--build]"
             exit 1
             ;;
     esac
