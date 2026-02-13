@@ -8,10 +8,25 @@ license = "MIT"
 authors = [
     { name = "Petteri Teikari" },
 ]
+keywords = [
+    "music",
+    "attribution",
+    "provenance",
+    "AI",
+    "MCP",
+    "confidence-scoring",
+    "conformal-prediction",
+]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3.13",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Multimedia :: Sound/Audio :: Analysis",
+    "Framework :: FastAPI",
+    "Typing :: Typed",
 ]
 dependencies = [
     "alembic>=1.14",
@@ -41,8 +56,10 @@ dependencies = [
 ]
 
 [project.urls]
+Homepage = "https://doi.org/10.2139/ssrn.6109087"
 Repository = "https://github.com/petteriTeikari/music-attribution-scaffold"
 Documentation = "https://github.com/petteriTeikari/music-attribution-scaffold#readme"
+"Bug Tracker" = "https://github.com/petteriTeikari/music-attribution-scaffold/issues"
 
 [dependency-groups]
 dev = [
