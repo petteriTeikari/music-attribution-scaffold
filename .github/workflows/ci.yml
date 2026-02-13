@@ -11,7 +11,34 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      backend: ${{ steps.filter.outputs.backend }}
+      frontend: ${{ steps.filter.outputs.frontend }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            backend:
+              - 'src/**'
+              - 'tests/**'
+              - 'pyproject.toml'
+              - 'uv.lock'
+              - 'alembic/**'
+              - 'scripts/**'
+              - 'docker/**'
+              - 'docker-compose*.yml'
+              - '.github/workflows/ci.yml'
+            frontend:
+              - 'frontend/**'
+              - '.github/workflows/ci.yml'
+
   test:
+    needs: changes
+    if: needs.changes.outputs.backend == 'true'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -49,8 +76,9 @@ jobs:
           fail_ci_if_error: false
 
   integration-test:
+    needs: [changes, test]
+    if: needs.changes.outputs.backend == 'true'
     runs-on: ubuntu-latest
-    needs: test
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -72,6 +100,8 @@ jobs:
         run: uv run pytest tests/integration/ -v --timeout=120
 
   frontend-test:
+    needs: changes
+    if: needs.changes.outputs.frontend == 'true'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -100,8 +130,9 @@ jobs:
         run: npm run build --prefix frontend
 
   e2e-test:
+    needs: [changes, frontend-test]
+    if: needs.changes.outputs.frontend == 'true'
     runs-on: ubuntu-latest
-    needs: frontend-test
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -136,6 +167,8 @@ jobs:
           retention-days: 7
 
   validate-guardrails:
+    needs: changes
+    if: needs.changes.outputs.backend == 'true'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
