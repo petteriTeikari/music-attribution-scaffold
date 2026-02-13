@@ -1,0 +1,236 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  xOps Tier 1 Implementation Plan
+  Branch: feat/xops-tier1
+  Source: docs/planning/observability-reproducability-double-checks.md v1.1
+  Reviewer convergence: Architecture 8/10, Portfolio/Hiring 7.5→8.5, MLOps Teaching APPROVE
+-->
+<plan version="1.0" branch="feat/xops-tier1">
+  <metadata>
+    <title>xOps Tier 1: Pipeline DAG + Prod Dockerfile + Prometheus Metrics + PRD Expansion</title>
+    <description>
+      Implement the three Tier 1 P2 tasks (Pipeline DAG, Production Dockerfile,
+      Prometheus metrics) plus portfolio reviewer's "one more thing" (Grafana dashboard)
+      and PRD network expansion (7 new decision nodes). Creates production-ready
+      infrastructure signal for the SSRN preprint companion repo.
+    </description>
+    <base_branch>main</base_branch>
+    <target_branch>feat/xops-tier1</target_branch>
+  </metadata>
+
+  <!-- ============================================================ -->
+  <!-- T1: Prometheus Metrics Endpoint (P2-7)                       -->
+  <!-- ============================================================ -->
+  <task id="T1" status="NOT_STARTED" depends="">
+    <name>Prometheus metrics endpoint</name>
+    <description>
+      Add prometheus_client dependency. Create metrics module with domain-specific
+      metrics. Wire /metrics endpoint into FastAPI app. Add TRACER_BACKEND-style
+      config for metrics enablement.
+    </description>
+    <tdd_spec>
+      <tests>
+        <test_file>tests/unit/test_metrics.py</test_file>
+        <test_cases>
+          <case>test_metrics_module_exports_expected_metrics</case>
+          <case>test_request_counter_increments</case>
+          <case>test_confidence_histogram_observes_values</case>
+          <case>test_drift_counter_increments</case>
+          <case>test_agent_latency_histogram_exists</case>
+          <case>test_metrics_endpoint_returns_prometheus_format</case>
+        </test_cases>
+      </tests>
+      <implementation>
+        <file>src/music_attribution/observability/__init__.py</file>
+        <file>src/music_attribution/observability/metrics.py</file>
+        <file>src/music_attribution/api/routes/metrics.py</file>
+        <file>src/music_attribution/api/app.py</file>
+        <file>pyproject.toml</file>
+      </implementation>
+      <verification>
+        <command>make test-local</command>
+        <command>pre-commit run --all-files</command>
+      </verification>
+    </tdd_spec>
+    <reviewer_notes>
+      MLOps Teaching: Use domain-specific metric names (attribution_requests_total,
+      attribution_confidence_score, agent_response_latency_seconds, drift_detected_total,
+      center_bias_detections_total). NOT generic http_request_duration_seconds.
+      Portfolio: Keep it a stub with 5-8 core metrics, not comprehensive.
+    </reviewer_notes>
+  </task>
+
+  <!-- ============================================================ -->
+  <!-- T2: Production Dockerfile (P2-6)                             -->
+  <!-- ============================================================ -->
+  <task id="T2" status="NOT_STARTED" depends="">
+    <name>Production Dockerfile</name>
+    <description>
+      Create docker/Dockerfile.prod with multi-stage build (builder + runtime),
+      non-root user, HEALTHCHECK instruction, ARG for Python version matching
+      pyproject.toml (3.13). Use uv sync --no-dev in final stage. Include LABEL
+      with SSRN DOI for provenance.
+    </description>
+    <tdd_spec>
+      <tests>
+        <test_file>tests/unit/test_prod_dockerfile.py</test_file>
+        <test_cases>
+          <case>test_dockerfile_prod_exists</case>
+          <case>test_dockerfile_has_multi_stage_build</case>
+          <case>test_dockerfile_has_non_root_user</case>
+          <case>test_dockerfile_has_healthcheck</case>
+          <case>test_dockerfile_python_version_matches_pyproject</case>
+          <case>test_dockerfile_has_ssrn_label</case>
+        </test_cases>
+      </tests>
+      <implementation>
+        <file>docker/Dockerfile.prod</file>
+      </implementation>
+      <verification>
+        <command>make test-local</command>
+        <command>pre-commit run --all-files</command>
+      </verification>
+    </tdd_spec>
+    <reviewer_notes>
+      Portfolio: Include comment blocks explaining WHY each security decision was made.
+      This is a teaching repo — Dockerfile should teach, not just function.
+      MLOps Teaching: Use uv sync --no-dev, ARG PYTHON_VERSION=3.13.
+    </reviewer_notes>
+  </task>
+
+  <!-- ============================================================ -->
+  <!-- T3: Pipeline DAG (P2-1)                                      -->
+  <!-- ============================================================ -->
+  <task id="T3" status="NOT_STARTED" depends="">
+    <name>Declarative pipeline DAG</name>
+    <description>
+      Create a declarative Pydantic model defining the 5 pipeline stages (ETL,
+      Entity Resolution, Attribution, API/MCP, Chat), their dependencies, and
+      expected I/O types. Include a generic runner that validates and executes
+      the DAG. Reference actual pipeline stage classes via TYPE_CHECKING imports.
+    </description>
+    <tdd_spec>
+      <tests>
+        <test_file>tests/unit/test_pipeline_dag.py</test_file>
+        <test_cases>
+          <case>test_dag_model_has_five_stages</case>
+          <case>test_dag_is_acyclic</case>
+          <case>test_dag_stages_have_correct_dependencies</case>
+          <case>test_dag_topological_sort_order</case>
+          <case>test_dag_stage_io_types_defined</case>
+          <case>test_dag_runner_validates_acyclicity</case>
+          <case>test_dag_runner_executes_in_order</case>
+        </test_cases>
+      </tests>
+      <implementation>
+        <file>src/music_attribution/pipeline/__init__.py</file>
+        <file>src/music_attribution/pipeline/dag.py</file>
+        <file>src/music_attribution/pipeline/runner.py</file>
+        <file>scripts/run-pipeline.py</file>
+      </implementation>
+      <verification>
+        <command>make test-local</command>
+        <command>pre-commit run --all-files</command>
+      </verification>
+    </tdd_spec>
+    <reviewer_notes>
+      Portfolio: Make DAG declarative (Pydantic model), not imperative. The DAG
+      definition is data, the runner is generic. Shows architectural maturity.
+      MLOps Teaching: Import actual pipeline stage classes (or TYPE_CHECKING refs)
+      to teach architecture by demonstrating the actual import graph.
+    </reviewer_notes>
+  </task>
+
+  <!-- ============================================================ -->
+  <!-- T4: Grafana Dashboard + Monitoring Profile                   -->
+  <!-- ============================================================ -->
+  <task id="T4" status="NOT_STARTED" depends="T1">
+    <name>Grafana dashboard and Docker Compose monitoring profile</name>
+    <description>
+      Create pre-built Grafana dashboard JSON (attribution-overview), Prometheus
+      scrape config, Grafana datasource config. Add monitoring services to
+      docker-compose.dev.yml under profiles: ["monitoring"]. This is the portfolio
+      reviewer's "one more thing" that pushes score from 7.5 to 8.5.
+    </description>
+    <tdd_spec>
+      <tests>
+        <test_file>tests/unit/test_monitoring_config.py</test_file>
+        <test_cases>
+          <case>test_grafana_dashboard_json_is_valid</case>
+          <case>test_grafana_dashboard_has_expected_panels</case>
+          <case>test_prometheus_config_targets_backend</case>
+          <case>test_grafana_datasource_references_prometheus</case>
+          <case>test_docker_compose_has_monitoring_profile</case>
+        </test_cases>
+      </tests>
+      <implementation>
+        <file>docker/grafana/dashboards/attribution-overview.json</file>
+        <file>docker/grafana/dashboards/dashboard.yml</file>
+        <file>docker/grafana/datasources/prometheus.yml</file>
+        <file>docker/prometheus.yml</file>
+        <file>docker-compose.dev.yml</file>
+      </implementation>
+      <verification>
+        <command>make test-local</command>
+        <command>pre-commit run --all-files</command>
+      </verification>
+    </tdd_spec>
+    <reviewer_notes>
+      Portfolio: "A hiring manager who runs docker compose --profile monitoring up,
+      opens localhost:3001, and sees a pre-provisioned Grafana dashboard with live
+      metrics will have a viscerally different reaction than one who curls /metrics."
+      Architecture: Pin versions at implementation time, not planning time.
+    </reviewer_notes>
+  </task>
+
+  <!-- ============================================================ -->
+  <!-- T5: PRD Network Expansion                                    -->
+  <!-- ============================================================ -->
+  <task id="T5" status="NOT_STARTED" depends="">
+    <name>PRD network expansion — 7 new decision nodes</name>
+    <description>
+      Add 7 new PRD decision nodes to _network.yaml:
+      orchestrator_choice (L4), ml_monitoring (L5), documentation_tooling (L5),
+      cd_strategy (L4), policy_as_code (L5), finops_strategy (L5),
+      ethics_governance (L5). Create .decision.yaml files for each.
+      Add edges per reviewer-validated plan. Add opentofu option to iac_tooling.
+      Bump version to v1.9.0.
+    </description>
+    <tdd_spec>
+      <tests>
+        <test_file>tests/unit/test_prd_xops_expansion.py</test_file>
+        <test_cases>
+          <case>test_network_version_is_1_9_0</case>
+          <case>test_network_has_44_nodes</case>
+          <case>test_new_l4_nodes_exist</case>
+          <case>test_new_l5_nodes_exist</case>
+          <case>test_decision_files_exist_and_valid</case>
+          <case>test_network_dag_is_acyclic</case>
+          <case>test_iac_tooling_has_opentofu_option</case>
+          <case>test_new_edges_reference_valid_nodes</case>
+        </test_cases>
+      </tests>
+      <implementation>
+        <file>docs/prd/decisions/_network.yaml</file>
+        <file>docs/prd/decisions/L4-deployment/orchestrator-choice.decision.yaml</file>
+        <file>docs/prd/decisions/L4-deployment/cd-strategy.decision.yaml</file>
+        <file>docs/prd/decisions/L5-operations/ml-monitoring.decision.yaml</file>
+        <file>docs/prd/decisions/L5-operations/documentation-tooling.decision.yaml</file>
+        <file>docs/prd/decisions/L5-operations/policy-as-code.decision.yaml</file>
+        <file>docs/prd/decisions/L5-operations/finops-strategy.decision.yaml</file>
+        <file>docs/prd/decisions/L5-operations/ethics-governance.decision.yaml</file>
+        <file>docs/prd/decisions/L4-deployment/iac-tooling.decision.yaml</file>
+      </implementation>
+      <verification>
+        <command>make test-local</command>
+        <command>pre-commit run --all-files</command>
+      </verification>
+    </tdd_spec>
+    <reviewer_notes>
+      Architecture: v1.9.0 not v2.0.0 (additive, not breaking). DAG acyclicity
+      validated by Kahn's algorithm: 44/44 nodes visited. Consider orchestrator_choice
+      at L3 vs L4 — keep at L4 for now. cd_strategy → observability_stack edge added.
+      documentation_tooling edge from ci_cd_pipeline should be weak not moderate.
+    </reviewer_notes>
+  </task>
+</plan>
