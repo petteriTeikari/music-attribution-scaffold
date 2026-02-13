@@ -1,0 +1,176 @@
+# FinOps & Cloud Cost Optimization
+#
+# Strategy for managing and optimizing cloud infrastructure costs.
+
+decision_id: finops_strategy
+title: "FinOps & Cloud Cost Optimization"
+description: >
+  Determines the approach to cloud cost visibility, optimization, and
+  governance. Attribution systems have variable cost profiles — LLM API
+  calls dominate during active attribution, while storage and compute
+  dominate at rest. FinOps practices help teams avoid bill shock and
+  right-size infrastructure as usage patterns emerge.
+
+decision_level: L5_operations
+status: open
+last_updated: 2026-02-13
+
+options:
+  - option_id: none_manual
+    title: "Manual Cost Review"
+    description: >
+      Review cloud bills manually via provider dashboards. Set billing
+      alerts but no automated optimization. Sufficient for small teams
+      on fixed-price PaaS (Render, Railway) where costs are predictable
+      and limited. Current scaffold default.
+    prior_probability: 0.45
+    status: recommended
+
+  - option_id: skypilot
+    title: "SkyPilot + SkyServe"
+    description: >
+      Multi-cloud job launcher that finds the cheapest spot/preemptible
+      instances across AWS, GCP, Azure. Excellent for batch ML workloads
+      like bulk re-attribution or embedding generation. Handles failover
+      across regions and clouds automatically. SkyServe extends this to
+      multi-cloud serving with SpotHedge — distributing spot replicas
+      across regions/clouds for ~43% cost savings on inference serving
+      (Mao et al., arXiv:2411.01438). Key differentiator for products
+      competing on lowest-price serving.
+    prior_probability: 0.25
+    status: viable
+    constraints:
+      - "Multi-cloud accounts for maximum savings"
+      - "Spot instance tolerance (preemption handling)"
+    references:
+      - "Mao et al. (2024). SkyServe: Serving AI Models across Regions and Clouds with Spot Instances. arXiv:2411.01438"
+      - "https://docs.skypilot.co/en/stable/serving/sky-serve.html"
+
+  - option_id: infracost
+    title: "Infracost"
+    description: >
+      Cost estimation in CI/CD — shows cost impact of infrastructure
+      changes before they are applied. Integrates with Terraform/Pulumi
+      pull requests. Prevents cost surprises but does not optimize runtime.
+    prior_probability: 0.20
+    status: viable
+    constraints:
+      - "Requires Terraform or Pulumi IaC"
+      - "Cost estimates only, no runtime optimization"
+
+  - option_id: kubecost
+    title: "Kubecost"
+    description: >
+      Kubernetes cost monitoring with per-namespace, per-deployment cost
+      allocation. Real-time cost visibility, right-sizing recommendations,
+      and idle resource detection. Requires Kubernetes.
+    prior_probability: 0.10
+    status: viable
+    constraints:
+      - "Kubernetes cluster required"
+      - "Kubecost server deployment"
+
+conditional_on:
+  - parent_decision_id: compute_platform
+    influence_strength: strong
+    conditional_table:
+      - given_parent_option: hetzner_vps
+        then_probabilities:
+          none_manual: 0.60
+          skypilot: 0.15
+          infracost: 0.15
+          kubecost: 0.10
+      - given_parent_option: render_railway
+        then_probabilities:
+          none_manual: 0.70
+          skypilot: 0.10
+          infracost: 0.10
+          kubecost: 0.10
+      - given_parent_option: fly_io
+        then_probabilities:
+          none_manual: 0.55
+          skypilot: 0.15
+          infracost: 0.15
+          kubecost: 0.15
+      - given_parent_option: aws_gcp_azure
+        then_probabilities:
+          none_manual: 0.20
+          skypilot: 0.30
+          infracost: 0.25
+          kubecost: 0.25
+
+  - parent_decision_id: iac_tooling
+    influence_strength: moderate
+    conditional_table:
+      - given_parent_option: pulumi
+        then_probabilities:
+          none_manual: 0.30
+          skypilot: 0.20
+          infracost: 0.35
+          kubecost: 0.15
+      - given_parent_option: terraform
+        then_probabilities:
+          none_manual: 0.25
+          skypilot: 0.20
+          infracost: 0.40
+          kubecost: 0.15
+      - given_parent_option: platform_native
+        then_probabilities:
+          none_manual: 0.60
+          skypilot: 0.15
+          infracost: 0.10
+          kubecost: 0.15
+
+archetype_weights:
+  engineer_heavy_startup:
+    probability_overrides:
+      none_manual: 0.25
+      skypilot: 0.30
+      infracost: 0.25
+      kubecost: 0.20
+    rationale: "Engineers optimize aggressively — SkyPilot for batch ML, Infracost in CI."
+
+  musician_first_team:
+    probability_overrides:
+      none_manual: 0.70
+      skypilot: 0.10
+      infracost: 0.10
+      kubecost: 0.10
+    rationale: "Fixed-price PaaS makes cost optimization largely irrelevant."
+
+  solo_hacker:
+    probability_overrides:
+      none_manual: 0.75
+      skypilot: 0.15
+      infracost: 0.05
+      kubecost: 0.05
+    rationale: "Manual review of a single provider bill. SkyPilot if running batch ML jobs."
+
+  well_funded_startup:
+    probability_overrides:
+      none_manual: 0.15
+      skypilot: 0.30
+      infracost: 0.30
+      kubecost: 0.25
+    rationale: "Invest in cost visibility as infrastructure spend grows with scale."
+
+volatility:
+  classification: stable
+  last_assessed: 2026-02-13
+  next_review: 2026-08-13
+  change_drivers:
+    - "LLM API cost trajectory (decreasing but usage increasing)"
+    - "Migration from PaaS to IaaS/Kubernetes"
+    - "Batch ML workload volume growth"
+    - "SkyServe maturity for spot-based serving (SpotHedge, arXiv:2411.01438)"
+
+domain_applicability:
+  music_attribution: 0.8
+  dpp_traceability: 0.8
+  generic_graph_rag: 0.9
+
+tags:
+  - operations
+  - finops
+  - cost-optimization
+  - cloud

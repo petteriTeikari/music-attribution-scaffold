@@ -1,0 +1,164 @@
+# Documentation-as-Code
+#
+# Tooling for generating and hosting project documentation.
+
+decision_id: documentation_tooling
+title: "Documentation-as-Code"
+description: >
+  Determines the documentation generation and hosting approach. Attribution
+  systems require both API reference docs (auto-generated from docstrings)
+  and conceptual guides (assurance levels, confidence scoring, Oracle Problem).
+  Documentation-as-code keeps docs versioned alongside source.
+
+decision_level: L5_operations
+status: open
+last_updated: 2026-02-13
+
+options:
+  - option_id: mkdocs_material
+    title: "MkDocs Material"
+    description: >
+      Markdown-based documentation with Material for MkDocs theme. Excellent
+      search, navigation, admonitions, and code highlighting. Python ecosystem
+      native, supports mkdocstrings for API reference auto-generation.
+      Deploys to GitHub Pages with a single CI step.
+    prior_probability: 0.40
+    status: recommended
+
+  - option_id: sphinx
+    title: "Sphinx + MyST"
+    description: >
+      Python documentation standard with MyST markdown parser. Rich
+      cross-referencing, intersphinx linking, and autodoc. More powerful
+      than MkDocs for complex API documentation but steeper learning curve
+      and less modern default theme.
+    prior_probability: 0.20
+    status: viable
+    constraints:
+      - "reStructuredText or MyST markdown learning curve"
+      - "Theme customization more involved than MkDocs Material"
+
+  - option_id: docusaurus
+    title: "Docusaurus"
+    description: >
+      React-based documentation framework by Meta. MDX support, versioning,
+      i18n, and blog. Better for projects with JavaScript/TypeScript frontend
+      teams who want a unified docs + marketing site.
+    prior_probability: 0.10
+    status: viable
+    constraints:
+      - "Node.js toolchain required"
+      - "Less Python ecosystem integration"
+
+  - option_id: none_markdown
+    title: "Plain Markdown (No Generator)"
+    description: >
+      Documentation lives as markdown files in docs/ and is read directly
+      on GitHub or in IDE. No build step, no hosting, no search. Current
+      scaffold approach with docs/knowledge-base/ and docs/planning/.
+      Sufficient for early-stage projects consumed primarily by developers.
+    prior_probability: 0.30
+    status: viable
+
+conditional_on:
+  - parent_decision_id: build_vs_buy_posture
+    influence_strength: moderate
+    conditional_table:
+      - given_parent_option: custom_build
+        then_probabilities:
+          mkdocs_material: 0.40
+          sphinx: 0.30
+          docusaurus: 0.10
+          none_markdown: 0.20
+      - given_parent_option: managed_services
+        then_probabilities:
+          mkdocs_material: 0.40
+          sphinx: 0.15
+          docusaurus: 0.15
+          none_markdown: 0.30
+      - given_parent_option: saas_maximalist
+        then_probabilities:
+          mkdocs_material: 0.30
+          sphinx: 0.10
+          docusaurus: 0.10
+          none_markdown: 0.50
+
+  - parent_decision_id: target_market_segment
+    influence_strength: moderate
+    conditional_table:
+      - given_parent_option: independent_creators
+        then_probabilities:
+          mkdocs_material: 0.35
+          sphinx: 0.10
+          docusaurus: 0.15
+          none_markdown: 0.40
+      - given_parent_option: mid_tier_labels
+        then_probabilities:
+          mkdocs_material: 0.40
+          sphinx: 0.20
+          docusaurus: 0.10
+          none_markdown: 0.30
+      - given_parent_option: enterprise_rights_orgs
+        then_probabilities:
+          mkdocs_material: 0.40
+          sphinx: 0.30
+          docusaurus: 0.10
+          none_markdown: 0.20
+      - given_parent_option: ai_platform_consumers
+        then_probabilities:
+          mkdocs_material: 0.45
+          sphinx: 0.25
+          docusaurus: 0.15
+          none_markdown: 0.15
+
+archetype_weights:
+  engineer_heavy_startup:
+    probability_overrides:
+      mkdocs_material: 0.35
+      sphinx: 0.30
+      docusaurus: 0.10
+      none_markdown: 0.25
+    rationale: "Engineers value auto-generated API docs and cross-references."
+
+  musician_first_team:
+    probability_overrides:
+      mkdocs_material: 0.35
+      sphinx: 0.05
+      docusaurus: 0.10
+      none_markdown: 0.50
+    rationale: "Plain markdown in GitHub is sufficient; no build step overhead."
+
+  solo_hacker:
+    probability_overrides:
+      mkdocs_material: 0.30
+      sphinx: 0.05
+      docusaurus: 0.05
+      none_markdown: 0.60
+    rationale: "README and inline docs suffice until external users appear."
+
+  well_funded_startup:
+    probability_overrides:
+      mkdocs_material: 0.45
+      sphinx: 0.25
+      docusaurus: 0.15
+      none_markdown: 0.15
+    rationale: "Professional docs site with MkDocs Material or Sphinx for credibility."
+
+volatility:
+  classification: stable
+  last_assessed: 2026-02-13
+  next_review: 2026-08-13
+  change_drivers:
+    - "External API consumer onboarding needs"
+    - "Regulatory documentation requirements (EU AI Act)"
+    - "MkDocs Material feature additions"
+
+domain_applicability:
+  music_attribution: 1.0
+  dpp_traceability: 1.0
+  generic_graph_rag: 1.0
+
+tags:
+  - operations
+  - documentation
+  - developer-experience

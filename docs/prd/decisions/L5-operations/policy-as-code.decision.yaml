@@ -1,0 +1,184 @@
+# Policy-as-Code
+#
+# Automated policy enforcement for infrastructure and deployments.
+
+decision_id: policy_as_code
+title: "Policy-as-Code"
+description: >
+  Determines whether and how infrastructure and deployment policies are
+  codified and enforced automatically. In attribution systems, policy-as-code
+  can enforce data residency constraints, RBAC on attribution records, and
+  infrastructure compliance boundaries (e.g., no GPU instances without approval).
+
+decision_level: L5_operations
+status: open
+last_updated: 2026-02-13
+
+options:
+  - option_id: none
+    title: "No Policy-as-Code"
+    description: >
+      Policies enforced via documentation, code review, and team discipline.
+      No automated enforcement engine. Sufficient for small teams where
+      every deploy is reviewed by the same person who wrote the policy.
+    prior_probability: 0.40
+    status: recommended
+
+  - option_id: opa_gatekeeper
+    title: "Open Policy Agent (OPA) / Gatekeeper"
+    description: >
+      CNCF policy engine using Rego language. OPA for general policy
+      evaluation, Gatekeeper for Kubernetes admission control. Rich
+      ecosystem but Rego has a steep learning curve. Can enforce
+      data residency, resource limits, and labeling requirements.
+    prior_probability: 0.25
+    status: viable
+    constraints:
+      - "Rego language learning curve"
+      - "Kubernetes for Gatekeeper admission webhooks"
+      - "OPA server deployment for non-K8s use cases"
+
+  - option_id: pulumi_crossguard
+    title: "Pulumi CrossGuard"
+    description: >
+      Policy-as-code in TypeScript/Python alongside Pulumi IaC. Policies
+      run at plan time, preventing non-compliant resources from being
+      created. Requires Pulumi as IaC tool. Good developer experience
+      since policies use the same language as infrastructure code.
+    prior_probability: 0.20
+    status: viable
+    constraints:
+      - "Requires Pulumi as IaC provider"
+      - "Only covers infrastructure policies, not runtime"
+
+  - option_id: kyverno
+    title: "Kyverno"
+    description: >
+      Kubernetes-native policy engine using YAML (no Rego). Validate,
+      mutate, and generate Kubernetes resources. Lower learning curve
+      than OPA/Gatekeeper but limited to Kubernetes resources.
+    prior_probability: 0.15
+    status: viable
+    constraints:
+      - "Kubernetes cluster required"
+      - "Only covers Kubernetes resource policies"
+
+conditional_on:
+  - parent_decision_id: compute_platform
+    influence_strength: strong
+    conditional_table:
+      - given_parent_option: hetzner_vps
+        then_probabilities:
+          none: 0.45
+          opa_gatekeeper: 0.25
+          pulumi_crossguard: 0.20
+          kyverno: 0.10
+      - given_parent_option: render_railway
+        then_probabilities:
+          none: 0.60
+          opa_gatekeeper: 0.15
+          pulumi_crossguard: 0.15
+          kyverno: 0.10
+      - given_parent_option: aws_gcp_azure
+        then_probabilities:
+          none: 0.20
+          opa_gatekeeper: 0.30
+          pulumi_crossguard: 0.25
+          kyverno: 0.25
+
+  - parent_decision_id: iac_tooling
+    influence_strength: moderate
+    conditional_table:
+      - given_parent_option: pulumi
+        then_probabilities:
+          none: 0.25
+          opa_gatekeeper: 0.15
+          pulumi_crossguard: 0.45
+          kyverno: 0.15
+      - given_parent_option: terraform
+        then_probabilities:
+          none: 0.30
+          opa_gatekeeper: 0.35
+          pulumi_crossguard: 0.10
+          kyverno: 0.25
+      - given_parent_option: platform_native
+        then_probabilities:
+          none: 0.55
+          opa_gatekeeper: 0.20
+          pulumi_crossguard: 0.10
+          kyverno: 0.15
+
+  - parent_decision_id: regulatory_posture
+    influence_strength: moderate
+    conditional_table:
+      - given_parent_option: minimal_compliance
+        then_probabilities:
+          none: 0.60
+          opa_gatekeeper: 0.15
+          pulumi_crossguard: 0.15
+          kyverno: 0.10
+      - given_parent_option: proactive_compliance
+        then_probabilities:
+          none: 0.25
+          opa_gatekeeper: 0.30
+          pulumi_crossguard: 0.25
+          kyverno: 0.20
+      - given_parent_option: compliance_first
+        then_probabilities:
+          none: 0.10
+          opa_gatekeeper: 0.35
+          pulumi_crossguard: 0.30
+          kyverno: 0.25
+
+archetype_weights:
+  engineer_heavy_startup:
+    probability_overrides:
+      none: 0.25
+      opa_gatekeeper: 0.30
+      pulumi_crossguard: 0.25
+      kyverno: 0.20
+    rationale: "Engineers invest in automated guardrails early to prevent drift."
+
+  musician_first_team:
+    probability_overrides:
+      none: 0.70
+      opa_gatekeeper: 0.10
+      pulumi_crossguard: 0.10
+      kyverno: 0.10
+    rationale: "Policy automation is low priority for small creative teams."
+
+  solo_hacker:
+    probability_overrides:
+      none: 0.80
+      opa_gatekeeper: 0.05
+      pulumi_crossguard: 0.10
+      kyverno: 0.05
+    rationale: "Solo developers are the policy — no enforcement engine needed."
+
+  well_funded_startup:
+    probability_overrides:
+      none: 0.15
+      opa_gatekeeper: 0.35
+      pulumi_crossguard: 0.30
+      kyverno: 0.20
+    rationale: "Compliance and governance requirements justify policy automation."
+
+volatility:
+  classification: stable
+  last_assessed: 2026-02-13
+  next_review: 2026-08-13
+  change_drivers:
+    - "EU AI Act enforcement requiring automated compliance checks"
+    - "Team growth beyond trusted inner circle"
+    - "Multi-environment deployment complexity"
+
+domain_applicability:
+  music_attribution: 0.8
+  dpp_traceability: 1.0
+  generic_graph_rag: 0.6
+
+tags:
+  - operations
+  - policy
+  - governance
+  - compliance

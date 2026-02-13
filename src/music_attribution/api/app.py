@@ -11,6 +11,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from music_attribution.api.routes.attribution import router as attribution_router
 from music_attribution.api.routes.health import router as health_router
+from music_attribution.api.routes.metrics import router as metrics_router
 from music_attribution.api.routes.permissions import router as permissions_router
 from music_attribution.chat.agui_endpoint import router as copilotkit_router
 from music_attribution.config import Settings
@@ -65,6 +66,7 @@ def create_app() -> FastAPI:
     )
 
     app.include_router(health_router)
+    app.include_router(metrics_router)
     app.include_router(attribution_router, prefix="/api/v1")
     app.include_router(permissions_router, prefix="/api/v1")
     app.include_router(copilotkit_router, prefix="/api/v1")

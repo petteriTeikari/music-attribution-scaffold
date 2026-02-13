@@ -53,6 +53,7 @@ dependencies = [
     "thefuzz>=0.22",
     "uvicorn>=0.34",
     "valkey>=6.0",
+    "prometheus-client>=0.24.1",
 ]
 
 [project.urls]

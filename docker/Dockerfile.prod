@@ -1,0 +1,99 @@
+# Dockerfile.prod — Production-optimized multi-stage build
+#
+# Security decisions documented for teaching purposes:
+#   1. Multi-stage build: separates build-time deps from runtime image
+#   2. Non-root user: limits blast radius of container compromise
+#   3. HEALTHCHECK: enables orchestrator liveness/readiness detection
+#   4. --no-dev: excludes test/dev dependencies from production image
+#   5. Slim base: minimal attack surface (no gcc, no git)
+#
+# Build:  docker build -f docker/Dockerfile.prod -t music-attribution .
+# Run:    docker run -p 8000:8000 --env-file .env music-attribution
+#
+# Companion code to: Teikari, P. (2026). Music Attribution with
+# Transparent Confidence. SSRN No. 6109087.
+
+# --- Stage 1: Builder ---
+# Install dependencies in a throwaway stage so build tools (gcc, etc.)
+# don't bloat the final image.
+
+ARG PYTHON_VERSION=3.13
+FROM python:${PYTHON_VERSION}-slim AS builder
+
+# Install uv for fast, reproducible dependency installation
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
+
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    UV_LINK_MODE=copy
+
+WORKDIR /app
+
+# Copy dependency files first (Docker layer caching)
+COPY pyproject.toml uv.lock* README.md ./
+
+# Install production dependencies only (no dev/test groups)
+# --frozen ensures we use the exact versions from uv.lock
+RUN uv sync --frozen --no-dev
+
+# Copy application source
+COPY src/ ./src/
+COPY alembic/ ./alembic/
+COPY alembic.ini ./
+
+# --- Stage 2: Runtime ---
+# Minimal image with only the application and its runtime dependencies.
+
+FROM python:${PYTHON_VERSION}-slim AS runtime
+
+# Provenance labels (OCI Image Spec + SSRN attribution)
+LABEL org.opencontainers.image.title="Music Attribution Scaffold" \
+      org.opencontainers.image.description="Research scaffold for music attribution with transparent confidence scoring" \
+      org.opencontainers.image.source="https://github.com/petteriTeikari/music-attribution-scaffold" \
+      org.opencontainers.image.documentation="https://papers.ssrn.com/sol3/papers.cfm?abstract_id=6109087" \
+      org.opencontainers.image.licenses="MIT" \
+      org.opencontainers.image.vendor="Petteri Teikari" \
+      com.ssrn.paper_id="6109087"
+
+# Install only curl for healthcheck (minimal runtime deps)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create non-root user for security
+# WHY: Running as root inside a container means a container escape
+# gives the attacker root on the host. A non-root user limits the
+# blast radius to the appuser's permissions.
+RUN groupadd --gid 1000 appuser && \
+    useradd --uid 1000 --gid appuser --shell /bin/bash --create-home appuser
+
+WORKDIR /app
+
+# Copy installed dependencies and application from builder stage
+COPY --from=builder /app/.venv /app/.venv
+COPY --from=builder /app/src /app/src
+COPY --from=builder /app/alembic /app/alembic
+COPY --from=builder /app/alembic.ini /app/alembic.ini
+
+# Ensure the virtual environment is on PATH
+ENV PATH="/app/.venv/bin:$PATH" \
+    PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1
+
+# Switch to non-root user before running the application
+USER appuser
+
+EXPOSE 8000
+
+# HEALTHCHECK enables container orchestrators (Docker, K8s, ECS) to
+# detect when the application is unhealthy and restart it automatically.
+# Uses the /health endpoint (liveness probe) which always returns 200
+# when the process is alive. The /health/ready endpoint (readiness probe)
+# checks database connectivity and is used by load balancers.
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+    CMD curl -f http://localhost:8000/health || exit 1
+
+# Use uvicorn directly (not --reload) for production
+CMD ["uvicorn", "music_attribution.api.app:create_app", "--factory", \
+     "--host", "0.0.0.0", "--port", "8000", \
+     "--workers", "2", "--log-level", "info"]

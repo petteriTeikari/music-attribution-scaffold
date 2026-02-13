@@ -12,7 +12,7 @@
 
 network:
   name: "Probabilistic PRD Decision Network"
-  version: "1.8.0"
+  version: "1.9.0"
   last_updated: 2026-02-13
   description: >
     Bayesian decision network for the Music Attribution Scaffold.
@@ -187,6 +187,16 @@ nodes:
     file: L4-deployment/container-strategy.decision.yaml
     title: "Container Strategy"
 
+  - id: orchestrator_choice
+    level: L4_deployment
+    file: L4-deployment/orchestrator-choice.decision.yaml
+    title: "Pipeline Orchestrator"
+
+  - id: cd_strategy
+    level: L4_deployment
+    file: L4-deployment/cd-strategy.decision.yaml
+    title: "Continuous Deployment Strategy"
+
   # L5: Operations Decisions
   - id: observability_stack
     level: L5_operations
@@ -212,6 +222,31 @@ nodes:
     level: L5_operations
     file: L5-operations/schema-governance.decision.yaml
     title: "Schema Governance & Data Lineage"
+
+  - id: ml_monitoring
+    level: L5_operations
+    file: L5-operations/ml-monitoring.decision.yaml
+    title: "ML Model Monitoring"
+
+  - id: documentation_tooling
+    level: L5_operations
+    file: L5-operations/documentation-tooling.decision.yaml
+    title: "Documentation-as-Code"
+
+  - id: policy_as_code
+    level: L5_operations
+    file: L5-operations/policy-as-code.decision.yaml
+    title: "Policy-as-Code"
+
+  - id: finops_strategy
+    level: L5_operations
+    file: L5-operations/finops-strategy.decision.yaml
+    title: "FinOps & Cloud Cost Optimization"
+
+  - id: ethics_governance
+    level: L5_operations
+    file: L5-operations/ethics-governance.decision.yaml
+    title: "EthicsOps & Governance-as-Code"
 
 # --- Edge Declarations ---
 
@@ -661,3 +696,112 @@ edges:
     to: external_registry_integration
     influence: moderate
     rationale: "Registry integrations require engineering investment and commercial agreements"
+
+  # --- xOps Expansion Edges (v1.9.0) ---
+
+  # Orchestrator edges
+  - from: service_decomposition
+    to: orchestrator_choice
+    influence: strong
+    rationale: "Service architecture determines orchestration complexity needs"
+
+  - from: build_vs_buy_posture
+    to: orchestrator_choice
+    influence: moderate
+    rationale: "Custom builders invest in orchestration; SaaS teams use platform scheduling"
+
+  - from: compute_platform
+    to: orchestrator_choice
+    influence: moderate
+    rationale: "Platform capabilities constrain available orchestrators"
+
+  # ML Monitoring edges
+  - from: data_quality_strategy
+    to: ml_monitoring
+    influence: strong
+    rationale: "Data quality validation drives monitoring scope and drift detection"
+
+  - from: observability_stack
+    to: ml_monitoring
+    influence: moderate
+    rationale: "ML monitoring builds on top of existing observability infrastructure"
+
+  - from: ai_framework_strategy
+    to: ml_monitoring
+    influence: moderate
+    rationale: "LLM-heavy projects need LLM-specific monitoring beyond traditional ML metrics"
+
+  # Documentation edges
+  - from: build_vs_buy_posture
+    to: documentation_tooling
+    influence: weak
+    rationale: "Custom builders invest in documentation; SaaS teams rely on platform docs"
+
+  - from: ci_cd_pipeline
+    to: documentation_tooling
+    influence: weak
+    rationale: "CI/CD can deploy docs (GitHub Pages) but doesn't determine tooling choice"
+
+  # CD Strategy edges
+  - from: ci_cd_pipeline
+    to: cd_strategy
+    influence: strong
+    rationale: "CI pipeline choice directly constrains deployment automation options"
+
+  - from: compute_platform
+    to: cd_strategy
+    influence: strong
+    rationale: "Platform determines available deployment mechanisms"
+
+  - from: container_strategy
+    to: cd_strategy
+    influence: moderate
+    rationale: "Container orchestration affects deployment workflow (K8s needs GitOps)"
+
+  - from: cd_strategy
+    to: observability_stack
+    influence: moderate
+    rationale: "CD pipelines emit deploy events and health metrics that feed observability"
+
+  # Policy-as-Code edges
+  - from: iac_tooling
+    to: policy_as_code
+    influence: strong
+    rationale: "IaC choice determines policy engine (Pulumi CrossGuard, Terraform Sentinel, OPA)"
+
+  - from: regulatory_posture
+    to: policy_as_code
+    influence: moderate
+    rationale: "Compliance requirements drive policy-as-code adoption and rigor"
+
+  - from: container_strategy
+    to: policy_as_code
+    influence: moderate
+    rationale: "K8s admission controllers (OPA Gatekeeper, Kyverno) require containerization"
+
+  # FinOps edges
+  - from: compute_platform
+    to: finops_strategy
+    influence: strong
+    rationale: "Cloud platform determines cost visibility and optimization levers"
+
+  - from: scaling_strategy
+    to: finops_strategy
+    influence: moderate
+    rationale: "Scaling decisions directly impact cloud costs and FinOps priorities"
+
+  # Ethics/Governance edges
+  - from: regulatory_posture
+    to: ethics_governance
+    influence: strong
+    rationale: "EU AI Act and compliance requirements drive governance-as-code adoption"
+
+  - from: ai_framework_strategy
+    to: ethics_governance
+    influence: moderate
+    rationale: "LLM usage creates model card and bias documentation requirements"
+
+  - from: data_quality_strategy
+    to: ethics_governance
+    influence: moderate
+    rationale: "Data quality practices inform bias detection and fairness metrics"

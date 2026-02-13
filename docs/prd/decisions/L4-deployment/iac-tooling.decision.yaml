@@ -21,7 +21,7 @@ options:
       Infrastructure managed via platform dashboards and CLI commands.
       No codified infrastructure. Fast for simple setups, becomes
       unmaintainable as complexity grows.
-    prior_probability: 0.35
+    prior_probability: 0.30
     status: viable
 
   - option_id: terraform
@@ -29,8 +29,9 @@ options:
     description: >
       HashiCorp's declarative IaC with HCL. Largest ecosystem,
       broadest provider support. State management required.
-      Industry standard for multi-cloud infrastructure.
-    prior_probability: 0.25
+      Industry standard for multi-cloud infrastructure. Note:
+      BSL license since Aug 2023 — consider OpenTofu fork.
+    prior_probability: 0.20
     status: viable
     constraints:
       - "HCL learning curve"
@@ -47,6 +48,18 @@ options:
     status: viable
     constraints:
       - "Pulumi Cloud or self-managed state"
+
+  - option_id: opentofu
+    title: "OpenTofu"
+    description: >
+      Open-source Terraform fork (Linux Foundation). HCL-compatible with
+      ephemeral values, state encryption. Avoids HashiCorp BSL license.
+      v1.11.4 as of Feb 2026.
+    prior_probability: 0.15
+    status: viable
+    constraints:
+      - "Smaller ecosystem than Terraform (but growing)"
+      - "State backend management"
 
   - option_id: platform_native
     title: "Platform Native (render.yaml / fly.toml)"

@@ -1,0 +1,178 @@
+# Pipeline Orchestrator
+#
+# Orchestration approach for the 5-stage attribution pipeline.
+
+decision_id: orchestrator_choice
+title: "Pipeline Orchestrator"
+description: >
+  Choose the pipeline orchestration approach for the 5-stage attribution
+  pipeline (ETL → Entity Resolution → Attribution Engine → API/MCP → Chat).
+  Ranges from plain Python scripts with Make targets to full-featured
+  workflow engines with DAG visualization, retry logic, and scheduling.
+
+decision_level: L4_deployment
+status: open
+last_updated: 2026-02-13
+
+options:
+  - option_id: none_scripts
+    title: "Plain Scripts + Make Targets"
+    description: >
+      No orchestration framework. Python scripts invoked via Makefile or
+      CLI entry points. Current scaffold approach. Zero dependency overhead,
+      full control, but no built-in retry, scheduling, or DAG visualization.
+    prior_probability: 0.40
+    status: recommended
+
+  - option_id: prefect
+    title: "Prefect"
+    description: >
+      Modern Python-native orchestration with decorator-based task/flow
+      definitions. Free self-hosted server with UI, hybrid execution model.
+      Low migration cost from plain scripts — add @task/@flow decorators.
+    prior_probability: 0.25
+    status: viable
+
+  - option_id: dagster
+    title: "Dagster"
+    description: >
+      Asset-centric orchestration with strong data lineage, type checking,
+      and software-defined assets. Heavier conceptual model than Prefect
+      but better for data-pipeline-first architectures.
+    prior_probability: 0.20
+    status: viable
+    constraints:
+      - "Dagster conceptual model learning curve"
+      - "Separate dagster-webserver deployment"
+
+  - option_id: celery
+    title: "Celery + Redis/RabbitMQ"
+    description: >
+      Distributed task queue for async job processing. Good for fan-out
+      workloads but lacks native DAG support and pipeline visualization.
+      Requires separate message broker infrastructure.
+    prior_probability: 0.10
+    status: viable
+    constraints:
+      - "Requires Redis or RabbitMQ broker"
+      - "No native DAG visualization"
+
+  - option_id: airflow
+    title: "Apache Airflow"
+    description: >
+      Industry-standard batch orchestration with rich DAG UI, scheduling,
+      and plugin ecosystem. Heavy operational footprint (scheduler, webserver,
+      database, workers). Overkill for most attribution scaffold deployments.
+    prior_probability: 0.05
+    status: deferred
+    constraints:
+      - "Heavy operational footprint"
+      - "Batch-oriented, poor for event-driven"
+      - "Significant infrastructure overhead"
+
+conditional_on:
+  - parent_decision_id: build_vs_buy_posture
+    influence_strength: moderate
+    conditional_table:
+      - given_parent_option: custom_build
+        then_probabilities:
+          none_scripts: 0.25
+          prefect: 0.25
+          dagster: 0.30
+          celery: 0.10
+          airflow: 0.10
+      - given_parent_option: managed_services
+        then_probabilities:
+          none_scripts: 0.35
+          prefect: 0.30
+          dagster: 0.20
+          celery: 0.10
+          airflow: 0.05
+      - given_parent_option: saas_maximalist
+        then_probabilities:
+          none_scripts: 0.55
+          prefect: 0.20
+          dagster: 0.10
+          celery: 0.10
+          airflow: 0.05
+
+  - parent_decision_id: service_decomposition
+    influence_strength: moderate
+    conditional_table:
+      - given_parent_option: modular_monolith
+        then_probabilities:
+          none_scripts: 0.50
+          prefect: 0.25
+          dagster: 0.15
+          celery: 0.05
+          airflow: 0.05
+      - given_parent_option: service_oriented
+        then_probabilities:
+          none_scripts: 0.20
+          prefect: 0.25
+          dagster: 0.25
+          celery: 0.20
+          airflow: 0.10
+      - given_parent_option: event_driven_microservices
+        then_probabilities:
+          none_scripts: 0.10
+          prefect: 0.20
+          dagster: 0.25
+          celery: 0.25
+          airflow: 0.20
+
+archetype_weights:
+  engineer_heavy_startup:
+    probability_overrides:
+      none_scripts: 0.20
+      prefect: 0.25
+      dagster: 0.35
+      celery: 0.10
+      airflow: 0.10
+    rationale: "Engineers appreciate Dagster's asset-centric model and type safety."
+
+  musician_first_team:
+    probability_overrides:
+      none_scripts: 0.60
+      prefect: 0.25
+      dagster: 0.05
+      celery: 0.05
+      airflow: 0.05
+    rationale: "Plain scripts minimize operational complexity for non-engineering teams."
+
+  solo_hacker:
+    probability_overrides:
+      none_scripts: 0.70
+      prefect: 0.20
+      dagster: 0.05
+      celery: 0.03
+      airflow: 0.02
+    rationale: "No reason to run an orchestrator for single-node pipeline execution."
+
+  well_funded_startup:
+    probability_overrides:
+      none_scripts: 0.15
+      prefect: 0.30
+      dagster: 0.30
+      celery: 0.15
+      airflow: 0.10
+    rationale: "Invest in proper orchestration for production reliability and observability."
+
+volatility:
+  classification: stable
+  last_assessed: 2026-02-13
+  next_review: 2026-05-13
+  change_drivers:
+    - "Pipeline complexity growth beyond 5 stages"
+    - "Need for scheduled re-attribution runs"
+    - "Prefect vs Dagster ecosystem evolution"
+
+domain_applicability:
+  music_attribution: 1.0
+  dpp_traceability: 1.0
+  generic_graph_rag: 0.8
+
+tags:
+  - deployment
+  - orchestration
+  - pipeline
