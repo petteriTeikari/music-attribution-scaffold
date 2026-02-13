@@ -27,18 +27,24 @@ options:
     status: recommended
 
   - option_id: skypilot
-    title: "SkyPilot"
+    title: "SkyPilot + SkyServe"
     description: >
       Multi-cloud job launcher that finds the cheapest spot/preemptible
       instances across AWS, GCP, Azure. Excellent for batch ML workloads
       like bulk re-attribution or embedding generation. Handles failover
-      across regions and clouds automatically.
+      across regions and clouds automatically. SkyServe extends this to
+      multi-cloud serving with SpotHedge — distributing spot replicas
+      across regions/clouds for ~43% cost savings on inference serving
+      (Mao et al., arXiv:2411.01438). Key differentiator for products
+      competing on lowest-price serving.
     prior_probability: 0.25
     status: viable
     constraints:
-      - "Batch/job workloads (not web serving)"
       - "Multi-cloud accounts for maximum savings"
       - "Spot instance tolerance (preemption handling)"
+    references:
+      - "Mao et al. (2024). SkyServe: Serving AI Models across Regions and Clouds with Spot Instances. arXiv:2411.01438"
+      - "https://docs.skypilot.co/en/stable/serving/sky-serve.html"
 
   - option_id: infracost
     title: "Infracost"
@@ -156,6 +162,7 @@ volatility:
     - "LLM API cost trajectory (decreasing but usage increasing)"
     - "Migration from PaaS to IaaS/Kubernetes"
     - "Batch ML workload volume growth"
+    - "SkyServe maturity for spot-based serving (SpotHedge, arXiv:2411.01438)"
 
 domain_applicability:
   music_attribution: 0.8
