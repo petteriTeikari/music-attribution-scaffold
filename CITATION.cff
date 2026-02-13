@@ -1,0 +1,29 @@
+cff-version: 1.2.0
+title: "Music Attribution Scaffold"
+message: "If you use this software, please cite the accompanying paper."
+type: software
+authors:
+  - family-names: Teikari
+    given-names: Petteri
+    orcid: "https://orcid.org/0000-0002-0844-8662"
+repository-code: "https://github.com/petteriTeikari/music-attribution-scaffold"
+url: "https://doi.org/10.2139/ssrn.6109087"
+license: MIT
+keywords:
+  - music attribution
+  - confidence scoring
+  - conformal prediction
+  - MCP protocol
+  - provenance
+  - generative AI
+preferred-citation:
+  type: article
+  title: "Governing Generative Music: Attribution Limits, Platform Incentives, and the Future of Creator Income"
+  authors:
+    - family-names: Teikari
+      given-names: Petteri
+  doi: "10.2139/ssrn.6109087"
+  year: 2026
+  publisher:
+    name: "Social Science Research Network"
+  url: "https://papers.ssrn.com/sol3/papers.cfm?abstract_id=6109087"
