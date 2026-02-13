@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useAtom, useAtomValue } from "jotai";
 import {
   worksAtom,
@@ -27,12 +27,17 @@ export default function WorksPage() {
   const [searchQuery, setSearchQuery] = useAtom(searchQueryAtom);
   const [sortField, setSortField] = useAtom(sortFieldAtom);
   const [sortDirection, setSortDirection] = useAtom(sortDirectionAtom);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (works.length > 0) return;
     setLoading(true);
+    setError(null);
     apiClient.getWorks().then((data) => {
       setWorks(data);
+      setLoading(false);
+    }).catch(() => {
+      setError("Failed to load works. Please try again.");
       setLoading(false);
     });
   }, [works.length, setWorks, setLoading]);
@@ -97,7 +102,27 @@ export default function WorksPage() {
       <div className="accent-line mb-6" style={{ opacity: 0.3 }} />
 
       {/* Works list */}
-      {loading ? (
+      {error ? (
+        <div className="py-20 text-center">
+          <p className="editorial-display text-2xl text-heading">{error}</p>
+          <button
+            onClick={() => {
+              setError(null);
+              setLoading(true);
+              apiClient.getWorks().then((data) => {
+                setWorks(data);
+                setLoading(false);
+              }).catch(() => {
+                setError("Failed to load works. Please try again.");
+                setLoading(false);
+              });
+            }}
+            className="mt-4 text-sm text-accent underline underline-offset-2"
+          >
+            Retry
+          </button>
+        </div>
+      ) : loading ? (
         <div className="space-y-4">
           {Array.from({ length: 4 }).map((_, i) => (
             <div

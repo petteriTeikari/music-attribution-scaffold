@@ -138,6 +138,37 @@ describe("CSS Token Lint", () => {
     });
   });
 
+  describe("no undefined --color-text or --color-text-muted tokens in .tsx files", () => {
+    // These tokens do NOT exist in globals.css. Correct alternatives:
+    //   --color-text       → --color-heading or --color-body
+    //   --color-text-muted → --color-muted
+    const UNDEFINED_TOKEN_PATTERN = /var\(--color-text\b(?!-decoration|-transform)/g;
+    const UNDEFINED_MUTED_PATTERN = /var\(--color-text-muted\)/g;
+
+    it.each(tsxFiles)("no undefined --color-text tokens in %s", (filePath) => {
+      const content = readFileSync(filePath, "utf-8");
+      const lines = content.split("\n");
+      const violations: string[] = [];
+
+      lines.forEach((line, i) => {
+        if (line.trim().startsWith("//") || line.trim().startsWith("*")) return;
+        const textMatches = line.match(UNDEFINED_TOKEN_PATTERN);
+        const mutedMatches = line.match(UNDEFINED_MUTED_PATTERN);
+        if (textMatches) {
+          violations.push(`  Line ${i + 1}: var(--color-text) → use --color-heading or --color-body`);
+        }
+        if (mutedMatches) {
+          violations.push(`  Line ${i + 1}: var(--color-text-muted) → use --color-muted`);
+        }
+      });
+
+      expect(
+        violations,
+        `Found references to undefined CSS tokens:\n${violations.join("\n")}`,
+      ).toHaveLength(0);
+    });
+  });
+
   describe("globals.css does not define --text-* vars (they conflict with Tailwind)", () => {
     it("no --text-* custom properties in :root", () => {
       const globalsPath = resolve(SRC_DIR, "app", "globals.css");

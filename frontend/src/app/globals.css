@@ -40,12 +40,12 @@
   --color-subheading: #333333;
   --color-body: #4A4A4A;
   --color-label: #666666;
-  --color-muted: #999999;
+  --color-muted: #6b6b6b;
 
   /* Confidence tiers */
   --color-confidence-high: #4A7C59;
   --color-confidence-high-bg: #4A7C5915;
-  --color-confidence-medium: #E09F3E;
+  --color-confidence-medium: #8B6914;
   --color-confidence-medium-bg: #E09F3E15;
   --color-confidence-low: #C44536;
   --color-confidence-low-bg: #C4453615;
@@ -153,7 +153,7 @@
   --color-subheading: #CCC8BC;
   --color-body: #B0ACA0;
   --color-label: #8A8680;
-  --color-muted: #666260;
+  --color-muted: #918e8b;
 
   --color-confidence-high: #6BAF7E;
   --color-confidence-high-bg: #6BAF7E20;

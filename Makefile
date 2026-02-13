@@ -3,7 +3,7 @@
 .PHONY: test test-all lint
 .PHONY: test-local test-integration test-cov lint-local format typecheck ci-local
 .PHONY: ci-docker docker-build docker-clean clean
-.PHONY: dev-frontend test-frontend lint-frontend build-frontend
+.PHONY: dev-frontend test-frontend lint-frontend build-frontend test-e2e test-e2e-ui
 .PHONY: agent dev-agent
 
 .DEFAULT_GOAL := help
@@ -116,6 +116,12 @@ lint-frontend:  ## Lint frontend (ESLint + TypeScript)
 
 build-frontend:  ## Build frontend for production
 	cd frontend && npm run build
+
+test-e2e:  ## Run Playwright E2E tests (chromium, auto-starts dev server)
+	cd frontend && npx playwright test
+
+test-e2e-ui:  ## Run Playwright E2E in interactive UI mode
+	cd frontend && npx playwright test --ui
 
 # =============================================================================
 # AGENT (PydanticAI + AG-UI)

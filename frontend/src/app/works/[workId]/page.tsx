@@ -22,6 +22,9 @@ export default function WorkDetailPage() {
     apiClient.getWorkById(workId).then((data) => {
       setWork(data);
       setLoading(false);
+    }).catch(() => {
+      setWork(null);
+      setLoading(false);
     });
   }, [workId]);
 

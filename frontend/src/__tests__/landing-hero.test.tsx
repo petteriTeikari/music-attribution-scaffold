@@ -63,14 +63,14 @@ describe("Landing page hero section", () => {
 
   it("displays author attribution", () => {
     render(<HomePage />);
-    expect(screen.getByText("Teikari, P. (2026)")).toBeDefined();
+    expect(screen.getByText("Petteri Teikari (2026)")).toBeDefined();
   });
 
   it("includes SSRN paper link", () => {
     render(<HomePage />);
     const paperLink = screen.getByText(/Read the Paper/);
     expect(paperLink).toBeDefined();
-    expect(paperLink.closest("a")?.getAttribute("href")).toContain("ssrn.com");
+    expect(paperLink.closest("a")?.getAttribute("href")).toContain("doi.org");
   });
 
   it("renders abstract excerpt", () => {
