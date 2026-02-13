@@ -3,10 +3,10 @@ name: CISO Assistant Security Check
 on:
   pull_request:
     paths:
-      - '**.py'
-      - '**.yaml'
-      - '**.yml'
-      - '**.md'
+      - 'src/**/*.py'
+      - 'scripts/security/**'
+      - 'pyproject.toml'
+      - 'docker/**'
       - '.github/workflows/ciso-assistant-security.yml'
 
 permissions:
