@@ -36,6 +36,19 @@ Confirm the figure plan's semantic tags map to valid palette entries:
 
 Build the prompt from two sections: Style + Content.
 
+**3a. Translate the ASCII layout to natural language.** Do NOT paste the raw ASCII
+block — rewrite it as prose describing the visual composition.
+
+**3b. Scrub internal references** (mandatory before pasting):
+- [ ] No color names as labels — use tier/level names ("High", "Low", not "Green", "Red")
+- [ ] No CSS class names — use descriptions ("serif display type", "small caps")
+- [ ] No font family names — use categories ("serif", "sans-serif", "monospace")
+- [ ] No hex codes — use natural color names ("coral red", "deep navy")
+- [ ] No semantic tag names — use visual descriptions ("data ingestion zone")
+- [ ] No parenthetical style annotations near content labels
+
+**3c. Apply the Master Prompt Template** with the translated, scrubbed content.
+
 ### Step 4: Generate in Nano Banana Pro
 
 - Upload the composed prompt to Gemini
@@ -111,7 +124,10 @@ prompt instructions as labels, style keywords visible,
 rendering keywords as labels, aesthetic descriptors as text,
 parentheses with style words, meta-instructions rendered,
 "Figure 1", "Fig.", figure title, figure number, figure caption,
-numbered figure label, academic figure numbering
+numbered figure label, academic figure numbering,
+color names as labels, "Green" as label, "Amber" as label, "Red" as label,
+CSS class names visible, ".editorial-display" text, ".data-mono" text,
+"(editorial-caps)" text, "(editorial-display)" text
 ```
 
 ---
@@ -164,6 +180,31 @@ The following terms appear in figure plans but must be translated before prompti
 | `deferred_option` | "dashed line path (alternative, not chosen)" |
 | `branching_path` | "fork in the flow where two paths diverge" |
 | `archetype_overlay` | "tinted overlay zone showing team-specific configuration" |
+
+---
+
+## ASCII Layout Hygiene (CRITICAL)
+
+The ASCII layout in each figure plan is the primary visual blueprint. Nano Banana Pro
+renders EVERYTHING in the ASCII block as visible content. Internal reference information
+MUST NOT appear inside the ``` ASCII layout ``` block.
+
+### BANNED inside ASCII layouts:
+
+| Category | Examples | Replace With |
+|----------|----------|-------------|
+| Color names as labels | "Green", "Amber", "Red" | Tier labels: "High", "Medium", "Low" |
+| CSS class annotations | "(editorial-caps)", ".data-mono" | Natural descriptions: "in small caps", "in monospace" |
+| Font family names | "(Instrument Serif)", "(IBM Plex Mono)" | "serif display type", "monospace" |
+| Hex codes | "#E84C4F", "#f6f3e6" | Never — colors are style, not content |
+| Semantic tag names | "etl_extract", "confidence_high" | Natural labels: "ETL", "HIGH" |
+| Style annotations | "(matte)", "(asymmetric)" | Never — move to style prompt |
+
+### WHERE to put internal references instead:
+
+- **Content Elements table** — map visible labels to their semantic tags
+- **Anti-Hallucination Rules** — document exact values/thresholds
+- **Style notes** (outside ASCII block) — font and color specifications
 
 ---
 
@@ -259,6 +300,8 @@ Run this checklist after every generation. The figure must score 21/25 or higher
 - [ ] NO font names visible as text ("Instrument Serif", "Plus Jakarta Sans", etc.)
 - [ ] NO prompt/style keywords visible as text ("matte", "asymmetric", "editorial", etc.)
 - [ ] NO "Figure 1.", "Fig.", or numbered figure caption visible
+- [ ] NO color names visible as standalone labels ("Green", "Amber", "Red", "Blue", etc.)
+- [ ] NO CSS class names visible (".editorial-display", ".data-mono", etc.)
 
 If any quick reject fails, re-prompt from scratch -- do NOT fix with inpainting.
 
@@ -364,6 +407,8 @@ Zoom to 100% and scan every text element in the image:
 | 6 | Framework names (L1/L2 only): "Pydantic", "FastAPI", "Splink", "CopilotKit" | **REJECT** |
 | 7 | Style descriptors: "(non-glowing, elegant)", "(editorial)", parenthesized style words | **REJECT** |
 | 8 | Garbled text: random characters, illegible glyphs, pseudo-text, lorem ipsum | **REJECT** |
+| 9 | Color names as labels: "Green", "Amber", "Red", "Blue", "Gray", "Gold" as standalone text | **REJECT** |
+| 10 | CSS class names: ".editorial-display", ".editorial-caps", ".data-mono" | **REJECT** |
 
 **If any check fails, do NOT attempt to fix with inpainting. Re-prompt from scratch with stronger negative instructions and fewer text elements.**
 

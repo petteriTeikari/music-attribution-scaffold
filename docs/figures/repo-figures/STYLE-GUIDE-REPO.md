@@ -63,6 +63,9 @@ Repository figures communicate **architectural clarity, probabilistic confidence
 - NO semantic tag names (`etl_extract`, `confidence_high`, `source_musicbrainz`, etc.) rendered as text
 - NO "Hex:", "RGB:", "Semantic Tag:" labels visible in the figure
 - NO font family names ("Instrument Serif", "Plus Jakarta Sans", "IBM Plex Mono") as visible text
+- NO color names as standalone labels ("Green", "Amber", "Red", "Blue", "Gray", "Gold", etc.)
+  Use tier labels instead: "High Confidence", "Medium", "Low Confidence"
+- NO CSS class names as visible text (".editorial-display", ".editorial-caps", ".data-mono", etc.)
 
 **These are mapping references for prompt construction, NOT content to display.**
 
@@ -294,7 +297,10 @@ prompt instructions as labels, style keywords visible,
 rendering keywords as labels, aesthetic descriptors as text,
 parentheses with style words, meta-instructions rendered,
 "Figure 1", "Fig.", figure title, figure number, figure caption,
-numbered figure label, academic figure numbering
+numbered figure label, academic figure numbering,
+color names as labels, "Green" as label, "Amber" as label, "Red" as label,
+CSS class names visible, ".editorial-display" text, ".data-mono" text,
+"(editorial-caps)" text, "(editorial-display)" text
 ```
 
 ---
@@ -311,6 +317,8 @@ Score each item 1 (pass) or 0 (fail). Accept the figure only if score >= 21/25.
 - [ ] NO hex codes visible as text anywhere in the image
 - [ ] NO font names visible as text ("Instrument Serif", "Plus Jakarta Sans", etc.)
 - [ ] NO "Figure 1.", "Fig.", or numbered figure caption visible
+- [ ] NO color names visible as standalone labels ("Green", "Amber", "Red")
+- [ ] NO CSS class names visible (".editorial-display", ".data-mono", etc.)
 
 If any quick reject fails, re-prompt from scratch -- do NOT attempt to fix with inpainting.
 
