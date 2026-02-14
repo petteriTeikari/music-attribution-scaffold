@@ -31,9 +31,13 @@ describe("TypeScript enum objects", () => {
     expect(CreditRole.REMIXER).toBe("REMIXER");
   });
 
-  it("PermissionType has 11 types", () => {
-    expect(Object.keys(PermissionType)).toHaveLength(11);
+  it("PermissionType has 15 types", () => {
+    expect(Object.keys(PermissionType)).toHaveLength(15);
     expect(PermissionType.AI_TRAINING).toBe("AI_TRAINING");
+    expect(PermissionType.AI_TRAINING_COMPOSITION).toBe("AI_TRAINING_COMPOSITION");
+    expect(PermissionType.AI_TRAINING_RECORDING).toBe("AI_TRAINING_RECORDING");
+    expect(PermissionType.AI_TRAINING_STYLE).toBe("AI_TRAINING_STYLE");
+    expect(PermissionType.DATASET_INCLUSION).toBe("DATASET_INCLUSION");
     expect(PermissionType.VOICE_CLONING).toBe("VOICE_CLONING");
   });
 
