@@ -1,0 +1,143 @@
+# MCP Security Strategy
+#
+# How the scaffold defends its MCP server against the attack surfaces
+# identified by MCPSecBench (85%+ compromise rate) and MSB (40.71% avg ASR).
+# Defense-in-depth is mandatory given the inverse scaling paradox.
+
+decision_id: mcp_security_strategy
+title: "MCP Security Strategy"
+description: >
+  Determines the security architecture for the Music Attribution Scaffold's
+  MCP server. Research benchmarks show alarming vulnerability rates: MCPSecBench
+  found 85%+ of attacks compromise at least one major platform (Cheng et al. 2025),
+  MSB measured 40.71% average attack success rate across nine models (Peng et al. 2025),
+  and MCPTox demonstrated 72.8% ASR for tool poisoning (Zhang et al. 2025).
+  The inverse scaling paradox — where more capable models are more vulnerable —
+  makes model-level defenses insufficient. Infrastructure-level defense-in-depth
+  is required.
+
+decision_level: L3_implementation
+status: active
+last_updated: 2026-02-14
+
+options:
+  - option_id: defense_in_depth
+    title: "Defense-in-Depth"
+    description: >
+      Four-layer defense combining MCP-Guard-style input validation (static +
+      neural + LLM arbiter), sandboxed tool execution, per-tool capability
+      grants with expiration, and immutable audit logging. Addresses all four
+      attack surfaces identified by MSB (tool manifest, communication, resource
+      access, execution). Highest security coverage, moderate implementation cost.
+    prior_probability: 0.50
+    status: recommended
+
+  - option_id: zero_trust_mcp
+    title: "Zero-Trust MCP"
+    description: >
+      Decentralized Identity (DID) and Verifiable Credentials (VC) for server
+      and client identity verification. Agent Name Service (ANS) for discovery.
+      Per-tool authorization with cryptographic attestation. Based on CSA/MIT
+      zero-trust framework. Highest security but highest implementation complexity
+      and dependency on immature identity infrastructure.
+    prior_probability: 0.20
+    status: candidate
+    constraints:
+      - "DID/VC ecosystem maturity (still emerging)"
+      - "Agent Name Service not yet standardized"
+      - "Higher integration complexity for partners"
+
+  - option_id: minimal_viable_security
+    title: "Minimal Viable Security"
+    description: >
+      OAuth 2.1 authentication, JSON Schema input validation, per-client rate
+      limiting, and basic audit logging. Covers the most common attack vectors
+      with minimal implementation overhead. Leaves tool poisoning and cross-server
+      contamination partially unaddressed.
+    prior_probability: 0.30
+    status: viable
+
+conditional_on:
+  - parent_decision_id: api_protocol
+    influence_strength: strong
+    conditional_table:
+      - given_parent_option: mcp_primary
+        then_probabilities:
+          defense_in_depth: 0.55
+          zero_trust_mcp: 0.25
+          minimal_viable_security: 0.20
+      - given_parent_option: rest_openapi
+        then_probabilities:
+          defense_in_depth: 0.30
+          zero_trust_mcp: 0.10
+          minimal_viable_security: 0.60
+      - given_parent_option: graphql
+        then_probabilities:
+          defense_in_depth: 0.35
+          zero_trust_mcp: 0.10
+          minimal_viable_security: 0.55
+      - given_parent_option: grpc
+        then_probabilities:
+          defense_in_depth: 0.40
+          zero_trust_mcp: 0.15
+          minimal_viable_security: 0.45
+
+archetype_weights:
+  engineer_heavy_startup:
+    probability_overrides:
+      defense_in_depth: 0.55
+      zero_trust_mcp: 0.25
+      minimal_viable_security: 0.20
+    rationale: "Engineers invest in comprehensive security and can implement neural classifiers."
+
+  musician_first_team:
+    probability_overrides:
+      defense_in_depth: 0.30
+      zero_trust_mcp: 0.05
+      minimal_viable_security: 0.65
+    rationale: "Musician-first teams lack security expertise; OAuth + rate limiting is pragmatic."
+
+  solo_hacker:
+    probability_overrides:
+      defense_in_depth: 0.20
+      zero_trust_mcp: 0.05
+      minimal_viable_security: 0.75
+    rationale: "Solo developers prioritize shipping over comprehensive security."
+
+  well_funded_startup:
+    probability_overrides:
+      defense_in_depth: 0.50
+      zero_trust_mcp: 0.30
+      minimal_viable_security: 0.20
+    rationale: "Well-funded teams can invest in zero-trust infrastructure and dedicated security eng."
+
+volatility:
+  classification: volatile
+  last_assessed: 2026-02-14
+  next_review: 2026-03-14
+  change_drivers:
+    - "MCP specification security updates (AAIF governance)"
+    - "New CVEs in MCP server implementations"
+    - "DID/VC ecosystem maturation"
+    - "OWASP Agentic AI Top 10 adoption"
+    - "MCP-Guard or similar frameworks reaching production readiness"
+
+domain_applicability:
+  music_attribution: 1.0
+  dpp_traceability: 1.0
+  generic_graph_rag: 0.8
+
+tags:
+  - security
+  - mcp
+  - defense-in-depth
+  - input-validation
+  - audit
+
+references:
+  - "MCPSecBench (arXiv:2508.13220) — 85%+ compromise rate"
+  - "MSB (arXiv:2510.15994) — 40.71% avg ASR, four attack surfaces"
+  - "MCPTox — 72.8% tool poisoning ASR"
+  - "MCP-Guard (Shan et al. 2025) — three-stage defense pipeline"
+  - "MI9 (Chandra et al. 2025) — 99.81% violation detection"
+  - "docs/planning/mcp-security-production-research.md"

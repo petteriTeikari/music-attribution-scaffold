@@ -38,6 +38,8 @@ flowchart TB
         AUF[Agentic UI<br/>Framework]
         VAS[Voice Agent<br/>Stack]
         GRE[Graph RAG<br/>Engine]
+        MSS[MCP Security<br/>Strategy]
+        MPD[MCP Production<br/>Deployment]
     end
 
     subgraph L4["L4: Deployment Decisions"]
@@ -46,6 +48,7 @@ flowchart TB
         CI[CI/CD<br/>Pipeline]
         IAC[IaC<br/>Tooling]
         CS[Container<br/>Strategy]
+        MIV[MCP Input<br/>Validation]
     end
 
     subgraph L5["L5: Operations Decisions"]
@@ -152,6 +155,21 @@ flowchart TB
     %% L2 → L5 skip
     AFS --> OS
 
+    %% L2 → L3 (MCP security)
+    AP --> MSS
+    AP --> MPD
+    RP --> MSS
+
+    %% L3 → L4 (MCP input validation)
+    MSS --> MIV
+    MSS --> OS
+    MSS --> AS
+    MPD --> CS
+    MPD --> CP
+
+    style MSS fill:#D4A03C,color:#000
+    style MPD fill:#D4A03C,color:#000
+    style MIV fill:#4A7C59,color:#fff
     style UAS fill:#2E7D7B,color:#fff
     style AUF fill:#D4A03C,color:#000
     style VAS fill:#D4A03C,color:#000
@@ -487,6 +505,7 @@ mindmap
       Schema Governance
       Artifact Decoupling
       UI Adaptation Strategy
+      MCP Production Deployment
     Volatile
       Regulatory Posture
       AI Framework Strategy
@@ -494,6 +513,8 @@ mindmap
       Agentic UI Framework
       Voice Agent Stack
       Graph RAG Engine
+      MCP Security Strategy
+      MCP Input Validation
 ```
 
 **Interpretation**:
@@ -591,22 +612,22 @@ Given **Neon** hosting (P=0.40):
 
 | Metric | Value |
 |--------|-------|
-| Total nodes | 30 |
+| Total nodes | 33 |
 | L1 Business nodes | 4 |
-| L2 Architecture nodes | 6 |
-| L3 Implementation nodes | 10 |
-| L4 Deployment nodes | 5 |
+| L2 Architecture nodes | 7 |
+| L3 Implementation nodes | 12 |
+| L4 Deployment nodes | 6 |
 | L5 Operations nodes | 5 |
-| Total edges | 60 |
-| Same-level edges | 15 |
-| Adjacent-level edges | 21 |
-| Skip-connection edges | 24 |
+| Total edges | 68 |
+| Same-level edges | 17 |
+| Adjacent-level edges | 24 |
+| Skip-connection edges | 27 |
 | Team archetypes | 4 |
 | Domain overlays | 2 (+ 1 planned) |
 | Scenario compositions | 4 |
-| Stable decisions | 12 (40%) |
-| Shifting decisions | 12 (40%) |
-| Volatile decisions | 6 (20%) |
+| Stable decisions | 12 (36%) |
+| Shifting decisions | 13 (39%) |
+| Volatile decisions | 8 (24%) |
 
 ---
 

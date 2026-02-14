@@ -12,12 +12,14 @@
 
 network:
   name: "Probabilistic PRD Decision Network"
-  version: "2.1.0"
+  version: "2.2.0"
   last_updated: 2026-02-14
   description: >
     Bayesian decision network for the Music Attribution Scaffold.
     5-level hierarchy (L1 Business → L5 Operations) with conditional
     probability edges encoding how upstream choices influence downstream options.
+    v2.2.0: Added mcp_security_strategy (L3), mcp_production_deployment (L3),
+    mcp_input_validation (L4) nodes based on MCP security research synthesis.
     v2.1.0: Added object_storage node (L4), corrected Hetzner complexity
     (bare-metal ≠ simple), promoted Pulumi over Terraform, expanded FinOps
     with DevOps tax framework and cloud credit strategy.
@@ -143,6 +145,16 @@ nodes:
     file: L3-implementation/audio-metadata-library.decision.yaml
     title: "Audio Metadata Library"
 
+  - id: mcp_security_strategy
+    level: L3_implementation
+    file: L3-implementation/mcp-security-strategy.decision.yaml
+    title: "MCP Security Strategy"
+
+  - id: mcp_production_deployment
+    level: L3_implementation
+    file: L3-implementation/mcp-production-deployment.decision.yaml
+    title: "MCP Production Deployment"
+
   # L3: Component Decisions (commercial landscape stubs)
   - id: training_attribution_integration
     level: L3_components
@@ -209,6 +221,11 @@ nodes:
     level: L4_deployment
     file: L4-deployment/object-storage.decision.yaml
     title: "Object Storage Provider"
+
+  - id: mcp_input_validation
+    level: L4_deployment
+    file: L4-deployment/mcp-input-validation.decision.yaml
+    title: "MCP Input Validation Strategy"
 
   - id: cd_strategy
     level: L4_deployment
@@ -882,3 +899,52 @@ edges:
     to: ethics_governance
     influence: moderate
     rationale: "Data quality practices inform bias detection and fairness metrics"
+
+  # --- MCP Security / Production / Validation edges (v2.2.0) ---
+
+  # L2 → L3 edges (api_protocol → mcp security)
+  - from: api_protocol
+    to: mcp_security_strategy
+    influence: strong
+    rationale: "MCP-primary protocol necessitates defense-in-depth security (85%+ compromise rate)"
+
+  - from: api_protocol
+    to: mcp_production_deployment
+    influence: moderate
+    rationale: "MCP protocol choice influences deployment sandboxing requirements"
+
+  # L1 → L3 edges (regulatory → mcp security)
+  - from: regulatory_posture
+    to: mcp_security_strategy
+    influence: moderate
+    rationale: "EU AI Act Art. 12 logging requirements drive audit layer in security strategy"
+
+  # L3 → L4 edges (mcp security → input validation)
+  - from: mcp_security_strategy
+    to: mcp_input_validation
+    influence: strong
+    rationale: "Security strategy determines validation pipeline depth (schema-only vs hybrid vs LLM)"
+
+  # L3 → L5 edges (mcp security → observability)
+  - from: mcp_security_strategy
+    to: observability_stack
+    influence: moderate
+    rationale: "Defense-in-depth generates security telemetry that feeds observability stack"
+
+  # L3 → L3 edges (mcp security → auth strategy)
+  - from: mcp_security_strategy
+    to: auth_strategy
+    influence: moderate
+    rationale: "MCP security strategy mandates OAuth 2.1 upgrade and token scoping via RFC 8707"
+
+  # L3 → L4 edges (mcp production deployment → container strategy)
+  - from: mcp_production_deployment
+    to: container_strategy
+    influence: moderate
+    rationale: "Docker isolation option requires container orchestration decisions"
+
+  # L3 → L4 edges (mcp production deployment → compute platform)
+  - from: mcp_production_deployment
+    to: compute_platform
+    influence: moderate
+    rationale: "Cloudflare Workers vs Docker vs Deno constrains compute platform selection"

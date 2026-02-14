@@ -1,0 +1,136 @@
+# MCP Input Validation
+#
+# How the scaffold validates inputs to MCP tools before execution.
+# The three-stage MCP-Guard pattern (Shan et al. 2025) provides
+# the reference architecture: static → neural → LLM arbiter.
+
+decision_id: mcp_input_validation
+title: "MCP Input Validation Strategy"
+description: >
+  Determines the input validation pipeline for MCP tool invocations.
+  MCPTox found 72.8% ASR for tool poisoning (Zhang et al. 2025) and MSB
+  found 40.71% average ASR across all attack types (Peng et al. 2025).
+  MCP-Guard (Shan et al. 2025) demonstrated that a three-stage pipeline
+  (static scanner → neural classifier → LLM arbiter) achieves 96.01%
+  detection with 12x speedup over LLM-only approaches. This node determines
+  how much of that pipeline the scaffold implements.
+
+decision_level: L4_deployment
+status: active
+last_updated: 2026-02-14
+
+options:
+  - option_id: llm_arbiter
+    title: "LLM Arbiter Only"
+    description: >
+      Send all tool inputs through an LLM for semantic analysis before
+      execution. Highest detection accuracy (89.07% F1) but highest latency
+      (~500ms per request) and highest cost. Suitable for low-volume,
+      high-value tool calls where false negatives are unacceptable.
+    prior_probability: 0.15
+    status: viable
+    constraints:
+      - "~500ms added latency per request"
+      - "LLM API cost per validation"
+      - "Availability dependency on LLM provider"
+
+  - option_id: schema_validation
+    title: "Schema Validation + Allow-Lists"
+    description: >
+      JSON Schema validation for all tool inputs with strict type checking,
+      string length limits, and regex pattern constraints. Allow-lists for
+      enumerated values. No ML component — purely deterministic validation.
+      Fast (<1ms) and reliable but cannot detect semantic attacks like
+      tool poisoning or hidden prompt injections.
+    prior_probability: 0.30
+    status: viable
+
+  - option_id: hybrid_validation
+    title: "Hybrid Validation (Schema + Neural)"
+    description: >
+      Combines JSON Schema validation (Stage 1, <1ms) with a lightweight
+      neural classifier (Stage 2, <50ms) for detecting adversarial patterns.
+      The LLM arbiter (Stage 3) is reserved for ambiguous cases flagged by
+      the neural classifier (~5% of requests). Based on MCP-Guard architecture
+      but pragmatically scoped. 96.01% detection accuracy with acceptable
+      latency for 95% of requests.
+    prior_probability: 0.55
+    status: recommended
+
+conditional_on:
+  - parent_decision_id: mcp_security_strategy
+    influence_strength: strong
+    conditional_table:
+      - given_parent_option: defense_in_depth
+        then_probabilities:
+          llm_arbiter: 0.10
+          schema_validation: 0.15
+          hybrid_validation: 0.75
+      - given_parent_option: zero_trust_mcp
+        then_probabilities:
+          llm_arbiter: 0.25
+          schema_validation: 0.15
+          hybrid_validation: 0.60
+      - given_parent_option: minimal_viable_security
+        then_probabilities:
+          llm_arbiter: 0.05
+          schema_validation: 0.70
+          hybrid_validation: 0.25
+
+archetype_weights:
+  engineer_heavy_startup:
+    probability_overrides:
+      llm_arbiter: 0.15
+      schema_validation: 0.25
+      hybrid_validation: 0.60
+    rationale: "Engineers can train and deploy neural classifiers; hybrid is achievable."
+
+  musician_first_team:
+    probability_overrides:
+      llm_arbiter: 0.10
+      schema_validation: 0.60
+      hybrid_validation: 0.30
+    rationale: "Schema validation is low-overhead; neural classifier requires ML expertise."
+
+  solo_hacker:
+    probability_overrides:
+      llm_arbiter: 0.05
+      schema_validation: 0.70
+      hybrid_validation: 0.25
+    rationale: "Solos lack resources for neural classifier training; schema is pragmatic."
+
+  well_funded_startup:
+    probability_overrides:
+      llm_arbiter: 0.20
+      schema_validation: 0.15
+      hybrid_validation: 0.65
+    rationale: "Well-funded teams can invest in hybrid validation and ML security engineering."
+
+volatility:
+  classification: volatile
+  last_assessed: 2026-02-14
+  next_review: 2026-03-14
+  change_drivers:
+    - "MCP-Guard open-source release and production readiness"
+    - "Pre-trained neural classifiers for MCP input validation"
+    - "New tool poisoning attack techniques"
+    - "OWASP validation library for agentic inputs"
+
+domain_applicability:
+  music_attribution: 1.0
+  dpp_traceability: 1.0
+  generic_graph_rag: 0.9
+
+tags:
+  - security
+  - validation
+  - mcp
+  - input-validation
+  - neural-classifier
+
+references:
+  - "MCP-Guard (Shan et al. 2025) — three-stage pipeline, 96.01% accuracy"
+  - "MCPTox (Zhang et al. 2025) — 72.8% tool poisoning ASR"
+  - "MSB (arXiv:2510.15994) — 40.71% avg ASR"
+  - "OWASP Agentic AI Top 10 — #3 Tool/Function Misuse"
+  - "docs/planning/mcp-security-production-research.md"

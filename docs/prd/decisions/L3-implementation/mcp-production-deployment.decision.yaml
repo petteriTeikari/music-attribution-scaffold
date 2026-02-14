@@ -1,0 +1,163 @@
+# MCP Production Deployment
+#
+# How the MCP server is isolated and deployed in production.
+# Sandboxing is critical given MCPSecBench findings on execution
+# environment attacks and privilege escalation.
+
+decision_id: mcp_production_deployment
+title: "MCP Production Deployment"
+description: >
+  Determines the isolation and deployment strategy for the MCP server in
+  production. MCP servers execute tool code on behalf of AI agents, creating
+  a trust boundary that requires sandboxing. CVE-2025-6514 (mcp-remote, 558K
+  downloads) and CVE-2025-68143 (Anthropic Git MCP command injection)
+  demonstrate that production MCP servers are actively targeted. The choice
+  affects latency, operational complexity, language support, and blast radius
+  of potential compromises.
+
+decision_level: L3_implementation
+status: active
+last_updated: 2026-02-14
+
+options:
+  - option_id: cloudflare_workers
+    title: "Cloudflare Workers"
+    description: >
+      V8 isolate-based sandboxing with sub-millisecond cold starts. Cloudflare
+      offers native MCP server support on Workers. Automatic sandboxing without
+      container overhead. Limitations: 10ms CPU time per request, no persistent
+      connections, JavaScript/TypeScript only, egress restrictions.
+    prior_probability: 0.20
+    status: viable
+    constraints:
+      - "JavaScript/TypeScript only"
+      - "10ms CPU limit per request"
+      - "No persistent database connections"
+
+  - option_id: docker_isolation
+    title: "Docker Container Isolation"
+    description: >
+      Container-per-server isolation with resource limits (CPU, memory, network).
+      Most flexible approach supporting any language runtime. The scaffold already
+      uses Docker for development and CI. Higher cold start latency (seconds vs
+      milliseconds) but full Python ecosystem access for attribution engine
+      integration. cgroups v2 resource limits, seccomp profiles, read-only
+      root filesystem.
+    prior_probability: 0.50
+    status: recommended
+    complements:
+      - "container_strategy.docker_compose"
+
+  - option_id: deno_sandbox
+    title: "Deno Sandbox"
+    description: >
+      Deno runtime with granular permission controls (--allow-net, --allow-read,
+      etc.) that map naturally to MCP capability grants. Deno Deploy for edge
+      distribution. Good security model but limited to TypeScript/JavaScript
+      and smaller ecosystem than Node.js.
+    prior_probability: 0.15
+    status: viable
+    constraints:
+      - "TypeScript/JavaScript only"
+      - "Smaller ecosystem than Node.js"
+      - "Would require rewriting Python attribution engine"
+
+  - option_id: process_sandbox
+    title: "Process-Level Sandbox (bubblewrap/firejail)"
+    description: >
+      Linux namespace-based sandboxing using bubblewrap or firejail. Lighter
+      weight than containers, supports any language. Used by Flatpak for
+      application sandboxing. Lower isolation guarantees than containers
+      but sufficient for single-tenant deployments.
+    prior_probability: 0.15
+    status: viable
+
+conditional_on:
+  - parent_decision_id: api_protocol
+    influence_strength: moderate
+    conditional_table:
+      - given_parent_option: mcp_primary
+        then_probabilities:
+          cloudflare_workers: 0.20
+          docker_isolation: 0.50
+          deno_sandbox: 0.15
+          process_sandbox: 0.15
+      - given_parent_option: rest_openapi
+        then_probabilities:
+          cloudflare_workers: 0.10
+          docker_isolation: 0.55
+          deno_sandbox: 0.10
+          process_sandbox: 0.25
+      - given_parent_option: graphql
+        then_probabilities:
+          cloudflare_workers: 0.15
+          docker_isolation: 0.50
+          deno_sandbox: 0.15
+          process_sandbox: 0.20
+      - given_parent_option: grpc
+        then_probabilities:
+          cloudflare_workers: 0.05
+          docker_isolation: 0.60
+          deno_sandbox: 0.05
+          process_sandbox: 0.30
+
+archetype_weights:
+  engineer_heavy_startup:
+    probability_overrides:
+      cloudflare_workers: 0.20
+      docker_isolation: 0.50
+      deno_sandbox: 0.15
+      process_sandbox: 0.15
+    rationale: "Engineers comfortable with Docker, may evaluate Workers for edge performance."
+
+  musician_first_team:
+    probability_overrides:
+      cloudflare_workers: 0.35
+      docker_isolation: 0.30
+      deno_sandbox: 0.25
+      process_sandbox: 0.10
+    rationale: "Managed platforms reduce ops burden; Workers and Deno Deploy are turnkey."
+
+  solo_hacker:
+    probability_overrides:
+      cloudflare_workers: 0.30
+      docker_isolation: 0.25
+      deno_sandbox: 0.20
+      process_sandbox: 0.25
+    rationale: "Solos favor minimal infrastructure; process sandboxing is simplest."
+
+  well_funded_startup:
+    probability_overrides:
+      cloudflare_workers: 0.15
+      docker_isolation: 0.55
+      deno_sandbox: 0.10
+      process_sandbox: 0.20
+    rationale: "Docker fits enterprise security requirements and existing container orchestration."
+
+volatility:
+  classification: shifting
+  last_assessed: 2026-02-14
+  next_review: 2026-04-14
+  change_drivers:
+    - "Cloudflare Workers MCP support maturity"
+    - "Docker rootless and sandbox improvements"
+    - "New CVEs in MCP transport layers"
+    - "WASM-based sandbox alternatives (Spin, Wasmtime)"
+
+domain_applicability:
+  music_attribution: 1.0
+  dpp_traceability: 1.0
+  generic_graph_rag: 0.8
+
+tags:
+  - security
+  - deployment
+  - sandboxing
+  - mcp
+  - isolation
+
+references:
+  - "CVE-2025-6514 — mcp-remote RCE (558K downloads)"
+  - "CVE-2025-68143 — Anthropic Git MCP command injection"
+  - "Cloudflare Workers MCP support announcement"
+  - "docs/planning/mcp-security-production-research.md"

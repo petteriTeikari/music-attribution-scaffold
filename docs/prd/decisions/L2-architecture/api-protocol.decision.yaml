@@ -124,14 +124,25 @@ archetype_weights:
       grpc: 0.20
     rationale: "Well-funded teams can support multiple protocols. gRPC viable for internal."
 
+security_notes: >
+  MCP security research reveals alarming vulnerability rates: MCPSecBench
+  found 85%+ of attacks compromise at least one major platform (Cheng et al.
+  2025), MSB measured 40.71% average ASR across nine models (Peng et al. 2025).
+  The inverse scaling paradox means more capable models are MORE vulnerable
+  to MCP-based attacks. Selecting MCP as primary protocol requires mandatory
+  investment in the mcp_security_strategy node (defense-in-depth recommended).
+  See docs/planning/mcp-security-production-research.md for full analysis.
+
 volatility:
   classification: shifting
-  last_assessed: 2026-02-10
-  next_review: 2026-04-10
+  last_assessed: 2026-02-14
+  next_review: 2026-04-14
   change_drivers:
     - "MCP protocol specification stability (AAIF governance)"
     - "AI platform adoption of MCP vs alternatives (A2A, ACP)"
     - "GraphQL federation maturity"
+    - "MCP security benchmarks — 85%+ compromise rate necessitates defense-in-depth"
+    - "Competing protocols: ACP (OpenAI+Stripe), A2A (Google→LF), TAP (Visa), XAA (Okta)"
 
 domain_applicability:
   music_attribution: 1.0
@@ -147,3 +158,6 @@ tags:
 references:
   - "../mcp-server/toc-mcp-server.md"
   - "../mcp-server/permissions-api.md"
+  - "docs/planning/mcp-security-production-research.md"
+  - "MCPSecBench (arXiv:2508.13220)"
+  - "MSB (arXiv:2510.15994)"
