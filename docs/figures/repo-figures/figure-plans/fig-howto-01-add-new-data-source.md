@@ -93,4 +93,16 @@ The key message is: "Adding a data source follows a strict five-step path: creat
 
 ## Alt Text
 
-Five-step flow diagram showing how to add a new data source: create extractor, implement interface, register in orchestrator, add quality gates, write tests.
+How-to guide: five-step workflow for adding a new music metadata data source to the open-source attribution scaffold ETL pipeline, covering extractor creation, BaseExtractor interface implementation, orchestrator registration, quality gate configuration, and test coverage -- each step maps to a specific module path ensuring transparent confidence scoring from ingestion onward.
+
+## Image Embed
+
+### For GitHub README / MkDocs (repo-root-relative)
+
+![How-to guide: five-step workflow for adding a new music metadata data source to the open-source attribution scaffold ETL pipeline, covering extractor creation, BaseExtractor interface implementation, orchestrator registration, quality gate configuration, and test coverage -- each step maps to a specific module path ensuring transparent confidence scoring from ingestion onward.](docs/figures/repo-figures/assets/fig-howto-01-add-new-data-source.jpg)
+
+*Five-step data source integration path for the Music Attribution Scaffold ETL pipeline. Each step corresponds to a specific module in the `src/music_attribution/etl/` package, enforcing the attribution-by-design principle that every new source must implement extraction, normalization, and validation before registration (Teikari, 2026).*
+
+### From this figure plan (relative)
+
+![How-to guide: five-step workflow for adding a new music metadata data source to the open-source attribution scaffold ETL pipeline, covering extractor creation, BaseExtractor interface implementation, orchestrator registration, quality gate configuration, and test coverage -- each step maps to a specific module path ensuring transparent confidence scoring from ingestion onward.](../assets/fig-howto-01-add-new-data-source.jpg)

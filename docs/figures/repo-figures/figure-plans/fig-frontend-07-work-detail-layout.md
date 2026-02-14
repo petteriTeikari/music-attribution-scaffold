@@ -102,4 +102,16 @@ The key message is: "The work detail page surfaces per-field confidence, source 
 
 ## Alt Text
 
-Work detail page with large confidence gauge hero, conformal statistics, credit list with per-credit scores, Perplexity-style provenance panel, and timeline.
+Interface mockup of the work detail page in the music attribution scaffold: hero section with large confidence gauge and conformal prediction statistics, per-credit music metadata scores with source tags, Perplexity-style provenance panel with inline citations, and chronological timeline for transparent confidence scoring of music credits provenance.
+
+## Image Embed
+
+### For GitHub README / MkDocs (repo-root-relative)
+
+![Interface mockup of the work detail page in the music attribution scaffold: hero section with large confidence gauge and conformal prediction statistics, per-credit music metadata scores with source tags, Perplexity-style provenance panel with inline citations, and chronological timeline for transparent confidence scoring of music credits provenance.](docs/figures/repo-figures/assets/fig-frontend-07-work-detail-layout.jpg)
+
+*Figure: The /works/[workId] detail page surfaces per-field confidence, source provenance with inline citations, and conformal set statistics -- making the attribution scaffold's transparency philosophy visible at every level of musical credit detail.*
+
+### From this figure plan (relative)
+
+![Interface mockup of the work detail page in the music attribution scaffold: hero section with large confidence gauge and conformal prediction statistics, per-credit music metadata scores with source tags, Perplexity-style provenance panel with inline citations, and chronological timeline for transparent confidence scoring of music credits provenance.](../assets/fig-frontend-07-work-detail-layout.jpg)

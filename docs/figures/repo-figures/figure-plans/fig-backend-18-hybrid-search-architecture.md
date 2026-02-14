@@ -96,4 +96,16 @@ The key message is: "Hybrid search combines three complementary signals -- text 
 
 ## Alt Text
 
-Hybrid search architecture diagram showing three modalities (text, vector, graph) independently ranking results, then fusing via Reciprocal Rank Fusion with k=60 into a single ranked output list.
+Architecture diagram of the hybrid search system for the music attribution scaffold, combining three modalities — full-text LIKE search on music metadata fields, vector similarity via sentence-transformers and pgvector embeddings, and graph context from 1-hop entity relationships — fused with Reciprocal Rank Fusion (RRF, k=60) into a single ranked result list for comprehensive open-source music credit discovery.
+
+## Image Embed
+
+### For GitHub README / MkDocs (repo-root-relative)
+
+![Architecture diagram of the hybrid search system for the music attribution scaffold, combining three modalities — full-text LIKE search on music metadata fields, vector similarity via sentence-transformers and pgvector embeddings, and graph context from 1-hop entity relationships — fused with Reciprocal Rank Fusion (RRF, k=60) into a single ranked result list for comprehensive open-source music credit discovery.](docs/figures/repo-figures/assets/fig-backend-18-hybrid-search-architecture.jpg)
+
+*Figure 18. Hybrid search combines three complementary signals — text matching for exact keywords, vector similarity for semantic meaning, and graph neighbors for contextual relationships — ensuring that attribution records are discoverable through any search modality.*
+
+### From this figure plan (relative)
+
+![Architecture diagram of the hybrid search system for the music attribution scaffold, combining three modalities — full-text LIKE search on music metadata fields, vector similarity via sentence-transformers and pgvector embeddings, and graph context from 1-hop entity relationships — fused with Reciprocal Rank Fusion (RRF, k=60) into a single ranked result list for comprehensive open-source music credit discovery.](../assets/fig-backend-18-hybrid-search-architecture.jpg)

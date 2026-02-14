@@ -93,4 +93,16 @@ The key message is: "Each source excels at different data -- MusicBrainz provide
 
 ## Alt Text
 
-Five-column comparison of ETL extractors showing MusicBrainz, Discogs, AcoustID, tinytag, and Artist Input with their connector classes, libraries, default confidence values, and returned data fields.
+Comparison diagram of five open-source music metadata ETL extractors — MusicBrainz (0.90 confidence, ISRC and credits), Discogs (0.85, personnel roles), AcoustID (variable, fingerprint matching), tinytag (0.70, local file tags), and Artist Input (0.60, declarations) — showing each connector's library, default source confidence, and returned data fields for transparent music attribution.
+
+## Image Embed
+
+### For GitHub README / MkDocs (repo-root-relative)
+
+![Comparison diagram of five open-source music metadata ETL extractors — MusicBrainz (0.90 confidence, ISRC and credits), Discogs (0.85, personnel roles), AcoustID (variable, fingerprint matching), tinytag (0.70, local file tags), and Artist Input (0.60, declarations) — showing each connector's library, default source confidence, and returned data fields for transparent music attribution.](docs/figures/repo-figures/assets/fig-backend-04-source-specific-extraction.jpg)
+
+*Figure 4. Each of the five ETL connectors excels at different music metadata: MusicBrainz provides ISRCs and relationship credits, Discogs supplies detailed personnel roles, AcoustID enables audio fingerprint matching, while source confidence values reflect data authority rather than match scores.*
+
+### From this figure plan (relative)
+
+![Comparison diagram of five open-source music metadata ETL extractors — MusicBrainz (0.90 confidence, ISRC and credits), Discogs (0.85, personnel roles), AcoustID (variable, fingerprint matching), tinytag (0.70, local file tags), and Artist Input (0.60, declarations) — showing each connector's library, default source confidence, and returned data fields for transparent music attribution.](../assets/fig-backend-04-source-specific-extraction.jpg)

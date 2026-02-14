@@ -82,4 +82,16 @@ The key message is: "Four team archetypes -- Engineer-Heavy, Musician-First, Sol
 
 ## Alt Text
 
-Four team archetype cards showing different probability distributions for key decisions: Engineer-Heavy favors PostgreSQL and custom build, Musician-First favors Supabase and SaaS.
+Comparison chart: four team archetypes for the music attribution scaffold -- Engineer-Heavy, Musician-First, Solo Hacker, and Well-Funded Startup -- each producing different probability distributions for database, compute, and build-versus-buy decisions, demonstrating how the open-source attribution scaffold adapts to diverse music credits workflows.
+
+## Image Embed
+
+### For GitHub README / MkDocs (repo-root-relative)
+
+![Comparison chart: four team archetypes for the music attribution scaffold -- Engineer-Heavy, Musician-First, Solo Hacker, and Well-Funded Startup -- each producing different probability distributions for database, compute, and build-versus-buy decisions, demonstrating how the open-source attribution scaffold adapts to diverse music credits workflows.](docs/figures/repo-figures/assets/fig-prd-07-team-archetypes.jpg)
+
+*Figure 7. Four team archetypes act as probability lenses on the same decision network: an engineer-heavy startup gravitates toward PostgreSQL and custom builds, while a musician-first team favors Supabase and managed services -- same scaffold, four fundamentally different instantiations.*
+
+### From this figure plan (relative)
+
+![Comparison chart: four team archetypes for the music attribution scaffold -- Engineer-Heavy, Musician-First, Solo Hacker, and Well-Funded Startup -- each producing different probability distributions for database, compute, and build-versus-buy decisions, demonstrating how the open-source attribution scaffold adapts to diverse music credits workflows.](../assets/fig-prd-07-team-archetypes.jpg)

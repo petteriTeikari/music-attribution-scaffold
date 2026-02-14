@@ -82,4 +82,16 @@ The key message is: "One database does three jobs: relational, graph, and vector
 
 ## Alt Text
 
-PostgreSQL unified architecture showing three capabilities (relational, graph, vector) in one database, compared against Pinecone, Chroma, and Supabase alternatives.
+Architecture decision: PostgreSQL with pgvector and Apache AGE unifying relational, graph, and vector capabilities in a single database for music attribution and metadata storage, compared against Pinecone, Chroma, and Supabase to reduce multi-database complexity in the open-source attribution scaffold.
+
+## Image Embed
+
+### For GitHub README / MkDocs (repo-root-relative)
+
+![Architecture decision: PostgreSQL with pgvector and Apache AGE unifying relational, graph, and vector capabilities in a single database for music attribution and metadata storage, compared against Pinecone, Chroma, and Supabase to reduce multi-database complexity in the open-source attribution scaffold.](docs/figures/repo-figures/assets/fig-choice-03-postgresql-pgvector.jpg)
+
+*PostgreSQL Unified provides relational SQL, graph queries (Apache AGE), and vector search (pgvector) in a single process for the music attribution scaffold, eliminating multi-database operational complexity while supporting music credits and metadata at scale.*
+
+### From this figure plan (relative)
+
+![Architecture decision: PostgreSQL with pgvector and Apache AGE unifying relational, graph, and vector capabilities in a single database for music attribution and metadata storage, compared against Pinecone, Chroma, and Supabase to reduce multi-database complexity in the open-source attribution scaffold.](../assets/fig-choice-03-postgresql-pgvector.jpg)

@@ -84,4 +84,16 @@ The key message is: "This repo is a scaffold (configurable, research, teaching) 
 
 ## Alt Text
 
-Split-panel comparison: left shows scaffold attributes (configurable, research, teaching), right shows production system attributes (fixed, deployed, revenue-generating).
+Comparison chart: open-source music attribution scaffold versus production system -- the scaffold offers configurable decision paths, research-oriented trade-off exploration, and a probabilistic PRD with four team archetypes, while a production system deploys one fixed architecture, highlighting that this repository is a teaching and research framework for music credits and transparent confidence scoring.
+
+## Image Embed
+
+### For GitHub README / MkDocs (repo-root-relative)
+
+![Comparison chart: open-source music attribution scaffold versus production system -- the scaffold offers configurable decision paths, research-oriented trade-off exploration, and a probabilistic PRD with four team archetypes, while a production system deploys one fixed architecture, highlighting that this repository is a teaching and research framework for music credits and transparent confidence scoring.](docs/figures/repo-figures/assets/fig-prd-10-scaffold-vs-product.jpg)
+
+*Figure 10. This repository is a scaffold -- a configurable research framework with weighted decision options, four team archetypes, and two domain overlays -- not a deployed production system. Companion code to Teikari (2026), SSRN No. 6109087.*
+
+### From this figure plan (relative)
+
+![Comparison chart: open-source music attribution scaffold versus production system -- the scaffold offers configurable decision paths, research-oriented trade-off exploration, and a probabilistic PRD with four team archetypes, while a production system deploys one fixed architecture, highlighting that this repository is a teaching and research framework for music credits and transparent confidence scoring.](../assets/fig-prd-10-scaffold-vs-product.jpg)

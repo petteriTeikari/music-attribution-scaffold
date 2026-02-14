@@ -93,4 +93,16 @@ The key message is: "Splink implements Fellegi-Sunter probabilistic linkage with
 
 ## Alt Text
 
-Three-option comparison for entity linkage: Splink selected for Fellegi-Sunter probabilistic model with EM training and scalable backends, versus dedupe.io and custom rules.
+Decision diagram: Splink selected for music attribution entity resolution using Fellegi-Sunter probabilistic linkage with EM-trained match weights, compared against dedupe.io and custom rules for matching artist identities across MusicBrainz, Discogs, and file metadata sources in the open-source attribution scaffold.
+
+## Image Embed
+
+### For GitHub README / MkDocs (repo-root-relative)
+
+![Decision diagram: Splink selected for music attribution entity resolution using Fellegi-Sunter probabilistic linkage with EM-trained match weights, compared against dedupe.io and custom rules for matching artist identities across MusicBrainz, Discogs, and file metadata sources in the open-source attribution scaffold.](docs/figures/repo-figures/assets/fig-choice-05-splink-linkage.jpg)
+
+*Splink implements the Fellegi-Sunter model with EM-trained match weights for probabilistic entity resolution in the music attribution scaffold, enabling scalable and interpretable linkage of artist identities across heterogeneous music metadata sources.*
+
+### From this figure plan (relative)
+
+![Decision diagram: Splink selected for music attribution entity resolution using Fellegi-Sunter probabilistic linkage with EM-trained match weights, compared against dedupe.io and custom rules for matching artist identities across MusicBrainz, Discogs, and file metadata sources in the open-source attribution scaffold.](../assets/fig-choice-05-splink-linkage.jpg)

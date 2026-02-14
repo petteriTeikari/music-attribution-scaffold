@@ -100,4 +100,16 @@ The key message is: "Every color in the UI flows from CSS custom properties in g
 
 ## Alt Text
 
-Three-layer token architecture: CSS custom properties in globals.css flow through Tailwind utilities and editorial classes to components, enforced by lint tests.
+Design system diagram showing CSS custom property token architecture for the music attribution scaffold: 60-plus color tokens in globals.css flow through Tailwind CSS v4 utilities and editorial classes to components with zero hardcoded hex values, enforced by automated lint tests for consistent confidence scoring and music metadata visualization.
+
+## Image Embed
+
+### For GitHub README / MkDocs (repo-root-relative)
+
+![Design system diagram showing CSS custom property token architecture for the music attribution scaffold: 60-plus color tokens in globals.css flow through Tailwind CSS v4 utilities and editorial classes to components with zero hardcoded hex values, enforced by automated lint tests for consistent confidence scoring and music metadata visualization.](docs/figures/repo-figures/assets/fig-frontend-02-design-token-architecture.jpg)
+
+*Figure: Design token architecture enforcing zero hardcoded hex values across the music attribution UI, tracing the flow from CSS custom properties through Tailwind v4 utilities to component consumption with lint-test enforcement.*
+
+### From this figure plan (relative)
+
+![Design system diagram showing CSS custom property token architecture for the music attribution scaffold: 60-plus color tokens in globals.css flow through Tailwind CSS v4 utilities and editorial classes to components with zero hardcoded hex values, enforced by automated lint tests for consistent confidence scoring and music metadata visualization.](../assets/fig-frontend-02-design-token-architecture.jpg)

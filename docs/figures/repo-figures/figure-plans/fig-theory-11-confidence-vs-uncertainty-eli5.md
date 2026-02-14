@@ -95,4 +95,16 @@ The key message is: "A single confidence number hides uncertainty -- a range tel
 
 ## Alt Text
 
-Split panel comparing point estimate (80 percent rain, 0.85 confidence) with interval estimate (70-90 percent rain, 0.78-0.92 confidence), showing intervals are more honest about uncertainty.
+Comparison chart: point estimate (80 percent rain, 0.85 music attribution confidence) versus interval estimate (70-90 percent rain, 0.78-0.92 confidence range) using weather forecast analogy -- showing why transparent confidence scoring with intervals is more honest than single numbers for music credits, where narrow ranges signal certainty and wide ranges signal need for more evidence.
+
+## Image Embed
+
+### For GitHub README / MkDocs (repo-root-relative)
+
+![Comparison chart: point estimate (80 percent rain, 0.85 music attribution confidence) versus interval estimate (70-90 percent rain, 0.78-0.92 confidence range) using weather forecast analogy -- showing why transparent confidence scoring with intervals is more honest than single numbers for music credits, where narrow ranges signal certainty and wide ranges signal need for more evidence.](docs/figures/repo-figures/assets/fig-theory-11-confidence-vs-uncertainty-eli5.jpg)
+
+*Figure 11. Confidence versus uncertainty: a single number (0.85) hides how much the system actually knows, while an interval (0.78-0.92) communicates both the estimate and its uncertainty -- this scaffold uses interval estimates because they are more honest and actionable for music attribution decisions.*
+
+### From this figure plan (relative)
+
+![Comparison chart: point estimate (80 percent rain, 0.85 music attribution confidence) versus interval estimate (70-90 percent rain, 0.78-0.92 confidence range) using weather forecast analogy -- showing why transparent confidence scoring with intervals is more honest than single numbers for music credits, where narrow ranges signal certainty and wide ranges signal need for more evidence.](../assets/fig-theory-11-confidence-vs-uncertainty-eli5.jpg)

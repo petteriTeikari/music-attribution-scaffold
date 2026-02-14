@@ -104,4 +104,16 @@ The key message is: "A single curl command to `/api/v1/attribution/{isrc}` retur
 
 ## Alt Text
 
-Vertical flow diagram showing API request lifecycle: curl command at top flows through FastAPI routing and attribution engine to JSON response with confidence score.
+Step-by-step guide: API request lifecycle for querying music attribution data, from a curl command through FastAPI routing and the multi-source attribution engine to a JSON response containing per-field confidence scores, A0-A3 assurance levels, and source provenance -- demonstrating transparent confidence scoring for music credits in a single HTTP call.
+
+## Image Embed
+
+### For GitHub README / MkDocs (repo-root-relative)
+
+![Step-by-step guide: API request lifecycle for querying music attribution data, from a curl command through FastAPI routing and the multi-source attribution engine to a JSON response containing per-field confidence scores, A0-A3 assurance levels, and source provenance -- demonstrating transparent confidence scoring for music credits in a single HTTP call.](docs/figures/repo-figures/assets/fig-howto-03-query-the-api.jpg)
+
+*API request-response lifecycle for the Music Attribution Scaffold. A single GET request to `/api/v1/attribution/{isrc}` returns confidence-scored music metadata with source provenance, illustrating the attribution-by-design principle where every response carries its own quality evidence (Teikari, 2026).*
+
+### From this figure plan (relative)
+
+![Step-by-step guide: API request lifecycle for querying music attribution data, from a curl command through FastAPI routing and the multi-source attribution engine to a JSON response containing per-field confidence scores, A0-A3 assurance levels, and source provenance -- demonstrating transparent confidence scoring for music credits in a single HTTP call.](../assets/fig-howto-03-query-the-api.jpg)

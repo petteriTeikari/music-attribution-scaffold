@@ -90,4 +90,16 @@ The key message is: "Conformal prediction provides distribution-free coverage gu
 
 ## Alt Text
 
-Four-step conformal prediction pipeline: calibration set to nonconformity scores to quantile threshold to prediction sets, with central coverage guarantee P of Y in C of X at least 1 minus alpha.
+Technical pipeline diagram: four-step conformal prediction methodology for music attribution -- calibration set to nonconformity scores to quantile threshold to prediction sets with coverage guarantee P(Y in C(X)) >= 1-alpha -- providing distribution-free, finite-sample valid confidence scoring that requires no model assumptions, enabling transparent confidence intervals for music credits in the open-source attribution scaffold.
+
+## Image Embed
+
+### For GitHub README / MkDocs (repo-root-relative)
+
+![Technical pipeline diagram: four-step conformal prediction methodology for music attribution -- calibration set to nonconformity scores to quantile threshold to prediction sets with coverage guarantee P(Y in C(X)) >= 1-alpha -- providing distribution-free, finite-sample valid confidence scoring that requires no model assumptions, enabling transparent confidence intervals for music credits in the open-source attribution scaffold.](docs/figures/repo-figures/assets/fig-theory-12-conformal-prediction.jpg)
+
+*Figure 12. Conformal prediction pipeline: held-out calibration data produces nonconformity scores, which yield a quantile threshold that generates prediction sets with formal coverage guarantees -- applied to music attribution where X represents source evidence features and C(X_new) is the set of plausible creators for a query.*
+
+### From this figure plan (relative)
+
+![Technical pipeline diagram: four-step conformal prediction methodology for music attribution -- calibration set to nonconformity scores to quantile threshold to prediction sets with coverage guarantee P(Y in C(X)) >= 1-alpha -- providing distribution-free, finite-sample valid confidence scoring that requires no model assumptions, enabling transparent confidence intervals for music credits in the open-source attribution scaffold.](../assets/fig-theory-12-conformal-prediction.jpg)

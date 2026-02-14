@@ -96,4 +96,16 @@ The key message is: "Four assurance levels -- A0 (No Data, gray) through A3 (Art
 
 ## Alt Text
 
-Four assurance levels A0 through A3 with color-coded underline badges, anatomy diagram, and usage context across works list, detail, review, and agent.
+Design system diagram of the A0-A3 assurance badge system for music attribution provenance: four color-coded levels from gray (no data) through amber (single source) and blue (multi-source) to green (artist verified) provide transparent confidence scoring of music metadata trustworthiness across the open-source attribution scaffold UI.
+
+## Image Embed
+
+### For GitHub README / MkDocs (repo-root-relative)
+
+![Design system diagram of the A0-A3 assurance badge system for music attribution provenance: four color-coded levels from gray (no data) through amber (single source) and blue (multi-source) to green (artist verified) provide transparent confidence scoring of music metadata trustworthiness across the open-source attribution scaffold UI.](docs/figures/repo-figures/assets/fig-frontend-05-assurance-badge-system.jpg)
+
+*Figure: The four-level assurance badge system (A0-A3) visualizes provenance quality for music credits, mapping data source agreement to color-coded editorial-caps badges that appear throughout the works catalog, detail pages, and AI review queue.*
+
+### From this figure plan (relative)
+
+![Design system diagram of the A0-A3 assurance badge system for music attribution provenance: four color-coded levels from gray (no data) through amber (single source) and blue (multi-source) to green (artist verified) provide transparent confidence scoring of music metadata trustworthiness across the open-source attribution scaffold UI.](../assets/fig-frontend-05-assurance-badge-system.jpg)

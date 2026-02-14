@@ -87,4 +87,16 @@ The key message is: "Conformal prediction provides mathematically guaranteed cov
 
 ## Alt Text
 
-Three-method comparison for confidence scoring: conformal prediction selected for distribution-free coverage guarantees, versus Bayesian posterior and bootstrap intervals.
+Trade-off analysis: conformal prediction selected for transparent confidence scoring in music attribution, providing distribution-free coverage guarantees over Bayesian posteriors and bootstrap intervals, essential for heterogeneous music metadata where data quality varies across MusicBrainz, Discogs, and file sources.
+
+## Image Embed
+
+### For GitHub README / MkDocs (repo-root-relative)
+
+![Trade-off analysis: conformal prediction selected for transparent confidence scoring in music attribution, providing distribution-free coverage guarantees over Bayesian posteriors and bootstrap intervals, essential for heterogeneous music metadata where data quality varies across MusicBrainz, Discogs, and file sources.](docs/figures/repo-figures/assets/fig-choice-04-conformal-prediction.jpg)
+
+*Conformal prediction delivers mathematically guaranteed coverage rates without distributional assumptions, making it the preferred confidence scoring method for the music attribution scaffold where metadata quality varies wildly across curated, community, and file-embedded sources (see SConU calibration in SSRN 6109087).*
+
+### From this figure plan (relative)
+
+![Trade-off analysis: conformal prediction selected for transparent confidence scoring in music attribution, providing distribution-free coverage guarantees over Bayesian posteriors and bootstrap intervals, essential for heterogeneous music metadata where data quality varies across MusicBrainz, Discogs, and file sources.](../assets/fig-choice-04-conformal-prediction.jpg)

@@ -1,6 +1,6 @@
 # STYLE GUIDE -- Repository Documentation Figures
 
-**Version:** 1.0.0
+**Version:** 2.0.0
 **Scope:** Repository explanation figures -- architecture, workflows, decision trees, module maps
 **Target:** Warp Records editorial aesthetic meets constructivist data visualization
 **Generator:** Gemini (Nano Banana Pro)
@@ -52,6 +52,26 @@ Repository figures communicate **architectural clarity, probabilistic confidence
 ---
 
 ## COLOR PALETTE
+
+### CRITICAL: INTERNAL REFERENCE ONLY
+
+**The color hex codes and semantic tags below are for INTERNAL WORKFLOW USE ONLY.**
+
+**NEVER let these appear as visible text in generated images:**
+
+- NO hex codes (#f6f3e6, #E84C4F, #1E3A5F, etc.) rendered as text in the figure
+- NO semantic tag names (`etl_extract`, `confidence_high`, `source_musicbrainz`, etc.) rendered as text
+- NO "Hex:", "RGB:", "Semantic Tag:" labels visible in the figure
+- NO font family names ("Instrument Serif", "Plus Jakarta Sans", "IBM Plex Mono") as visible text
+
+**These are mapping references for prompt construction, NOT content to display.**
+
+When prompting Nano Banana Pro:
+
+- **DO**: "Use coral red for the accent squares and divider lines"
+- **DON'T**: "Use #E84C4F for accent_line elements"
+- **DO**: "Deep navy module boundaries with serif display headings"
+- **DON'T**: "Use #1E3A5F with Instrument Serif font"
 
 ### Background (MANDATORY)
 
@@ -151,6 +171,28 @@ Repository figures communicate **architectural clarity, probabilistic confidence
 
 ---
 
+## ACADEMIC FIGURE FORMAT
+
+### NO Figure Title in Image (CRITICAL)
+
+**DO NOT include on the image:**
+
+- Figure number/title header (e.g., "Figure 1: Five-Stage Attribution Pipeline...")
+- "FIGURE X:" prefix
+- "Fig. X." prefix
+- Any title text that looks like a formal figure caption
+
+The figure's editorial display title (e.g., "FIVE-STAGE ATTRIBUTION PIPELINE") is a **design element**, not a numbered figure caption. These are different:
+
+| ALLOWED (design element) | BANNED (figure caption) |
+|--------------------------|-------------------------|
+| "ETL PIPELINE" in editorial caps | "Figure 1. ETL Pipeline Overview" |
+| "ATTRIBUTION BY DESIGN" as hero text | "Fig. 2: Attribution by Design Architecture" |
+
+**Add to negative prompts:** `"Figure 1", "Figure 2", "Fig.", figure title, figure number, figure caption, numbered figure label`
+
+---
+
 ## POWER KEYWORDS FOR NANO BANANA PRO
 
 ### Positive (Include in every prompt)
@@ -165,7 +207,76 @@ accent squares, thin accent lines, Roman numerals, ALL-CAPS labels,
 generous negative space, flat matte surfaces, sharp geometric edges
 ```
 
-### Negative (Exclude in every prompt)
+### Negative: Standard Exclusions
+
+```
+--no stock photography, generic AI art, corporate gradient, neon glow,
+sci-fi futuristic, dark background, symmetric layout, rounded pill shapes,
+glossy finish, 3D render, photorealistic, detailed faces, text-heavy,
+PowerPoint style, flowchart software, Lucidchart, Miro, drop shadows,
+thick block arrows, centered composition, dense dashboard, clip art,
+holographic, plasma effects, oversaturated colors, pure white background
+```
+
+### Negative: Anti-Text-Garbling
+
+```
+garbled text, illegible glyphs, blurred alphanumeric characters,
+pseudo-text, alien hieroglyphs, corrupted letters, gibberish words,
+misspelled labels, broken typography, scrambled characters,
+lorem ipsum, placeholder gibberish, random letter sequences
+```
+
+### Negative: Anti-Technical-Markup (Common Glitch Prevention)
+
+```
+visible hex codes, color codes as text, "#" followed by six characters,
+"#E84C4F" visible, "#1E3A5F" visible, "#2E7D7B" visible, "#f6f3e6" visible,
+semantic tag names as labels, "etl_extract" visible, "confidence_high" visible,
+"source_musicbrainz" visible, "primary_outcome" visible, "data_flow" visible,
+technical markup visible, yaml syntax visible, json visible in image,
+"Semantic Tag:" visible, "Hex:" visible, "RGB:" visible
+```
+
+### Negative: Anti-Prompt-Leakage (CRITICAL -- Prompt Instructions as Text)
+
+**PROBLEM**: Nano Banana Pro sometimes renders prompt keywords/instructions as visible text in the image.
+
+**Example failures**: "(matte finish, asymmetric)" appeared as text under a label; "Instrument Serif" rendered as a visible label.
+
+```
+"matte" as text, "asymmetric" as text, "editorial" as text,
+"constructivist" as text, "Warp Records" as text (unless content requires it),
+parentheses with style words, prompt instructions as labels,
+style keywords visible, rendering keywords as labels,
+"halftone" text, "grain overlay" text, "negative space" text,
+"subsurface" text, "volumetric" text, "Bauhaus" text,
+"Instrument Serif" as label, "Plus Jakarta Sans" as label,
+"IBM Plex Mono" as label, font names as visible text,
+aesthetic descriptors visible, instruction text in parentheses,
+meta-instructions rendered as content
+```
+
+**PREVENTION**: When writing positive prompts:
+
+1. Keep style keywords at the START of prompt (before content)
+2. Never put style words near element labels
+3. Use natural descriptions, not adjective lists
+4. Avoid parenthetical style qualifiers near content
+
+**DO**: "A pipeline diagram with five processing stages flowing left to right"
+**DON'T**: "A pipeline diagram (Warp Records aesthetic, matte finish, asymmetric) with five stages"
+
+### Negative: Anti-Figure-Caption (CRITICAL)
+
+```
+"Figure 1", "Figure 2", "Figure 3", "Fig.", "Fig ",
+figure title, figure number, figure caption, numbered figure label,
+"Figure X:", caption text at bottom, academic figure numbering,
+"Source:", "Note:", formal caption formatting
+```
+
+### Combined Negative Prompt (COPY THIS)
 
 ```
 --no stock photography, generic AI art, corporate gradient, neon glow,
@@ -174,14 +285,34 @@ glossy finish, 3D render, photorealistic, detailed faces, text-heavy,
 PowerPoint style, flowchart software, Lucidchart, Miro, drop shadows,
 thick block arrows, centered composition, dense dashboard, clip art,
 holographic, plasma effects, oversaturated colors, pure white background,
-visible hex codes, semantic tag names as text, prompt keywords visible
+garbled text, illegible glyphs, blurred characters, pseudo-text,
+corrupted letters, gibberish words, broken typography,
+visible hex codes, "#" followed by six characters, color codes as text,
+semantic tag names visible, technical markup visible,
+font names as labels, "Instrument Serif" text, "Plus Jakarta Sans" text,
+prompt instructions as labels, style keywords visible,
+rendering keywords as labels, aesthetic descriptors as text,
+parentheses with style words, meta-instructions rendered,
+"Figure 1", "Fig.", figure title, figure number, figure caption,
+numbered figure label, academic figure numbering
 ```
 
 ---
 
-## QUALITY CHECKLIST (17/20 Pass Threshold)
+## QUALITY CHECKLIST (21/25 Pass Threshold)
 
-Score each item 1 (pass) or 0 (fail). Accept the figure only if score >= 17/20.
+Score each item 1 (pass) or 0 (fail). Accept the figure only if score >= 21/25.
+
+### Quick Reject (ANY fail = immediate reject, do not score further)
+
+- [ ] Background IS warm cream (#f6f3e6), not white, gray, or yellow
+- [ ] NO neon, glow, or sci-fi aesthetic anywhere
+- [ ] NO garbled, illegible, or pseudo-text
+- [ ] NO hex codes visible as text anywhere in the image
+- [ ] NO font names visible as text ("Instrument Serif", "Plus Jakarta Sans", etc.)
+- [ ] NO "Figure 1.", "Fig.", or numbered figure caption visible
+
+If any quick reject fails, re-prompt from scratch -- do NOT attempt to fix with inpainting.
 
 ### Palette (5 items)
 
@@ -206,17 +337,25 @@ Score each item 1 (pass) or 0 (fail). Accept the figure only if score >= 17/20.
 - [ ] 13. Matte, flat finish on all surfaces
 - [ ] 14. Information hierarchy is clear (title > sections > labels > annotations)
 
+### Anti-Hallucination (5 items -- NEW)
+
+- [ ] 15. No semantic tag names visible (no "etl_extract", "confidence_high", etc.)
+- [ ] 16. No hex codes visible as text (no "#E84C4F", "#1E3A5F", etc.)
+- [ ] 17. No font names visible as text (no "Instrument Serif", "IBM Plex Mono", etc.)
+- [ ] 18. No prompt keywords visible as text (no "matte", "asymmetric", "editorial", etc.)
+- [ ] 19. No "Figure X." or "Fig." numbered caption visible in image
+
 ### Domain (4 items)
 
-- [ ] 15. Technical content is accurate (pipeline stages in correct order)
-- [ ] 16. No internal terms rendered as visible text (no semantic tags, no hex codes)
-- [ ] 17. Would look at home in a Warp Records catalog or studio wall poster
-- [ ] 18. Would be understood by the target audience (see complexity level)
+- [ ] 20. Technical content is accurate (pipeline stages in correct order)
+- [ ] 21. Would look at home in a Warp Records catalog or studio wall poster
+- [ ] 22. Would be understood by the target audience (see complexity level)
+- [ ] 23. No internal/workflow terms rendered as visible text
 
 ### Production (2 items)
 
-- [ ] 19. Aspect ratio matches specification (16:9, 16:10, or 3:4 portrait)
-- [ ] 20. Resolution sufficient for GitHub rendering (minimum 1200px wide)
+- [ ] 24. Aspect ratio matches specification (16:9, 16:10, or 3:4 portrait)
+- [ ] 25. Resolution sufficient for GitHub rendering (minimum 1200px wide)
 
 ---
 
@@ -390,8 +529,9 @@ Output directories:
 
 | Version | Date | Changes |
 |---------|------|---------|
+| 2.0.0 | 2026-02-14 | Major anti-hallucination upgrade: INTERNAL REFERENCE ONLY warnings, Anti-Technical-Markup + Anti-Prompt-Leakage + Anti-Figure-Caption negative prompts, NO figure title rule, expanded quality checklist (25 items), quick reject gates |
 | 1.0.0 | 2026-02-14 | Initial repo-figures style guide adapted from frontend-figures |
 
 ---
 
-*Music Attribution Scaffold -- Repository Documentation Figure Style Guide v1.0.0*
+*Music Attribution Scaffold -- Repository Documentation Figure Style Guide v2.0.0*

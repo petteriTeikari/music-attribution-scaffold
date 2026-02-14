@@ -110,4 +110,16 @@ The key message is: "Agent integration tests validate the proficiency model thre
 
 ## Alt Text
 
-Agent testing strategy: 11 frontend integration tests covering proficiency model, event schema, and feature flags, plus backend mock agent for endpoint tests.
+Testing strategy diagram: deterministic test approach for the music attribution scaffold agentic UI showing 11 integration tests covering proficiency model thresholds, PostHog event schema validation, and feature flag mappings, plus backend mock agent pattern for endpoint testing, illustrating how to test transparent confidence scoring behavior around non-deterministic AI without requiring live LLM calls for music metadata queries.
+
+## Image Embed
+
+### For GitHub README / MkDocs (repo-root-relative)
+
+![Testing strategy diagram: deterministic test approach for the music attribution scaffold agentic UI showing 11 integration tests covering proficiency model thresholds, PostHog event schema validation, and feature flag mappings, plus backend mock agent pattern for endpoint testing, illustrating how to test transparent confidence scoring behavior around non-deterministic AI without requiring live LLM calls for music metadata queries.](docs/figures/repo-figures/assets/fig-agent-10-testing-strategy.jpg)
+
+*Agent testing strategy for the open-source attribution scaffold, demonstrating the principle of testing the deterministic ring (proficiency thresholds, event schemas, tool contracts) around the non-deterministic AI core, with mock agent injection via Python unittest.mock for backend endpoint tests.*
+
+### From this figure plan (relative)
+
+![Testing strategy diagram: deterministic test approach for the music attribution scaffold agentic UI showing 11 integration tests covering proficiency model thresholds, PostHog event schema validation, and feature flag mappings, plus backend mock agent pattern for endpoint testing, illustrating how to test transparent confidence scoring behavior around non-deterministic AI without requiring live LLM calls for music metadata queries.](../assets/fig-agent-10-testing-strategy.jpg)

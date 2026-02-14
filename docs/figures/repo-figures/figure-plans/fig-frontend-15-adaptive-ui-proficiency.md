@@ -105,4 +105,16 @@ The key message is: "The proficiency model automatically adapts the UI as users 
 
 ## Alt Text
 
-Proficiency model flow: user interactions feed Jotai store with localStorage persistence, computeLevel produces tiers, useFeatureFlags adapts UI density and tooltips.
+Component diagram of the adaptive UI proficiency model for the music attribution scaffold: user interactions with music credits review, feedback, and confidence reading feed a Jotai store with localStorage persistence, computeLevel produces novice-intermediate-expert tiers, and useFeatureFlags adapts UI density, batch operations, and tooltip visibility for experience-driven transparent confidence scoring.
+
+## Image Embed
+
+### For GitHub README / MkDocs (repo-root-relative)
+
+![Component diagram of the adaptive UI proficiency model for the music attribution scaffold: user interactions with music credits review, feedback, and confidence reading feed a Jotai store with localStorage persistence, computeLevel produces novice-intermediate-expert tiers, and useFeatureFlags adapts UI density, batch operations, and tooltip visibility for experience-driven transparent confidence scoring.](docs/figures/repo-figures/assets/fig-frontend-15-adaptive-ui-proficiency.jpg)
+
+*Figure: The proficiency model automatically adapts the music attribution UI as users gain experience -- novices see comfortable layouts with tooltips, experts unlock dense layouts with batch operations, and PostHog feature flags can remotely override any default.*
+
+### From this figure plan (relative)
+
+![Component diagram of the adaptive UI proficiency model for the music attribution scaffold: user interactions with music credits review, feedback, and confidence reading feed a Jotai store with localStorage persistence, computeLevel produces novice-intermediate-expert tiers, and useFeatureFlags adapts UI density, batch operations, and tooltip visibility for experience-driven transparent confidence scoring.](../assets/fig-frontend-15-adaptive-ui-proficiency.jpg)

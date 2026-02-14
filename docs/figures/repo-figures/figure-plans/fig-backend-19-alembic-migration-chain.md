@@ -100,4 +100,16 @@ The key message is: "Four migrations build the full schema incrementally: initia
 
 ## Alt Text
 
-Linear chain of four Alembic database migrations from initial schema (3 tables) through permissions and vectors (5 tables) to uncertainty and display field additions, with dates and table counts.
+Flow diagram of the Alembic database migration chain for the music attribution scaffold, showing four sequential reversible migrations — initial schema with 3 boundary object tables, permissions and pgvector HALFVEC(768) embeddings adding 5 tables, uncertainty metadata column for attribution records, and display fields for work title and artist name — documenting PostgreSQL schema evolution for the open-source music metadata system.
+
+## Image Embed
+
+### For GitHub README / MkDocs (repo-root-relative)
+
+![Flow diagram of the Alembic database migration chain for the music attribution scaffold, showing four sequential reversible migrations — initial schema with 3 boundary object tables, permissions and pgvector HALFVEC(768) embeddings adding 5 tables, uncertainty metadata column for attribution records, and display fields for work title and artist name — documenting PostgreSQL schema evolution for the open-source music metadata system.](docs/figures/repo-figures/assets/fig-backend-19-alembic-migration-chain.jpg)
+
+*Figure 19. Four Alembic migrations build the full schema incrementally: initial boundary object tables, then permissions and vector infrastructure, then uncertainty metadata, then display fields — each migration is reversible and the chain forms a linear sequence tracking the schema evolution of the attribution database.*
+
+### From this figure plan (relative)
+
+![Flow diagram of the Alembic database migration chain for the music attribution scaffold, showing four sequential reversible migrations — initial schema with 3 boundary object tables, permissions and pgvector HALFVEC(768) embeddings adding 5 tables, uncertainty metadata column for attribution records, and display fields for work title and artist name — documenting PostgreSQL schema evolution for the open-source music metadata system.](../assets/fig-backend-19-alembic-migration-chain.jpg)

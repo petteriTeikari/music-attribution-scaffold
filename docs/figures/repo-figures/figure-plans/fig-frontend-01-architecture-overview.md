@@ -89,4 +89,16 @@ The key message is: "The frontend is a four-layer Next.js 15 application -- page
 
 ## Alt Text
 
-Four-layer frontend architecture: RootLayout wraps App Router pages, 19 domain-organized component modules, lib utilities, and three custom hooks.
+Architecture diagram showing the four-layer Next.js 15 frontend for the open-source music attribution scaffold: App Router pages compose 19 domain-organized component modules, lib utilities including Jotai state and CopilotKit agent context, and three custom hooks bridging transparent confidence scoring UI to agentic workflows.
+
+## Image Embed
+
+### For GitHub README / MkDocs (repo-root-relative)
+
+![Architecture diagram showing the four-layer Next.js 15 frontend for the open-source music attribution scaffold: App Router pages compose 19 domain-organized component modules, lib utilities including Jotai state and CopilotKit agent context, and three custom hooks bridging transparent confidence scoring UI to agentic workflows.](docs/figures/repo-figures/assets/fig-frontend-01-architecture-overview.jpg)
+
+*Figure: High-level frontend architecture of the Music Attribution Scaffold, illustrating how four composition layers -- pages, components, lib, and hooks -- organize a Next.js 15 App Router application for transparent music credits and confidence-scored attribution workflows.*
+
+### From this figure plan (relative)
+
+![Architecture diagram showing the four-layer Next.js 15 frontend for the open-source music attribution scaffold: App Router pages compose 19 domain-organized component modules, lib utilities including Jotai state and CopilotKit agent context, and three custom hooks bridging transparent confidence scoring UI to agentic workflows.](../assets/fig-frontend-01-architecture-overview.jpg)

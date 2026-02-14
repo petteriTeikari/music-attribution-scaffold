@@ -113,4 +113,16 @@ The key message is: "The PydanticAI agent is configured with a domain-specific s
 
 ## Alt Text
 
-PydanticAI agent architecture showing configuration, AgentDeps dependencies, four domain tools with signatures, and model routing via env var.
+Architecture diagram: PydanticAI agent for music attribution scaffold showing agent configuration with domain-specific system prompt, AgentDeps dependency injection for database access, four registered tools for transparent confidence scoring of music credits, and model routing via environment variable defaulting to Claude Haiku for cost-efficient attribution queries.
+
+## Image Embed
+
+### For GitHub README / MkDocs (repo-root-relative)
+
+![Architecture diagram: PydanticAI agent for music attribution scaffold showing agent configuration with domain-specific system prompt, AgentDeps dependency injection for database access, four registered tools for transparent confidence scoring of music credits, and model routing via environment variable defaulting to Claude Haiku for cost-efficient attribution queries.](docs/figures/repo-figures/assets/fig-agent-02-pydantic-ai-architecture.jpg)
+
+*PydanticAI agent architecture detailing the four domain tools (explain_confidence, search_attributions, suggest_correction, submit_feedback), their input/output signatures, and the AgentDeps dataclass that provides shared state and PostgreSQL session access.*
+
+### From this figure plan (relative)
+
+![Architecture diagram: PydanticAI agent for music attribution scaffold showing agent configuration with domain-specific system prompt, AgentDeps dependency injection for database access, four registered tools for transparent confidence scoring of music credits, and model routing via environment variable defaulting to Claude Haiku for cost-efficient attribution queries.](../assets/fig-agent-02-pydantic-ai-architecture.jpg)

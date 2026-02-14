@@ -106,4 +106,16 @@ The key message is: "The scaffold ships as a production-ready Docker image with 
 
 ## Alt Text
 
-Five-step deployment flow: Docker build, configure environment, push to registry, deploy with three cloud options branching, verify with health checks.
+Step-by-step guide: five-step production deployment pipeline for the open-source music attribution scaffold, from Docker build through environment configuration and registry push to a branching deploy step with Hetzner, Render, and AWS options, concluding with health check and Prometheus metrics verification -- reflecting the scaffold philosophy that deployment paths vary by team archetype.
+
+## Image Embed
+
+### For GitHub README / MkDocs (repo-root-relative)
+
+![Step-by-step guide: five-step production deployment pipeline for the open-source music attribution scaffold, from Docker build through environment configuration and registry push to a branching deploy step with Hetzner, Render, and AWS options, concluding with health check and Prometheus metrics verification -- reflecting the scaffold philosophy that deployment paths vary by team archetype.](docs/figures/repo-figures/assets/fig-howto-07-deploy-to-production.jpg)
+
+*Production deployment pipeline for the Music Attribution Scaffold. The branching deploy step reflects the PRD archetype system: engineer-heavy teams may self-host on Hetzner, while musician-heavy teams may prefer managed platforms like Render, all converging on the same health and metrics verification endpoints (Teikari, 2026).*
+
+### From this figure plan (relative)
+
+![Step-by-step guide: five-step production deployment pipeline for the open-source music attribution scaffold, from Docker build through environment configuration and registry push to a branching deploy step with Hetzner, Render, and AWS options, concluding with health check and Prometheus metrics verification -- reflecting the scaffold philosophy that deployment paths vary by team archetype.](../assets/fig-howto-07-deploy-to-production.jpg)

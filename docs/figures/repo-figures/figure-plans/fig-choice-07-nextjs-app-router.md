@@ -90,4 +90,16 @@ The key message is: "CopilotKit requires React -- Next.js 15 App Router provides
 
 ## Alt Text
 
-Three-card comparison of frontend frameworks with CopilotKit compatibility as key constraint: Next.js 15 App Router selected, SvelteKit and HTMX incompatible with CopilotKit.
+Architecture decision: Next.js 15 App Router selected for music attribution frontend, driven by CopilotKit React dependency for agentic UI, compared against SvelteKit and HTMX alternatives, with server components and streaming SSR enabling transparent confidence display in the open-source attribution scaffold.
+
+## Image Embed
+
+### For GitHub README / MkDocs (repo-root-relative)
+
+![Architecture decision: Next.js 15 App Router selected for music attribution frontend, driven by CopilotKit React dependency for agentic UI, compared against SvelteKit and HTMX alternatives, with server components and streaming SSR enabling transparent confidence display in the open-source attribution scaffold.](docs/figures/repo-figures/assets/fig-choice-07-nextjs-app-router.jpg)
+
+*Next.js 15 with App Router was selected as the frontend framework for the music attribution scaffold primarily because CopilotKit requires React, providing server components, nested layouts, and streaming SSR for real-time confidence scoring display.*
+
+### From this figure plan (relative)
+
+![Architecture decision: Next.js 15 App Router selected for music attribution frontend, driven by CopilotKit React dependency for agentic UI, compared against SvelteKit and HTMX alternatives, with server components and streaming SSR enabling transparent confidence display in the open-source attribution scaffold.](../assets/fig-choice-07-nextjs-app-router.jpg)

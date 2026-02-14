@@ -80,4 +80,16 @@ The key message is: "tinytag's BSD-3 license preserves the scaffold's permissive
 
 ## Alt Text
 
-Split-panel comparison of tinytag and mutagen audio metadata libraries, highlighting BSD-3 versus GPL-2.0 licensing as the primary decision driver.
+Trade-off analysis: tinytag BSD-3 license selected over mutagen GPL-2.0 for music metadata extraction in the attribution scaffold, preserving permissive open-source licensing for the music attribution project while providing read-only ID3, FLAC, and MP4 tag support for music credits and ISRC identification.
+
+## Image Embed
+
+### For GitHub README / MkDocs (repo-root-relative)
+
+![Trade-off analysis: tinytag BSD-3 license selected over mutagen GPL-2.0 for music metadata extraction in the attribution scaffold, preserving permissive open-source licensing for the music attribution project while providing read-only ID3, FLAC, and MP4 tag support for music credits and ISRC identification.](docs/figures/repo-figures/assets/fig-choice-13-tinytag-over-mutagen.jpg)
+
+*The license-driven decision to use tinytag (BSD-3) over mutagen (GPL-2.0) preserves the music attribution scaffold's permissive licensing, trading write capabilities and TIPL credits support for zero-dependency metadata reading of artist, title, album, duration, and ISRC fields (Issue #29).*
+
+### From this figure plan (relative)
+
+![Trade-off analysis: tinytag BSD-3 license selected over mutagen GPL-2.0 for music metadata extraction in the attribution scaffold, preserving permissive open-source licensing for the music attribution project while providing read-only ID3, FLAC, and MP4 tag support for music credits and ISRC identification.](../assets/fig-choice-13-tinytag-over-mutagen.jpg)

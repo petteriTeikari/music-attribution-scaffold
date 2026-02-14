@@ -78,4 +78,16 @@ The key message is: "Four business decisions at L1 determine the probability lan
 
 ## Alt Text
 
-Four L1 business decision nodes with their options, showing cascade arrows into L2 architecture decisions and callout about skip connections to L3 and L4.
+Decision diagram: four foundational business decisions -- build versus buy, target market, revenue model, and regulatory posture -- cascading into architecture-level choices for the music attribution scaffold, with skip connections showing how business strategy directly shapes music metadata infrastructure and confidence scoring design.
+
+## Image Embed
+
+### For GitHub README / MkDocs (repo-root-relative)
+
+![Decision diagram: four foundational business decisions -- build versus buy, target market, revenue model, and regulatory posture -- cascading into architecture-level choices for the music attribution scaffold, with skip connections showing how business strategy directly shapes music metadata infrastructure and confidence scoring design.](docs/figures/repo-figures/assets/fig-prd-03-foundation-decisions.jpg)
+
+*Figure 3. The L1 business layer of the probabilistic PRD sets the probability landscape for all downstream technology decisions, with skip connections reaching directly from business strategy to database and compute choices.*
+
+### From this figure plan (relative)
+
+![Decision diagram: four foundational business decisions -- build versus buy, target market, revenue model, and regulatory posture -- cascading into architecture-level choices for the music attribution scaffold, with skip connections showing how business strategy directly shapes music metadata infrastructure and confidence scoring design.](../assets/fig-prd-03-foundation-decisions.jpg)

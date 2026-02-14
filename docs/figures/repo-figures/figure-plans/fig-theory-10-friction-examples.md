@@ -102,4 +102,16 @@ The key message is: "Most pain points in music attribution are administrative fr
 
 ## Alt Text
 
-Two categorized tables: administrative friction with licensing, registration, and reporting examples to automate, and discovery friction with curation, collaboration, and gatekeeping examples to preserve.
+Categorization chart: real-world music industry friction examples classified into administrative friction (sync licensing, PRO registration, ISRC assignment, royalty reporting to automate) and discovery friction (DJ curation, artist collaboration, playlist gatekeeping to preserve) -- concrete applications of the two-friction taxonomy for music attribution and transparent confidence in which processes deserve automation.
+
+## Image Embed
+
+### For GitHub README / MkDocs (repo-root-relative)
+
+![Categorization chart: real-world music industry friction examples classified into administrative friction (sync licensing, PRO registration, ISRC assignment, royalty reporting to automate) and discovery friction (DJ curation, artist collaboration, playlist gatekeeping to preserve) -- concrete applications of the two-friction taxonomy for music attribution and transparent confidence in which processes deserve automation.](docs/figures/repo-figures/assets/fig-theory-10-friction-examples.jpg)
+
+*Figure 10. Real-world friction examples classified using the two-friction taxonomy: administrative friction involves compliance and process (licensing forms, ISRC assignment, royalty calculations), while discovery friction involves taste and relationships (DJ sets, co-writing sessions, editorial curation).*
+
+### From this figure plan (relative)
+
+![Categorization chart: real-world music industry friction examples classified into administrative friction (sync licensing, PRO registration, ISRC assignment, royalty reporting to automate) and discovery friction (DJ curation, artist collaboration, playlist gatekeeping to preserve) -- concrete applications of the two-friction taxonomy for music attribution and transparent confidence in which processes deserve automation.](../assets/fig-theory-10-friction-examples.jpg)

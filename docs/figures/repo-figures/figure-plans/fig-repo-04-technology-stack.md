@@ -87,4 +87,16 @@ The key message is: "A modern Python 3.13 + Next.js 15 stack with PostgreSQL, Py
 
 ## Alt Text
 
-Technology stack reference card: Python 3.13 backend with FastAPI, SQLAlchemy, PydanticAI; TypeScript frontend with Next.js 15, Jotai, CopilotKit; shared infrastructure with uv, Docker, GitHub Actions.
+Reference card: full technology stack for the open-source music attribution scaffold listing Python 3.13 backend with FastAPI, SQLAlchemy, and PydanticAI for transparent confidence scoring, Next.js 15 frontend with Jotai and CopilotKit AG-UI, and shared infrastructure including Docker, GitHub Actions, PostgreSQL with pgvector, and uv package manager -- every dependency a deliberate PRD decision.
+
+## Image Embed
+
+### For GitHub README / MkDocs (repo-root-relative)
+
+![Reference card: full technology stack for the open-source music attribution scaffold listing Python 3.13 backend with FastAPI, SQLAlchemy, and PydanticAI for transparent confidence scoring, Next.js 15 frontend with Jotai and CopilotKit AG-UI, and shared infrastructure including Docker, GitHub Actions, PostgreSQL with pgvector, and uv package manager -- every dependency a deliberate PRD decision.](docs/figures/repo-figures/assets/fig-repo-04-technology-stack.jpg)
+
+*Figure 4. The technology stack spans a modern Python 3.13 backend (FastAPI, SQLAlchemy 2.0, PydanticAI, Splink v4) and TypeScript frontend (Next.js 15, Tailwind CSS v4, CopilotKit), with every dependency documented in the probabilistic PRD decision network.*
+
+### From this figure plan (relative)
+
+![Reference card: full technology stack for the open-source music attribution scaffold listing Python 3.13 backend with FastAPI, SQLAlchemy, and PydanticAI for transparent confidence scoring, Next.js 15 frontend with Jotai and CopilotKit AG-UI, and shared infrastructure including Docker, GitHub Actions, PostgreSQL with pgvector, and uv package manager -- every dependency a deliberate PRD decision.](../assets/fig-repo-04-technology-stack.jpg)

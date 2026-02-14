@@ -91,4 +91,16 @@ The key message is: "Six always-on services (postgres, pgbouncer, valkey, backen
 
 ## Alt Text
 
-Docker Compose architecture: six core services (PostgreSQL+pgvector, PgBouncer, Valkey, FastAPI backend, Next.js frontend) with opt-in Prometheus+Grafana monitoring stack.
+Architecture diagram: Docker Compose six-service development stack for the music attribution scaffold showing PostgreSQL 17 with pgvector for music metadata storage, PgBouncer connection pooling, Valkey cache, FastAPI backend with hot-reload, Next.js 15 frontend, and opt-in Prometheus plus Grafana monitoring -- all launched via a single make dev command for transparent confidence scoring development.
+
+## Image Embed
+
+### For GitHub README / MkDocs (repo-root-relative)
+
+![Architecture diagram: Docker Compose six-service development stack for the music attribution scaffold showing PostgreSQL 17 with pgvector for music metadata storage, PgBouncer connection pooling, Valkey cache, FastAPI backend with hot-reload, Next.js 15 frontend, and opt-in Prometheus plus Grafana monitoring -- all launched via a single make dev command for transparent confidence scoring development.](docs/figures/repo-figures/assets/fig-repo-09-docker-architecture.jpg)
+
+*Figure 9. The Docker Compose development stack provides six always-on services (PostgreSQL 17 with pgvector, PgBouncer, Valkey, FastAPI backend, Next.js frontend) with opt-in Prometheus and Grafana monitoring, ensuring every developer runs an identical local environment via docker-compose.dev.yml.*
+
+### From this figure plan (relative)
+
+![Architecture diagram: Docker Compose six-service development stack for the music attribution scaffold showing PostgreSQL 17 with pgvector for music metadata storage, PgBouncer connection pooling, Valkey cache, FastAPI backend with hot-reload, Next.js 15 frontend, and opt-in Prometheus plus Grafana monitoring -- all launched via a single make dev command for transparent confidence scoring development.](../assets/fig-repo-09-docker-architecture.jpg)

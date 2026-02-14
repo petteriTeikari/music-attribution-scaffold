@@ -80,4 +80,16 @@ The key message is: "Seven automated quality gates run on every commit -- from t
 
 ## Alt Text
 
-Horizontal chain of seven pre-commit hooks: whitespace, YAML/TOML, uv lock, ruff lint, ruff format, mypy types, detect-secrets. Any failure blocks the commit.
+Workflow diagram: seven pre-commit quality gates for the music attribution scaffold showing sequential hooks from whitespace trimming and YAML validation through uv lockfile sync, ruff linting, ruff formatting, mypy static type checking, and detect-secrets scanning -- any hook failure blocks the commit, enforcing zero-exception code quality on every contribution to the open-source project.
+
+## Image Embed
+
+### For GitHub README / MkDocs (repo-root-relative)
+
+![Workflow diagram: seven pre-commit quality gates for the music attribution scaffold showing sequential hooks from whitespace trimming and YAML validation through uv lockfile sync, ruff linting, ruff formatting, mypy static type checking, and detect-secrets scanning -- any hook failure blocks the commit, enforcing zero-exception code quality on every contribution to the open-source project.](docs/figures/repo-figures/assets/fig-repo-07-precommit-quality-gates.jpg)
+
+*Figure 7. Seven automated pre-commit hooks form an unbypassable quality gate chain: every commit to the music attribution scaffold must pass whitespace, config validation, lockfile sync, linting, formatting, type checking, and secret detection before it can land.*
+
+### From this figure plan (relative)
+
+![Workflow diagram: seven pre-commit quality gates for the music attribution scaffold showing sequential hooks from whitespace trimming and YAML validation through uv lockfile sync, ruff linting, ruff formatting, mypy static type checking, and detect-secrets scanning -- any hook failure blocks the commit, enforcing zero-exception code quality on every contribution to the open-source project.](../assets/fig-repo-07-precommit-quality-gates.jpg)

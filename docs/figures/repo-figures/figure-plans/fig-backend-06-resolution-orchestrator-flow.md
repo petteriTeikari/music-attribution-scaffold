@@ -103,4 +103,16 @@ The key message is: "Entity resolution is a cascade -- exact identifier match fi
 
 ## Alt Text
 
-Flowchart of the multi-signal entity resolution pipeline showing identifier matching, string similarity, and per-group resolution with six weighted signals producing ResolvedEntity output.
+Flow diagram of the multi-signal entity resolution pipeline in the music attribution scaffold, showing a cascade from exact identifier matching (ISRC, ISWC, ISNI, MBID) through fuzzy string similarity to per-group resolution using six weighted signals — identifier (1.0), Splink probabilistic linkage (0.8), embedding semantic match (0.7), graph evidence (0.75), string similarity (0.6), and LLM disambiguation (0.85) — producing ResolvedEntity output with assurance levels A0-A3.
+
+## Image Embed
+
+### For GitHub README / MkDocs (repo-root-relative)
+
+![Flow diagram of the multi-signal entity resolution pipeline in the music attribution scaffold, showing a cascade from exact identifier matching (ISRC, ISWC, ISNI, MBID) through fuzzy string similarity to per-group resolution using six weighted signals — identifier (1.0), Splink probabilistic linkage (0.8), embedding semantic match (0.7), graph evidence (0.75), string similarity (0.6), and LLM disambiguation (0.85) — producing ResolvedEntity output with assurance levels A0-A3.](docs/figures/repo-figures/assets/fig-backend-06-resolution-orchestrator-flow.jpg)
+
+*Figure 6. The ResolutionOrchestrator implements a cascade strategy — exact identifiers first, then string similarity for unmatched records — with six weighted signals contributing to a final resolution confidence that maps to assurance levels A0-A3.*
+
+### From this figure plan (relative)
+
+![Flow diagram of the multi-signal entity resolution pipeline in the music attribution scaffold, showing a cascade from exact identifier matching (ISRC, ISWC, ISNI, MBID) through fuzzy string similarity to per-group resolution using six weighted signals — identifier (1.0), Splink probabilistic linkage (0.8), embedding semantic match (0.7), graph evidence (0.75), string similarity (0.6), and LLM disambiguation (0.85) — producing ResolvedEntity output with assurance levels A0-A3.](../assets/fig-backend-06-resolution-orchestrator-flow.jpg)

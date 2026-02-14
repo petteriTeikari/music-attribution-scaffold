@@ -89,4 +89,16 @@ The key message is: "When string similarity fails, semantic embeddings catch wha
 
 ## Alt Text
 
-Embedding pipeline diagram showing entity names encoded by sentence-transformers into 768-dimensional vectors, stored in pgvector HALFVEC columns, with cosine similarity search for semantic entity matching.
+Architecture diagram of semantic embedding-based entity resolution for music attribution, showing entity names encoded by the all-MiniLM-L6-v2 sentence-transformer model into 768-dimensional vectors, stored in PostgreSQL pgvector HALFVEC columns, with cosine similarity search catching translations and alias variations that string matching misses — weighted at 0.7 in the open-source attribution scaffold's confidence scoring pipeline.
+
+## Image Embed
+
+### For GitHub README / MkDocs (repo-root-relative)
+
+![Architecture diagram of semantic embedding-based entity resolution for music attribution, showing entity names encoded by the all-MiniLM-L6-v2 sentence-transformer model into 768-dimensional vectors, stored in PostgreSQL pgvector HALFVEC columns, with cosine similarity search catching translations and alias variations that string matching misses — weighted at 0.7 in the open-source attribution scaffold's confidence scoring pipeline.](docs/figures/repo-figures/assets/fig-backend-08-pgvector-embedding-match.jpg)
+
+*Figure 8. When string similarity fails for translated or heavily aliased music entity names, semantic embeddings in pgvector HALFVEC(768) capture meaning-level similarity, enabling the attribution scaffold to resolve entities like "Tchaikovsky" and "Tschaikowski" that look different but refer to the same person.*
+
+### From this figure plan (relative)
+
+![Architecture diagram of semantic embedding-based entity resolution for music attribution, showing entity names encoded by the all-MiniLM-L6-v2 sentence-transformer model into 768-dimensional vectors, stored in PostgreSQL pgvector HALFVEC columns, with cosine similarity search catching translations and alias variations that string matching misses — weighted at 0.7 in the open-source attribution scaffold's confidence scoring pipeline.](../assets/fig-backend-08-pgvector-embedding-match.jpg)

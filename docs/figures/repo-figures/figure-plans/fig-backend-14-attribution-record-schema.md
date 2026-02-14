@@ -93,4 +93,16 @@ The key message is: "AttributionRecord is the crown jewel of the pipeline -- it 
 
 ## Alt Text
 
-Schema diagram of the AttributionRecord Pydantic model showing credits with per-credit confidence, conformal prediction sets, provenance chain with six event types, and review prioritization metadata.
+Data schema diagram of the AttributionRecord Pydantic model — the final output of the music attribution scaffold — showing per-credit confidence scoring with 14 role types, conformal prediction sets with calibration metadata, a full provenance chain tracking six event types (fetch, resolve, score, review, update, feedback), assurance levels A0-A3, and review prioritization for transparent, auditable music credits.
+
+## Image Embed
+
+### For GitHub README / MkDocs (repo-root-relative)
+
+![Data schema diagram of the AttributionRecord Pydantic model — the final output of the music attribution scaffold — showing per-credit confidence scoring with 14 role types, conformal prediction sets with calibration metadata, a full provenance chain tracking six event types (fetch, resolve, score, review, update, feedback), assurance levels A0-A3, and review prioritization for transparent, auditable music credits.](docs/figures/repo-figures/assets/fig-backend-14-attribution-record-schema.jpg)
+
+*Figure 14. The AttributionRecord (BO-3) is the culminating boundary object of the pipeline, carrying per-credit confidence, conformal prediction sets, a complete provenance audit trail, and uncertainty metadata — serving both the REST API and the conversational agent interface.*
+
+### From this figure plan (relative)
+
+![Data schema diagram of the AttributionRecord Pydantic model — the final output of the music attribution scaffold — showing per-credit confidence scoring with 14 role types, conformal prediction sets with calibration metadata, a full provenance chain tracking six event types (fetch, resolve, score, review, update, feedback), assurance levels A0-A3, and review prioritization for transparent, auditable music credits.](../assets/fig-backend-14-attribution-record-schema.jpg)

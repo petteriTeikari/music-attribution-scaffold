@@ -89,4 +89,16 @@ The key message is: "Five page files under frontend/src/app/ produce four URL pa
 
 ## Alt Text
 
-App Router tree showing five page files branching from RootLayout, with URL paths, page descriptions, and key child components listed for each route.
+Component diagram mapping the Next.js 15 App Router page tree for the open-source music attribution scaffold: five page files branch from a shared RootLayout with provider chain, rendering works catalog, work detail with transparent confidence scoring, AI-assisted review queue, and MCP permission consent management routes.
+
+## Image Embed
+
+### For GitHub README / MkDocs (repo-root-relative)
+
+![Component diagram mapping the Next.js 15 App Router page tree for the open-source music attribution scaffold: five page files branch from a shared RootLayout with provider chain, rendering works catalog, work detail with transparent confidence scoring, AI-assisted review queue, and MCP permission consent management routes.](docs/figures/repo-figures/assets/fig-frontend-03-page-router-map.jpg)
+
+*Figure: App Router page hierarchy showing how five route segments compose domain-specific components for music metadata browsing, attribution review, and permission management under a shared layout with CopilotKit agent context.*
+
+### From this figure plan (relative)
+
+![Component diagram mapping the Next.js 15 App Router page tree for the open-source music attribution scaffold: five page files branch from a shared RootLayout with provider chain, rendering works catalog, work detail with transparent confidence scoring, AI-assisted review queue, and MCP permission consent management routes.](../assets/fig-frontend-03-page-router-map.jpg)

@@ -105,4 +105,16 @@ The key message is: "Deterrence works like tax audits -- you don't need to audit
 
 ## Alt Text
 
-Deterrence economics formula p times d times F greater than g with tax audit analogy showing that 3 percent audit rate with large penalties deters infringement, applied to music attribution.
+Theory visualization: deterrence economics formula p times d times F greater than or equal to g with tax audit analogy showing that even a 3 percent audit rate deters infringement when penalties are large -- applied to music attribution where imperfect detection still protects music credits through transparent confidence scoring and economic incentives rather than perfect surveillance.
+
+## Image Embed
+
+### For GitHub README / MkDocs (repo-root-relative)
+
+![Theory visualization: deterrence economics formula p times d times F greater than or equal to g with tax audit analogy showing that even a 3 percent audit rate deters infringement when penalties are large -- applied to music attribution where imperfect detection still protects music credits through transparent confidence scoring and economic incentives rather than perfect surveillance.](docs/figures/repo-figures/assets/fig-theory-04-deterrence-economics.jpg)
+
+*Figure 4. Deterrence economics applied to music attribution: the system does not need perfect detection to be effective, just as tax audits deter fraud at a 3% audit rate -- the expected penalty (p x d x F) need only exceed the expected gain (g) from infringement.*
+
+### From this figure plan (relative)
+
+![Theory visualization: deterrence economics formula p times d times F greater than or equal to g with tax audit analogy showing that even a 3 percent audit rate deters infringement when penalties are large -- applied to music attribution where imperfect detection still protects music credits through transparent confidence scoring and economic incentives rather than perfect surveillance.](../assets/fig-theory-04-deterrence-economics.jpg)

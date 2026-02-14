@@ -92,4 +92,16 @@ The key message is: "ResolvedEntity carries full provenance -- every source reco
 
 ## Alt Text
 
-Schema diagram of the ResolvedEntity Pydantic model showing core identity fields, source provenance references, per-method resolution confidence breakdown, conflict detection, and review flags.
+Data schema diagram of the ResolvedEntity Pydantic model in the music attribution scaffold, showing core identity fields with assurance levels A0-A3, source provenance references tracking which MusicBrainz, Discogs, or AcoustID records contributed, per-method resolution confidence breakdown (string, embedding, graph, LLM), conflict detection with severity levels, and review flags for uncertain music credits requiring human verification.
+
+## Image Embed
+
+### For GitHub README / MkDocs (repo-root-relative)
+
+![Data schema diagram of the ResolvedEntity Pydantic model in the music attribution scaffold, showing core identity fields with assurance levels A0-A3, source provenance references tracking which MusicBrainz, Discogs, or AcoustID records contributed, per-method resolution confidence breakdown (string, embedding, graph, LLM), conflict detection with severity levels, and review flags for uncertain music credits requiring human verification.](docs/figures/repo-figures/assets/fig-backend-10-resolved-entity-schema.jpg)
+
+*Figure 10. The ResolvedEntity (BO-2) carries full provenance from entity resolution — every contributing source record, the resolution method used, per-method confidence scores, and detected conflicts — enabling transparent confidence scoring in the downstream attribution engine.*
+
+### From this figure plan (relative)
+
+![Data schema diagram of the ResolvedEntity Pydantic model in the music attribution scaffold, showing core identity fields with assurance levels A0-A3, source provenance references tracking which MusicBrainz, Discogs, or AcoustID records contributed, per-method resolution confidence breakdown (string, embedding, graph, LLM), conflict detection with severity levels, and review flags for uncertain music credits requiring human verification.](../assets/fig-backend-10-resolved-entity-schema.jpg)

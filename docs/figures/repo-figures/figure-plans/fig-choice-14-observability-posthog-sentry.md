@@ -91,4 +91,16 @@ The key message is: "PostHog (product analytics) + Sentry (error tracking) provi
 
 ## Alt Text
 
-PostHog and Sentry selected as observability stack for analytics and error tracking, compared against Datadog, Grafana, and defunct Highlight.io.
+Architecture decision: PostHog plus Sentry selected for music attribution observability, providing typed product analytics and error tracking for confidence scoring workflows, compared against Datadog, Grafana, and defunct Highlight.io in the open-source attribution scaffold.
+
+## Image Embed
+
+### For GitHub README / MkDocs (repo-root-relative)
+
+![Architecture decision: PostHog plus Sentry selected for music attribution observability, providing typed product analytics and error tracking for confidence scoring workflows, compared against Datadog, Grafana, and defunct Highlight.io in the open-source attribution scaffold.](docs/figures/repo-figures/assets/fig-choice-14-observability-posthog-sentry.jpg)
+
+*PostHog (product analytics with typed events and feature flags) paired with Sentry (error tracking and performance monitoring) provides cost-effective observability for the music attribution scaffold after Highlight.io's shutdown, with separate tools for separate concerns.*
+
+### From this figure plan (relative)
+
+![Architecture decision: PostHog plus Sentry selected for music attribution observability, providing typed product analytics and error tracking for confidence scoring workflows, compared against Datadog, Grafana, and defunct Highlight.io in the open-source attribution scaffold.](../assets/fig-choice-14-observability-posthog-sentry.jpg)

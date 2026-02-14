@@ -101,4 +101,16 @@ The key message is: "The voice agent is a Pro-tier upsell surface only -- the ba
 
 ## Alt Text
 
-Voice agent upsell banner with coral mic icon, "Pro Feature" title, example query about Hide and Seek, "Upgrade to Pro" button, and dismiss control.
+UI component mockup: voice agent Pro-tier upsell banner for the music attribution scaffold featuring a coral microphone icon, aspirational example query about music credits, and upgrade call-to-action, demonstrating the open-source project's product design philosophy of subtle feature gating without implementing actual voice processing for music metadata queries.
+
+## Image Embed
+
+### For GitHub README / MkDocs (repo-root-relative)
+
+![UI component mockup: voice agent Pro-tier upsell banner for the music attribution scaffold featuring a coral microphone icon, aspirational example query about music credits, and upgrade call-to-action, demonstrating the open-source project's product design philosophy of subtle feature gating without implementing actual voice processing for music metadata queries.](docs/figures/repo-figures/assets/fig-agent-09-voice-agent-upsell.jpg)
+
+*VoiceAgentBanner component showing the aspirational Pro-tier upsell surface for voice-based music attribution queries, designed to be subtle and dismissable with no actual voice processing backend -- a UI-only feature gate in the attribution scaffold.*
+
+### From this figure plan (relative)
+
+![UI component mockup: voice agent Pro-tier upsell banner for the music attribution scaffold featuring a coral microphone icon, aspirational example query about music credits, and upgrade call-to-action, demonstrating the open-source project's product design philosophy of subtle feature gating without implementing actual voice processing for music metadata queries.](../assets/fig-agent-09-voice-agent-upsell.jpg)

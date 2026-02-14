@@ -79,4 +79,16 @@ The key message is: "FastAPI's async-native, Pydantic-native design aligns perfe
 
 ## Alt Text
 
-Split-panel comparison of FastAPI and Django highlighting async-native design, Pydantic integration, and lightweight deployment versus batteries-included approach.
+Comparison chart: FastAPI versus Django for music attribution API serving, highlighting async-native Pydantic integration and MCP endpoint streaming for transparent confidence scoring, with FastAPI selected as lightweight modular monolith over Django's batteries-included ORM approach in the open-source scaffold.
+
+## Image Embed
+
+### For GitHub README / MkDocs (repo-root-relative)
+
+![Comparison chart: FastAPI versus Django for music attribution API serving, highlighting async-native Pydantic integration and MCP endpoint streaming for transparent confidence scoring, with FastAPI selected as lightweight modular monolith over Django's batteries-included ORM approach in the open-source scaffold.](docs/figures/repo-figures/assets/fig-choice-06-fastapi-over-django.jpg)
+
+*FastAPI's async-native, Pydantic-native design aligns with the music attribution scaffold's need for REST and MCP serving without ORM overhead, providing auto-generated OpenAPI docs and SSE streaming for the AG-UI agentic endpoint.*
+
+### From this figure plan (relative)
+
+![Comparison chart: FastAPI versus Django for music attribution API serving, highlighting async-native Pydantic integration and MCP endpoint streaming for transparent confidence scoring, with FastAPI selected as lightweight modular monolith over Django's batteries-included ORM approach in the open-source scaffold.](../assets/fig-choice-06-fastapi-over-django.jpg)

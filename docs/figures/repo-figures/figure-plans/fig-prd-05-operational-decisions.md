@@ -84,4 +84,16 @@ The key message is: "Deployment and operations decisions are the most archetype-
 
 ## Alt Text
 
-Two-tier layout showing L4 deployment decisions flowing into L5 operations decisions, with candidate options listed in each node and volatility classification footer.
+Decision diagram: deployment and operations layers of the music attribution scaffold showing compute platform, database hosting, CI/CD, observability, and scaling decisions with candidate options per node -- the most team-archetype-sensitive decisions in the open-source probabilistic PRD, classified by volatility into stable, shifting, and volatile categories.
+
+## Image Embed
+
+### For GitHub README / MkDocs (repo-root-relative)
+
+![Decision diagram: deployment and operations layers of the music attribution scaffold showing compute platform, database hosting, CI/CD, observability, and scaling decisions with candidate options per node -- the most team-archetype-sensitive decisions in the open-source probabilistic PRD, classified by volatility into stable, shifting, and volatile categories.](docs/figures/repo-figures/assets/fig-prd-05-operational-decisions.jpg)
+
+*Figure 5. Operational decisions are where team archetype differences become most dramatic: the same music attribution scaffold deploys on Render (musician-first), AWS ECS (engineer-heavy), or Railway (solo hacker) depending on team constraints and budget.*
+
+### From this figure plan (relative)
+
+![Decision diagram: deployment and operations layers of the music attribution scaffold showing compute platform, database hosting, CI/CD, observability, and scaling decisions with candidate options per node -- the most team-archetype-sensitive decisions in the open-source probabilistic PRD, classified by volatility into stable, shifting, and volatile categories.](../assets/fig-prd-05-operational-decisions.jpg)

@@ -105,4 +105,16 @@ The key message is: "The agent defaults to Claude Haiku 4.5 for fast, cheap resp
 
 ## Alt Text
 
-Model failover chain: ATTRIBUTION_AGENT_MODEL env var configures default Haiku 4.5, with PydanticAI FallbackModel cascading to Sonnet 4.5 on failure.
+Configuration diagram: PydanticAI FallbackModel failover strategy for the music attribution scaffold agent, showing environment variable configuration defaulting to Claude Haiku for fast and cost-efficient music metadata queries, automatic cascading to more capable models on failure, and retry mechanisms that ensure reliable transparent confidence scoring responses for music credits.
+
+## Image Embed
+
+### For GitHub README / MkDocs (repo-root-relative)
+
+![Configuration diagram: PydanticAI FallbackModel failover strategy for the music attribution scaffold agent, showing environment variable configuration defaulting to Claude Haiku for fast and cost-efficient music metadata queries, automatic cascading to more capable models on failure, and retry mechanisms that ensure reliable transparent confidence scoring responses for music credits.](docs/figures/repo-figures/assets/fig-agent-07-model-failover.jpg)
+
+*Model failover strategy for the open-source attribution agent, illustrating the configuration chain from ATTRIBUTION_AGENT_MODEL environment variable through PydanticAI Settings to the FallbackModel cascade with automatic retry on transient failures.*
+
+### From this figure plan (relative)
+
+![Configuration diagram: PydanticAI FallbackModel failover strategy for the music attribution scaffold agent, showing environment variable configuration defaulting to Claude Haiku for fast and cost-efficient music metadata queries, automatic cascading to more capable models on failure, and retry mechanisms that ensure reliable transparent confidence scoring responses for music credits.](../assets/fig-agent-07-model-failover.jpg)

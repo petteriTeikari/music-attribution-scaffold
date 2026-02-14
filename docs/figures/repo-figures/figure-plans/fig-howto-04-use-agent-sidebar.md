@@ -90,4 +90,16 @@ The key message is: "Type a natural-language question in the sidebar, and the ag
 
 ## Alt Text
 
-Screenshot-style layout showing main application with works dashboard on left and agent sidebar on right with three-step flow: ask, tool calls, response.
+How-to guide: AI agent sidebar for natural-language music attribution queries, showing a split-panel layout with a works dashboard displaying confidence scores on the left and a three-step conversational flow on the right -- user asks about music credits, agent invokes attribution tools, and returns a transparent confidence-scored answer with source provenance.
+
+## Image Embed
+
+### For GitHub README / MkDocs (repo-root-relative)
+
+![How-to guide: AI agent sidebar for natural-language music attribution queries, showing a split-panel layout with a works dashboard displaying confidence scores on the left and a three-step conversational flow on the right -- user asks about music credits, agent invokes attribution tools, and returns a transparent confidence-scored answer with source provenance.](docs/figures/repo-figures/assets/fig-howto-04-use-agent-sidebar.jpg)
+
+*Agent sidebar interaction flow for the Music Attribution Scaffold. Non-technical users query music credits in natural language while the agent transparently invokes the same tools as the REST API, returning confidence-scored attribution data without requiring API knowledge (Teikari, 2026).*
+
+### From this figure plan (relative)
+
+![How-to guide: AI agent sidebar for natural-language music attribution queries, showing a split-panel layout with a works dashboard displaying confidence scores on the left and a three-step conversational flow on the right -- user asks about music credits, agent invokes attribution tools, and returns a transparent confidence-scored answer with source provenance.](../assets/fig-howto-04-use-agent-sidebar.jpg)

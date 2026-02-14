@@ -104,4 +104,16 @@ The key message is: "Entity mentions form a graph where edges represent evidence
 
 ## Alt Text
 
-Graph with entity mention nodes for Imogen Heap and Brian Eno variants connected by weighted edges, community detection identifies two clusters each resolving to a single ISNI.
+Theory visualization: graph-based entity resolution for music attribution showing mention nodes for Imogen Heap and Brian Eno name variants connected by weighted edges from cascade scoring -- community detection identifies two clusters each resolving to a single ISNI identifier, with strong within-cluster edges above 0.85 and weak cross-community edges at 0.08 confirming distinct entities in the music metadata graph.
+
+## Image Embed
+
+### For GitHub README / MkDocs (repo-root-relative)
+
+![Theory visualization: graph-based entity resolution for music attribution showing mention nodes for Imogen Heap and Brian Eno name variants connected by weighted edges from cascade scoring -- community detection identifies two clusters each resolving to a single ISNI identifier, with strong within-cluster edges above 0.85 and weak cross-community edges at 0.08 confirming distinct entities in the music metadata graph.](docs/figures/repo-figures/assets/fig-theory-18-graph-resolution.jpg)
+
+*Figure 18. Graph-based entity resolution: entity mentions form a weighted graph where edge weights come from the resolution cascade (string similarity, embeddings, LLM judgment), and community detection algorithms identify clusters of mentions that resolve to the same real-world artist with an ISNI identifier.*
+
+### From this figure plan (relative)
+
+![Theory visualization: graph-based entity resolution for music attribution showing mention nodes for Imogen Heap and Brian Eno name variants connected by weighted edges from cascade scoring -- community detection identifies two clusters each resolving to a single ISNI identifier, with strong within-cluster edges above 0.85 and weak cross-community edges at 0.08 confirming distinct entities in the music metadata graph.](../assets/fig-theory-18-graph-resolution.jpg)

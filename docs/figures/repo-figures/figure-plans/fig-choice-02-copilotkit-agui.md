@@ -89,4 +89,16 @@ The key message is: "CopilotKit + AG-UI provides open-source agentic UI with nat
 
 ## Alt Text
 
-Three-card comparison of agentic UI frameworks: CopilotKit with AG-UI selected for open-source governance, MCP integration, and bidirectional shared state.
+Architecture decision: CopilotKit with AG-UI protocol selected for music attribution agentic UI, comparing open-source streaming with 31 event types and MCP integration against Vercel AI SDK and custom WebSocket, enabling transparent confidence scoring through bidirectional shared state.
+
+## Image Embed
+
+### For GitHub README / MkDocs (repo-root-relative)
+
+![Architecture decision: CopilotKit with AG-UI protocol selected for music attribution agentic UI, comparing open-source streaming with 31 event types and MCP integration against Vercel AI SDK and custom WebSocket, enabling transparent confidence scoring through bidirectional shared state.](docs/figures/repo-figures/assets/fig-choice-02-copilotkit-agui.jpg)
+
+*CopilotKit + AG-UI was selected as the agentic UI framework for the music attribution scaffold, providing 31-event SSE streaming, native MCP permission queries, and bidirectional state sharing via `useCopilotReadable`/`useCopilotAction` hooks (PRD node: `agentic_ui_framework = copilotkit_agui`, P=0.50).*
+
+### From this figure plan (relative)
+
+![Architecture decision: CopilotKit with AG-UI protocol selected for music attribution agentic UI, comparing open-source streaming with 31 event types and MCP integration against Vercel AI SDK and custom WebSocket, enabling transparent confidence scoring through bidirectional shared state.](../assets/fig-choice-02-copilotkit-agui.jpg)

@@ -85,4 +85,16 @@ The key message is: "The scaffold's architecture is a 5-level Bayesian decision 
 
 ## Alt Text
 
-Hierarchical decision network showing 30+ nodes across 5 levels from business decisions at top to operations at bottom, connected by 60+ conditional probability edges.
+Network visualization: complete Bayesian decision network for the music attribution scaffold with 30-plus nodes across five levels -- business, architecture, implementation, deployment, and operations -- connected by 60-plus conditional probability edges that govern transparent confidence scoring for music metadata and credits.
+
+## Image Embed
+
+### For GitHub README / MkDocs (repo-root-relative)
+
+![Network visualization: complete Bayesian decision network for the music attribution scaffold with 30-plus nodes across five levels -- business, architecture, implementation, deployment, and operations -- connected by 60-plus conditional probability edges that govern transparent confidence scoring for music metadata and credits.](docs/figures/repo-figures/assets/fig-prd-02-full-decision-network.jpg)
+
+*Figure 2. The full probabilistic PRD decision network maps every architectural choice in the open-source music attribution scaffold, from L1 business strategy through L5 operations, revealing how upstream decisions conditionally shape downstream technology selection.*
+
+### From this figure plan (relative)
+
+![Network visualization: complete Bayesian decision network for the music attribution scaffold with 30-plus nodes across five levels -- business, architecture, implementation, deployment, and operations -- connected by 60-plus conditional probability edges that govern transparent confidence scoring for music metadata and credits.](../assets/fig-prd-02-full-decision-network.jpg)

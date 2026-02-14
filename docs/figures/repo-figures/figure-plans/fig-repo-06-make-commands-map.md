@@ -92,4 +92,16 @@ The key message is: "Seven command categories, two execution modes (Docker for C
 
 ## Alt Text
 
-Make commands organized in eight categories across Docker and local execution modes, with frontend and agent sections. Key commands highlighted with coral accent squares.
+Reference card: Makefile developer command interface for the music attribution scaffold organized into eight categories across Docker CI-parity and local fast-iteration modes, covering dependency management with uv, testing with pytest, linting with ruff and mypy, Next.js 15 frontend commands, and PydanticAI agent workflows -- a single entry point for all development tasks.
+
+## Image Embed
+
+### For GitHub README / MkDocs (repo-root-relative)
+
+![Reference card: Makefile developer command interface for the music attribution scaffold organized into eight categories across Docker CI-parity and local fast-iteration modes, covering dependency management with uv, testing with pytest, linting with ruff and mypy, Next.js 15 frontend commands, and PydanticAI agent workflows -- a single entry point for all development tasks.](docs/figures/repo-figures/assets/fig-repo-06-make-commands-map.jpg)
+
+*Figure 6. The Makefile serves as the primary developer interface, organizing all commands into Docker-based (CI-parity) and local (fast-iteration) execution modes, ensuring contributors always use the correct environment for their workflow.*
+
+### From this figure plan (relative)
+
+![Reference card: Makefile developer command interface for the music attribution scaffold organized into eight categories across Docker CI-parity and local fast-iteration modes, covering dependency management with uv, testing with pytest, linting with ruff and mypy, Next.js 15 frontend commands, and PydanticAI agent workflows -- a single entry point for all development tasks.](../assets/fig-repo-06-make-commands-map.jpg)

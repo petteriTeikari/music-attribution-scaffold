@@ -115,4 +115,16 @@ The key message is: "explain_confidence breaks a confidence score into human-rea
 
 ## Alt Text
 
-explain_confidence tool flow: work ID input, database lookup, field extraction, factor generation, state update, and natural language explanation output.
+Flow diagram: explain_confidence agent tool for transparent confidence scoring in the music attribution scaffold, tracing execution from work ID input through database lookup, extraction of source agreement and assurance level from music metadata, generation of human-readable confidence factors, shared state update, and natural language explanation output that makes attribution scores interpretable.
+
+## Image Embed
+
+### For GitHub README / MkDocs (repo-root-relative)
+
+![Flow diagram: explain_confidence agent tool for transparent confidence scoring in the music attribution scaffold, tracing execution from work ID input through database lookup, extraction of source agreement and assurance level from music metadata, generation of human-readable confidence factors, shared state update, and natural language explanation output that makes attribution scores interpretable.](docs/figures/repo-figures/assets/fig-agent-05-tool-get-work.jpg)
+
+*Execution path of the explain_confidence PydanticAI tool, which decomposes a music attribution confidence score into human-readable factors -- source agreement level, source count and names, and assurance tier -- enabling transparent confidence scoring for music credits.*
+
+### From this figure plan (relative)
+
+![Flow diagram: explain_confidence agent tool for transparent confidence scoring in the music attribution scaffold, tracing execution from work ID input through database lookup, extraction of source agreement and assurance level from music metadata, generation of human-readable confidence factors, shared state update, and natural language explanation output that makes attribution scores interpretable.](../assets/fig-agent-05-tool-get-work.jpg)

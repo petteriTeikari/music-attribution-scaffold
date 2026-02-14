@@ -106,4 +106,16 @@ The key message is: "MCP turns ambiguous licensing into a machine-readable permi
 
 ## Alt Text
 
-Four-step MCP permission flow: AI agent asks permission query, MCP server processes it against rights holder preferences, returns structured DENY response.
+Workflow diagram: four-step MCP permission check for music attribution consent infrastructure, showing how an AI agent queries training rights for a music work, the MCP server evaluates rights holder preferences, and returns a structured ALLOW or DENY response with assurance level -- replacing ambiguous license text with machine-readable, transparent confidence-backed consent.
+
+## Image Embed
+
+### For GitHub README / MkDocs (repo-root-relative)
+
+![Workflow diagram: four-step MCP permission check for music attribution consent infrastructure, showing how an AI agent queries training rights for a music work, the MCP server evaluates rights holder preferences, and returns a structured ALLOW or DENY response with assurance level -- replacing ambiguous license text with machine-readable, transparent confidence-backed consent.](docs/figures/repo-figures/assets/fig-howto-05-check-permissions-mcp.jpg)
+
+*MCP consent infrastructure workflow for the Music Attribution Scaffold. An AI agent submits a structured permission query, the MCP server evaluates it against declared rights holder preferences, and returns an explicit decision with provenance -- embodying the paper's principle that consent must be machine-readable, not buried in license text (Teikari, 2026).*
+
+### From this figure plan (relative)
+
+![Workflow diagram: four-step MCP permission check for music attribution consent infrastructure, showing how an AI agent queries training rights for a music work, the MCP server evaluates rights holder preferences, and returns a structured ALLOW or DENY response with assurance level -- replacing ambiguous license text with machine-readable, transparent confidence-backed consent.](../assets/fig-howto-05-check-permissions-mcp.jpg)

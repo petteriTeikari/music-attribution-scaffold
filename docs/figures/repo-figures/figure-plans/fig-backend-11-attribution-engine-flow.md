@@ -105,4 +105,16 @@ The key message is: "The Attribution Engine takes resolved entities and produces
 
 ## Alt Text
 
-Three-stage Attribution Engine pipeline showing credit aggregation with source weights, conformal prediction calibration at 90% coverage, and review prioritization producing AttributionRecord output.
+Pipeline diagram of the three-stage music attribution engine showing weighted credit aggregation with source reliability weights (MusicBrainz 0.95, Discogs 0.85, AcoustID 0.80, file metadata 0.70, Artist Input 0.60), conformal prediction calibration using Adaptive Prediction Sets at 90% coverage, and active learning review prioritization — producing the final AttributionRecord with transparent confidence scoring for open-source music credits.
+
+## Image Embed
+
+### For GitHub README / MkDocs (repo-root-relative)
+
+![Pipeline diagram of the three-stage music attribution engine showing weighted credit aggregation with source reliability weights (MusicBrainz 0.95, Discogs 0.85, AcoustID 0.80, file metadata 0.70, Artist Input 0.60), conformal prediction calibration using Adaptive Prediction Sets at 90% coverage, and active learning review prioritization — producing the final AttributionRecord with transparent confidence scoring for open-source music credits.](docs/figures/repo-figures/assets/fig-backend-11-attribution-engine-flow.jpg)
+
+*Figure 11. The Attribution Engine is the core scoring pipeline: it transforms resolved entities into calibrated, confidence-scored attribution records through weighted source aggregation, conformal prediction calibration, and review prioritization — ensuring that confidence scores are statistically meaningful.*
+
+### From this figure plan (relative)
+
+![Pipeline diagram of the three-stage music attribution engine showing weighted credit aggregation with source reliability weights (MusicBrainz 0.95, Discogs 0.85, AcoustID 0.80, file metadata 0.70, Artist Input 0.60), conformal prediction calibration using Adaptive Prediction Sets at 90% coverage, and active learning review prioritization — producing the final AttributionRecord with transparent confidence scoring for open-source music credits.](../assets/fig-backend-11-attribution-engine-flow.jpg)

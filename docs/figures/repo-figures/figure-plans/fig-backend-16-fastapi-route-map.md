@@ -100,4 +100,16 @@ The key message is: "The Music Attribution API exposes five router groups -- hea
 
 ## Alt Text
 
-Tree diagram of FastAPI route map showing five router groups: health, metrics, attribution CRUD with search, permission checks, and CopilotKit AG-UI endpoint, all under the /api/v1 prefix.
+Architecture diagram of the FastAPI route map for the music attribution scaffold API, showing five router groups — health check, Prometheus metrics, attribution CRUD with hybrid search, MCP-compatible permission checks, and CopilotKit AG-UI streaming endpoint — with CORS middleware and async PostgreSQL session management, providing the REST interface for transparent music credit confidence scoring.
+
+## Image Embed
+
+### For GitHub README / MkDocs (repo-root-relative)
+
+![Architecture diagram of the FastAPI route map for the music attribution scaffold API, showing five router groups — health check, Prometheus metrics, attribution CRUD with hybrid search, MCP-compatible permission checks, and CopilotKit AG-UI streaming endpoint — with CORS middleware and async PostgreSQL session management, providing the REST interface for transparent music credit confidence scoring.](docs/figures/repo-figures/assets/fig-backend-16-fastapi-route-map.jpg)
+
+*Figure 16. The Music Attribution API exposes five router groups under a single FastAPI application, including attribution CRUD with hybrid search (text + vector + graph), permission checks for AI training rights, and a CopilotKit AG-UI endpoint for conversational agent access.*
+
+### From this figure plan (relative)
+
+![Architecture diagram of the FastAPI route map for the music attribution scaffold API, showing five router groups — health check, Prometheus metrics, attribution CRUD with hybrid search, MCP-compatible permission checks, and CopilotKit AG-UI streaming endpoint — with CORS middleware and async PostgreSQL session management, providing the REST interface for transparent music credit confidence scoring.](../assets/fig-backend-16-fastapi-route-map.jpg)

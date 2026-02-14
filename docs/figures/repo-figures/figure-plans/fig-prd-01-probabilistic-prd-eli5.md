@@ -76,4 +76,16 @@ The key message is: "A probabilistic PRD is a decision tree where every branch h
 
 ## Alt Text
 
-Split-panel comparison: left shows traditional PRD with one fixed answer, right shows probabilistic PRD with weighted options that adapt to different team types.
+Comparison chart: traditional product requirements document versus probabilistic PRD for music attribution scaffold, showing how weighted decision options replace fixed specs and adapt transparent confidence scoring to different team archetypes -- enabling open-source flexibility instead of one-size-fits-all architecture.
+
+## Image Embed
+
+### For GitHub README / MkDocs (repo-root-relative)
+
+![Comparison chart: traditional product requirements document versus probabilistic PRD for music attribution scaffold, showing how weighted decision options replace fixed specs and adapt transparent confidence scoring to different team archetypes -- enabling open-source flexibility instead of one-size-fits-all architecture.](docs/figures/repo-figures/assets/fig-prd-01-probabilistic-prd-eli5.jpg)
+
+*Figure 1. A probabilistic PRD replaces fixed specifications with weighted options that shift depending on team constraints, enabling the same music attribution scaffold to serve engineer-heavy startups, musician-first teams, and solo hackers alike.*
+
+### From this figure plan (relative)
+
+![Comparison chart: traditional product requirements document versus probabilistic PRD for music attribution scaffold, showing how weighted decision options replace fixed specs and adapt transparent confidence scoring to different team archetypes -- enabling open-source flexibility instead of one-size-fits-all architecture.](../assets/fig-prd-01-probabilistic-prd-eli5.jpg)

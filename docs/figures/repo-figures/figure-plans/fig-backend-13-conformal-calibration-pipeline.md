@@ -100,4 +100,16 @@ The key message is: "Conformal prediction ensures that '90% confident' actually 
 
 ## Alt Text
 
-Conformal calibration diagram showing APS method accumulating role predictions until 90% coverage, with reliability diagram and Expected Calibration Error formula for measuring calibration quality.
+Pipeline diagram of conformal prediction calibration for music attribution confidence scoring, showing the Adaptive Prediction Sets (APS) method accumulating role predictions sorted by confidence until 90% coverage is reached, with a reliability diagram plotting predicted versus actual accuracy and the Expected Calibration Error (ECE) formula — ensuring that confidence scores in the open-source attribution scaffold are statistically valid and not overconfident.
+
+## Image Embed
+
+### For GitHub README / MkDocs (repo-root-relative)
+
+![Pipeline diagram of conformal prediction calibration for music attribution confidence scoring, showing the Adaptive Prediction Sets (APS) method accumulating role predictions sorted by confidence until 90% coverage is reached, with a reliability diagram plotting predicted versus actual accuracy and the Expected Calibration Error (ECE) formula — ensuring that confidence scores in the open-source attribution scaffold are statistically valid and not overconfident.](docs/figures/repo-figures/assets/fig-backend-13-conformal-calibration-pipeline.jpg)
+
+*Figure 13. Conformal prediction ensures that "90% confident" actually means 90% coverage: the APS method wraps attribution confidence in statistically valid prediction sets while the ECE metric across 10 bins monitors whether the system's confidence estimates are well-calibrated.*
+
+### From this figure plan (relative)
+
+![Pipeline diagram of conformal prediction calibration for music attribution confidence scoring, showing the Adaptive Prediction Sets (APS) method accumulating role predictions sorted by confidence until 90% coverage is reached, with a reliability diagram plotting predicted versus actual accuracy and the Expected Calibration Error (ECE) formula — ensuring that confidence scores in the open-source attribution scaffold are statistically valid and not overconfident.](../assets/fig-backend-13-conformal-calibration-pipeline.jpg)

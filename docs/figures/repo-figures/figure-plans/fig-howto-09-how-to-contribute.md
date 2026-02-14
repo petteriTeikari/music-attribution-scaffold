@@ -110,4 +110,16 @@ The key message is: "Every contribution follows a six-step path: fork, branch, c
 
 ## Alt Text
 
-Six-step contribution flow: fork and clone, create branch, code following CLAUDE.md rules, pass pre-commit hooks, run tests, submit pull request.
+How-to guide: six-step open-source contribution workflow for the music attribution scaffold, from fork and clone through branch creation, coding under CLAUDE.md behavioral rules, pre-commit hook verification, test execution, and pull request submission -- quality gates including ruff, mypy, and pytest are non-negotiable for both human and AI contributors to maintain transparent confidence in music metadata code.
+
+## Image Embed
+
+### For GitHub README / MkDocs (repo-root-relative)
+
+![How-to guide: six-step open-source contribution workflow for the music attribution scaffold, from fork and clone through branch creation, coding under CLAUDE.md behavioral rules, pre-commit hook verification, test execution, and pull request submission -- quality gates including ruff, mypy, and pytest are non-negotiable for both human and AI contributors to maintain transparent confidence in music metadata code.](docs/figures/repo-figures/assets/fig-howto-09-how-to-contribute.jpg)
+
+*Contribution workflow for the Music Attribution Scaffold. The CLAUDE.md behavioral contract governs both human and AI contributors equally, with four mandatory quality gates (ruff check, ruff format, mypy, pytest) ensuring that every pull request meets the project's standards for code quality and attribution correctness (Teikari, 2026).*
+
+### From this figure plan (relative)
+
+![How-to guide: six-step open-source contribution workflow for the music attribution scaffold, from fork and clone through branch creation, coding under CLAUDE.md behavioral rules, pre-commit hook verification, test execution, and pull request submission -- quality gates including ruff, mypy, and pytest are non-negotiable for both human and AI contributors to maintain transparent confidence in music metadata code.](../assets/fig-howto-09-how-to-contribute.jpg)

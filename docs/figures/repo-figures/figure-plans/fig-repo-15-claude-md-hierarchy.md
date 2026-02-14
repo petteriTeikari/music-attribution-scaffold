@@ -101,4 +101,16 @@ The key message is: "AI assistant behavior is governed by a layered configuratio
 
 ## Alt Text
 
-Configuration tree showing CLAUDE.md hierarchy: root contract, five numbered domain rules, skills directory, and institutional knowledge layers with context loading triggers.
+Reference card: CLAUDE.md AI-assisted development configuration hierarchy for the music attribution scaffold showing layered governance from root behavior contract through five numbered domain rules covering code analysis and frontend design system, self-learning TDD skill workflows, and institutional knowledge memory -- with file-pattern context loading triggers that automatically activate relevant rules when editing Python 3.13 backend, Next.js 15 frontend, or test files in the open-source project.
+
+## Image Embed
+
+### For GitHub README / MkDocs (repo-root-relative)
+
+![Reference card: CLAUDE.md AI-assisted development configuration hierarchy for the music attribution scaffold showing layered governance from root behavior contract through five numbered domain rules covering code analysis and frontend design system, self-learning TDD skill workflows, and institutional knowledge memory -- with file-pattern context loading triggers that automatically activate relevant rules when editing Python 3.13 backend, Next.js 15 frontend, or test files in the open-source project.](docs/figures/repo-figures/assets/fig-repo-15-claude-md-hierarchy.jpg)
+
+*Figure 15. The AI assistant configuration system governs development behavior through four layers: root CLAUDE.md sets the behavior contract and forbidden actions, numbered rules add domain-specific guidance (AST-only code analysis, frontend design tokens), skills provide reusable TDD workflows, and memory files capture persistent failure patterns and institutional knowledge.*
+
+### From this figure plan (relative)
+
+![Reference card: CLAUDE.md AI-assisted development configuration hierarchy for the music attribution scaffold showing layered governance from root behavior contract through five numbered domain rules covering code analysis and frontend design system, self-learning TDD skill workflows, and institutional knowledge memory -- with file-pattern context loading triggers that automatically activate relevant rules when editing Python 3.13 backend, Next.js 15 frontend, or test files in the open-source project.](../assets/fig-repo-15-claude-md-hierarchy.jpg)

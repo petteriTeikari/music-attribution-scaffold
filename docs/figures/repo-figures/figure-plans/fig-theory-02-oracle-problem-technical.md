@@ -88,4 +88,16 @@ The key message is: "Attribution information is destroyed during training throug
 
 ## Alt Text
 
-Technical pipeline showing creator audio, MIDI, and metadata entering a training black box with tokenization, gradient descent, and weight averaging stages, producing output with unanswerable attribution questions.
+Technical pipeline diagram: creator audio, MIDI, and music metadata enter a training black box where tokenization, gradient descent, and weight averaging destroy attribution identity at each stage -- showing the oracle problem's analog hole bypass that breaks digital provenance chains, a core challenge for transparent confidence in music attribution systems.
+
+## Image Embed
+
+### For GitHub README / MkDocs (repo-root-relative)
+
+![Technical pipeline diagram: creator audio, MIDI, and music metadata enter a training black box where tokenization, gradient descent, and weight averaging destroy attribution identity at each stage -- showing the oracle problem's analog hole bypass that breaks digital provenance chains, a core challenge for transparent confidence in music attribution systems.](docs/figures/repo-figures/assets/fig-theory-02-oracle-problem-technical.jpg)
+
+*Figure 2. The Oracle Problem at the technical level: attribution information is irreversibly destroyed through tokenization, gradient descent, and weight averaging during model training, while the analog hole further undermines provenance by allowing physical re-encoding to break digital identity chains.*
+
+### From this figure plan (relative)
+
+![Technical pipeline diagram: creator audio, MIDI, and music metadata enter a training black box where tokenization, gradient descent, and weight averaging destroy attribution identity at each stage -- showing the oracle problem's analog hole bypass that breaks digital provenance chains, a core challenge for transparent confidence in music attribution systems.](../assets/fig-theory-02-oracle-problem-technical.jpg)

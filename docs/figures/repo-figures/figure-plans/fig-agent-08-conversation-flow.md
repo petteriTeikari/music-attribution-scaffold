@@ -112,4 +112,16 @@ The key message is: "A single conversation can chain multiple tool calls -- sear
 
 ## Alt Text
 
-Two-turn agent conversation: user asks about Hide and Seek, agent chains search and explain tools, then suggests a correction with state updates at each step.
+Conversation flow diagram: multi-turn agentic interaction for music attribution showing a user querying confidence for a track, the agent chaining search_attributions and explain_confidence tools to deliver transparent confidence scoring with source agreement breakdown, then suggesting a music credits correction with live state updates reflected in the CopilotKit sidebar at each step.
+
+## Image Embed
+
+### For GitHub README / MkDocs (repo-root-relative)
+
+![Conversation flow diagram: multi-turn agentic interaction for music attribution showing a user querying confidence for a track, the agent chaining search_attributions and explain_confidence tools to deliver transparent confidence scoring with source agreement breakdown, then suggesting a music credits correction with live state updates reflected in the CopilotKit sidebar at each step.](docs/figures/repo-figures/assets/fig-agent-08-conversation-flow.jpg)
+
+*Example two-turn conversation with the open-source attribution agent, demonstrating how tool calls chain (search, explain, suggest) with shared state propagation so the agentic UI updates in real time as the user explores music metadata confidence.*
+
+### From this figure plan (relative)
+
+![Conversation flow diagram: multi-turn agentic interaction for music attribution showing a user querying confidence for a track, the agent chaining search_attributions and explain_confidence tools to deliver transparent confidence scoring with source agreement breakdown, then suggesting a music credits correction with live state updates reflected in the CopilotKit sidebar at each step.](../assets/fig-agent-08-conversation-flow.jpg)

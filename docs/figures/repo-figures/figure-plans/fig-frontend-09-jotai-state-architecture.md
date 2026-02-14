@@ -115,4 +115,16 @@ The key message is: "Four store files define the entire client state -- primitiv
 
 ## Alt Text
 
-Jotai atom tree across four stores showing primitive read-write atoms, derived read-only atoms, data flow arrows, and localStorage persistence.
+Component diagram of the Jotai state architecture for the music attribution scaffold: four store files manage theme, role mode, works catalog with filtered and sorted music metadata atoms, and a localStorage-persisted proficiency model that drives adaptive UI for transparent confidence scoring workflows.
+
+## Image Embed
+
+### For GitHub README / MkDocs (repo-root-relative)
+
+![Component diagram of the Jotai state architecture for the music attribution scaffold: four store files manage theme, role mode, works catalog with filtered and sorted music metadata atoms, and a localStorage-persisted proficiency model that drives adaptive UI for transparent confidence scoring workflows.](docs/figures/repo-figures/assets/fig-frontend-09-jotai-state-architecture.jpg)
+
+*Figure: Jotai atom tree mapping primitive read-write atoms to derived read-only computations across four stores, showing how music attribution state flows from user interactions through reactive derivations to component renders.*
+
+### From this figure plan (relative)
+
+![Component diagram of the Jotai state architecture for the music attribution scaffold: four store files manage theme, role mode, works catalog with filtered and sorted music metadata atoms, and a localStorage-persisted proficiency model that drives adaptive UI for transparent confidence scoring workflows.](../assets/fig-frontend-09-jotai-state-architecture.jpg)

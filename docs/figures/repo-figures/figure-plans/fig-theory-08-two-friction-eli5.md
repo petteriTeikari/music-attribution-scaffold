@@ -91,4 +91,16 @@ The key message is: "Administrative friction (paperwork, licensing forms, royalt
 
 ## Alt Text
 
-Split panel: left shows airport security as admin friction to automate, right shows record store browsing as discovery friction to preserve, with music industry examples for each.
+Comparison chart: split panel contrasting administrative friction (airport security line representing licensing forms and royalty calculations to automate) with discovery friction (record store browsing representing curation and collaboration to preserve) -- the two-friction taxonomy for music attribution that guides which processes an open-source scaffold should automate and which it should protect.
+
+## Image Embed
+
+### For GitHub README / MkDocs (repo-root-relative)
+
+![Comparison chart: split panel contrasting administrative friction (airport security line representing licensing forms and royalty calculations to automate) with discovery friction (record store browsing representing curation and collaboration to preserve) -- the two-friction taxonomy for music attribution that guides which processes an open-source scaffold should automate and which it should protect.](docs/figures/repo-figures/assets/fig-theory-08-two-friction-eli5.jpg)
+
+*Figure 8. The two-friction taxonomy: not all friction in music attribution is bad. Administrative friction (licensing forms, royalty calculations, multi-platform registration) should be automated, while discovery friction (DJ curation, artist collaboration, playlist taste-making) must be preserved because it creates cultural value.*
+
+### From this figure plan (relative)
+
+![Comparison chart: split panel contrasting administrative friction (airport security line representing licensing forms and royalty calculations to automate) with discovery friction (record store browsing representing curation and collaboration to preserve) -- the two-friction taxonomy for music attribution that guides which processes an open-source scaffold should automate and which it should protect.](../assets/fig-theory-08-two-friction-eli5.jpg)

@@ -105,4 +105,16 @@ The key message is: "More independent sources agreeing on the same attribution c
 
 ## Alt Text
 
-Venn diagram of five data sources with center overlap labeled high confidence, plus bar chart showing confidence rising from 0.35 with one source to 0.94 with four sources plus artist verification.
+Scoring diagram: Venn-style overlap of five music metadata sources (MusicBrainz, Discogs, AcoustID, file metadata, artist input) with center labeled high confidence, plus bar chart showing transparent confidence scoring rising from 0.35 with one source to 0.94 with four sources plus artist verification -- demonstrating how source agreement drives Bayesian confidence in the music attribution scaffold.
+
+## Image Embed
+
+### For GitHub README / MkDocs (repo-root-relative)
+
+![Scoring diagram: Venn-style overlap of five music metadata sources (MusicBrainz, Discogs, AcoustID, file metadata, artist input) with center labeled high confidence, plus bar chart showing transparent confidence scoring rising from 0.35 with one source to 0.94 with four sources plus artist verification -- demonstrating how source agreement drives Bayesian confidence in the music attribution scaffold.](docs/figures/repo-figures/assets/fig-theory-14-source-agreement-scoring.jpg)
+
+*Figure 14. Source agreement scoring: confidence increases with independent corroboration across weighted data sources. A single file tag yields 0.35, while four sources plus artist verification reaches 0.94, with artist input carrying the highest authority weight in the attribution scaffold.*
+
+### From this figure plan (relative)
+
+![Scoring diagram: Venn-style overlap of five music metadata sources (MusicBrainz, Discogs, AcoustID, file metadata, artist input) with center labeled high confidence, plus bar chart showing transparent confidence scoring rising from 0.35 with one source to 0.94 with four sources plus artist verification -- demonstrating how source agreement drives Bayesian confidence in the music attribution scaffold.](../assets/fig-theory-14-source-agreement-scoring.jpg)

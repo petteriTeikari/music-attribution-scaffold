@@ -88,4 +88,16 @@ The key message is: "Two communication channels -- REST for data CRUD, AG-UI SSE
 
 ## Alt Text
 
-Two communication channels between Next.js frontend and FastAPI backend: REST JSON for CRUD operations and AG-UI SSE for real-time PydanticAI agent conversation via CopilotKit.
+Architecture diagram: two communication channels connecting the music attribution scaffold frontend and backend -- REST JSON via FastAPI for music metadata CRUD operations on works, permissions, and health endpoints, and AG-UI Server-Sent Events for real-time PydanticAI agent conversation via CopilotKit with transparent confidence scoring queries, both served from a single FastAPI application on port 8000.
+
+## Image Embed
+
+### For GitHub README / MkDocs (repo-root-relative)
+
+![Architecture diagram: two communication channels connecting the music attribution scaffold frontend and backend -- REST JSON via FastAPI for music metadata CRUD operations on works, permissions, and health endpoints, and AG-UI Server-Sent Events for real-time PydanticAI agent conversation via CopilotKit with transparent confidence scoring queries, both served from a single FastAPI application on port 8000.](docs/figures/repo-figures/assets/fig-repo-12-backend-frontend-connection.jpg)
+
+*Figure 12. The backend-frontend integration uses dual communication channels: traditional REST for attribution data CRUD and AG-UI SSE for streaming AI agent conversation, with CopilotKit hooks (useCopilotReadable, useCopilotAction) on the frontend connecting to a PydanticAI agent with four tools and claude-haiku-4-5 default model on the backend.*
+
+### From this figure plan (relative)
+
+![Architecture diagram: two communication channels connecting the music attribution scaffold frontend and backend -- REST JSON via FastAPI for music metadata CRUD operations on works, permissions, and health endpoints, and AG-UI Server-Sent Events for real-time PydanticAI agent conversation via CopilotKit with transparent confidence scoring queries, both served from a single FastAPI application on port 8000.](../assets/fig-repo-12-backend-frontend-connection.jpg)

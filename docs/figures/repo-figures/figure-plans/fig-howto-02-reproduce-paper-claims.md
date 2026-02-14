@@ -91,4 +91,16 @@ The key message is: "Every substantive claim in the paper maps to a specific cod
 
 ## Alt Text
 
-Three-column mapping table: paper sections on left, corresponding code modules in center, test commands on right, with five rows for each major claim.
+Tutorial diagram: three-column reproducibility map linking academic paper sections on music attribution to corresponding open-source code modules and test commands, covering confidence scoring, multi-source entity resolution, A0-A3 assurance levels, and MCP consent infrastructure -- every substantive claim is verifiable by running a single make test command.
+
+## Image Embed
+
+### For GitHub README / MkDocs (repo-root-relative)
+
+![Tutorial diagram: three-column reproducibility map linking academic paper sections on music attribution to corresponding open-source code modules and test commands, covering confidence scoring, multi-source entity resolution, A0-A3 assurance levels, and MCP consent infrastructure -- every substantive claim is verifiable by running a single make test command.](docs/figures/repo-figures/assets/fig-howto-02-reproduce-paper-claims.jpg)
+
+*Paper-to-code reproducibility map for SSRN No. 6109087 (Teikari, 2026). Each row connects a manuscript section -- from transparent confidence scoring to the Oracle Problem -- to the specific module and test keyword that validates it, making the music attribution scaffold a fully auditable companion to the research.*
+
+### From this figure plan (relative)
+
+![Tutorial diagram: three-column reproducibility map linking academic paper sections on music attribution to corresponding open-source code modules and test commands, covering confidence scoring, multi-source entity resolution, A0-A3 assurance levels, and MCP consent infrastructure -- every substantive claim is verifiable by running a single make test command.](../assets/fig-howto-02-reproduce-paper-claims.jpg)

@@ -82,4 +82,16 @@ The key message is: "PydanticAI provides typed, Pydantic-native LLM integration 
 
 ## Alt Text
 
-Split-panel comparison of PydanticAI and LangChain showing code patterns, dependency counts, fallback mechanisms, and debugging experience differences.
+Comparison chart: PydanticAI versus LangChain for music attribution AI framework, showing typed Pydantic-native agent code versus middleware-heavy chain composition, with PydanticAI selected for transparent confidence scoring with fewer dependencies and readable stack traces in an open-source attribution scaffold.
+
+## Image Embed
+
+### For GitHub README / MkDocs (repo-root-relative)
+
+![Comparison chart: PydanticAI versus LangChain for music attribution AI framework, showing typed Pydantic-native agent code versus middleware-heavy chain composition, with PydanticAI selected for transparent confidence scoring with fewer dependencies and readable stack traces in an open-source attribution scaffold.](docs/figures/repo-figures/assets/fig-choice-01-pydanticai-over-langchain.jpg)
+
+*PydanticAI provides typed, zero-middleware LLM integration for the music attribution scaffold, chosen over LangChain for its simplicity, single-dependency footprint, and native FallbackModel failover (PRD node: `ai_framework_strategy = direct_api_pydantic`).*
+
+### From this figure plan (relative)
+
+![Comparison chart: PydanticAI versus LangChain for music attribution AI framework, showing typed Pydantic-native agent code versus middleware-heavy chain composition, with PydanticAI selected for transparent confidence scoring with fewer dependencies and readable stack traces in an open-source attribution scaffold.](../assets/fig-choice-01-pydanticai-over-langchain.jpg)

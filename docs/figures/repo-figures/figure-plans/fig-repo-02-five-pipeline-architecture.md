@@ -78,4 +78,16 @@ The key message is: "Data flows left-to-right through five sequential pipelines,
 
 ## Alt Text
 
-Horizontal five-stage pipeline: ETL ingests from Discogs/MusicBrainz/System, Entity Resolution deduplicates, Attribution Engine scores confidence, API/MCP exposes data, Chat provides AI conversation.
+Architecture diagram: five-pipeline data flow for music attribution showing ETL ingestion from Discogs and MusicBrainz, entity resolution with fuzzy matching, transparent confidence scoring engine, FastAPI REST and MCP permission server, and PydanticAI chat interface with Pydantic boundary objects ensuring type-safe handoffs across the open-source attribution scaffold.
+
+## Image Embed
+
+### For GitHub README / MkDocs (repo-root-relative)
+
+![Architecture diagram: five-pipeline data flow for music attribution showing ETL ingestion from Discogs and MusicBrainz, entity resolution with fuzzy matching, transparent confidence scoring engine, FastAPI REST and MCP permission server, and PydanticAI chat interface with Pydantic boundary objects ensuring type-safe handoffs across the open-source attribution scaffold.](docs/figures/repo-figures/assets/fig-repo-02-five-pipeline-architecture.jpg)
+
+*Figure 2. The five-pipeline architecture transforms raw music metadata into confidence-scored attribution records through sequential stages (ETL, Entity Resolution, Attribution Engine, API/MCP, Chat), with Pydantic boundary objects (NormalizedRecord, ResolvedEntity, AttributionRecord) enforcing type safety at each transition and PostgreSQL with pgvector as the shared persistence layer.*
+
+### From this figure plan (relative)
+
+![Architecture diagram: five-pipeline data flow for music attribution showing ETL ingestion from Discogs and MusicBrainz, entity resolution with fuzzy matching, transparent confidence scoring engine, FastAPI REST and MCP permission server, and PydanticAI chat interface with Pydantic boundary objects ensuring type-safe handoffs across the open-source attribution scaffold.](../assets/fig-repo-02-five-pipeline-architecture.jpg)

@@ -94,4 +94,16 @@ The key message is: "Four route groups, 19 component modules, and three cross-cu
 
 ## Alt Text
 
-Frontend architecture: four App Router pages, 19 component modules in domain-organized grid, three cross-cutting layers for state, styling, and agent integration.
+Architecture diagram: Next.js 15 App Router frontend for the music attribution scaffold showing four route pages for works catalog, attribution review queue, and MCP permissions, 19 domain-organized component modules including confidence gauges and provenance badges, and cross-cutting layers of Jotai state management, Tailwind CSS v4 design tokens, CopilotKit AG-UI agent integration, and PostHog analytics for transparent music credits visualization.
+
+## Image Embed
+
+### For GitHub README / MkDocs (repo-root-relative)
+
+![Architecture diagram: Next.js 15 App Router frontend for the music attribution scaffold showing four route pages for works catalog, attribution review queue, and MCP permissions, 19 domain-organized component modules including confidence gauges and provenance badges, and cross-cutting layers of Jotai state management, Tailwind CSS v4 design tokens, CopilotKit AG-UI agent integration, and PostHog analytics for transparent music credits visualization.](docs/figures/repo-figures/assets/fig-repo-11-frontend-architecture.jpg)
+
+*Figure 11. The frontend architecture organizes 19 component modules by domain (attribution, confidence, provenance, works, chat, permissions) rather than technical role, with four App Router pages and cross-cutting Jotai state, Tailwind CSS v4 design tokens, and CopilotKit AG-UI integration.*
+
+### From this figure plan (relative)
+
+![Architecture diagram: Next.js 15 App Router frontend for the music attribution scaffold showing four route pages for works catalog, attribution review queue, and MCP permissions, 19 domain-organized component modules including confidence gauges and provenance badges, and cross-cutting layers of Jotai state management, Tailwind CSS v4 design tokens, CopilotKit AG-UI agent integration, and PostHog analytics for transparent music credits visualization.](../assets/fig-repo-11-frontend-architecture.jpg)

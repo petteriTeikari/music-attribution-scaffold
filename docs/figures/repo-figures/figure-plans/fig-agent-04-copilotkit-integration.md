@@ -103,4 +103,16 @@ The key message is: "CopilotKit provides bidirectional context between the UI an
 
 ## Alt Text
 
-CopilotKit integration showing provider with graceful degradation, sidebar component, two useCopilotReadable hooks, and four useCopilotAction hooks.
+Integration diagram: CopilotKit bidirectional context for music attribution showing the provider with graceful degradation, sidebar component for credit queries, useCopilotReadable hooks that feed user role and selected music metadata to the agent, and four useCopilotAction hooks enabling the agent to navigate works, highlight credits, and show transparent confidence scoring diffs in the agentic UI.
+
+## Image Embed
+
+### For GitHub README / MkDocs (repo-root-relative)
+
+![Integration diagram: CopilotKit bidirectional context for music attribution showing the provider with graceful degradation, sidebar component for credit queries, useCopilotReadable hooks that feed user role and selected music metadata to the agent, and four useCopilotAction hooks enabling the agent to navigate works, highlight credits, and show transparent confidence scoring diffs in the agentic UI.](docs/figures/repo-figures/assets/fig-agent-04-copilotkit-integration.jpg)
+
+*CopilotKit DuetUI integration in the attribution scaffold frontend, illustrating the bidirectional context loop where useCopilotReadable sends user role and selected attribution record to the PydanticAI agent while useCopilotAction lets the agent manipulate the UI in response.*
+
+### From this figure plan (relative)
+
+![Integration diagram: CopilotKit bidirectional context for music attribution showing the provider with graceful degradation, sidebar component for credit queries, useCopilotReadable hooks that feed user role and selected music metadata to the agent, and four useCopilotAction hooks enabling the agent to navigate works, highlight credits, and show transparent confidence scoring diffs in the agentic UI.](../assets/fig-agent-04-copilotkit-integration.jpg)

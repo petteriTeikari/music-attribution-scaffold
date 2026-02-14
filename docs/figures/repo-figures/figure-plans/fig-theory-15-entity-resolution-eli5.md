@@ -99,4 +99,16 @@ The key message is: "The same person appears with different names in different d
 
 ## Alt Text
 
-Three conference name tags showing I. Heap, Imogen Heap, and HEAP IMOGEN converging to a single unified person record with ISNI identifier and source attributions.
+Concept diagram: three conference name tags showing name variants I. Heap, Imogen Heap, and HEAP IMOGEN from different music metadata sources converging to a single unified person record with ISNI identifier -- illustrating entity resolution for music attribution where the same artist appears differently across MusicBrainz, Discogs, and file tags, ensuring correct music credits and payment.
+
+## Image Embed
+
+### For GitHub README / MkDocs (repo-root-relative)
+
+![Concept diagram: three conference name tags showing name variants I. Heap, Imogen Heap, and HEAP IMOGEN from different music metadata sources converging to a single unified person record with ISNI identifier -- illustrating entity resolution for music attribution where the same artist appears differently across MusicBrainz, Discogs, and file tags, ensuring correct music credits and payment.](docs/figures/repo-figures/assets/fig-theory-15-entity-resolution-eli5.jpg)
+
+*Figure 15. Entity resolution explained through a conference name tag analogy: the same artist appears as "I. Heap," "Imogen Heap," and "HEAP, IMOGEN" across different databases, and entity resolution connects these variants so the right person gets credited and paid.*
+
+### From this figure plan (relative)
+
+![Concept diagram: three conference name tags showing name variants I. Heap, Imogen Heap, and HEAP IMOGEN from different music metadata sources converging to a single unified person record with ISNI identifier -- illustrating entity resolution for music attribution where the same artist appears differently across MusicBrainz, Discogs, and file tags, ensuring correct music credits and payment.](../assets/fig-theory-15-entity-resolution-eli5.jpg)

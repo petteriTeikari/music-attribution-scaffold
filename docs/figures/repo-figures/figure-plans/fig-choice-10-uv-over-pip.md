@@ -87,4 +87,16 @@ The key message is: "uv provides 10-100x faster dependency resolution with deter
 
 ## Alt Text
 
-Three-column package manager comparison: uv selected for Rust-based speed and deterministic lockfiles, pip and conda both banned with explanations.
+Comparison chart: uv package manager selected exclusively for the music attribution scaffold over banned pip and conda, showing 100x faster Rust-based resolution, deterministic lockfiles, and native dependency groups for open-source music metadata project reproducibility.
+
+## Image Embed
+
+### For GitHub README / MkDocs (repo-root-relative)
+
+![Comparison chart: uv package manager selected exclusively for the music attribution scaffold over banned pip and conda, showing 100x faster Rust-based resolution, deterministic lockfiles, and native dependency groups for open-source music metadata project reproducibility.](docs/figures/repo-figures/assets/fig-choice-10-uv-over-pip.jpg)
+
+*The music attribution scaffold enforces uv as the sole package manager, completely banning pip and conda for deterministic, fast dependency resolution via Rust-based tooling and a single `pyproject.toml` source of truth.*
+
+### From this figure plan (relative)
+
+![Comparison chart: uv package manager selected exclusively for the music attribution scaffold over banned pip and conda, showing 100x faster Rust-based resolution, deterministic lockfiles, and native dependency groups for open-source music metadata project reproducibility.](../assets/fig-choice-10-uv-over-pip.jpg)

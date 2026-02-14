@@ -109,4 +109,16 @@ The key message is: "The layout pivots at the md breakpoint -- desktop uses a fi
 
 ## Alt Text
 
-Three responsive layouts: desktop with fixed left sidebar, mobile with top bar, and mobile slide-over panel with navigation links and controls.
+UI wireframe showing the responsive layout strategy for the music attribution scaffold: desktop view with fixed 60px left sidebar and editorial content grid, mobile view with 48px top bar, and hamburger-triggered slide-over navigation panel, all built with Tailwind CSS v4 breakpoints for accessible music credits and transparent confidence scoring on any device.
+
+## Image Embed
+
+### For GitHub README / MkDocs (repo-root-relative)
+
+![UI wireframe showing the responsive layout strategy for the music attribution scaffold: desktop view with fixed 60px left sidebar and editorial content grid, mobile view with 48px top bar, and hamburger-triggered slide-over navigation panel, all built with Tailwind CSS v4 breakpoints for accessible music credits and transparent confidence scoring on any device.](docs/figures/repo-figures/assets/fig-frontend-12-responsive-layout.jpg)
+
+*Figure: Responsive layout transformation at the md (768px) breakpoint, pivoting from a fixed left sidebar with rotated text navigation on desktop to a top bar with hamburger slide-over on mobile for consistent music attribution access.*
+
+### From this figure plan (relative)
+
+![UI wireframe showing the responsive layout strategy for the music attribution scaffold: desktop view with fixed 60px left sidebar and editorial content grid, mobile view with 48px top bar, and hamburger-triggered slide-over navigation panel, all built with Tailwind CSS v4 breakpoints for accessible music credits and transparent confidence scoring on any device.](../assets/fig-frontend-12-responsive-layout.jpg)

@@ -90,4 +90,16 @@ The key message is: "CSS custom properties own the design tokens, Tailwind v4 pr
 
 ## Alt Text
 
-Token flow diagram from globals.css through CSS custom properties to Tailwind utilities, with three-card styling approach comparison and critical Tailwind v4 pitfall warning.
+Design token architecture: CSS custom properties flowing through Tailwind v4 utilities for music attribution UI theming, showing zero-hardcoded-hex color tokens for confidence scoring tiers and music credits display, with critical text-var pitfall warning for the open-source attribution scaffold.
+
+## Image Embed
+
+### For GitHub README / MkDocs (repo-root-relative)
+
+![Design token architecture: CSS custom properties flowing through Tailwind v4 utilities for music attribution UI theming, showing zero-hardcoded-hex color tokens for confidence scoring tiers and music credits display, with critical text-var pitfall warning for the open-source attribution scaffold.](docs/figures/repo-figures/assets/fig-choice-09-tailwind-v4-css-properties.jpg)
+
+*CSS custom properties define all design tokens for the music attribution scaffold's confidence tier colors, assurance levels, and data source indicators, consumed via Tailwind v4 utility classes with a documented pitfall: `text-[var(--anything)]` is treated as color, not font-size.*
+
+### From this figure plan (relative)
+
+![Design token architecture: CSS custom properties flowing through Tailwind v4 utilities for music attribution UI theming, showing zero-hardcoded-hex color tokens for confidence scoring tiers and music credits display, with critical text-var pitfall warning for the open-source attribution scaffold.](../assets/fig-choice-09-tailwind-v4-css-properties.jpg)

@@ -83,4 +83,16 @@ The key message is: "Each decision node is a self-contained Bayesian unit with o
 
 ## Alt Text
 
-Exploded view of a single decision node showing its internal structure: options with probabilities, conditional dependencies, archetype weights, volatility, and domain applicability.
+Annotated diagram: anatomy of a single Bayesian decision node in the music attribution scaffold probabilistic PRD, using the LLM provider node as example -- showing options with prior probabilities, conditional dependencies, team archetype weight overrides, volatility classification, and domain applicability scores for transparent confidence scoring.
+
+## Image Embed
+
+### For GitHub README / MkDocs (repo-root-relative)
+
+![Annotated diagram: anatomy of a single Bayesian decision node in the music attribution scaffold probabilistic PRD, using the LLM provider node as example -- showing options with prior probabilities, conditional dependencies, team archetype weight overrides, volatility classification, and domain applicability scores for transparent confidence scoring.](docs/figures/repo-figures/assets/fig-prd-06-decision-node-anatomy.jpg)
+
+*Figure 6. Each decision node in the probabilistic PRD is a self-contained Bayesian unit: options with prior probabilities summing to 1.0, conditional tables linking to parent decisions, archetype-specific weight overrides, and volatility classification -- all defined in a machine-readable YAML schema.*
+
+### From this figure plan (relative)
+
+![Annotated diagram: anatomy of a single Bayesian decision node in the music attribution scaffold probabilistic PRD, using the LLM provider node as example -- showing options with prior probabilities, conditional dependencies, team archetype weight overrides, volatility classification, and domain applicability scores for transparent confidence scoring.](../assets/fig-prd-06-decision-node-anatomy.jpg)

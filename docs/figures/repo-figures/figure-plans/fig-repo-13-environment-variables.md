@@ -91,4 +91,16 @@ The key message is: "All configuration flows through environment variables -- no
 
 ## Alt Text
 
-Environment variable map organized by service: Backend requires DATABASE_URL and CORS_ORIGINS, PostgreSQL needs DB credentials, PgBouncer configures pooling, Frontend needs API URL.
+Reference card: environment variable configuration map for the music attribution scaffold organized by service -- FastAPI backend requiring DATABASE_URL with psycopg3 async driver and CORS_ORIGINS, PostgreSQL 17 database credentials, PgBouncer transaction pooling settings, and Next.js 15 frontend API URL, following 12-factor app principles with detect-secrets pre-commit enforcement preventing credential leaks in the open-source repository.
+
+## Image Embed
+
+### For GitHub README / MkDocs (repo-root-relative)
+
+![Reference card: environment variable configuration map for the music attribution scaffold organized by service -- FastAPI backend requiring DATABASE_URL with psycopg3 async driver and CORS_ORIGINS, PostgreSQL 17 database credentials, PgBouncer transaction pooling settings, and Next.js 15 frontend API URL, following 12-factor app principles with detect-secrets pre-commit enforcement preventing credential leaks in the open-source repository.](docs/figures/repo-figures/assets/fig-repo-13-environment-variables.jpg)
+
+*Figure 13. All configuration flows through environment variables following 12-factor app principles, with sensible development defaults in docker-compose.dev.yml and pydantic-settings managing validation -- detect-secrets pre-commit hooks ensure no credentials are ever committed.*
+
+### From this figure plan (relative)
+
+![Reference card: environment variable configuration map for the music attribution scaffold organized by service -- FastAPI backend requiring DATABASE_URL with psycopg3 async driver and CORS_ORIGINS, PostgreSQL 17 database credentials, PgBouncer transaction pooling settings, and Next.js 15 frontend API URL, following 12-factor app principles with detect-secrets pre-commit enforcement preventing credential leaks in the open-source repository.](../assets/fig-repo-13-environment-variables.jpg)

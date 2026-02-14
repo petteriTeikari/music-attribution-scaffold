@@ -85,4 +85,16 @@ The key message is: "The repository has a clear separation of concerns -- backen
 
 ## Alt Text
 
-Annotated directory tree showing backend source in src/music_attribution, frontend in frontend/, tests in tests/, Docker in docker/, and configuration files at root level.
+Reference card: annotated directory tree of the open-source music attribution scaffold showing Python 3.13 backend in src/music_attribution with five pipeline modules, Next.js 15 frontend, 393 backend tests plus 265 frontend tests, Docker infrastructure, and pyproject.toml as the single source of truth for dependency management via uv.
+
+## Image Embed
+
+### For GitHub README / MkDocs (repo-root-relative)
+
+![Reference card: annotated directory tree of the open-source music attribution scaffold showing Python 3.13 backend in src/music_attribution with five pipeline modules, Next.js 15 frontend, 393 backend tests plus 265 frontend tests, Docker infrastructure, and pyproject.toml as the single source of truth for dependency management via uv.](docs/figures/repo-figures/assets/fig-repo-03-directory-map.jpg)
+
+*Figure 3. The repository follows a clear separation of concerns: backend Python source in src/music_attribution/ maps directly to the five-pipeline architecture, while tests mirror the source structure and all configuration converges on pyproject.toml as the single source of truth.*
+
+### From this figure plan (relative)
+
+![Reference card: annotated directory tree of the open-source music attribution scaffold showing Python 3.13 backend in src/music_attribution with five pipeline modules, Next.js 15 frontend, 393 backend tests plus 265 frontend tests, Docker infrastructure, and pyproject.toml as the single source of truth for dependency management via uv.](../assets/fig-repo-03-directory-map.jpg)

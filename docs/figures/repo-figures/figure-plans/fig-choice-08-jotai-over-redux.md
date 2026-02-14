@@ -89,4 +89,16 @@ The key message is: "Jotai's atomic model provides minimal-boilerplate state man
 
 ## Alt Text
 
-Three-column comparison of state management libraries: Jotai selected for atomic minimal-boilerplate approach, versus Redux centralized store and Zustand simplified store.
+Comparison chart: Jotai atomic state management selected for music attribution frontend over Redux and Zustand, showing minimal two-line atom definitions for theme, role mode, and music credits state with zero boilerplate in the open-source attribution scaffold.
+
+## Image Embed
+
+### For GitHub README / MkDocs (repo-root-relative)
+
+![Comparison chart: Jotai atomic state management selected for music attribution frontend over Redux and Zustand, showing minimal two-line atom definitions for theme, role mode, and music credits state with zero boilerplate in the open-source attribution scaffold.](docs/figures/repo-figures/assets/fig-choice-08-jotai-over-redux.jpg)
+
+*Jotai's atomic state model provides minimal-boilerplate state management for the music attribution scaffold's three client-side state domains (theme, role mode, works), chosen over Redux's action/reducer ceremony and Zustand's store-based approach for React concurrent compatibility.*
+
+### From this figure plan (relative)
+
+![Comparison chart: Jotai atomic state management selected for music attribution frontend over Redux and Zustand, showing minimal two-line atom definitions for theme, role mode, and music credits state with zero boilerplate in the open-source attribution scaffold.](../assets/fig-choice-08-jotai-over-redux.jpg)

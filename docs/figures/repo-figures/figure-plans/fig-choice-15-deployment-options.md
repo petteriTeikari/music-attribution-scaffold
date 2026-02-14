@@ -95,4 +95,16 @@ The key message is: "The scaffold deploys on Hetzner (cheapest), Render (simples
 
 ## Alt Text
 
-Cost-versus-complexity scatter showing three deployment tracks: Hetzner budget path, Render balanced path, and AWS ECS enterprise path, mapped to team archetypes.
+Trade-off analysis: three deployment tracks for the music attribution scaffold plotted on cost versus complexity axes, mapping Hetzner budget, Render balanced, and AWS ECS enterprise paths to team archetypes, demonstrating the open-source scaffold deploys the same Docker image across all operational realities.
+
+## Image Embed
+
+### For GitHub README / MkDocs (repo-root-relative)
+
+![Trade-off analysis: three deployment tracks for the music attribution scaffold plotted on cost versus complexity axes, mapping Hetzner budget, Render balanced, and AWS ECS enterprise paths to team archetypes, demonstrating the open-source scaffold deploys the same Docker image across all operational realities.](docs/figures/repo-figures/assets/fig-choice-15-deployment-options.jpg)
+
+*The music attribution scaffold deploys identically on Hetzner (~$20/mo, Docker Compose), Render (~$50--100/mo, auto-deploy from Git), or AWS ECS (~$200--500/mo, Terraform IaC), with each path mapped to a probabilistic PRD team archetype from solo hacker to well-funded startup.*
+
+### From this figure plan (relative)
+
+![Trade-off analysis: three deployment tracks for the music attribution scaffold plotted on cost versus complexity axes, mapping Hetzner budget, Render balanced, and AWS ECS enterprise paths to team archetypes, demonstrating the open-source scaffold deploys the same Docker image across all operational realities.](../assets/fig-choice-15-deployment-options.jpg)

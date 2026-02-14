@@ -90,4 +90,16 @@ The key message is: "Trust comes in levels -- from 'no ID' to 'biometric scan' -
 
 ## Alt Text
 
-Four-step staircase showing assurance levels: A0 as sticky note with no ID, A1 as business card with a claim, A2 as passport with multiple sources, A3 as biometric scan with artist verification.
+Concept diagram: four-step staircase showing music attribution assurance levels A0 through A3 using ID card analogies -- A0 as sticky note with no identification, A1 as business card with a single claim, A2 as passport with multiple sources agreeing, A3 as biometric scan with direct artist verification -- illustrating how transparent confidence scoring grades trust in music credits.
+
+## Image Embed
+
+### For GitHub README / MkDocs (repo-root-relative)
+
+![Concept diagram: four-step staircase showing music attribution assurance levels A0 through A3 using ID card analogies -- A0 as sticky note with no identification, A1 as business card with a single claim, A2 as passport with multiple sources agreeing, A3 as biometric scan with direct artist verification -- illustrating how transparent confidence scoring grades trust in music credits.](docs/figures/repo-figures/assets/fig-theory-05-assurance-levels-eli5.jpg)
+
+*Figure 5. Assurance levels A0-A3 explained through everyday ID card analogies: every attribution claim carries a trust level from no data (A0) to artist-verified (A3), enabling music industry professionals to assess how much evidence supports each music credit.*
+
+### From this figure plan (relative)
+
+![Concept diagram: four-step staircase showing music attribution assurance levels A0 through A3 using ID card analogies -- A0 as sticky note with no identification, A1 as business card with a single claim, A2 as passport with multiple sources agreeing, A3 as biometric scan with direct artist verification -- illustrating how transparent confidence scoring grades trust in music credits.](../assets/fig-theory-05-assurance-levels-eli5.jpg)

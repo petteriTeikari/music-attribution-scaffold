@@ -90,4 +90,16 @@ The key message is: "Two complementary methods handle different failure modes --
 
 ## Alt Text
 
-Side-by-side comparison of Jaro-Winkler and token sort ratio string similarity algorithms with normalization pipeline, music-domain abbreviation expansion, and 0.85 match threshold.
+Comparison diagram of two string similarity algorithms for music attribution entity resolution — Jaro-Winkler (via jellyfish) for typo detection in short names and token sort ratio (via thefuzz) for word reordering — with a music-domain normalization pipeline expanding abbreviations like "feat." and "prod.", using the maximum of both scores at a 0.85 match threshold for transparent confidence scoring of music credits.
+
+## Image Embed
+
+### For GitHub README / MkDocs (repo-root-relative)
+
+![Comparison diagram of two string similarity algorithms for music attribution entity resolution — Jaro-Winkler (via jellyfish) for typo detection in short names and token sort ratio (via thefuzz) for word reordering — with a music-domain normalization pipeline expanding abbreviations like "feat." and "prod.", using the maximum of both scores at a 0.85 match threshold for transparent confidence scoring of music credits.](docs/figures/repo-figures/assets/fig-backend-07-string-similarity-methods.jpg)
+
+*Figure 7. Two complementary string similarity methods handle different failure modes in music metadata: Jaro-Winkler catches single-character typos while token sort ratio handles name reordering, both preceded by domain-specific normalization of music abbreviations.*
+
+### From this figure plan (relative)
+
+![Comparison diagram of two string similarity algorithms for music attribution entity resolution — Jaro-Winkler (via jellyfish) for typo detection in short names and token sort ratio (via thefuzz) for word reordering — with a music-domain normalization pipeline expanding abbreviations like "feat." and "prod.", using the maximum of both scores at a 0.85 match threshold for transparent confidence scoring of music credits.](../assets/fig-backend-07-string-similarity-methods.jpg)

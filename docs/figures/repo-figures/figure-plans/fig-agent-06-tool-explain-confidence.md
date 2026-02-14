@@ -102,4 +102,16 @@ The key message is: "search_attributions uses the HybridSearchService to find up
 
 ## Alt Text
 
-search_attributions tool flow: query string input, HybridSearchService database search, result formatting with confidence and assurance, and state update.
+Flow diagram: search_attributions agent tool for querying music metadata in the open-source attribution scaffold, showing hybrid text-and-vector search across attribution records, result formatting with confidence scoring percentages and assurance levels per hit, and state synchronization enabling the agentic UI to display music credits search results in real time.
+
+## Image Embed
+
+### For GitHub README / MkDocs (repo-root-relative)
+
+![Flow diagram: search_attributions agent tool for querying music metadata in the open-source attribution scaffold, showing hybrid text-and-vector search across attribution records, result formatting with confidence scoring percentages and assurance levels per hit, and state synchronization enabling the agentic UI to display music credits search results in real time.](docs/figures/repo-figures/assets/fig-agent-06-tool-explain-confidence.jpg)
+
+*Execution path of the search_attributions PydanticAI tool, which uses the HybridSearchService to find up to 10 matching music attribution records and formats each result with title, artist, transparent confidence score, and assurance level.*
+
+### From this figure plan (relative)
+
+![Flow diagram: search_attributions agent tool for querying music metadata in the open-source attribution scaffold, showing hybrid text-and-vector search across attribution records, result formatting with confidence scoring percentages and assurance levels per hit, and state synchronization enabling the agentic UI to display music credits search results in real time.](../assets/fig-agent-06-tool-explain-confidence.jpg)

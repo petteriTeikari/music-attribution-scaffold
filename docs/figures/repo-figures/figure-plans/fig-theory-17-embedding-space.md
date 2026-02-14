@@ -94,4 +94,16 @@ The key message is: "In embedding space, semantically equivalent name variants c
 
 ## Alt Text
 
-2D projection of entity embeddings showing three tight clusters for Imogen Heap, Brian Eno, and Bjork name variants, with within-cluster cosine distance below 0.1 and between-cluster distance above 0.7.
+Theory visualization: 2D t-SNE/UMAP projection of entity embeddings for music attribution showing three tight clusters for Imogen Heap, Brian Eno, and Bjork name variants -- within-cluster cosine distance below 0.1, between-cluster distance above 0.7, and an ambiguous zone that escalates to LLM or Splink -- demonstrating how vector space captures semantic similarity for entity resolution in music metadata beyond string matching.
+
+## Image Embed
+
+### For GitHub README / MkDocs (repo-root-relative)
+
+![Theory visualization: 2D t-SNE/UMAP projection of entity embeddings for music attribution showing three tight clusters for Imogen Heap, Brian Eno, and Bjork name variants -- within-cluster cosine distance below 0.1, between-cluster distance above 0.7, and an ambiguous zone that escalates to LLM or Splink -- demonstrating how vector space captures semantic similarity for entity resolution in music metadata beyond string matching.](docs/figures/repo-figures/assets/fig-theory-17-embedding-space.jpg)
+
+*Figure 17. Embedding space visualization: name variants for the same artist cluster tightly in vector space (cosine distance < 0.1) even when string forms differ, while distinct entities remain well-separated (distance > 0.7), with an ambiguous zone (0.1-0.7) that escalates to more expensive resolution methods.*
+
+### From this figure plan (relative)
+
+![Theory visualization: 2D t-SNE/UMAP projection of entity embeddings for music attribution showing three tight clusters for Imogen Heap, Brian Eno, and Bjork name variants -- within-cluster cosine distance below 0.1, between-cluster distance above 0.7, and an ambiguous zone that escalates to LLM or Splink -- demonstrating how vector space captures semantic similarity for entity resolution in music metadata beyond string matching.](../assets/fig-theory-17-embedding-space.jpg)

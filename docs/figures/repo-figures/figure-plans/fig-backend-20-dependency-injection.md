@@ -117,4 +117,16 @@ The key message is: "Dependencies flow through app.state -- the lifespan creates
 
 ## Alt Text
 
-Dependency injection chain showing FastAPI lifespan creating engine and session factory on app.state, with request-scoped sessions flowing through route handlers, repositories, and services to JSON response.
+Architecture diagram of the FastAPI dependency injection chain in the music attribution scaffold, showing the lifespan creating an async PostgreSQL engine and session factory stored on app.state, with request-scoped database sessions flowing through route handlers, repository layer (attribution and permission repositories), and service layer (hybrid search, credit aggregation) to produce JSON responses for music credit confidence scoring queries.
+
+## Image Embed
+
+### For GitHub README / MkDocs (repo-root-relative)
+
+![Architecture diagram of the FastAPI dependency injection chain in the music attribution scaffold, showing the lifespan creating an async PostgreSQL engine and session factory stored on app.state, with request-scoped database sessions flowing through route handlers, repository layer (attribution and permission repositories), and service layer (hybrid search, credit aggregation) to produce JSON responses for music credit confidence scoring queries.](docs/figures/repo-figures/assets/fig-backend-20-dependency-injection.jpg)
+
+*Figure 20. Dependencies flow through app.state in a clean chain: the lifespan creates the async engine and session factory at startup, route handlers acquire request-scoped sessions, and repositories and services are composed without global state — enabling straightforward testing and extension of the attribution API.*
+
+### From this figure plan (relative)
+
+![Architecture diagram of the FastAPI dependency injection chain in the music attribution scaffold, showing the lifespan creating an async PostgreSQL engine and session factory stored on app.state, with request-scoped database sessions flowing through route handlers, repository layer (attribution and permission repositories), and service layer (hybrid search, credit aggregation) to produce JSON responses for music credit confidence scoring queries.](../assets/fig-backend-20-dependency-injection.jpg)

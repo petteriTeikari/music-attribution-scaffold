@@ -100,4 +100,16 @@ The key message is: "Review priority is a weighted composite of five factors -- 
 
 ## Alt Text
 
-Multi-factor review priority formula showing five weighted components: boundary proximity (30%), source disagreement (25%), ambiguity (15%), never-reviewed (15%), and staleness (15%) with exact formulas.
+Architecture diagram of the active learning review priority queue for music attribution, showing a five-factor weighted formula — boundary proximity at 30% peaking at 0.5 confidence, source disagreement at 25%, conformal set ambiguity at 15%, never-reviewed penalty at 15%, and staleness at 15% — designed to surface the most informative music credits for human expert review in the open-source attribution scaffold.
+
+## Image Embed
+
+### For GitHub README / MkDocs (repo-root-relative)
+
+![Architecture diagram of the active learning review priority queue for music attribution, showing a five-factor weighted formula — boundary proximity at 30% peaking at 0.5 confidence, source disagreement at 25%, conformal set ambiguity at 15%, never-reviewed penalty at 15%, and staleness at 15% — designed to surface the most informative music credits for human expert review in the open-source attribution scaffold.](docs/figures/repo-figures/assets/fig-backend-15-review-priority-queue.jpg)
+
+*Figure 15. The ReviewPriorityQueue uses an active learning strategy to rank attribution records for human review: boundary proximity (records near the 0.5 decision threshold) receives the highest weight, ensuring that expert attention is directed where it provides the greatest reduction in attribution uncertainty.*
+
+### From this figure plan (relative)
+
+![Architecture diagram of the active learning review priority queue for music attribution, showing a five-factor weighted formula — boundary proximity at 30% peaking at 0.5 confidence, source disagreement at 25%, conformal set ambiguity at 15%, never-reviewed penalty at 15%, and staleness at 15% — designed to surface the most informative music credits for human expert review in the open-source attribution scaffold.](../assets/fig-backend-15-review-priority-queue.jpg)

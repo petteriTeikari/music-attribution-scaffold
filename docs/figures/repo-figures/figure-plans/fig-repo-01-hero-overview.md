@@ -78,4 +78,16 @@ The key message is: "Music metadata is broken -- 40%+ incorrect or incomplete. T
 
 ## Alt Text
 
-Split-panel infographic: left shows fragmented music databases with missing data, right shows unified attribution record with 0.87 confidence score and full provenance tracking.
+Repository overview: split-panel infographic contrasting fragmented music metadata across siloed databases with an open-source attribution scaffold that unifies sources into a single record with 0.87 transparent confidence scoring, multi-source resolution, and A0-A3 assurance levels for music credits provenance.
+
+## Image Embed
+
+### For GitHub README / MkDocs (repo-root-relative)
+
+![Repository overview: split-panel infographic contrasting fragmented music metadata across siloed databases with an open-source attribution scaffold that unifies sources into a single record with 0.87 transparent confidence scoring, multi-source resolution, and A0-A3 assurance levels for music credits provenance.](docs/figures/repo-figures/assets/fig-repo-01-hero-overview.jpg)
+
+*Figure 1. The Music Attribution Scaffold addresses the industry-wide problem of 40%+ incorrect or incomplete music metadata by providing open-source infrastructure for probabilistic confidence scoring, multi-source entity resolution, and machine-readable consent (companion code to Teikari, 2026, SSRN No. 6109087).*
+
+### From this figure plan (relative)
+
+![Repository overview: split-panel infographic contrasting fragmented music metadata across siloed databases with an open-source attribution scaffold that unifies sources into a single record with 0.87 transparent confidence scoring, multi-source resolution, and A0-A3 assurance levels for music credits provenance.](../assets/fig-repo-01-hero-overview.jpg)

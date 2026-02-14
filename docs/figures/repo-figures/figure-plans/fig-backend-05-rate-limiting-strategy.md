@@ -85,4 +85,16 @@ The key message is: "A shared TokenBucketRateLimiter class enforces per-source r
 
 ## Alt Text
 
-Token bucket rate limiter diagram showing per-source rate configurations for MusicBrainz, Discogs, and AcoustID with exponential backoff retry strategy.
+Architecture diagram of the token bucket rate limiter used in the music attribution scaffold, showing per-source API rate configurations — MusicBrainz at 1 req/s, Discogs at 1 req/s authenticated, and AcoustID at 3 req/s — with async locking, exponential backoff retry strategy, and capacity settings ensuring compliant music metadata extraction.
+
+## Image Embed
+
+### For GitHub README / MkDocs (repo-root-relative)
+
+![Architecture diagram of the token bucket rate limiter used in the music attribution scaffold, showing per-source API rate configurations — MusicBrainz at 1 req/s, Discogs at 1 req/s authenticated, and AcoustID at 3 req/s — with async locking, exponential backoff retry strategy, and capacity settings ensuring compliant music metadata extraction.](docs/figures/repo-figures/assets/fig-backend-05-rate-limiting-strategy.jpg)
+
+*Figure 5. The TokenBucketRateLimiter enforces per-source API rate limits with asyncio locking and exponential backoff (2^attempt seconds), ensuring that the ETL pipeline remains compliant with MusicBrainz, Discogs, and AcoustID usage policies.*
+
+### From this figure plan (relative)
+
+![Architecture diagram of the token bucket rate limiter used in the music attribution scaffold, showing per-source API rate configurations — MusicBrainz at 1 req/s, Discogs at 1 req/s authenticated, and AcoustID at 3 req/s — with async locking, exponential backoff retry strategy, and capacity settings ensuring compliant music metadata extraction.](../assets/fig-backend-05-rate-limiting-strategy.jpg)

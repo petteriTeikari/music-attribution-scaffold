@@ -99,4 +99,16 @@ The key message is: "Post-hoc detection is inherently limited by the Oracle Prob
 
 ## Alt Text
 
-Split panel comparing post-hoc detection (broken arrows leading to no answer) versus attribution-by-design (solid arrows with embedded provenance leading to queryable results).
+Comparison chart: post-hoc detection with broken arrows leading to no answer versus attribution-by-design with embedded provenance at ISRC and ISWC assurance levels A0-A3 leading to queryable music credits -- demonstrating why open-source music attribution scaffolds must embed provenance before AI training rather than attempting reverse engineering afterward.
+
+## Image Embed
+
+### For GitHub README / MkDocs (repo-root-relative)
+
+![Comparison chart: post-hoc detection with broken arrows leading to no answer versus attribution-by-design with embedded provenance at ISRC and ISWC assurance levels A0-A3 leading to queryable music credits -- demonstrating why open-source music attribution scaffolds must embed provenance before AI training rather than attempting reverse engineering afterward.](docs/figures/repo-figures/assets/fig-theory-03-attribution-by-design-vs-posthoc.jpg)
+
+*Figure 3. Attribution-by-design versus post-hoc detection: the left panel shows how the oracle problem blocks reverse engineering of AI-generated output, while the right panel shows how embedding provenance with industry identifiers (ISRC, ISWC, ISNI) before training preserves queryable attribution.*
+
+### From this figure plan (relative)
+
+![Comparison chart: post-hoc detection with broken arrows leading to no answer versus attribution-by-design with embedded provenance at ISRC and ISWC assurance levels A0-A3 leading to queryable music credits -- demonstrating why open-source music attribution scaffolds must embed provenance before AI training rather than attempting reverse engineering afterward.](../assets/fig-theory-03-attribution-by-design-vs-posthoc.jpg)

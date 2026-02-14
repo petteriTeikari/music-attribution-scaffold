@@ -94,4 +94,16 @@ The key message is: "The decision network has grown from an initial core to 40+ 
 
 ## Alt Text
 
-Vertical timeline showing PRD network growth from v1.0 core foundation through v2.0 regulatory compliance, with new decision nodes listed at each version milestone.
+Timeline visualization: evolution of the music attribution scaffold probabilistic PRD from v1.0 core foundation through v2.0 regulatory compliance, showing incremental growth from 15 to 40-plus decision nodes across seven versions -- demonstrating how open-source music metadata architecture decisions expand without disrupting existing Bayesian confidence scoring structures.
+
+## Image Embed
+
+### For GitHub README / MkDocs (repo-root-relative)
+
+![Timeline visualization: evolution of the music attribution scaffold probabilistic PRD from v1.0 core foundation through v2.0 regulatory compliance, showing incremental growth from 15 to 40-plus decision nodes across seven versions -- demonstrating how open-source music metadata architecture decisions expand without disrupting existing Bayesian confidence scoring structures.](docs/figures/repo-figures/assets/fig-prd-09-versioning-timeline.jpg)
+
+*Figure 9. The probabilistic PRD has grown incrementally from 15 initial nodes (v1.0) to 40-plus nodes (v2.0), adding agentic UI, LLM routing, commercial landscape, xOps, and regulatory compliance decisions -- each version extending the network without breaking prior conditional probability structures.*
+
+### From this figure plan (relative)
+
+![Timeline visualization: evolution of the music attribution scaffold probabilistic PRD from v1.0 core foundation through v2.0 regulatory compliance, showing incremental growth from 15 to 40-plus decision nodes across seven versions -- demonstrating how open-source music metadata architecture decisions expand without disrupting existing Bayesian confidence scoring structures.](../assets/fig-prd-09-versioning-timeline.jpg)

@@ -100,4 +100,16 @@ The key message is: "The light theme uses warm cream (#f6f3e6) as its foundation
 
 ## Alt Text
 
-Side-by-side light and dark color palettes showing surface, brand, confidence, assurance, source, and role token categories with hex values.
+Design system diagram showing the complete light and dark mode color palettes for the open-source music attribution scaffold: warm cream and dark navy surface foundations, coral red brand accent, three-tier confidence scoring colors, A0-A3 assurance level colors, five music metadata source colors, and role accent tokens for artist and query modes.
+
+## Image Embed
+
+### For GitHub README / MkDocs (repo-root-relative)
+
+![Design system diagram showing the complete light and dark mode color palettes for the open-source music attribution scaffold: warm cream and dark navy surface foundations, coral red brand accent, three-tier confidence scoring colors, A0-A3 assurance level colors, five music metadata source colors, and role accent tokens for artist and query modes.](docs/figures/repo-figures/assets/fig-frontend-11-color-system.jpg)
+
+*Figure: Side-by-side light and dark color systems with six token categories, anchored by warm cream (#f6f3e6) and dark navy (#1A1A2E) foundations that create an editorial, paper-like feel for music attribution workflows.*
+
+### From this figure plan (relative)
+
+![Design system diagram showing the complete light and dark mode color palettes for the open-source music attribution scaffold: warm cream and dark navy surface foundations, coral red brand accent, three-tier confidence scoring colors, A0-A3 assurance level colors, five music metadata source colors, and role accent tokens for artist and query modes.](../assets/fig-frontend-11-color-system.jpg)

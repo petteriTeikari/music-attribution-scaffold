@@ -103,4 +103,16 @@ The key message is: "Three diagnostic questions -- Does it involve human agency?
 
 ## Alt Text
 
-Diamond flowchart with three questions: agency, identity, community. Any YES leads to discovery friction to preserve. All NO leads to admin friction to automate.
+Decision tree: three-question diagnostic flowchart for classifying friction in music attribution pipelines -- testing for human agency, artistic identity, and community building -- where any YES identifies discovery friction to preserve and all NO identifies administrative friction to automate, enabling transparent confidence in which processes the open-source scaffold should target.
+
+## Image Embed
+
+### For GitHub README / MkDocs (repo-root-relative)
+
+![Decision tree: three-question diagnostic flowchart for classifying friction in music attribution pipelines -- testing for human agency, artistic identity, and community building -- where any YES identifies discovery friction to preserve and all NO identifies administrative friction to automate, enabling transparent confidence in which processes the open-source scaffold should target.](docs/figures/repo-figures/assets/fig-theory-09-friction-diagnostic-test.jpg)
+
+*Figure 9. The friction diagnostic test: three questions (Does it involve human agency? Does it build identity? Does it create community?) classify any friction point in the music attribution pipeline, using OR logic where any YES means discovery friction to preserve.*
+
+### From this figure plan (relative)
+
+![Decision tree: three-question diagnostic flowchart for classifying friction in music attribution pipelines -- testing for human agency, artistic identity, and community building -- where any YES identifies discovery friction to preserve and all NO identifies administrative friction to automate, enabling transparent confidence in which processes the open-source scaffold should target.](../assets/fig-theory-09-friction-diagnostic-test.jpg)

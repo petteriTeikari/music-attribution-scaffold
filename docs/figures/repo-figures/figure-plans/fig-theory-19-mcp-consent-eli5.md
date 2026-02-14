@@ -99,4 +99,16 @@ The key message is: "A library card lets you borrow books but not photocopy the 
 
 ## Alt Text
 
-Split panel comparing library card permissions (borrow yes, photocopy no) with MCP music permissions (streaming yes, AI training no), plus flow showing AI system querying permission server.
+Concept diagram: library card analogy for machine-readable consent in music attribution -- comparing library permissions (borrow yes, photocopy no) with MCP permissions for Imogen Heap's music (streaming yes, AI voice cloning no, remix ask first) -- plus flow showing AI system querying a permission server that returns allow, deny, or ask, enabling transparent confidence in how music credits and rights are managed by the open-source scaffold.
+
+## Image Embed
+
+### For GitHub README / MkDocs (repo-root-relative)
+
+![Concept diagram: library card analogy for machine-readable consent in music attribution -- comparing library permissions (borrow yes, photocopy no) with MCP permissions for Imogen Heap's music (streaming yes, AI voice cloning no, remix ask first) -- plus flow showing AI system querying a permission server that returns allow, deny, or ask, enabling transparent confidence in how music credits and rights are managed by the open-source scaffold.](docs/figures/repo-figures/assets/fig-theory-19-mcp-consent-eli5.jpg)
+
+*Figure 19. Machine-readable consent explained through a library card analogy: just as a library card specifies what you can and cannot do with borrowed books, MCP permissions let artists set specific rules for how AI systems can use their music -- set once, checked automatically every time.*
+
+### From this figure plan (relative)
+
+![Concept diagram: library card analogy for machine-readable consent in music attribution -- comparing library permissions (borrow yes, photocopy no) with MCP permissions for Imogen Heap's music (streaming yes, AI voice cloning no, remix ask first) -- plus flow showing AI system querying a permission server that returns allow, deny, or ask, enabling transparent confidence in how music credits and rights are managed by the open-source scaffold.](../assets/fig-theory-19-mcp-consent-eli5.jpg)

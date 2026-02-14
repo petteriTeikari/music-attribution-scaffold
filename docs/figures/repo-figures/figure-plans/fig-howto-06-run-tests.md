@@ -100,4 +100,16 @@ The key message is: "Follow the decision tree: Python backend changes need pytes
 
 ## Alt Text
 
-Decision tree diagram: starting from what code changed, branches to Python, frontend, or config paths, each leading to specific test commands.
+Tutorial diagram: decision tree for selecting the correct test suite in the open-source music attribution scaffold, branching from code change type -- Python backend, frontend components, or configuration -- to specific make commands for unit tests, integration tests, Vitest, Playwright E2E, and pre-commit hooks, ensuring transparent confidence in every code contribution.
+
+## Image Embed
+
+### For GitHub README / MkDocs (repo-root-relative)
+
+![Tutorial diagram: decision tree for selecting the correct test suite in the open-source music attribution scaffold, branching from code change type -- Python backend, frontend components, or configuration -- to specific make commands for unit tests, integration tests, Vitest, Playwright E2E, and pre-commit hooks, ensuring transparent confidence in every code contribution.](docs/figures/repo-figures/assets/fig-howto-06-run-tests.jpg)
+
+*Test selection decision tree for the Music Attribution Scaffold. Contributors follow branching paths based on what they changed -- Python logic, database models, frontend components, or configuration -- to run the minimal necessary test suite, with pre-commit hooks as a universal quality gate before every commit (Teikari, 2026).*
+
+### From this figure plan (relative)
+
+![Tutorial diagram: decision tree for selecting the correct test suite in the open-source music attribution scaffold, branching from code change type -- Python backend, frontend components, or configuration -- to specific make commands for unit tests, integration tests, Vitest, Playwright E2E, and pre-commit hooks, ensuring transparent confidence in every code contribution.](../assets/fig-howto-06-run-tests.jpg)

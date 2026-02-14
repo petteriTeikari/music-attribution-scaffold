@@ -114,4 +114,16 @@ The key message is: "Eight PostgreSQL tables mirror the five boundary objects (B
 
 ## Alt Text
 
-Entity-relationship diagram of 8 PostgreSQL tables: normalized_records, resolved_entities (central), attribution_records, feedback_cards, permission_bundles, edges, entity_embeddings with HALFVEC, and audit_log.
+Entity-relationship diagram of the music attribution scaffold's PostgreSQL database showing 8 tables — normalized_records, resolved_entities (central hub), attribution_records with JSONB credits and conformal sets, feedback_cards, permission_bundles, graph edges, entity_embeddings with pgvector HALFVEC(768) for semantic search, and audit_log — mapping the five boundary objects to persistent storage for transparent music metadata and confidence scoring.
+
+## Image Embed
+
+### For GitHub README / MkDocs (repo-root-relative)
+
+![Entity-relationship diagram of the music attribution scaffold's PostgreSQL database showing 8 tables — normalized_records, resolved_entities (central hub), attribution_records with JSONB credits and conformal sets, feedback_cards, permission_bundles, graph edges, entity_embeddings with pgvector HALFVEC(768) for semantic search, and audit_log — mapping the five boundary objects to persistent storage for transparent music metadata and confidence scoring.](docs/figures/repo-figures/assets/fig-backend-17-database-erd.jpg)
+
+*Figure 17. Eight PostgreSQL tables mirror the five boundary objects (BO-1 through BO-5) plus three infrastructure tables for graph relationships, vector embeddings, and permission auditing, using JSONB for flexible nested data and pgvector HALFVEC(768) for semantic search.*
+
+### From this figure plan (relative)
+
+![Entity-relationship diagram of the music attribution scaffold's PostgreSQL database showing 8 tables — normalized_records, resolved_entities (central hub), attribution_records with JSONB credits and conformal sets, feedback_cards, permission_bundles, graph edges, entity_embeddings with pgvector HALFVEC(768) for semantic search, and audit_log — mapping the five boundary objects to persistent storage for transparent music metadata and confidence scoring.](../assets/fig-backend-17-database-erd.jpg)

@@ -117,4 +117,16 @@ The key message is: "Three font families serve distinct roles -- Instrument Seri
 
 ## Alt Text
 
-Three-font typography system: Instrument Serif for display headings, Plus Jakarta Sans for body/UI text, IBM Plex Mono for data values, with utility classes.
+Design system diagram of the three-font typography system for the music attribution scaffold: Instrument Serif for editorial display headings, Plus Jakarta Sans for body and UI text, and IBM Plex Mono for transparent confidence scoring data values, with four CSS utility classes enabling consistent music metadata presentation.
+
+## Image Embed
+
+### For GitHub README / MkDocs (repo-root-relative)
+
+![Design system diagram of the three-font typography system for the music attribution scaffold: Instrument Serif for editorial display headings, Plus Jakarta Sans for body and UI text, and IBM Plex Mono for transparent confidence scoring data values, with four CSS utility classes enabling consistent music metadata presentation.](docs/figures/repo-figures/assets/fig-frontend-10-typography-system.jpg)
+
+*Figure: Three font families serve distinct roles in the music attribution UI -- Instrument Serif creates editorial gravitas for headings, Plus Jakarta Sans handles body text and navigation, and IBM Plex Mono with tabular-nums makes confidence scores instantly scannable.*
+
+### From this figure plan (relative)
+
+![Design system diagram of the three-font typography system for the music attribution scaffold: Instrument Serif for editorial display headings, Plus Jakarta Sans for body and UI text, and IBM Plex Mono for transparent confidence scoring data values, with four CSS utility classes enabling consistent music metadata presentation.](../assets/fig-frontend-10-typography-system.jpg)

@@ -99,4 +99,16 @@ The key message is: "Five CI jobs with intelligent path filtering -- backend cha
 
 ## Alt Text
 
-GitHub Actions CI pipeline: changes-detect job filters paths, then backend jobs (test, integration, guardrails) and frontend jobs (vitest, e2e) run conditionally based on changed files.
+Workflow diagram: GitHub Actions CI pipeline for the music attribution scaffold with path-based filtering that conditionally triggers five jobs -- backend ruff lint, mypy type checking, and pytest with Codecov coverage, integration tests on real PostgreSQL via testcontainers, Claude constraint guardrails, frontend Vitest and ESLint, and Playwright E2E -- eliminating wasted compute on irrelevant changes.
+
+## Image Embed
+
+### For GitHub README / MkDocs (repo-root-relative)
+
+![Workflow diagram: GitHub Actions CI pipeline for the music attribution scaffold with path-based filtering that conditionally triggers five jobs -- backend ruff lint, mypy type checking, and pytest with Codecov coverage, integration tests on real PostgreSQL via testcontainers, Claude constraint guardrails, frontend Vitest and ESLint, and Playwright E2E -- eliminating wasted compute on irrelevant changes.](docs/figures/repo-figures/assets/fig-repo-08-ci-cd-pipeline.jpg)
+
+*Figure 8. The GitHub Actions CI pipeline uses dorny/paths-filter to intelligently route changes: backend modifications (src/, tests/, pyproject.toml) trigger Python linting, typing, and testing jobs, while frontend changes trigger ESLint, TypeScript, Vitest, and Playwright jobs -- with cancel-in-progress concurrency to avoid redundant runs.*
+
+### From this figure plan (relative)
+
+![Workflow diagram: GitHub Actions CI pipeline for the music attribution scaffold with path-based filtering that conditionally triggers five jobs -- backend ruff lint, mypy type checking, and pytest with Codecov coverage, integration tests on real PostgreSQL via testcontainers, Claude constraint guardrails, frontend Vitest and ESLint, and Playwright E2E -- eliminating wasted compute on irrelevant changes.](../assets/fig-repo-08-ci-cd-pipeline.jpg)

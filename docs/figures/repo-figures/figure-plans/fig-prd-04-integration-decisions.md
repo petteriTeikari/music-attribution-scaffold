@@ -82,4 +82,16 @@ The key message is: "The scaffold's reference implementation selects Anthropic +
 
 ## Alt Text
 
-Architecture decision flow showing L2 decisions cascading into L3 selected implementation stack: Anthropic, PydanticAI Native routing, CopilotKit AG-UI, and Next.js 15.
+Architecture overview: integration-layer decisions in the music attribution scaffold showing how L2 architecture choices cascade into the selected implementation stack -- Anthropic LLM provider, PydanticAI routing, and CopilotKit agentic UI -- with conditional probability reinforcement between each open-source component selection.
+
+## Image Embed
+
+### For GitHub README / MkDocs (repo-root-relative)
+
+![Architecture overview: integration-layer decisions in the music attribution scaffold showing how L2 architecture choices cascade into the selected implementation stack -- Anthropic LLM provider, PydanticAI routing, and CopilotKit agentic UI -- with conditional probability reinforcement between each open-source component selection.](docs/figures/repo-figures/assets/fig-prd-04-integration-decisions.jpg)
+
+*Figure 4. The scaffold's reference implementation selects a coherent integration stack where each choice reinforces the others: Anthropic primary, PydanticAI native routing, and CopilotKit AG-UI, all connected by Bayesian conditional probabilities in the decision network.*
+
+### From this figure plan (relative)
+
+![Architecture overview: integration-layer decisions in the music attribution scaffold showing how L2 architecture choices cascade into the selected implementation stack -- Anthropic LLM provider, PydanticAI routing, and CopilotKit agentic UI -- with conditional probability reinforcement between each open-source component selection.](../assets/fig-prd-04-integration-decisions.jpg)

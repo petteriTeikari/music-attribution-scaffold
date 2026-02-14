@@ -87,4 +87,16 @@ The key message is: "NormalizedRecord is the universal schema that every data so
 
 ## Alt Text
 
-Schema diagram of the NormalizedRecord Pydantic model showing 12 top-level fields, nested IdentifierBundle with 7 identifiers, SourceMetadata with 8 fields, and 3 validation rules.
+Data schema diagram of the NormalizedRecord Pydantic model used in the music attribution scaffold, displaying 12 top-level fields including source confidence scoring, a nested IdentifierBundle with seven music metadata identifiers (ISRC, ISWC, ISNI, IPI, MBID, Discogs ID, AcoustID), SourceMetadata with eight fields, and three validation rules ensuring data integrity for transparent music credits.
+
+## Image Embed
+
+### For GitHub README / MkDocs (repo-root-relative)
+
+![Data schema diagram of the NormalizedRecord Pydantic model used in the music attribution scaffold, displaying 12 top-level fields including source confidence scoring, a nested IdentifierBundle with seven music metadata identifiers (ISRC, ISWC, ISNI, IPI, MBID, Discogs ID, AcoustID), SourceMetadata with eight fields, and three validation rules ensuring data integrity for transparent music credits.](docs/figures/repo-figures/assets/fig-backend-02-normalized-record-schema.jpg)
+
+*Figure 2. The NormalizedRecord (BO-1) is the universal boundary object that every ETL connector must produce, ensuring a consistent schema across MusicBrainz, Discogs, AcoustID, file metadata, and artist input sources.*
+
+### From this figure plan (relative)
+
+![Data schema diagram of the NormalizedRecord Pydantic model used in the music attribution scaffold, displaying 12 top-level fields including source confidence scoring, a nested IdentifierBundle with seven music metadata identifiers (ISRC, ISWC, ISNI, IPI, MBID, Discogs ID, AcoustID), SourceMetadata with eight fields, and three validation rules ensuring data integrity for transparent music credits.](../assets/fig-backend-02-normalized-record-schema.jpg)

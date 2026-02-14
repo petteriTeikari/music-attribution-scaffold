@@ -113,4 +113,16 @@ The key message is: "Consent infrastructure has three layers: the MCP server for
 
 ## Alt Text
 
-Architecture diagram with MCP server and FastAPI REST API as two interfaces, both connecting to PostgreSQL permission store with permissions and audit log tables.
+Architecture diagram: consent infrastructure for music attribution with MCP server (machine-readable consent for AI agents) and FastAPI REST API (human management interface) as two interfaces connecting to a shared PostgreSQL permission store with permissions and audit log tables -- enabling transparent confidence in music credits through the open-source attribution scaffold's dual-interface design for both machines and humans.
+
+## Image Embed
+
+### For GitHub README / MkDocs (repo-root-relative)
+
+![Architecture diagram: consent infrastructure for music attribution with MCP server (machine-readable consent for AI agents) and FastAPI REST API (human management interface) as two interfaces connecting to a shared PostgreSQL permission store with permissions and audit log tables -- enabling transparent confidence in music credits through the open-source attribution scaffold's dual-interface design for both machines and humans.](docs/figures/repo-figures/assets/fig-theory-21-consent-infrastructure.jpg)
+
+*Figure 21. Consent infrastructure architecture: two interfaces (MCP for machine-to-machine queries, FastAPI REST for human management) share a single PostgreSQL permission store with full audit logging, embodying the principle of "two interfaces, one truth" for durable consent management.*
+
+### From this figure plan (relative)
+
+![Architecture diagram: consent infrastructure for music attribution with MCP server (machine-readable consent for AI agents) and FastAPI REST API (human management interface) as two interfaces connecting to a shared PostgreSQL permission store with permissions and audit log tables -- enabling transparent confidence in music credits through the open-source attribution scaffold's dual-interface design for both machines and humans.](../assets/fig-theory-21-consent-infrastructure.jpg)

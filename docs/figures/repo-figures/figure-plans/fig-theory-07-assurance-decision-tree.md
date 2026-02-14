@@ -99,4 +99,16 @@ The key message is: "Assurance classification is a deterministic decision tree -
 
 ## Alt Text
 
-Flowchart decision tree: start with attribution record, check artist verification for A3, check source agreement for A2, check any identifier for A1, default to A0 unknown.
+Decision tree: deterministic classification flowchart for music attribution assurance levels -- starting with an attribution record, checking artist verification for A3, then independent source agreement for A2, then any ISRC or ISWC identifier for A1, defaulting to A0 unknown as fail-safe -- showing how the open-source attribution scaffold assigns transparent confidence levels to music credits.
+
+## Image Embed
+
+### For GitHub README / MkDocs (repo-root-relative)
+
+![Decision tree: deterministic classification flowchart for music attribution assurance levels -- starting with an attribution record, checking artist verification for A3, then independent source agreement for A2, then any ISRC or ISWC identifier for A1, defaulting to A0 unknown as fail-safe -- showing how the open-source attribution scaffold assigns transparent confidence levels to music credits.](docs/figures/repo-figures/assets/fig-theory-07-assurance-decision-tree.jpg)
+
+*Figure 7. The assurance level decision tree evaluates top-down from A3 to A0: artist verification yields A3, cross-database agreement yields A2, any standard identifier yields A1, and absence of all evidence defaults to A0 as a fail-safe classification.*
+
+### From this figure plan (relative)
+
+![Decision tree: deterministic classification flowchart for music attribution assurance levels -- starting with an attribution record, checking artist verification for A3, then independent source agreement for A2, then any ISRC or ISWC identifier for A1, defaulting to A0 unknown as fail-safe -- showing how the open-source attribution scaffold assigns transparent confidence levels to music credits.](../assets/fig-theory-07-assurance-decision-tree.jpg)

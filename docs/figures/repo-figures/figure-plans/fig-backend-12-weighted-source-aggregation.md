@@ -98,4 +98,16 @@ The key message is: "Attribution confidence is a weighted average -- high-author
 
 ## Alt Text
 
-Mathematical diagram showing weighted source aggregation formula with bar chart of five source reliability weights and worked example computing 0.845 per-credit confidence from three sources.
+Mathematical diagram of the weighted source aggregation formula for music attribution confidence scoring, with a bar chart of five source reliability weights (MusicBrainz 0.95, Discogs 0.85, AcoustID 0.80, file metadata 0.70, Artist Input 0.60) and a worked example computing 0.845 per-credit confidence from three music metadata sources — demonstrating how the open-source attribution scaffold produces transparent, auditable confidence scores.
+
+## Image Embed
+
+### For GitHub README / MkDocs (repo-root-relative)
+
+![Mathematical diagram of the weighted source aggregation formula for music attribution confidence scoring, with a bar chart of five source reliability weights (MusicBrainz 0.95, Discogs 0.85, AcoustID 0.80, file metadata 0.70, Artist Input 0.60) and a worked example computing 0.845 per-credit confidence from three music metadata sources — demonstrating how the open-source attribution scaffold produces transparent, auditable confidence scores.](docs/figures/repo-figures/assets/fig-backend-12-weighted-source-aggregation.jpg)
+
+*Figure 12. Attribution confidence is computed as a weighted average of source reliabilities: high-authority sources like MusicBrainz contribute more to the final score than lower-authority sources, with the overall attribution confidence being the arithmetic mean of all per-credit confidences.*
+
+### From this figure plan (relative)
+
+![Mathematical diagram of the weighted source aggregation formula for music attribution confidence scoring, with a bar chart of five source reliability weights (MusicBrainz 0.95, Discogs 0.85, AcoustID 0.80, file metadata 0.70, Artist Input 0.60) and a worked example computing 0.845 per-credit confidence from three music metadata sources — demonstrating how the open-source attribution scaffold produces transparent, auditable confidence scores.](../assets/fig-backend-12-weighted-source-aggregation.jpg)

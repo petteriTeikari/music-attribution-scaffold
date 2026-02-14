@@ -106,4 +106,16 @@ The key message is: "Accessibility is tested at two layers -- fast component-lev
 
 ## Alt Text
 
-Two-layer accessibility architecture: Vitest plus vitest-axe for component checks, Playwright plus axe-core for browser checks, with ARIA pattern catalog.
+Architecture diagram of the two-layer WCAG 2.1 AA accessibility testing strategy for the music attribution scaffold: Vitest plus vitest-axe for fast component-level checks and Playwright plus axe-core for real-browser validation, with an ARIA pattern catalog covering confidence scoring meter roles, navigation landmarks, and motion-safe music metadata interfaces.
+
+## Image Embed
+
+### For GitHub README / MkDocs (repo-root-relative)
+
+![Architecture diagram of the two-layer WCAG 2.1 AA accessibility testing strategy for the music attribution scaffold: Vitest plus vitest-axe for fast component-level checks and Playwright plus axe-core for real-browser validation, with an ARIA pattern catalog covering confidence scoring meter roles, navigation landmarks, and motion-safe music metadata interfaces.](docs/figures/repo-figures/assets/fig-frontend-13-accessibility-architecture.jpg)
+
+*Figure: Two-layer accessibility architecture ensuring WCAG 2.1 AA compliance for the music attribution UI, combining fast per-component axe checks (265 tests) with real-browser Playwright validation and documented ARIA patterns for all interactive elements.*
+
+### From this figure plan (relative)
+
+![Architecture diagram of the two-layer WCAG 2.1 AA accessibility testing strategy for the music attribution scaffold: Vitest plus vitest-axe for fast component-level checks and Playwright plus axe-core for real-browser validation, with an ARIA pattern catalog covering confidence scoring meter roles, navigation landmarks, and motion-safe music metadata interfaces.](../assets/fig-frontend-13-accessibility-architecture.jpg)

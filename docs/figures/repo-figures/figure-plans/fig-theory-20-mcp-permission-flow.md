@@ -112,4 +112,16 @@ The key message is: "An AI agent sends a structured MCP query specifying the wor
 
 ## Alt Text
 
-Sequence diagram showing AI agent sending MCP permission query for AI training use, MCP server looking up permissions in PostgreSQL, returning DENY response with alternative allowed uses.
+Sequence diagram: MCP permission flow for music attribution showing an AI agent sending a structured check_permission query with ISRC work identifier and use type, the MCP server looking up permissions in PostgreSQL, and returning a DENY response with machine-readable reason and alternative allowed uses -- demonstrating how the open-source attribution scaffold enables transparent confidence in AI training consent for music metadata.
+
+## Image Embed
+
+### For GitHub README / MkDocs (repo-root-relative)
+
+![Sequence diagram: MCP permission flow for music attribution showing an AI agent sending a structured check_permission query with ISRC work identifier and use type, the MCP server looking up permissions in PostgreSQL, and returning a DENY response with machine-readable reason and alternative allowed uses -- demonstrating how the open-source attribution scaffold enables transparent confidence in AI training consent for music metadata.](docs/figures/repo-figures/assets/fig-theory-20-mcp-permission-flow.jpg)
+
+*Figure 20. The MCP permission flow: an AI agent sends a structured query specifying work ID and intended use, the MCP server looks up the artist's permissions in PostgreSQL, and returns ALLOW, DENY, or CONDITIONS with machine-readable terms and suggested alternatives when denying.*
+
+### From this figure plan (relative)
+
+![Sequence diagram: MCP permission flow for music attribution showing an AI agent sending a structured check_permission query with ISRC work identifier and use type, the MCP server looking up permissions in PostgreSQL, and returning a DENY response with machine-readable reason and alternative allowed uses -- demonstrating how the open-source attribution scaffold enables transparent confidence in AI training consent for music metadata.](../assets/fig-theory-20-mcp-permission-flow.jpg)

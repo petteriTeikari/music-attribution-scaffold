@@ -84,4 +84,16 @@ The key message is: "Once creative works are blended inside an AI model, separat
 
 ## Alt Text
 
-Three paint tubes labeled Artist A, B, C flow into a blender representing AI training, producing uniform purple output with the question: which paint made the purple?
+Concept diagram: three paint tubes labeled Artist A, B, and C flow into a blender representing AI model training, producing uniform purple output that cannot be unmixed -- illustrating the oracle problem in music attribution, where transparent confidence scoring is impossible after creative works are blended during generative AI training, a fundamental limitation for open-source attribution scaffolds.
+
+## Image Embed
+
+### For GitHub README / MkDocs (repo-root-relative)
+
+![Concept diagram: three paint tubes labeled Artist A, B, and C flow into a blender representing AI model training, producing uniform purple output that cannot be unmixed -- illustrating the oracle problem in music attribution, where transparent confidence scoring is impossible after creative works are blended during generative AI training, a fundamental limitation for open-source attribution scaffolds.](docs/figures/repo-figures/assets/fig-theory-01-oracle-problem-eli5.jpg)
+
+*Figure 1. The Oracle Problem explained through a paint-mixing analogy: once creative works are blended inside an AI model through gradient descent and weight averaging, separating individual contributions is fundamentally impossible -- motivating the attribution-by-design approach used in this scaffold.*
+
+### From this figure plan (relative)
+
+![Concept diagram: three paint tubes labeled Artist A, B, and C flow into a blender representing AI model training, producing uniform purple output that cannot be unmixed -- illustrating the oracle problem in music attribution, where transparent confidence scoring is impossible after creative works are blended during generative AI training, a fundamental limitation for open-source attribution scaffolds.](../assets/fig-theory-01-oracle-problem-eli5.jpg)

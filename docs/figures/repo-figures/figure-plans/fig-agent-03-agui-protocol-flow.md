@@ -109,4 +109,16 @@ The key message is: "The AG-UI protocol streams 6 SSE event types in a fixed seq
 
 ## Alt Text
 
-AG-UI SSE protocol flow timeline: client POST triggers server to emit RunStarted, chunked TextMessage events, StateSnapshot, and RunFinished.
+Sequence diagram: AG-UI protocol flow for music attribution agentic UI showing the complete Server-Sent Events lifecycle from CopilotKit POST request through six SSE event types including chunked text streaming of confidence scoring explanations and a StateSnapshot that synchronizes music metadata state between the PydanticAI backend and the frontend sidebar.
+
+## Image Embed
+
+### For GitHub README / MkDocs (repo-root-relative)
+
+![Sequence diagram: AG-UI protocol flow for music attribution agentic UI showing the complete Server-Sent Events lifecycle from CopilotKit POST request through six SSE event types including chunked text streaming of confidence scoring explanations and a StateSnapshot that synchronizes music metadata state between the PydanticAI backend and the frontend sidebar.](docs/figures/repo-figures/assets/fig-agent-03-agui-protocol-flow.jpg)
+
+*AG-UI SSE event sequence as implemented in the open-source attribution scaffold, showing the fixed order of RunStarted, TextMessageStart, chunked TextMessageContent (50-character segments), TextMessageEnd, StateSnapshot, and RunFinished events streamed from FastAPI to CopilotKit.*
+
+### From this figure plan (relative)
+
+![Sequence diagram: AG-UI protocol flow for music attribution agentic UI showing the complete Server-Sent Events lifecycle from CopilotKit POST request through six SSE event types including chunked text streaming of confidence scoring explanations and a StateSnapshot that synchronizes music metadata state between the PydanticAI backend and the frontend sidebar.](../assets/fig-agent-03-agui-protocol-flow.jpg)

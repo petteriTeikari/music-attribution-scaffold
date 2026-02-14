@@ -1,6 +1,6 @@
 # Nano Banana Pro -- Repository Figure Prompting Instructions
 
-**Version:** 1.0.0
+**Version:** 2.0.0
 **Scope:** Repository documentation figures (architecture, pipelines, decisions, comparisons)
 **Adapted from:** `docs/figures/frontend-figures/PROMPTING-INSTRUCTIONS.md`
 **Generator:** Gemini (Nano Banana Pro)
@@ -44,7 +44,7 @@ Build the prompt from two sections: Style + Content.
 
 ### Step 5: Verify and Save
 
-- Run the quality checklist (17/20 threshold)
+- Run the quality checklist (21/25 threshold)
 - Save raw PNG to `docs/figures/repo-figures/generated/`
 - Run conversion script for web-optimized JPEG to `docs/figures/repo-figures/assets/`
 - Embed JPEG in documentation
@@ -55,17 +55,19 @@ Build the prompt from two sections: Style + Content.
 
 Use this template for every repo figure. Replace bracketed sections with content from the figure plan.
 
+**CRITICAL: Style keywords go FIRST, content SECOND. Never put style descriptors near element labels -- this causes prompt leakage where style words appear as visible text.**
+
 ```
 STYLE:
-Warm cream background (#f6f3e6). Warp Records editorial aesthetic meets
-constructivist data visualization. Coral red (#E84C4F) as primary graphic
+Warm cream background. Warp Records editorial aesthetic meets
+constructivist data visualization. Coral red as primary graphic
 accent -- accent squares, thin accent lines, stage markers. Deep navy
-(#1E3A5F) for structural elements and module boundaries. Teal (#2E7D7B)
-for technology/innovation and feedback loops. Matte finish, halftone
-grain texture. Asymmetric composition with generous negative space (30%+).
-Sharp geometric edges, no rounded corners, no drop shadows. Instrument
-Serif-style display headings in ALL-CAPS with letter tracking. Sans-serif
-labels. Monospace for numbers and data.
+for structural elements and module boundaries. Teal for technology
+and feedback loops. Matte finish, halftone grain texture. Asymmetric
+composition with generous negative space (30%+). Sharp geometric edges,
+no rounded corners, no drop shadows. Bold serif display headings in
+ALL-CAPS with letter tracking. Clean sans-serif labels. Monospace
+typeface for numbers and data.
 
 [IF APPLICABLE -- add layout-specific style notes:]
 [For Template A (Hero): Bold display type as primary visual element]
@@ -73,6 +75,16 @@ labels. Monospace for numbers and data.
 [For Template C (Flowchart): Solid lines for selected paths, dashed for alternatives]
 [For Template D (Split-Panel): Muted palette on left, full palette on right]
 [For Template E (Steps): Vertical signal chain, coral squares as stage markers]
+
+TEXT RENDERING RULES:
+- Render text labels cleanly at large size or use solid-colored
+  placeholder blocks where text would go (for post-processing)
+- Do NOT attempt to render complex multi-word labels -- use
+  placeholder rectangles with colored borders instead
+- Maximum 8 distinct text elements per figure
+- NO figure numbers, NO "Figure X." captions, NO "Fig." prefix
+- The editorial display title IS allowed but must not look like
+  a formal academic figure caption
 
 CONTENT:
 [Paste the visual concept description from the figure plan]
@@ -90,8 +102,16 @@ glossy finish, 3D render, photorealistic, detailed faces, text-heavy,
 PowerPoint style, flowchart software, Lucidchart, Miro, drop shadows,
 thick block arrows, centered composition, dense dashboard, clip art,
 holographic, plasma effects, oversaturated colors, pure white background,
-visible hex codes, semantic tag names, prompt keywords visible,
-garbled text, illegible glyphs, pseudo-text, font names as labels
+garbled text, illegible glyphs, blurred characters, pseudo-text,
+corrupted letters, gibberish words, broken typography,
+visible hex codes, color codes as text, "#" followed by six characters,
+semantic tag names visible, technical markup visible,
+font names as labels, "Instrument Serif" text, "Plus Jakarta Sans" text,
+prompt instructions as labels, style keywords visible,
+rendering keywords as labels, aesthetic descriptors as text,
+parentheses with style words, meta-instructions rendered,
+"Figure 1", "Fig.", figure title, figure number, figure caption,
+numbered figure label, academic figure numbering
 ```
 
 ---
@@ -227,16 +247,22 @@ NEGATIVE: [Standard negative block]
 
 ## Quality Checklist (Pre-Accept)
 
-Run this checklist after every generation. The figure must score 17/20 or higher (see STYLE-GUIDE-REPO.md for the full 20-item checklist).
+Run this checklist after every generation. The figure must score 21/25 or higher (see STYLE-GUIDE-REPO.md v2.0 for the full 25-item checklist).
 
-### Quick Pass/Fail (reject immediately if any fail)
+### Quick Reject (ANY fail = immediate reject)
 
 - [ ] Background IS warm cream (#f6f3e6), not white, gray, or yellow
 - [ ] NO neon, glow, or sci-fi aesthetic anywhere
 - [ ] NO garbled, illegible, or pseudo-text
-- [ ] NO semantic tags, hex codes, or font names rendered as visible text
+- [ ] NO hex codes visible as text ("#E84C4F", "#1E3A5F", etc.)
+- [ ] NO semantic tags visible as text ("etl_extract", "confidence_high", etc.)
+- [ ] NO font names visible as text ("Instrument Serif", "Plus Jakarta Sans", etc.)
+- [ ] NO prompt/style keywords visible as text ("matte", "asymmetric", "editorial", etc.)
+- [ ] NO "Figure 1.", "Fig.", or numbered figure caption visible
 
-### Full Checklist (score 1/0 each, accept if >= 17/20)
+If any quick reject fails, re-prompt from scratch -- do NOT fix with inpainting.
+
+### Full Checklist (score 1/0 each, accept if >= 21/25, see STYLE-GUIDE-REPO.md v2.0)
 
 **Palette (5):**
 1. Cream background
@@ -258,15 +284,22 @@ Run this checklist after every generation. The figure must score 17/20 or higher
 13. Matte finish
 14. Clear information hierarchy
 
+**Anti-Hallucination (5):**
+15. No semantic tag names visible
+16. No hex codes visible as text
+17. No font names visible as text
+18. No prompt keywords visible as text
+19. No "Figure X." or "Fig." numbered caption visible
+
 **Domain (4):**
-15. Technical accuracy (correct pipeline order, correct thresholds)
-16. No internal terms as visible text
-17. Warp Records aesthetic achieved
-18. Target audience would understand
+20. Technical accuracy (correct pipeline order, correct thresholds)
+21. Warp Records aesthetic achieved
+22. Target audience would understand
+23. No internal/workflow terms rendered as visible text
 
 **Production (2):**
-19. Correct aspect ratio
-20. Sufficient resolution (>= 1200px wide)
+24. Correct aspect ratio
+25. Sufficient resolution (>= 1200px wide)
 
 ---
 
@@ -293,36 +326,67 @@ If the script does not support custom input/output directories, copy PNGs to `do
 
 ---
 
-## Anti-Hallucination Protocol
+## Anti-Hallucination Protocol (v2.0)
 
-Nano Banana Pro will sometimes render internal instructions as visible text in the image. This protocol prevents that.
+Nano Banana Pro will sometimes render internal instructions as visible text in the image. This is the #1 quality issue and requires aggressive prevention.
 
-### Before Prompting
+### Three Classes of Hallucination
 
-1. **Scrub the prompt** of all semantic tag names (`etl_extract`, `confidence_high`, etc.)
-2. **Scrub the prompt** of all hex codes -- use natural color names ("coral red", "deep navy")
-3. **Scrub the prompt** of all font family names -- use descriptive terms ("serif display type", "sans-serif labels", "monospace for numbers")
-4. **Scrub the prompt** of framework/library names unless the figure is L3/L4 audience
-5. **Add explicit ban** to the negative prompt: `--no visible hex codes, no semantic tag names, no font names as labels, no prompt keywords visible`
+| Class | Example | Severity |
+|-------|---------|----------|
+| **Technical Markup** | "#E84C4F", "etl_extract", "source_musicbrainz" visible as text | CRITICAL -- immediate reject |
+| **Prompt Leakage** | "(matte finish, asymmetric)", "Instrument Serif", "editorial caps" visible | CRITICAL -- immediate reject |
+| **Figure Caption** | "Figure 1. ETL Pipeline Overview", "Fig. 3: Oracle Problem" visible | CRITICAL -- immediate reject |
+| **Text Garbling** | Random characters, illegible glyphs, pseudo-text | HIGH -- reject unless minimal |
 
-### After Generation -- Text Audit
+### Before Prompting -- Scrub Checklist
+
+1. **Scrub ALL hex codes** -- use natural color names ("coral red", "deep navy", "teal")
+2. **Scrub ALL semantic tag names** (`etl_extract`, `confidence_high`, etc.)
+3. **Scrub ALL font family names** -- use descriptive terms ("serif display type", "sans-serif labels", "monospace for numbers")
+4. **Scrub ALL framework/library names** unless the figure is L3/L4 audience
+5. **Separate style from content** -- style keywords go at the START of the prompt, content descriptions AFTER. Never interleave.
+6. **No parenthetical qualifiers near labels** -- write "Five processing stages flowing left to right" not "Five processing stages (matte, asymmetric, editorial)"
+7. **No figure numbering** -- do not mention "Figure 1" or "Fig." anywhere in the prompt
+8. **Add the full Combined Negative Prompt** from STYLE-GUIDE-REPO.md
+
+### After Generation -- Text Audit (MANDATORY)
 
 Zoom to 100% and scan every text element in the image:
 
-1. Does any text read "etl_extract", "source_corroborate", "confidence_high", or similar? **REJECT.**
-2. Does any text read "#E84C4F", "#1E3A5F", "#2E7D7B", or any hex code? **REJECT.**
-3. Does any text read "Instrument Serif", "Plus Jakarta Sans", "IBM Plex Mono"? **REJECT.**
-4. Does any text read "Nano Banana", "Gemini", "prompt:", "STYLE:", or "NEGATIVE:"? **REJECT.**
-5. Does any text read "Pydantic", "FastAPI", "Splink" when the audience is L1 or L2? **REJECT.**
-6. Is there any garbled, pseudo-text, or lorem-ipsum-like gibberish? **REJECT.**
+| Check | What to Look For | Action |
+|-------|-----------------|--------|
+| 1 | Semantic tags: "etl_extract", "source_corroborate", "confidence_high", "primary_outcome", "data_flow" | **REJECT** |
+| 2 | Hex codes: "#E84C4F", "#1E3A5F", "#2E7D7B", "#f6f3e6", or any "#XXXXXX" pattern | **REJECT** |
+| 3 | Font names: "Instrument Serif", "Plus Jakarta Sans", "IBM Plex Mono" | **REJECT** |
+| 4 | Prompt keywords: "Nano Banana", "Gemini", "prompt:", "STYLE:", "NEGATIVE:", "matte", "asymmetric" | **REJECT** |
+| 5 | Figure captions: "Figure 1.", "Fig.", "Figure X:", any numbered academic caption | **REJECT** |
+| 6 | Framework names (L1/L2 only): "Pydantic", "FastAPI", "Splink", "CopilotKit" | **REJECT** |
+| 7 | Style descriptors: "(non-glowing, elegant)", "(editorial)", parenthesized style words | **REJECT** |
+| 8 | Garbled text: random characters, illegible glyphs, pseudo-text, lorem ipsum | **REJECT** |
 
-If any check fails, do NOT attempt to fix with inpainting. Re-prompt from scratch with stronger negative instructions.
+**If any check fails, do NOT attempt to fix with inpainting. Re-prompt from scratch with stronger negative instructions and fewer text elements.**
+
+### The Placeholder Protocol (for Text-Heavy Figures)
+
+When a figure requires many text labels, request placeholders instead of rendered text:
+
+```
+TEXT RENDERING: For all text labels and callout content, render
+clean solid-colored rectangular placeholder blocks (light gray
+backgrounds with colored borders) where text would go. Do NOT
+attempt to render actual text characters. I will add labels in
+post-processing using an image editor. Exception: single large
+letters (A, B, C) for panel identification are OK to render.
+```
+
+This is the most reliable approach for figures with more than 8 text elements.
 
 ---
 
 ## Iteration Protocol for Failures
 
-When a generated figure fails the quality checklist (score < 17/20), follow this protocol.
+When a generated figure fails the quality checklist (score < 21/25), follow this protocol.
 
 ### Failure Category: Wrong Background Color
 
@@ -353,10 +417,32 @@ When a generated figure fails the quality checklist (score < 17/20), follow this
 **Fix:** Remove 30% of the content elements. Start with the least essential labels and annotations. Negative space is not wasted space -- it is a design element.
 **Add to style:** "At least 30% of the canvas MUST be empty warm cream background with no elements."
 
-### Failure Category: Rendered Internal Terms
+### Failure Category: Rendered Internal Terms (Hex Codes, Semantic Tags)
 
-**Symptom:** Semantic tags, hex codes, or font names appear as visible text.
-**Fix:** Re-prompt from scratch. Completely remove all internal terms from the prompt and replace with natural language descriptions. See the Anti-Hallucination Protocol above.
+**Symptom:** "#E84C4F", "etl_extract", "source_musicbrainz", or similar internal markup appears as visible text.
+**Cause:** Hex codes or semantic tag names were in the prompt near content descriptions.
+**Fix:** Re-prompt from scratch. Replace ALL hex codes with natural color names ("coral red", "deep navy"). Replace ALL semantic tags with visual descriptions ("data ingestion zone", "confidence indicator").
+**Also add to negative:** the specific strings that leaked (e.g., `"#E84C4F" visible, "etl_extract" text`)
+
+### Failure Category: Font Names as Labels
+
+**Symptom:** "Instrument Serif", "Plus Jakarta Sans", or "IBM Plex Mono" appears as visible text in the image.
+**Cause:** Font family names were in the prompt.
+**Fix:** Replace all font names with descriptive terms: "bold serif display type", "clean sans-serif labels", "monospace digits".
+**Also add to negative:** `"Instrument Serif" text, "Plus Jakarta Sans" text, "IBM Plex Mono" text, font names as labels`
+
+### Failure Category: Figure Caption Rendered
+
+**Symptom:** "Figure 1. ETL Pipeline Overview" or "Fig. 3:" appears as a formal numbered caption in the image.
+**Cause:** The figure plan title or numbering leaked into the prompt, or Nano Banana Pro added it autonomously.
+**Fix:** Ensure no "Figure X" or "Fig." text appears anywhere in the prompt. The editorial display title ("ETL PIPELINE") is fine, but it must NOT include a figure number prefix.
+**Also add to negative:** `"Figure 1", "Fig.", figure title, figure number, figure caption, numbered figure label`
+
+### Failure Category: Prompt Leakage (Style Words as Text)
+
+**Symptom:** Words like "(matte finish)", "asymmetric", "editorial", "constructivist" appear as visible text in the image.
+**Cause:** Style descriptors were placed too close to content labels, or parenthetical qualifiers were used.
+**Fix:** Restructure the prompt: move ALL style keywords to the very beginning, keep content descriptions plain and factual. Never use parenthetical style qualifiers near element names.
 
 ### General Iteration Rule
 
@@ -376,7 +462,7 @@ Use this checklist to track each figure through the full workflow.
 - [ ] **Compose**: Two-part prompt (Style + Content) written using master template
 - [ ] **Generate**: Image generated in Nano Banana Pro
 - [ ] **Audit**: Anti-hallucination text audit passed (0 internal terms visible)
-- [ ] **Score**: Quality checklist scored >= 17/20
+- [ ] **Score**: Quality checklist scored >= 21/25
 - [ ] **Save**: Raw PNG saved to `generated/`
 - [ ] **Convert**: Web-optimized JPEG saved to `assets/`
 - [ ] **Embed**: JPEG linked from target documentation file
@@ -384,4 +470,4 @@ Use this checklist to track each figure through the full workflow.
 
 ---
 
-*Music Attribution Scaffold -- Repository Documentation Prompting Instructions v1.0.0*
+*Music Attribution Scaffold -- Repository Documentation Prompting Instructions v2.0.0*

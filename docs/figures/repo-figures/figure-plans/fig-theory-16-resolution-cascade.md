@@ -111,4 +111,16 @@ The key message is: "Resolution is a waterfall of increasingly expensive methods
 
 ## Alt Text
 
-Five-step waterfall cascade for entity resolution: identifier match, string similarity, embedding match, LLM judgment, Splink probabilistic, each firing only when the previous step is inconclusive.
+Waterfall diagram: five-step entity resolution cascade for music attribution -- identifier match at near zero cost, string similarity via Jaro-Winkler, embedding match via cosine similarity, LLM judgment with structured output, and Splink probabilistic linking via Fellegi-Sunter model -- each step fires only when the previous is inconclusive, optimizing transparent confidence scoring by trying the cheapest method first.
+
+## Image Embed
+
+### For GitHub README / MkDocs (repo-root-relative)
+
+![Waterfall diagram: five-step entity resolution cascade for music attribution -- identifier match at near zero cost, string similarity via Jaro-Winkler, embedding match via cosine similarity, LLM judgment with structured output, and Splink probabilistic linking via Fellegi-Sunter model -- each step fires only when the previous is inconclusive, optimizing transparent confidence scoring by trying the cheapest method first.](docs/figures/repo-figures/assets/fig-theory-16-resolution-cascade.jpg)
+
+*Figure 16. The resolution cascade: entity resolution proceeds from cheapest to most expensive -- exact identifier match (ISRC/ISWC), string similarity, embedding cosine distance, LLM contextual reasoning, and Splink probabilistic linking -- with early exit on match to minimize cost while maintaining confidence.*
+
+### From this figure plan (relative)
+
+![Waterfall diagram: five-step entity resolution cascade for music attribution -- identifier match at near zero cost, string similarity via Jaro-Winkler, embedding match via cosine similarity, LLM judgment with structured output, and Splink probabilistic linking via Fellegi-Sunter model -- each step fires only when the previous is inconclusive, optimizing transparent confidence scoring by trying the cheapest method first.](../assets/fig-theory-16-resolution-cascade.jpg)

@@ -61,7 +61,7 @@ The key message is: "Figure creation follows a six-step pipeline: read the figur
 |  ─────────────────                  ─────────                  |
 |  ┌───────────────────┐             ┌───────────────────┐      |
 |  │ Quality checklist: │             │ docs/figures/      │      |
-|  │ ■ Score >= 17/20   │     ──>     │  repo-figures/     │      |
+|  │ ■ Score >= 21/25   │     ──>     │  repo-figures/     │      |
 |  │ ■ Background cream │             │  generated/        │      |
 |  │ ■ No hex visible   │             │  fig-repo-NN.png   │      |
 |  │ ■ Fonts correct    │             │                    │      |
@@ -83,7 +83,7 @@ The key message is: "Figure creation follows a six-step pipeline: read the figur
 | Step II: Style guide | `processing_stage` | Reading the style guide for visual specifications (palette, typography, layout, scoring) |
 | Step III: Compose prompt | `processing_stage` | Combining plan content with style rules into a generation prompt |
 | Step IV: Generate | `processing_stage` | Uploading to Nano Banana Pro and generating the image |
-| Step V: Verify | `processing_stage` | Quality checklist verification (score >= 17/20, background color, no visible hex codes) |
+| Step V: Verify | `processing_stage` | Quality checklist verification (score >= 21/25, background color, no visible hex codes) |
 | Step VI: Commit | `processing_stage` | Saving to generated/ directory and committing to repo |
 | Flow arrows (I+II merge to III, then sequential) | `data_flow` | Two inputs merge, then linear flow through remaining steps |
 | Roman numerals I-VI | `section_numeral` | Step headers in editorial style |
@@ -93,7 +93,7 @@ The key message is: "Figure creation follows a six-step pipeline: read the figur
 ## Anti-Hallucination Rules
 
 1. Nano Banana Pro is the specific image generation tool used -- do not substitute DALL-E, Midjourney, or other tools.
-2. The quality score threshold is >= 17/20 as defined in STYLE-GUIDE-REPO.md -- do not change this number.
+2. The quality score threshold is >= 21/25 as defined in STYLE-GUIDE-REPO.md -- do not change this number.
 3. Figure plans live in `docs/figures/repo-figures/figure-plans/` -- not in a different directory.
 4. The style guide is `STYLE-GUIDE-REPO.md` -- not a generic style guide.
 5. The content/style decoupling principle is central: plans use semantic tags (not colors or fonts), and the style guide maps tags to visual properties.
@@ -104,4 +104,16 @@ The key message is: "Figure creation follows a six-step pipeline: read the figur
 
 ## Alt Text
 
-Six-step figure creation workflow: read plan, read style guide, compose prompt, generate in Nano Banana Pro, verify quality, commit to repository.
+Workflow diagram: six-step figure creation pipeline for the music attribution scaffold documentation, from reading the figure plan and style guide through prompt composition and Nano Banana Pro image generation to quality verification and repository commit -- demonstrating content-style decoupling where plans define what to show and the style guide defines how, ensuring consistent open-source visual identity.
+
+## Image Embed
+
+### For GitHub README / MkDocs (repo-root-relative)
+
+![Workflow diagram: six-step figure creation pipeline for the music attribution scaffold documentation, from reading the figure plan and style guide through prompt composition and Nano Banana Pro image generation to quality verification and repository commit -- demonstrating content-style decoupling where plans define what to show and the style guide defines how, ensuring consistent open-source visual identity.](docs/figures/repo-figures/assets/fig-howto-08-create-figures-nano-banana.jpg)
+
+*Figure creation workflow for the Music Attribution Scaffold. The content-style decoupling principle separates semantic figure plans (what to communicate) from the visual style guide (how it should look), enabling reproducible, quality-gated figure generation via Nano Banana Pro with a minimum score threshold of 21/25 (Teikari, 2026).*
+
+### From this figure plan (relative)
+
+![Workflow diagram: six-step figure creation pipeline for the music attribution scaffold documentation, from reading the figure plan and style guide through prompt composition and Nano Banana Pro image generation to quality verification and repository commit -- demonstrating content-style decoupling where plans define what to show and the style guide defines how, ensuring consistent open-source visual identity.](../assets/fig-howto-08-create-figures-nano-banana.jpg)

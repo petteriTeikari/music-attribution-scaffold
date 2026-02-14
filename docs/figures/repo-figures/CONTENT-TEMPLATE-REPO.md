@@ -191,14 +191,20 @@ anchors:
 
 ## Anti-Hallucination Rules
 
-These are INTERNAL instructions. They MUST NEVER appear as visible text in the output.
+These are INTERNAL instructions for prompt construction. They MUST NEVER appear as visible text in the generated image. Add figure-specific rules below these defaults.
 
-1. **Font names are internal** -- "Instrument Serif", "Plus Jakarta Sans", "IBM Plex Mono" are CSS references. Do NOT render them as labels.
-2. **Semantic tags are internal** -- `etl_extract`, `entity_resolve`, `source_corroborate`, `final_score`, `confidence_high`, `assurance_a2`, `source_musicbrainz` etc. Do NOT render them as visible text.
-3. **Hex codes are internal** -- `#E84C4F`, `#1E3A5F`, `#2E7D7B` are palette references. Do NOT render them.
+### Default Rules (always include)
+
+1. **Font names are INTERNAL** -- "Instrument Serif", "Plus Jakarta Sans", "IBM Plex Mono" are CSS references. Do NOT render them as labels in the image.
+2. **Semantic tags are INTERNAL** -- `etl_extract`, `entity_resolve`, `source_corroborate`, `final_score`, `confidence_high`, `assurance_a2`, `source_musicbrainz` etc. Do NOT render them as visible text.
+3. **Hex codes are INTERNAL** -- `#E84C4F`, `#1E3A5F`, `#2E7D7B`, `#f6f3e6` are palette references. Do NOT render them.
 4. **Engineering jargon** -- "Pydantic", "FastAPI", "Splink", "pgvector" should NOT appear unless the figure is L3/L4 audience.
-5. **Background MUST be #f6f3e6** -- exact match to frontend surface color. No off-white, no pure white, no gray.
+5. **Background MUST be warm cream (#f6f3e6)** -- exact match to frontend surface color. No pure white, no gray, no yellow.
 6. **No generic flowchart aesthetics** -- no thick block arrows, no rounded rectangles, no PowerPoint look.
+7. **No figure captions** -- do NOT render "Figure 1.", "Fig.", or any numbered academic caption. The editorial display title is allowed.
+8. **No prompt leakage** -- do NOT render style keywords ("matte", "asymmetric", "editorial", "constructivist") as visible text in the figure.
+
+### Figure-Specific Rules (add below)
 
 ## Alt Text
 
@@ -262,7 +268,7 @@ These are INTERNAL instructions. They MUST NEVER appear as visible text in the o
 - [ ] Draft created
 - [ ] Content reviewed
 - [ ] Generated via Nano Banana Pro
-- [ ] Quality score >= 17/20 (see STYLE-GUIDE-REPO.md)
+- [ ] Quality score >= 21/25 (see STYLE-GUIDE-REPO.md v2.0)
 - [ ] Embedded in documentation
 ```
 

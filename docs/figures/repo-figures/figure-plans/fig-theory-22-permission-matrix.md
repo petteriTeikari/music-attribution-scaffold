@@ -95,4 +95,16 @@ The key message is: "Permissions are not binary -- each work has a unique permis
 
 ## Alt Text
 
-Permission matrix with five Imogen Heap songs as rows and five use types as columns, cells colored green for allow, red for deny, amber for conditional, showing granular per-work permission profiles.
+Matrix diagram: permission matrix for music attribution with five Imogen Heap songs as rows and five use types as columns (streaming, sync license, download, AI training, voice cloning) -- cells colored green for allow, red for deny, amber for conditional with fee or attribution requirements -- showing how machine-readable consent enables granular per-work permission profiles with transparent confidence in the open-source music credits scaffold.
+
+## Image Embed
+
+### For GitHub README / MkDocs (repo-root-relative)
+
+![Matrix diagram: permission matrix for music attribution with five Imogen Heap songs as rows and five use types as columns (streaming, sync license, download, AI training, voice cloning) -- cells colored green for allow, red for deny, amber for conditional with fee or attribution requirements -- showing how machine-readable consent enables granular per-work permission profiles with transparent confidence in the open-source music credits scaffold.](docs/figures/repo-figures/assets/fig-theory-22-permission-matrix.jpg)
+
+*Figure 22. Permission matrix across works and use cases: permissions are not binary -- each musical work has a unique profile where streaming is typically allowed, voice cloning is typically denied, and the interesting policy decisions (AI training, sync licensing) vary per work with conditional terms.*
+
+### From this figure plan (relative)
+
+![Matrix diagram: permission matrix for music attribution with five Imogen Heap songs as rows and five use types as columns (streaming, sync license, download, AI training, voice cloning) -- cells colored green for allow, red for deny, amber for conditional with fee or attribution requirements -- showing how machine-readable consent enables granular per-work permission profiles with transparent confidence in the open-source music credits scaffold.](../assets/fig-theory-22-permission-matrix.jpg)

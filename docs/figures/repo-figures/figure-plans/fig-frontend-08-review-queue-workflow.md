@@ -96,4 +96,16 @@ The key message is: "The review queue transforms tedious one-by-one attribution 
 
 ## Alt Text
 
-Review queue workflow showing agent narration, progress bar, work items with Roman numerals, expandable AI suggestion diffs, and batch approval action.
+UI wireframe of the AI-assisted review queue workflow in the music attribution scaffold: agent narration header, progress tracking bar, music credits items indexed with Roman numerals, expandable suggestion diffs showing before-and-after attribution changes, and batch approval for efficient transparent confidence scoring of music metadata.
+
+## Image Embed
+
+### For GitHub README / MkDocs (repo-root-relative)
+
+![UI wireframe of the AI-assisted review queue workflow in the music attribution scaffold: agent narration header, progress tracking bar, music credits items indexed with Roman numerals, expandable suggestion diffs showing before-and-after attribution changes, and batch approval for efficient transparent confidence scoring of music metadata.](docs/figures/repo-figures/assets/fig-frontend-08-review-queue-workflow.jpg)
+
+*Figure: The review queue transforms one-by-one attribution review into a momentum-driven agentic UI workflow with AI-generated diffs, batch approval, and progress tracking -- the primary friction reducer for music credits verification.*
+
+### From this figure plan (relative)
+
+![UI wireframe of the AI-assisted review queue workflow in the music attribution scaffold: agent narration header, progress tracking bar, music credits items indexed with Roman numerals, expandable suggestion diffs showing before-and-after attribution changes, and batch approval for efficient transparent confidence scoring of music metadata.](../assets/fig-frontend-08-review-queue-workflow.jpg)

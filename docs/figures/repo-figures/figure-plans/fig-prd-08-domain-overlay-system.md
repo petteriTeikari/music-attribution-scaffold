@@ -84,4 +84,16 @@ The key message is: "The same scaffold architecture applies isomorphically to mu
 
 ## Alt Text
 
-Side-by-side domain overlays showing music attribution and DPP traceability sharing the same core pipeline but with different sources, entities, assurance levels, and regulatory requirements.
+Architecture overview: domain overlay system showing how the music attribution scaffold and Digital Product Passport traceability share an isomorphic core pipeline -- sources, entity resolution, unified record with confidence scoring, permissioned API, and agentic consumers -- while differing in music metadata sources, assurance levels (A0-A3 versus T0-T3), and regulatory requirements.
+
+## Image Embed
+
+### For GitHub README / MkDocs (repo-root-relative)
+
+![Architecture overview: domain overlay system showing how the music attribution scaffold and Digital Product Passport traceability share an isomorphic core pipeline -- sources, entity resolution, unified record with confidence scoring, permissioned API, and agentic consumers -- while differing in music metadata sources, assurance levels (A0-A3 versus T0-T3), and regulatory requirements.](docs/figures/repo-figures/assets/fig-prd-08-domain-overlay-system.jpg)
+
+*Figure 8. The domain overlay system demonstrates the scaffold's generalizability: music attribution (A0-A3 assurance, MCP consent API) and supply chain traceability (T0-T3 assurance, Digital Link API) are isomorphic instantiations of the same open-source pipeline architecture.*
+
+### From this figure plan (relative)
+
+![Architecture overview: domain overlay system showing how the music attribution scaffold and Digital Product Passport traceability share an isomorphic core pipeline -- sources, entity resolution, unified record with confidence scoring, permissioned API, and agentic consumers -- while differing in music metadata sources, assurance levels (A0-A3 versus T0-T3), and regulatory requirements.](../assets/fig-prd-08-domain-overlay-system.jpg)

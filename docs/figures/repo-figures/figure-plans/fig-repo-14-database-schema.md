@@ -99,4 +99,16 @@ The key message is: "Every attribution record carries per-field confidence score
 
 ## Alt Text
 
-Entity-relationship diagram: Works and Artists tables linked through Attribution Records junction table with per-field confidence scores, assurance levels, and JSONB provenance. Permissions table for MCP consent.
+Architecture diagram: PostgreSQL 17 entity-relationship schema for the music attribution scaffold showing Works table with ISRC and ISWC identifiers, Artists table with ISNI, Attribution Records junction table carrying per-field transparent confidence scores from 0.0 to 1.0, A0-A3 assurance levels, and JSONB source provenance arrays, plus a Permissions table for MCP machine-readable consent -- with pgvector VECTOR columns enabling semantic similarity search across music metadata.
+
+## Image Embed
+
+### For GitHub README / MkDocs (repo-root-relative)
+
+![Architecture diagram: PostgreSQL 17 entity-relationship schema for the music attribution scaffold showing Works table with ISRC and ISWC identifiers, Artists table with ISNI, Attribution Records junction table carrying per-field transparent confidence scores from 0.0 to 1.0, A0-A3 assurance levels, and JSONB source provenance arrays, plus a Permissions table for MCP machine-readable consent -- with pgvector VECTOR columns enabling semantic similarity search across music metadata.](docs/figures/repo-figures/assets/fig-repo-14-database-schema.jpg)
+
+*Figure 14. The database schema embeds attribution-by-design principles: every attribution record carries per-field confidence scores (FLOAT 0.0-1.0), A0-A3 assurance levels, and full JSONB source provenance, while pgvector VECTOR columns enable semantic similarity search across works and artists, all managed by Alembic migrations over SQLAlchemy 2.0 models.*
+
+### From this figure plan (relative)
+
+![Architecture diagram: PostgreSQL 17 entity-relationship schema for the music attribution scaffold showing Works table with ISRC and ISWC identifiers, Artists table with ISNI, Attribution Records junction table carrying per-field transparent confidence scores from 0.0 to 1.0, A0-A3 assurance levels, and JSONB source provenance arrays, plus a Permissions table for MCP machine-readable consent -- with pgvector VECTOR columns enabling semantic similarity search across music metadata.](../assets/fig-repo-14-database-schema.jpg)

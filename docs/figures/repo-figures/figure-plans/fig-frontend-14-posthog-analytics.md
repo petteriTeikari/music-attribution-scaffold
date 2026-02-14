@@ -106,4 +106,16 @@ The key message is: "12 typed events capture the complete attribution workflow -
 
 ## Alt Text
 
-PostHog event taxonomy showing 12 typed events in four categories: review, agent, UI, and feedback, with property types and provider architecture.
+Component diagram of the PostHog analytics event taxonomy for the music attribution scaffold: 12 type-safe events across review, agentic UI, interaction, and feedback categories track the complete music credits workflow from approval through agent chat to proficiency changes, with graceful no-op fallback for transparent confidence scoring analytics.
+
+## Image Embed
+
+### For GitHub README / MkDocs (repo-root-relative)
+
+![Component diagram of the PostHog analytics event taxonomy for the music attribution scaffold: 12 type-safe events across review, agentic UI, interaction, and feedback categories track the complete music credits workflow from approval through agent chat to proficiency changes, with graceful no-op fallback for transparent confidence scoring analytics.](docs/figures/repo-figures/assets/fig-frontend-14-posthog-analytics.jpg)
+
+*Figure: Typed PostHog event taxonomy capturing the complete music attribution workflow, from review approvals and AG-UI agent interactions to proficiency-level transitions, with TypeScript generics ensuring compile-time safety for all 12 events.*
+
+### From this figure plan (relative)
+
+![Component diagram of the PostHog analytics event taxonomy for the music attribution scaffold: 12 type-safe events across review, agentic UI, interaction, and feedback categories track the complete music credits workflow from approval through agent chat to proficiency changes, with graceful no-op fallback for transparent confidence scoring analytics.](../assets/fig-frontend-14-posthog-analytics.jpg)

@@ -106,4 +106,16 @@ The key message is: "Splink applies Fellegi-Sunter theory to music entity record
 
 ## Alt Text
 
-Four-step Splink probabilistic linkage diagram: configure comparisons, estimate Fellegi-Sunter m/u parameters via EM, predict match probabilities, and cluster records above 0.85 threshold using union-find.
+Pipeline diagram of Splink probabilistic record linkage for music attribution entity resolution, showing four stages — configure comparison columns with blocking rules, estimate Fellegi-Sunter match/non-match probabilities via EM algorithm, predict pairwise match probabilities using DuckDB backend, and cluster records above 0.85 threshold using union-find — weighted at 0.8 in the open-source attribution scaffold's transparent confidence scoring.
+
+## Image Embed
+
+### For GitHub README / MkDocs (repo-root-relative)
+
+![Pipeline diagram of Splink probabilistic record linkage for music attribution entity resolution, showing four stages — configure comparison columns with blocking rules, estimate Fellegi-Sunter match/non-match probabilities via EM algorithm, predict pairwise match probabilities using DuckDB backend, and cluster records above 0.85 threshold using union-find — weighted at 0.8 in the open-source attribution scaffold's transparent confidence scoring.](docs/figures/repo-figures/assets/fig-backend-09-splink-probabilistic-linkage.jpg)
+
+*Figure 9. Splink applies Fellegi-Sunter probabilistic theory to music entity records, estimating match and non-match probabilities via expectation-maximization before clustering matched pairs with union-find — providing a statistically principled signal for entity resolution alongside identifier and string similarity methods.*
+
+### From this figure plan (relative)
+
+![Pipeline diagram of Splink probabilistic record linkage for music attribution entity resolution, showing four stages — configure comparison columns with blocking rules, estimate Fellegi-Sunter match/non-match probabilities via EM algorithm, predict pairwise match probabilities using DuckDB backend, and cluster records above 0.85 threshold using union-find — weighted at 0.8 in the open-source attribution scaffold's transparent confidence scoring.](../assets/fig-backend-09-splink-probabilistic-linkage.jpg)

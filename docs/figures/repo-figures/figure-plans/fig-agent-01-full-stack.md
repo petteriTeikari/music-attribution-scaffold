@@ -100,4 +100,16 @@ The key message is: "The agentic UI is a full-stack loop -- CopilotKit sends use
 
 ## Alt Text
 
-End-to-end agentic UI: CopilotKit sidebar sends messages via AG-UI SSE to FastAPI, PydanticAI agent queries database, streams response back with state.
+Architecture diagram: end-to-end agentic UI stack for open-source music attribution showing CopilotKit sidebar sending messages via AG-UI Server-Sent Events to a FastAPI backend where a PydanticAI agent queries music metadata with four domain tools, then streams transparent confidence scoring responses back through bidirectional DuetUI context hooks.
+
+## Image Embed
+
+### For GitHub README / MkDocs (repo-root-relative)
+
+![Architecture diagram: end-to-end agentic UI stack for open-source music attribution showing CopilotKit sidebar sending messages via AG-UI Server-Sent Events to a FastAPI backend where a PydanticAI agent queries music metadata with four domain tools, then streams transparent confidence scoring responses back through bidirectional DuetUI context hooks.](docs/figures/repo-figures/assets/fig-agent-01-full-stack.jpg)
+
+*Full-stack agentic UI architecture for the Music Attribution Scaffold, tracing the complete request path from CopilotKit sidebar through AG-UI SSE protocol to a PydanticAI agent with four domain-specific tools and back via streamed state snapshots.*
+
+### From this figure plan (relative)
+
+![Architecture diagram: end-to-end agentic UI stack for open-source music attribution showing CopilotKit sidebar sending messages via AG-UI Server-Sent Events to a FastAPI backend where a PydanticAI agent queries music metadata with four domain tools, then streams transparent confidence scoring responses back through bidirectional DuetUI context hooks.](../assets/fig-agent-01-full-stack.jpg)

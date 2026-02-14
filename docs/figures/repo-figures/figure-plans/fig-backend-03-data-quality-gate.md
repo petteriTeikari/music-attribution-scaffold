@@ -89,4 +89,16 @@ The key message is: "Every batch passes through three statistical checks -- iden
 
 ## Alt Text
 
-Pipeline diagram showing three batch validation checks (identifier coverage, duplicate detection, source distribution) with pass, warn, and fail outcome paths before Entity Resolution.
+Pipeline diagram of the music attribution data quality gate showing three batch validation checks — identifier coverage at 50% threshold, duplicate detection by source and ID, and source distribution capping any single source at 95% — with pass, warn, and fail outcome paths that prevent low-quality music metadata from entering the entity resolution pipeline.
+
+## Image Embed
+
+### For GitHub README / MkDocs (repo-root-relative)
+
+![Pipeline diagram of the music attribution data quality gate showing three batch validation checks — identifier coverage at 50% threshold, duplicate detection by source and ID, and source distribution capping any single source at 95% — with pass, warn, and fail outcome paths that prevent low-quality music metadata from entering the entity resolution pipeline.](docs/figures/repo-figures/assets/fig-backend-03-data-quality-gate.jpg)
+
+*Figure 3. The DataQualityGate enforces three statistical checks on every batch of NormalizedRecords, gating entry to the entity resolution pipeline with configurable thresholds and a QualityReport that enables pipeline observability.*
+
+### From this figure plan (relative)
+
+![Pipeline diagram of the music attribution data quality gate showing three batch validation checks — identifier coverage at 50% threshold, duplicate detection by source and ID, and source distribution capping any single source at 95% — with pass, warn, and fail outcome paths that prevent low-quality music metadata from entering the entity resolution pipeline.](../assets/fig-backend-03-data-quality-gate.jpg)

@@ -87,4 +87,16 @@ The key message is: "658 total tests -- 351 backend unit, 42 integration (real P
 
 ## Alt Text
 
-Testing pyramid with four layers: 351 unit tests at base, 42 integration tests with testcontainers PostgreSQL, 265 frontend Vitest tests, and Playwright E2E at the tip. Total 658 tests.
+Quality assurance diagram: testing pyramid for the open-source music attribution scaffold with 658 total tests across four layers -- 351 pytest unit tests validating Pydantic schemas and confidence scoring at the base, 42 integration tests against real PostgreSQL via testcontainers, 265 Vitest frontend tests with WCAG accessibility checks, and Playwright E2E browser tests at the tip, ensuring robust music metadata quality.
+
+## Image Embed
+
+### For GitHub README / MkDocs (repo-root-relative)
+
+![Quality assurance diagram: testing pyramid for the open-source music attribution scaffold with 658 total tests across four layers -- 351 pytest unit tests validating Pydantic schemas and confidence scoring at the base, 42 integration tests against real PostgreSQL via testcontainers, 265 Vitest frontend tests with WCAG accessibility checks, and Playwright E2E browser tests at the tip, ensuring robust music metadata quality.](docs/figures/repo-figures/assets/fig-repo-10-testing-pyramid.jpg)
+
+*Figure 10. The testing pyramid demonstrates the project's quality commitment: 351 unit tests cover all Pydantic models and pipeline stages, 42 integration tests validate against real PostgreSQL with pgvector via testcontainers, and 265 frontend tests include 11 agent integration tests and component-level WCAG checks via vitest-axe.*
+
+### From this figure plan (relative)
+
+![Quality assurance diagram: testing pyramid for the open-source music attribution scaffold with 658 total tests across four layers -- 351 pytest unit tests validating Pydantic schemas and confidence scoring at the base, 42 integration tests against real PostgreSQL via testcontainers, 265 Vitest frontend tests with WCAG accessibility checks, and Playwright E2E browser tests at the tip, ensuring robust music metadata quality.](../assets/fig-repo-10-testing-pyramid.jpg)

@@ -95,4 +95,16 @@ The key message is: "MCP provides standardized, machine-readable permission quer
 
 ## Alt Text
 
-MCP permission query flow diagram showing AI platform checking training rights via standardized protocol, compared against custom REST API and blockchain approaches.
+Decision diagram: MCP as consent infrastructure for music attribution, showing machine-readable AI training permission queries with transparent confidence responses, compared against custom REST API and blockchain approaches for the open-source attribution scaffold enabling attribution-by-design.
+
+## Image Embed
+
+### For GitHub README / MkDocs (repo-root-relative)
+
+![Decision diagram: MCP as consent infrastructure for music attribution, showing machine-readable AI training permission queries with transparent confidence responses, compared against custom REST API and blockchain approaches for the open-source attribution scaffold enabling attribution-by-design.](docs/figures/repo-figures/assets/fig-choice-11-mcp-permissions.jpg)
+
+*Model Context Protocol (MCP) enables standardized, machine-readable permission queries for AI training consent in the music attribution scaffold, allowing AI platforms to programmatically check training rights with confidence-scored responses before use, not after (Teikari 2026, SSRN 6109087).*
+
+### From this figure plan (relative)
+
+![Decision diagram: MCP as consent infrastructure for music attribution, showing machine-readable AI training permission queries with transparent confidence responses, compared against custom REST API and blockchain approaches for the open-source attribution scaffold enabling attribution-by-design.](../assets/fig-choice-11-mcp-permissions.jpg)

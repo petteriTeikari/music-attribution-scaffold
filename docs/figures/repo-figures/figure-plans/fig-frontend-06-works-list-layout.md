@@ -90,4 +90,16 @@ The key message is: "The works catalog uses horizontal rows with divider lines (
 
 ## Alt Text
 
-Works list page with fixed sidebar and horizontal catalog rows showing confidence gauges, titles, assurance badges, and source agreement percentages.
+Interface mockup of the works catalog page in the music attribution scaffold: fixed left sidebar navigation alongside horizontal rows displaying confidence gauges, music credits titles, A0-A3 assurance badges, and source agreement percentages with Jotai-driven search and sort for transparent confidence scoring of music metadata.
+
+## Image Embed
+
+### For GitHub README / MkDocs (repo-root-relative)
+
+![Interface mockup of the works catalog page in the music attribution scaffold: fixed left sidebar navigation alongside horizontal rows displaying confidence gauges, music credits titles, A0-A3 assurance badges, and source agreement percentages with Jotai-driven search and sort for transparent confidence scoring of music metadata.](docs/figures/repo-figures/assets/fig-frontend-06-works-list-layout.jpg)
+
+*Figure: Layout of the /works catalog page showing editorial horizontal rows (not shadow-box cards) with per-work confidence gauges, assurance badges, and source agreement, driven by a Jotai atom chain for reactive filtering and sorting.*
+
+### From this figure plan (relative)
+
+![Interface mockup of the works catalog page in the music attribution scaffold: fixed left sidebar navigation alongside horizontal rows displaying confidence gauges, music credits titles, A0-A3 assurance badges, and source agreement percentages with Jotai-driven search and sort for transparent confidence scoring of music metadata.](../assets/fig-frontend-06-works-list-layout.jpg)

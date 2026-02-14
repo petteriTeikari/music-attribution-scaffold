@@ -98,4 +98,16 @@ The key message is: "Each assurance level maps to specific industry identifiers 
 
 ## Alt Text
 
-Pyramid diagram mapping assurance levels A0 through A3 to industry identifiers: A0 has none, A1 has ISRC, A2 adds ISWC, A3 adds ISNI and IPI, with analog hole warning.
+Mapping diagram: pyramid mapping music attribution assurance levels A0 through A3 to industry standard identifiers -- A0 with no identifier, A1 with ISRC only, A2 adding ISWC for cross-database agreement, A3 adding ISNI and IPI for artist-verified identity -- with analog hole warning showing that even A3 is not tamper-proof, supporting transparent confidence in music metadata.
+
+## Image Embed
+
+### For GitHub README / MkDocs (repo-root-relative)
+
+![Mapping diagram: pyramid mapping music attribution assurance levels A0 through A3 to industry standard identifiers -- A0 with no identifier, A1 with ISRC only, A2 adding ISWC for cross-database agreement, A3 adding ISNI and IPI for artist-verified identity -- with analog hole warning showing that even A3 is not tamper-proof, supporting transparent confidence in music metadata.](docs/figures/repo-figures/assets/fig-theory-06-assurance-standards-mapping.jpg)
+
+*Figure 6. Assurance levels mapped to music industry standard identifiers (ISRC, ISWC, ISNI, IPI): each level requires progressively stronger evidence, from no provenance at A0 to artist-verified identity at A3, while the analog hole warning acknowledges that no level guarantees tamper-proof attribution.*
+
+### From this figure plan (relative)
+
+![Mapping diagram: pyramid mapping music attribution assurance levels A0 through A3 to industry standard identifiers -- A0 with no identifier, A1 with ISRC only, A2 adding ISWC for cross-database agreement, A3 adding ISNI and IPI for artist-verified identity -- with analog hole warning showing that even A3 is not tamper-proof, supporting transparent confidence in music metadata.](../assets/fig-theory-06-assurance-standards-mapping.jpg)

@@ -94,4 +94,16 @@ The key message is: "A well-calibrated system's reliability curve follows the di
 
 ## Alt Text
 
-Reliability diagram with predicted confidence on x-axis and observed frequency on y-axis, showing perfect calibration diagonal, overconfident curve below, and panels defining calibration and sharpness.
+Theory visualization: reliability diagram for evaluating music attribution confidence scoring calibration -- predicted confidence on x-axis versus observed frequency on y-axis with perfect calibration diagonal, overconfident curve below the diagonal, and underconfident region above -- plus panels defining calibration (ECE metric) and sharpness for transparent confidence in music metadata systems.
+
+## Image Embed
+
+### For GitHub README / MkDocs (repo-root-relative)
+
+![Theory visualization: reliability diagram for evaluating music attribution confidence scoring calibration -- predicted confidence on x-axis versus observed frequency on y-axis with perfect calibration diagonal, overconfident curve below the diagonal, and underconfident region above -- plus panels defining calibration (ECE metric) and sharpness for transparent confidence in music metadata systems.](docs/figures/repo-figures/assets/fig-theory-13-reliability-diagram.jpg)
+
+*Figure 13. Reliability diagram for confidence calibration: when the attribution system says "85% confident," it should be correct 85% of the time. Deviations below the diagonal indicate overconfidence, while deviations above indicate underconfidence -- both calibration and sharpness must be evaluated for trustworthy music attribution.*
+
+### From this figure plan (relative)
+
+![Theory visualization: reliability diagram for evaluating music attribution confidence scoring calibration -- predicted confidence on x-axis versus observed frequency on y-axis with perfect calibration diagonal, overconfident curve below the diagonal, and underconfident region above -- plus panels defining calibration (ECE metric) and sharpness for transparent confidence in music metadata systems.](../assets/fig-theory-13-reliability-diagram.jpg)

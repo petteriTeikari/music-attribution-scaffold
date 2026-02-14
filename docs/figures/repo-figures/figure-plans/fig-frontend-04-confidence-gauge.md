@@ -101,4 +101,16 @@ The key message is: "The confidence gauge uses a 270-degree SVG arc with three s
 
 ## Alt Text
 
-Confidence gauge component showing three-tier SVG arc (green/amber/red) in three sizes, with ARIA meter role anatomy and animation behavior.
+UI component diagram of the ConfidenceGauge used in the music attribution scaffold: a 270-degree SVG arc with three transparent confidence scoring tiers -- green for high, amber for medium, red for low -- shown in three size variants with ARIA meter role accessibility attributes and motion-safe mount animation for music credits visualization.
+
+## Image Embed
+
+### For GitHub README / MkDocs (repo-root-relative)
+
+![UI component diagram of the ConfidenceGauge used in the music attribution scaffold: a 270-degree SVG arc with three transparent confidence scoring tiers -- green for high, amber for medium, red for low -- shown in three size variants with ARIA meter role accessibility attributes and motion-safe mount animation for music credits visualization.](docs/figures/repo-figures/assets/fig-frontend-04-confidence-gauge.jpg)
+
+*Figure: Anatomy of the ConfidenceGauge component, the primary visual indicator for music attribution confidence, illustrating tier thresholds (0.85/0.50), size variants, SVG arc construction, and WCAG 2.1 AA accessibility via role="meter".*
+
+### From this figure plan (relative)
+
+![UI component diagram of the ConfidenceGauge used in the music attribution scaffold: a 270-degree SVG arc with three transparent confidence scoring tiers -- green for high, amber for medium, red for low -- shown in three size variants with ARIA meter role accessibility attributes and motion-safe mount animation for music credits visualization.](../assets/fig-frontend-04-confidence-gauge.jpg)

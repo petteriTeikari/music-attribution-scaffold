@@ -85,4 +85,16 @@ The key message is: "Four commands from clone to a fully running development sta
 
 ## Alt Text
 
-Four-step quickstart flow with Roman numerals: I Clone+Install, II Start Infrastructure via Docker, III Verify health endpoints, IV Run test suites. Prerequisites listed at bottom.
+Workflow diagram: four-step quickstart for the open-source music attribution scaffold using Makefile commands -- clone and install with uv, start Docker Compose development stack with PostgreSQL and FastAPI, verify health endpoints, and run 658 tests across backend pytest and frontend Vitest suites, demonstrating a five-minute path to a running local environment.
+
+## Image Embed
+
+### For GitHub README / MkDocs (repo-root-relative)
+
+![Workflow diagram: four-step quickstart for the open-source music attribution scaffold using Makefile commands -- clone and install with uv, start Docker Compose development stack with PostgreSQL and FastAPI, verify health endpoints, and run 658 tests across backend pytest and frontend Vitest suites, demonstrating a five-minute path to a running local environment.](docs/figures/repo-figures/assets/fig-repo-05-quickstart-flow.jpg)
+
+*Figure 5. The quickstart flow reduces onboarding to four commands: install dependencies via uv, launch the six-service Docker Compose stack, verify backend and frontend health endpoints, and run the full test suite -- requiring only git, Docker, and uv as prerequisites.*
+
+### From this figure plan (relative)
+
+![Workflow diagram: four-step quickstart for the open-source music attribution scaffold using Makefile commands -- clone and install with uv, start Docker Compose development stack with PostgreSQL and FastAPI, verify health endpoints, and run 658 tests across backend pytest and frontend Vitest suites, demonstrating a five-minute path to a running local environment.](../assets/fig-repo-05-quickstart-flow.jpg)
