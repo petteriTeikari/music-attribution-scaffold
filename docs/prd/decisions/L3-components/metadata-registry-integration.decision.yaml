@@ -1,0 +1,73 @@
+# Metadata Registry Integration
+#
+# Breadth of external metadata registry integration beyond the current
+# MusicBrainz-focused approach.
+
+decision_id: metadata_registry_integration
+title: "Metadata Registry Integration"
+description: >
+  Determines the breadth of external metadata registry integration. The
+  current scaffold uses MusicBrainz as the primary external registry.
+  Options range from MusicBrainz-only to multi-registry integration
+  to full DDEX compliance for industry-standard metadata exchange.
+
+decision_level: L3_components
+status: stub
+last_updated: 2026-02-14
+
+options:
+  - option_id: musicbrainz_only
+    title: "MusicBrainz Only"
+    description: >
+      MusicBrainz as the sole external metadata registry. Sufficient
+      for research purposes and indie music. Limited coverage of
+      commercial catalog metadata and real-time release data.
+    prior_probability: 0.45
+    status: selected
+
+  - option_id: multi_registry
+    title: "Multi-Registry Integration"
+    description: >
+      Integrate multiple registries: MusicBrainz (community), Discogs
+      (marketplace), ISNI (identifiers), and ISRC/ISWC lookups.
+      Requires entity resolution across different identifier systems
+      and data quality reconciliation.
+    prior_probability: 0.35
+    status: candidate
+
+  - option_id: ddex_full
+    title: "Full DDEX Compliance"
+    description: >
+      Implement DDEX (Digital Data Exchange) standard compliance for
+      industry-standard metadata exchange. Enables integration with
+      major label systems, distributors, and DSPs. Significant
+      engineering investment and potentially requires DDEX membership.
+    prior_probability: 0.20
+    status: candidate
+
+research_notes: >
+  MusicBrainz has the most comprehensive open metadata for indie and
+  catalog music. DDEX is the industry standard for commercial metadata
+  exchange but has high implementation complexity. The scaffold's entity
+  resolution pipeline is designed to handle multi-source metadata
+  reconciliation, making multi-registry integration architecturally
+  feasible even if not yet implemented.
+
+influences:
+  - from: external_registry_integration
+    direction: upstream
+    rationale: "Existing external registry node scope constrains this decision"
+  - from: data_model_complexity
+    direction: upstream
+    rationale: "Multi-registry requires complex entity resolution across identifier systems"
+
+references:
+  - "MusicBrainz — open music metadata encyclopedia"
+  - "DDEX — Digital Data Exchange standards"
+  - "ISRC/ISWC/ISNI identifier systems"
+
+tags:
+  - metadata
+  - registries
+  - integration
+  - discussion-expansion

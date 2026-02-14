@@ -1,0 +1,67 @@
+# Training Data Provenance Store
+#
+# Storage infrastructure for training data provenance records.
+
+decision_id: training_data_provenance_store
+title: "Training Data Provenance Store"
+description: >
+  Determines where and how training data provenance records are stored.
+  Provenance records track which training data was used, authorization
+  status, and attribution linkages.
+
+decision_level: L4_deployment
+status: stub
+last_updated: 2026-02-14
+
+options:
+  - option_id: in_primary_db
+    title: "In Primary Database"
+    description: >
+      Store provenance records alongside attribution data in the primary
+      PostgreSQL database. Simple deployment, transactional consistency.
+      May not scale for very large provenance graphs.
+    prior_probability: 0.50
+    status: selected
+
+  - option_id: dedicated_db
+    title: "Dedicated Provenance Database"
+    description: >
+      Separate database optimized for provenance queries (append-only
+      log structure, temporal queries, graph traversal). Higher
+      operational complexity but better query patterns for audit trails.
+    prior_probability: 0.30
+    status: candidate
+
+  - option_id: blockchain
+    title: "Blockchain/DLT"
+    description: >
+      Distributed ledger for tamper-evident provenance records. Maximum
+      auditability and trust but significant infrastructure overhead
+      and limited query flexibility.
+    prior_probability: 0.20
+    status: candidate
+
+research_notes: >
+  The primary database approach is simplest and sufficient for current
+  scale. Dedicated provenance databases become valuable when provenance
+  queries are frequent and complex (multi-hop traversal, temporal ranges).
+  Blockchain approaches are technically interesting but add significant
+  complexity for modest trust gains in a research context.
+
+influences:
+  - from: primary_database
+    direction: upstream
+    rationale: "Primary database choice determines in-DB provenance feasibility"
+  - from: provenance_strategy
+    direction: upstream
+    rationale: "Provenance strategy determines storage depth requirements"
+
+references:
+  - "C2PA — content provenance standard"
+  - "DVC — data version control for ML"
+
+tags:
+  - provenance
+  - storage
+  - infrastructure
+  - discussion-expansion

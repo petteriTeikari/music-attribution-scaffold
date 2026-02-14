@@ -1,0 +1,70 @@
+# Attribution Evaluation Framework
+#
+# How attribution accuracy and agent quality are evaluated systematically.
+
+decision_id: attribution_eval_framework
+title: "Attribution Evaluation Framework"
+description: >
+  Determines the evaluation infrastructure for measuring attribution
+  accuracy and agent response quality. Options range from manual
+  spot-checking to automated regression testing to full CI-integrated
+  evaluation pipelines.
+
+decision_level: L3_components
+status: stub
+last_updated: 2026-02-14
+
+options:
+  - option_id: manual_spot_check
+    title: "Manual Spot-Check"
+    description: >
+      Manual review of attribution results against known-good data.
+      Sufficient for research validation but doesn't scale and can't
+      detect regressions automatically.
+    prior_probability: 0.35
+    status: candidate
+
+  - option_id: automated_regression
+    title: "Automated Regression Testing"
+    description: >
+      Automated evaluation suite with gold-standard datasets, scoring
+      metrics (precision, recall, confidence calibration), and regression
+      detection. Runs on schedule or on-demand. Frameworks: Braintrust,
+      Promptfoo, or custom PydanticAI test harnesses.
+    prior_probability: 0.45
+    status: selected
+
+  - option_id: full_ci_eval
+    title: "Full CI-Integrated Evaluation"
+    description: >
+      Evaluation runs as part of every CI pipeline. Attribution accuracy
+      and agent quality gates block deployment. Requires deterministic
+      gold datasets and fast evaluation cycles.
+    prior_probability: 0.20
+    status: candidate
+
+research_notes: >
+  Braintrust and Promptfoo are the leading evaluation frameworks for
+  LLM/agent applications. The scaffold currently uses PydanticAI's
+  built-in testing utilities (mock models, deterministic responses) for
+  unit-level agent testing. A gold-standard attribution dataset is needed
+  for meaningful accuracy evaluation beyond unit tests.
+
+influences:
+  - from: ci_cd_pipeline
+    direction: upstream
+    rationale: "CI pipeline determines evaluation automation options"
+  - from: data_quality_strategy
+    direction: upstream
+    rationale: "Data quality strategy informs evaluation dataset management"
+
+references:
+  - "Braintrust — dataset-driven LLM evaluation"
+  - "Promptfoo — open-source prompt/model evaluation"
+  - "PydanticAI testing utilities"
+
+tags:
+  - evaluation
+  - testing
+  - quality
+  - discussion-expansion

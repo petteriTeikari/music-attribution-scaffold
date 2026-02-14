@@ -1,0 +1,67 @@
+# Market Intelligence
+#
+# How the team monitors the music technology competitive landscape.
+
+decision_id: market_intelligence
+title: "Market Intelligence"
+description: >
+  Determines how the team monitors the music technology ecosystem,
+  including competitor activity, partnership opportunities, and
+  market shifts relevant to attribution infrastructure.
+
+decision_level: L5_operations
+status: stub
+last_updated: 2026-02-14
+
+options:
+  - option_id: manual_research
+    title: "Manual Research"
+    description: >
+      Ad-hoc research via industry publications, conference attendance,
+      and network conversations. Lowest cost but inconsistent coverage.
+    prior_probability: 0.45
+    status: selected
+
+  - option_id: curated_alerts
+    title: "Curated Alert System"
+    description: >
+      Structured monitoring via news aggregators, Google Alerts, RSS
+      feeds, and social media tracking for key companies and topics.
+      Regular synthesis reports (monthly or quarterly).
+    prior_probability: 0.40
+    status: candidate
+
+  - option_id: automated
+    title: "Automated Intelligence"
+    description: >
+      Automated competitive intelligence with LLM-powered summarization
+      of market developments. Requires dedicated tooling and significant
+      signal-to-noise filtering.
+    prior_probability: 0.15
+    status: candidate
+
+research_notes: >
+  The music-tech ecosystem includes ~50 companies across 6 tiers
+  (generation, attribution, rights management, certification, content ID,
+  metadata). Key signals to track: funding rounds, partnership
+  announcements, patent filings, regulatory submissions, and API launches.
+  For a research project, curated alerts provide sufficient coverage
+  without over-investment.
+
+influences:
+  - from: platform_strategy
+    direction: upstream
+    rationale: "Platform strategy determines competitive monitoring scope"
+  - from: partnership_model
+    direction: upstream
+    rationale: "Partnership model determines which companies to track"
+
+references:
+  - "Suno $2.45B valuation as market signal"
+  - "STIM licence pilot as institutional signal"
+
+tags:
+  - intelligence
+  - monitoring
+  - ecosystem
+  - discussion-expansion

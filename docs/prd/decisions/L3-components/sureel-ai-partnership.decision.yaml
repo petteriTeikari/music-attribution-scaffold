@@ -1,0 +1,69 @@
+# Sureel AI Partnership
+#
+# Whether and how the scaffold partners with Sureel AI for music
+# identification and attribution.
+
+decision_id: sureel_ai_partnership
+title: "Sureel AI Partnership"
+description: >
+  Determines the partnership model with Sureel AI, a company specializing
+  in music identification and attribution with a claimed 86-90% accuracy
+  rate and 5 pending patents. Sureel is the technology partner for STIM's
+  collective AI music licence pilot.
+
+decision_level: L3_components
+status: stub
+last_updated: 2026-02-14
+
+options:
+  - option_id: no_partnership
+    title: "No Partnership"
+    description: >
+      No partnership with Sureel AI. The scaffold uses independent
+      identification and attribution methods.
+    prior_probability: 0.45
+    status: selected
+
+  - option_id: decoupled_api
+    title: "Decoupled API Integration"
+    description: >
+      Integrate Sureel's decoupled mode API for identification results.
+      The scaffold queries Sureel for work identification and receives
+      confidence-scored matches. Lighter integration, no shared state.
+    prior_probability: 0.40
+    status: candidate
+
+  - option_id: integrated
+    title: "Integrated Mode"
+    description: >
+      Full integration with Sureel's attribution graph. Shared entity
+      resolution, combined confidence scoring, and joint data enrichment.
+      Requires deep technical coordination and data sharing agreement.
+    prior_probability: 0.15
+    status: candidate
+
+research_notes: >
+  Sureel AI provides both decoupled (lighter) and integrated (full) modes.
+  As STIM's technology partner for the world's first collective AI music
+  licence, Sureel has unique institutional access to CMO infrastructure.
+  5 patents pending on their identification approach. Claimed 86-90%
+  accuracy, but independent validation is limited.
+
+influences:
+  - from: tda_provider_integration
+    direction: upstream
+    rationale: "TDA provider strategy determines Sureel engagement level"
+  - from: cmo_licensing_integration
+    direction: upstream
+    rationale: "CMO integration creates natural Sureel partnership surface via STIM"
+
+references:
+  - "Sureel AI — 86-90% accuracy claimed, 5 patents pending"
+  - "Sureel AI as STIM technology partner"
+  - "STIM collective AI music licence (Sep 2025)"
+
+tags:
+  - partnership
+  - identification
+  - named-partner
+  - discussion-expansion

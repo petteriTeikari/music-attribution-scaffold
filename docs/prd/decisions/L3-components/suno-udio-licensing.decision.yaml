@@ -1,0 +1,74 @@
+# Suno/Udio Licensing Integration
+#
+# Whether and how the scaffold integrates with the two dominant AI music
+# generation platforms.
+
+decision_id: suno_udio_licensing
+title: "Suno/Udio Licensing Integration"
+description: >
+  Determines integration depth with Suno and Udio, the two dominant AI
+  music generation platforms. Suno ($2.45B valuation, Warner deal) and
+  Udio (UMG/WMG settlements) represent the primary sources of AI-generated
+  music content that may need attribution.
+
+decision_level: L3_components
+status: stub
+last_updated: 2026-02-14
+
+options:
+  - option_id: no_integration
+    title: "No Integration"
+    description: >
+      No integration with Suno or Udio. AI-generated music from these
+      platforms is treated like any other audio file — metadata extracted
+      from file tags only.
+    prior_probability: 0.55
+    status: selected
+
+  - option_id: metadata_extraction
+    title: "Metadata Extraction"
+    description: >
+      Extract and normalize attribution metadata that Suno/Udio embed
+      in their outputs (generation parameters, model version, training
+      data references). One-way data flow; no API integration.
+    prior_probability: 0.30
+    status: candidate
+
+  - option_id: attribution_api
+    title: "Attribution API Integration"
+    description: >
+      Integrate with Suno/Udio APIs (if available) to query detailed
+      attribution information for specific generated outputs. Bidirectional
+      — could provide scaffold's multi-source confidence data back to
+      platforms.
+    prior_probability: 0.15
+    status: candidate
+
+research_notes: >
+  Suno raised $250M at $2.45B valuation and signed a licensing deal with
+  Warner Music Group. Also acquired Songkick (live events), signaling
+  platform ambitions beyond generation. Udio settled copyright suits with
+  UMG and WMG, pivoting to licensed training data. Both platforms are
+  beginning to embed attribution metadata in outputs, but no standard
+  format exists. The scaffold's value proposition is strongest when
+  platform-embedded metadata can be cross-referenced with external sources.
+
+influences:
+  - from: ai_music_platform_connector
+    direction: upstream
+    rationale: "Platform connector strategy determines Suno/Udio integration"
+  - from: platform_strategy
+    direction: upstream
+    rationale: "Platform strategy determines partnership with competing platforms"
+
+references:
+  - "Suno $250M raise at $2.45B valuation, Warner Music deal, Songkick acquisition"
+  - "Udio UMG/WMG copyright settlements, walled-garden pivot"
+
+tags:
+  - platforms
+  - suno
+  - udio
+  - ai-music
+  - named-partner
+  - discussion-expansion

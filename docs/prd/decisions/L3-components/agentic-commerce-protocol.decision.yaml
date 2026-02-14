@@ -1,0 +1,72 @@
+# Agentic Commerce Protocol
+#
+# Machine-readable licensing and autonomous transaction capability.
+
+decision_id: agentic_commerce_protocol
+title: "Agentic Commerce Protocol"
+description: >
+  Determines whether and how the scaffold supports machine-readable
+  licensing queries and autonomous commerce transactions. Options
+  range from manual human-mediated licensing to machine-readable
+  rights queries to fully autonomous negotiation.
+
+decision_level: L3_components
+status: stub
+last_updated: 2026-02-14
+
+options:
+  - option_id: none_manual
+    title: "None — Manual Licensing"
+    description: >
+      All licensing decisions are human-mediated. The scaffold provides
+      attribution data but does not participate in licensing transactions.
+      Current state.
+    prior_probability: 0.45
+    status: selected
+
+  - option_id: machine_readable_licensing
+    title: "Machine-Readable Licensing"
+    description: >
+      MCP tools expose machine-readable licensing status (opt-in,
+      opt-out, conditional) that AI agents can query programmatically.
+      Humans still approve transactions but AI agents can check
+      permissions autonomously.
+    prior_probability: 0.40
+    status: candidate
+
+  - option_id: autonomous_negotiation
+    title: "Autonomous Negotiation"
+    description: >
+      Full autonomous commerce: AI agents negotiate licensing terms,
+      execute payments (via ACP/TAP), and record transactions. Requires
+      commerce protocol integration and significant trust infrastructure.
+    prior_probability: 0.15
+    status: candidate
+
+research_notes: >
+  ACP (OpenAI + Stripe) provides payment orchestration for agent
+  transactions. TAP (Visa) adds agent verification. The scaffold's
+  check_permissions MCP tool is already a primitive form of
+  machine-readable licensing. Full autonomous negotiation is
+  technically feasible but ethically and legally premature for
+  music rights.
+
+influences:
+  - from: api_protocol
+    direction: upstream
+    rationale: "MCP protocol enables machine-readable licensing queries"
+  - from: platform_strategy
+    direction: upstream
+    rationale: "Platform strategy determines commerce integration depth"
+
+references:
+  - "ACP — Agentic Commerce Protocol (OpenAI + Stripe)"
+  - "TAP — Transaction Authorization Protocol (Visa)"
+  - "Teikari (2026) — two-friction taxonomy, MCP as consent infrastructure"
+
+tags:
+  - commerce
+  - licensing
+  - mcp
+  - ecosystem
+  - discussion-expansion

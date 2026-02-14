@@ -1,0 +1,69 @@
+# Golden Dataset Management
+#
+# How gold-standard attribution datasets are created, versioned, and maintained.
+
+decision_id: golden_dataset_management
+title: "Golden Dataset Management"
+description: >
+  Determines the management approach for gold-standard attribution datasets
+  used in evaluation and regression testing. These datasets contain manually
+  verified attribution records against which the scaffold's automated
+  attribution is benchmarked.
+
+decision_level: L4_deployment
+status: stub
+last_updated: 2026-02-14
+
+options:
+  - option_id: manual_curation
+    title: "Manual Curation"
+    description: >
+      Gold datasets curated manually in Git-tracked JSON/YAML files.
+      Simple version control but limited scale and no automated
+      quality validation.
+    prior_probability: 0.40
+    status: candidate
+
+  - option_id: versioned_dvc
+    title: "Versioned with DVC"
+    description: >
+      Gold datasets managed with DVC (Data Version Control) alongside
+      code. Enables dataset versioning, reproducibility, and CI
+      integration. Datasets stored in object storage with metadata
+      in Git.
+    prior_probability: 0.40
+    status: selected
+
+  - option_id: automated
+    title: "Automated Curation"
+    description: >
+      Semi-automated gold dataset creation with human-in-the-loop
+      validation. The system proposes new gold records based on high-
+      confidence attributions; humans approve or reject.
+    prior_probability: 0.20
+    status: candidate
+
+research_notes: >
+  Gold datasets are critical for the attribution_eval_framework node.
+  Without gold-standard data, accuracy metrics are meaningless. DVC
+  provides the best balance of version control and scalability for
+  ML datasets. The Imogen Heap mock data (8 works, 0.0-0.95 confidence)
+  serves as the initial gold dataset seed.
+
+influences:
+  - from: attribution_eval_framework
+    direction: upstream
+    rationale: "Eval framework determines gold dataset requirements"
+  - from: data_quality_strategy
+    direction: upstream
+    rationale: "Data quality strategy informs dataset validation approach"
+
+references:
+  - "DVC — Data Version Control"
+  - "Braintrust — dataset-driven evaluation"
+
+tags:
+  - datasets
+  - evaluation
+  - quality
+  - discussion-expansion

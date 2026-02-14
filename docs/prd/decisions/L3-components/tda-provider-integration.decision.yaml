@@ -1,0 +1,70 @@
+# TDA Provider Integration
+#
+# Whether and how the scaffold integrates with external Training Data
+# Attribution providers beyond the existing training_attribution_integration node.
+
+decision_id: tda_provider_integration
+title: "TDA Provider Integration"
+description: >
+  Determines integration depth with Training Data Attribution (TDA) providers.
+  TDA quantifies how specific training data influenced generative model output.
+  Options range from no dedicated provider integration (metadata-only) to
+  API-based partnerships to self-hosted influence computation engines.
+
+decision_level: L3_components
+status: stub
+last_updated: 2026-02-14
+
+options:
+  - option_id: none
+    title: "None — Metadata-Only"
+    description: >
+      No dedicated TDA provider integration. Attribution relies on
+      metadata matching from MusicBrainz, Discogs, file metadata, and
+      human input. Current scaffold state.
+    prior_probability: 0.50
+    status: selected
+
+  - option_id: api_partner
+    title: "API Partner Integration"
+    description: >
+      Integrate with one or more TDA provider APIs to receive influence
+      percentages and training provenance data. Requires commercial
+      agreements and API key management.
+    prior_probability: 0.35
+    status: candidate
+
+  - option_id: self_hosted
+    title: "Self-Hosted Engine"
+    description: >
+      Run influence function computation locally using research tools
+      (DataInf, TRAK, TracIn). Maximum control but requires GPU resources
+      and ML engineering expertise.
+    prior_probability: 0.15
+    status: candidate
+
+research_notes: >
+  TDA is the key technical differentiator for AI music attribution vs
+  traditional metadata matching. The field is split between training-time
+  approaches (require integration during model training) and post-hoc
+  approaches (can analyze existing models). Most commercial TDA providers
+  are pre-revenue and pre-product-market-fit as of early 2026.
+
+influences:
+  - from: ai_framework_strategy
+    direction: upstream
+    rationale: "AI framework determines whether TDA computation is feasible"
+  - from: build_vs_buy_posture
+    direction: upstream
+    rationale: "Custom builders may self-host; SaaS teams use partner APIs"
+
+references:
+  - "Musical AI — training-time TDA, $7.3M funded"
+  - "Sureel AI — decoupled and integrated modes, 5 patents"
+  - "DataInf, TRAK, TracIn — research-grade influence function libraries"
+
+tags:
+  - tda
+  - integration
+  - ecosystem
+  - discussion-expansion

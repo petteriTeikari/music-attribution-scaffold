@@ -1,0 +1,68 @@
+# Partnership Health Metrics
+#
+# Monitoring the health and SLA compliance of external partnerships.
+
+decision_id: partnership_health_metrics
+title: "Partnership Health Metrics"
+description: >
+  Determines how the health of external partnerships and API integrations
+  is monitored. As the scaffold adds integration points (SoundExchange,
+  Sureel, MusicBrainz, etc.), monitoring API availability and data
+  quality becomes operationally important.
+
+decision_level: L5_operations
+status: stub
+last_updated: 2026-02-14
+
+options:
+  - option_id: no_monitoring
+    title: "No Dedicated Monitoring"
+    description: >
+      No dedicated partnership monitoring. API failures surface through
+      application error handling and user reports. Acceptable for
+      research/pre-production.
+    prior_probability: 0.40
+    status: selected
+
+  - option_id: basic_uptime
+    title: "Basic Uptime Monitoring"
+    description: >
+      Monitor API endpoint availability and response latency for each
+      integration partner. Alerts on downtime or degraded performance.
+      Standard health check approach.
+    prior_probability: 0.40
+    status: candidate
+
+  - option_id: full_sla
+    title: "Full SLA Monitoring"
+    description: >
+      Comprehensive SLA monitoring including uptime, latency percentiles,
+      data freshness, error rates, and data quality metrics. SLA
+      dashboards per partner with escalation procedures.
+    prior_probability: 0.20
+    status: candidate
+
+research_notes: >
+  Partnership monitoring becomes critical when the scaffold transitions
+  from research to production. Current integrations (MusicBrainz API)
+  have no SLA and occasionally rate-limit. Future integrations
+  (SoundExchange, Sureel) may have contractual SLAs requiring monitoring.
+  Basic uptime monitoring is the minimum viable operational practice.
+
+influences:
+  - from: partnership_model
+    direction: upstream
+    rationale: "Partnership model determines monitoring depth"
+  - from: observability_stack
+    direction: upstream
+    rationale: "Observability stack provides monitoring infrastructure"
+
+references:
+  - "MusicBrainz API rate limiting documentation"
+  - "SoundExchange API (planned)"
+
+tags:
+  - monitoring
+  - partnerships
+  - sla
+  - discussion-expansion

@@ -1,0 +1,71 @@
+# CMO Licensing Integration
+#
+# Whether and how the scaffold integrates with Collective Management
+# Organizations for AI music licensing.
+
+decision_id: cmo_licensing_integration
+title: "CMO Licensing Integration"
+description: >
+  Determines integration depth with Collective Management Organizations
+  (CMOs) such as STIM, GEMA, PRS, and ASCAP/BMI. CMOs manage licensing
+  on behalf of rights holders. Integration could range from no CMO
+  involvement to serving as attribution infrastructure for a multi-CMO
+  licensing federation.
+
+decision_level: L3_components
+status: stub
+last_updated: 2026-02-14
+
+options:
+  - option_id: none
+    title: "None — No CMO Integration"
+    description: >
+      No CMO integration. The scaffold operates independently of
+      licensing infrastructure. Attribution data is available but
+      not connected to licensing workflows.
+    prior_probability: 0.45
+    status: selected
+
+  - option_id: single_cmo_pilot
+    title: "Single CMO Pilot"
+    description: >
+      Partner with one CMO (e.g., STIM) for a pilot integration.
+      Provide attribution data to support licensing decisions.
+      Limited scope, manageable complexity.
+    prior_probability: 0.35
+    status: candidate
+
+  - option_id: multi_cmo_federation
+    title: "Multi-CMO Federation"
+    description: >
+      Build federation infrastructure enabling multiple CMOs to query
+      the same attribution engine. Cross-CMO data sharing protocol,
+      conflict resolution for overlapping rights claims, and
+      compliance reporting.
+    prior_probability: 0.20
+    status: candidate
+
+research_notes: >
+  STIM launched the world's first collective AI music licence (Sep 2025)
+  with Sureel AI as technology partner. This creates the first real
+  integration surface for attribution scaffolds with licensing
+  infrastructure. Other CMOs (GEMA, PRS, ASCAP/BMI) are evaluating
+  similar approaches but haven't launched pilots.
+
+influences:
+  - from: partnership_model
+    direction: upstream
+    rationale: "CMO federation requires the CMO federated partnership model"
+  - from: regulatory_posture
+    direction: upstream
+    rationale: "Compliance requirements drive CMO integration depth"
+
+references:
+  - "STIM collective AI music licence pilot (Sep 2025)"
+  - "Sureel AI as STIM technology partner"
+
+tags:
+  - cmo
+  - licensing
+  - ecosystem
+  - discussion-expansion
