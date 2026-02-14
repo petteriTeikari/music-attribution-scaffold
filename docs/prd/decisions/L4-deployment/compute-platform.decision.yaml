@@ -7,6 +7,11 @@
 # corrected Hetzner bare-metal complexity (it is NOT simple),
 # added Kamal 2 as deployment mechanism. See FinOps landscape:
 # docs/planning/deployement-finops-landscape.md
+#
+# Updated 2026-02-14 (v2.1.1): Added geopolitical risk dimension —
+# sovereignty_conscious_eu archetype, CLOUD Act/Schrems III change
+# drivers, jurisdictional constraints on US-owned options. See:
+# docs/planning/deployement-finops-landscape-geopolitical-risk-assessment.md
 
 decision_id: compute_platform
 title: "Compute Platform"
@@ -235,6 +240,25 @@ archetype_weights:
       aws_ecs: 0.40
     rationale: "AWS ECS for enterprise. Hetzner+Ubicloud for cost-conscious growth."
 
+  sovereignty_conscious_eu:
+    probability_overrides:
+      render: 0.05
+      vercel_plus_backend: 0.00
+      railway: 0.00
+      fly_io: 0.00
+      hetzner_ubicloud: 0.45
+      hetzner_baremetal: 0.20
+      aws_ecs: 0.05
+    rationale: >
+      EU data sovereignty is a hard requirement. Only EU-owned providers
+      acceptable for production workloads handling artist PII and MCP consent
+      data. CLOUD Act exposure from US-headquartered providers is unacceptable
+      for rights infrastructure. Render acceptable for MVP-only phase (open-
+      source research, not production rights data). Hetzner+Ubicloud is the
+      optimal balance of sovereignty + cost. Remaining 0.25 probability
+      reserved for UpCloud (0.15) and OVHcloud (0.10) when added as options.
+      See: docs/planning/deployement-finops-landscape-geopolitical-risk-assessment.md
+
 volatility:
   classification: shifting
   last_assessed: 2026-02-14
@@ -246,6 +270,10 @@ volatility:
     - "Hetzner cloud region expansion"
     - "Kamal 2 ecosystem growth (37signals)"
     - "DevOps tax threshold shifts with team size"
+    - "Schrems III challenge to EU-US Data Privacy Framework"
+    - "Section 301 US trade investigation targeting EU tech (Spotify named)"
+    - "EUCS certification scheme sovereignty requirements"
+    - "PCLOB restoration or permanent dissolution"
 
 domain_applicability:
   music_attribution: 1.0
@@ -261,4 +289,5 @@ references:
   - "../infrastructure/toc-infrastructure.md"
   - "../defaults.yaml"
   - "../../planning/deployement-finops-landscape.md"
+  - "../../planning/deployement-finops-landscape-geopolitical-risk-assessment.md"
   - "../../knowledge-base/raw-sources/Digital Society _ Posts _ Migrating to Hetzner.md"

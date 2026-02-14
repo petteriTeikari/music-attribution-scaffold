@@ -345,6 +345,7 @@ All tests run in CI via GitHub Actions with path-based filtering — backend cha
 | [**Troubleshooting**](https://petteriTeikari.github.io/music-attribution-scaffold/troubleshooting/) | 15 common issues: Docker, database, testing, frontend, CI |
 | [**PRD Decision Network**](docs/prd/decisions/REPORT.md) | 40+ probabilistic decision nodes, 5 levels, 4 team archetypes |
 | [**FinOps Landscape**](docs/planning/deployement-finops-landscape.md) | Deployment cost analysis: 5 paths, DevOps tax, cloud credits, egress optimization |
+| [**Geopolitical Risk Assessment**](docs/planning/deployement-finops-landscape-geopolitical-risk-assessment.md) | Cloud sovereignty: CLOUD Act, EU providers, Schrems III, Section 301 |
 | [**Knowledge Base**](docs/knowledge-base/README.md) | RAG-optimized markdown: attribution papers, agentic systems research |
 
 Preview docs locally:
