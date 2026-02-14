@@ -14,53 +14,61 @@
 
 ## Purpose & Key Message
 
-Maps the L4 deployment and L5 operations layers as updated in PRD v2.1.0, showing how compute platform choice cascades into hosting, object storage, CI/CD, observability, and FinOps strategy. Highlights the expanded decision network with Object Storage as a new L4 node, Kamal 2 as a container strategy, Pulumi as recommended IaC, and two distinct Hetzner compute paths (Ubicloud managed vs bare-metal). Shows that operational decisions are where archetype differences become most dramatic.
+Maps the L4 deployment and L5 operations layers as updated through PRD v3.0.0, showing how compute platform choice cascades into hosting, object storage, CI/CD, observability, and FinOps strategy. Includes the v3.0.0 ecosystem expansion: 4 new L4 nodes (compliance_reporting_pipeline, training_data_provenance_store, golden_dataset_management, edge_deployment_target) and 4 new L5 nodes (regulatory_monitoring, market_intelligence, attribution_accuracy_monitoring, partnership_health_metrics) with cascade arrows from upstream ecosystem nodes. Shows that operational decisions are where archetype differences become most dramatic.
 
-The key message is: "PRD v2.1.0 adds Object Storage, Kamal 2, and Ubicloud paths -- deployment decisions are the most archetype-sensitive layer, with five compute options cascading into six database hosting choices, four container strategies, and a new FinOps cost model."
+The key message is: "PRD v3.0.0 expands deployment to 13 L4 nodes and operations to 14 L5 nodes -- 4 new ecosystem L4 nodes (compliance reporting, provenance store, golden datasets, edge deployment) cascade from ecosystem integration decisions into 4 new L5 monitoring nodes."
 
 ## Visual Concept (ASCII Layout)
 
 ```
 +---------------------------------------------------------------+
-|  OPERATIONAL DECISIONS (v2.1.0)                                |
-|  ■ L4 Deployment + L5 Operations                               |
+|  OPERATIONAL DECISIONS (v3.0.0)                                |
+|  ■ L4 Deployment (13) + L5 Operations (14)                    |
 +---------------------------------------------------------------+
 |                                                                |
-|  L4: DEPLOYMENT ───────────────────────────────────────        |
+|  L4: CORE DEPLOYMENT (9) ─────────────────────────────────    |
 |                                                                |
-|  ┌──────────────┐    ┌──────────────┐    ┌───────────┐        |
-|  │  COMPUTE     │───>│ DB HOSTING   │    │  CI/CD    │        |
-|  │  PLATFORM    │    │              │    │  PIPELINE │        |
-|  │  ──────────  │    │  ──────────  │    │  ──────── │        |
-|  │  Render      │    │  Neon        │    │  GitHub   │        |
-|  │  Hetzner +   │    │  Supabase    │    │  Actions  │        |
-|  │    Ubicloud  │    │  Ubicloud PG │    │  Auto-Dpl │        |
-|  │  Hetzner bare│    │  Self-managed│    │           │        |
-|  │  Big Three   │    │  AWS RDS     │    │           │        |
-|  └──────┬───────┘    └──────────────┘    └───────────┘        |
+|  ┌──────────┐  ┌────────┐  ┌──────┐  ┌──────┐  ┌────────┐   |
+|  │Compute   │─>│DB Host │  │CI/CD │  │IaC   │  │Containr│   |
+|  │Platform  │  │        │  │Pipeln│  │Toolng│  │Strategy│   |
+|  └──────┬───┘  └────────┘  └──────┘  └──────┘  └────────┘   |
 |         │                                                      |
-|  ┌──────┴──────────┐  ┌───────────────┐  ┌──────────────┐    |
-|  │  IaC TOOLING    │  │  CONTAINER    │  │ OBJECT       │    |
-|  │  ────────────   │  │  STRATEGY     │  │ STORAGE      │    |
-|  │  Pulumi (rec.)  │  │  ──────────   │  │ ──────────   │    |
-|  │  Terraform      │  │  Docker Comp. │  │ Cloudflare   │    |
-|  │  None (PaaS)    │  │  Kamal 2      │  │ R2 (rec.)    │    |
-|  │                 │  │  Kubernetes   │  │ Hetzner Obj  │    |
-|  └─────────────────┘  └───────────────┘  └──────────────┘    |
-|         │                                                      |
-|  L5: OPERATIONS ───────────────────────────────────────        |
+|  ┌──────┴───┐  ┌────────┐  ┌────────┐  ┌──────────┐          |
+|  │Orchestrtr│  │Obj Stor│  │MCP Val │  │CD Strat  │          |
+|  └──────────┘  └────────┘  └────────┘  └──────────┘          |
 |                                                                |
-|  ┌──────────┐ ┌────────┐ ┌────────┐ ┌───────┐ ┌───────┐     |
-|  │Observ-   │ │Scaling │ │Backup/ │ │Secrets│ │FinOps │     |
-|  │ability   │ │Strategy│ │DR      │ │Mgmt   │ │Strat. │     |
-|  │──────    │ │──────  │ │──────  │ │────── │ │────── │     |
-|  │PostHog + │ │Vertical│ │Managed │ │Env    │ │DevOps │     |
-|  │Sentry    │ │        │ │Provider│ │Vars   │ │Tax +  │     |
-|  │          │ │        │ │        │ │       │ │Egress │     |
-|  └──────────┘ └────────┘ └────────┘ └───────┘ └───────┘     |
+|  L4: ECOSYSTEM DEPLOYMENT (4, NEW v3.0.0) ────────────────    |
+|                                                                |
+|  ┌──────────────┐  ┌──────────────┐  ┌─────────┐  ┌────────┐ |
+|  │  COMPLIANCE   │  │  PROVENANCE  │  │ GOLDEN  │  │  EDGE  │ |
+|  │  REPORTING    │  │  STORE       │  │ DATASET │  │  DEPLOY│ |
+|  │  PIPELINE     │  │              │  │ MGMT    │  │  TARGET│ |
+|  │  ──────────   │  │  ──────────  │  │ ─────── │  │ ────── │ |
+|  │  ← compliance │  │  ← primary_db│  │ ← eval  │  │ ← edge │ |
+|  │    framework  │  │  ← provenance│  │   fwk   │  │   infer│ |
+|  └──────────────┘  └──────────────┘  └─────────┘  └────────┘ |
+|                                                                |
+|  L5: CORE OPERATIONS (10) ────────────────────────────────    |
+|                                                                |
+|  ┌──────┐ ┌──────┐ ┌──────┐ ┌──────┐ ┌──────┐               |
+|  │Observ│ │Scale │ │Backup│ │Secret│ │Schema│               |
+|  └──────┘ └──────┘ └──────┘ └──────┘ └──────┘               |
+|  ┌──────┐ ┌──────┐ ┌──────┐ ┌──────┐ ┌──────┐               |
+|  │ML Mon│ │Doc   │ │Policy│ │FinOps│ │Ethics│               |
+|  └──────┘ └──────┘ └──────┘ └──────┘ └──────┘               |
+|                                                                |
+|  L5: ECOSYSTEM OPERATIONS (4, NEW v3.0.0) ────────────────    |
+|                                                                |
+|  ┌───────────┐ ┌───────────┐ ┌───────────┐ ┌───────────┐     |
+|  │REGULATORY │ │MARKET     │ │ATTRIBUTION│ │PARTNERSHIP│     |
+|  │MONITORING │ │INTELLIGNCE│ │ACCURACY   │ │HEALTH     │     |
+|  │← reg_post │ │← platform │ │← eval_fwk │ │← partner  │     |
+|  │← comply   │ │← partner  │ │← ml_mon   │ │← observ   │     |
+|  └───────────┘ └───────────┘ └───────────┘ └───────────┘     |
 |                                                                |
 +---------------------------------------------------------------+
-|  NEW in v2.1.0: Object Storage node, Kamal 2, Ubicloud paths  |
+|  v3.0.0: +4 L4 ecosystem nodes, +4 L5 ecosystem nodes         |
+|  Cascade: ecosystem L3 → new L4 → new L5 monitoring           |
 +---------------------------------------------------------------+
 ```
 
@@ -68,38 +76,39 @@ The key message is: "PRD v2.1.0 adds Object Storage, Kamal 2, and Ubicloud paths
 
 | Element | Semantic Tag | Description |
 |---------|--------------|-------------|
-| Title block | `heading_display` | "OPERATIONAL DECISIONS (v2.1.0)" with coral accent square |
-| L4 Deployment nodes (6) | `decision_point` | Compute Platform, DB Hosting, CI/CD, IaC, Container Strategy, Object Storage |
-| L5 Operations nodes (5) | `decision_point` | Observability, Scaling, Backup/DR, Secrets, FinOps Strategy |
-| Level banners | `label_editorial` | L4 and L5 horizontal section headers |
-| Option lists per node | `branching_path` | Top candidate options listed inside each node |
-| Cascade arrows | `data_flow` | Compute Platform to DB Hosting, to Object Storage, to FinOps |
-| Version footer | `callout_bar` | PRD v2.1.0 additions: Object Storage, Kamal 2, Ubicloud paths |
+| Title block | `heading_display` | "OPERATIONAL DECISIONS (v3.0.0)" with coral accent square |
+| L4 Core Deployment nodes (9) | `decision_point` | Compute, DB Hosting, CI/CD, IaC, Container, Orchestrator, Object Storage, MCP Validation, CD Strategy |
+| L4 Ecosystem Deployment nodes (4) | `decision_point` | Compliance Reporting Pipeline, Training Data Provenance Store, Golden Dataset Management, Edge Deployment Target |
+| L5 Core Operations nodes (10) | `decision_point` | Observability, Scaling, Backup/DR, Secrets, Schema Governance, ML Monitoring, Documentation, Policy-as-Code, FinOps, Ethics Governance |
+| L5 Ecosystem Operations nodes (4) | `decision_point` | Regulatory Monitoring, Market Intelligence, Attribution Accuracy Monitoring, Partnership Health Metrics |
+| Level banners | `label_editorial` | L4 Core, L4 Ecosystem, L5 Core, L5 Ecosystem section headers |
+| Cascade arrows (core) | `data_flow` | Compute Platform to DB Hosting, to Object Storage, to FinOps |
+| Cascade arrows (ecosystem) | `data_flow` | Ecosystem L3 nodes → new L4 → new L5 (e.g., compliance_framework → compliance_reporting → regulatory_monitoring) |
+| Version footer | `callout_bar` | v3.0.0: +4 L4 ecosystem nodes, +4 L5 ecosystem nodes |
 
 ## Anti-Hallucination Rules
 
-1. L4 has 6 nodes in v2.1.0: Compute Platform (7 options), DB Hosting (6 options), CI/CD Pipeline, IaC Tooling (5 options), Container Strategy (4 options), Object Storage (6 options, NEW).
-2. L5 includes FinOps Strategy (now `active` status) with DevOps tax framework, egress cost analysis, and phased cost projections.
-3. Compute Platform options: Render (0.25), Hetzner+Ubicloud (0.10, managed K8s), Hetzner bare-metal (0.05, self-managed), Big Three AWS/GCP/Azure (0.20), Railway (0.15), Fly.io (0.10), Vercel+backend (0.15).
-4. IaC Tooling: Pulumi is now `recommended` (0.25) over Terraform (0.15) due to BSL license after IBM acquisition. Pulumi has MCP server for Claude and native Python support.
-5. Container Strategy now includes Kamal 2 (0.15) from 37signals -- Docker deployment without K8s complexity.
-6. Object Storage: Cloudflare R2 recommended (0.45) -- zero egress fees save $2,700-9,000/mo at scale vs AWS S3.
-7. DB Hosting now includes Ubicloud managed PG (0.10) on Hetzner -- preview Feb 2026.
-8. Do NOT show pricing -- this is an architectural overview. See `docs/planning/deployement-finops-landscape.md` for costs.
-9. Background must be warm cream (#f6f3e6).
+1. L4 has 13 nodes in v3.0.0: 9 core (Compute Platform, DB Hosting, CI/CD, IaC, Container, Orchestrator, Object Storage, MCP Validation, CD Strategy) + 4 ecosystem (Compliance Reporting Pipeline, Training Data Provenance Store, Golden Dataset Management, Edge Deployment Target).
+2. L5 has 14 nodes in v3.0.0: 10 core (Observability, Scaling, Backup/DR, Secrets, Schema Governance, ML Monitoring, Documentation, Policy-as-Code, FinOps, Ethics) + 4 ecosystem (Regulatory Monitoring, Market Intelligence, Attribution Accuracy Monitoring, Partnership Health Metrics).
+3. New L4 ecosystem cascade: compliance_framework_mapping → compliance_reporting_pipeline (strong), edge_inference_strategy → edge_deployment_target (strong), attribution_eval_framework → golden_dataset_management (strong), provenance_strategy → training_data_provenance_store (strong).
+4. New L5 ecosystem cascade: attribution_eval_framework → attribution_accuracy_monitoring (strong), platform_strategy → market_intelligence (strong), partnership_model → partnership_health_metrics (strong), regulatory_posture → regulatory_monitoring (strong).
+5. Core L4/L5 details unchanged from v2.1.0 (Render, Pulumi, Kamal 2, R2, etc.).
+6. Do NOT show pricing -- this is an architectural overview.
+7. Background must be warm cream (#f6f3e6).
+8. Ecosystem L4/L5 nodes have high "none" priors -- they activate conditionally based on ecosystem L3 decisions.
 
 ## Alt Text
 
-Decision diagram: deployment and operations layers of the music attribution scaffold PRD v2.1.0, showing six L4 deployment nodes including new Object Storage with Cloudflare R2, expanded compute platform with Hetzner Ubicloud and bare-metal paths, Kamal 2 container strategy, Pulumi as recommended IaC, and L5 operations with active FinOps strategy -- the most team-archetype-sensitive decisions in the open-source probabilistic PRD.
+Decision diagram: deployment and operations layers of the music attribution scaffold PRD v3.0.0, showing 13 L4 deployment nodes (9 core plus 4 ecosystem: compliance reporting, provenance store, golden datasets, edge deployment) and 14 L5 operations nodes (10 core plus 4 ecosystem: regulatory monitoring, market intelligence, attribution accuracy, partnership health) -- ecosystem nodes cascade from upstream integration decisions.
 
 ## Image Embed
 
 ### For GitHub README / MkDocs (repo-root-relative)
 
-![Decision diagram: deployment and operations layers of the music attribution scaffold PRD v2.1.0, showing six L4 deployment nodes including new Object Storage with Cloudflare R2, expanded compute platform with Hetzner Ubicloud and bare-metal paths, Kamal 2 container strategy, Pulumi as recommended IaC, and L5 operations with active FinOps strategy -- the most team-archetype-sensitive decisions in the open-source probabilistic PRD.](docs/figures/repo-figures/assets/fig-prd-05-operational-decisions.jpg)
+![Decision diagram: deployment and operations layers of the music attribution scaffold PRD v3.0.0, showing 13 L4 deployment nodes and 14 L5 operations nodes including ecosystem integration cascades for compliance reporting, attribution accuracy monitoring, and partnership health metrics.](docs/figures/repo-figures/assets/fig-prd-05-operational-decisions.jpg)
 
-*Figure 5. PRD v2.1.0 operational decisions with expanded deployment layer: Object Storage (Cloudflare R2), two Hetzner paths (Ubicloud managed vs bare-metal), Kamal 2 container strategy, and Pulumi as recommended IaC -- cascading into an active FinOps strategy with DevOps tax analysis.*
+*Figure 5. PRD v3.0.0 operational decisions: 13 L4 deployment nodes and 14 L5 operations nodes spanning core infrastructure and ecosystem integration, with new cascade paths from compliance frameworks to regulatory monitoring and from evaluation frameworks to attribution accuracy tracking.*
 
 ### From this figure plan (relative)
 
-![Decision diagram: deployment and operations layers of the music attribution scaffold PRD v2.1.0, showing six L4 deployment nodes including new Object Storage with Cloudflare R2, expanded compute platform with Hetzner Ubicloud and bare-metal paths, Kamal 2 container strategy, Pulumi as recommended IaC, and L5 operations with active FinOps strategy -- the most team-archetype-sensitive decisions in the open-source probabilistic PRD.](../assets/fig-prd-05-operational-decisions.jpg)
+![Decision diagram: deployment and operations layers of the music attribution scaffold PRD v3.0.0, showing 13 L4 deployment nodes and 14 L5 operations nodes including ecosystem integration cascades for compliance reporting, attribution accuracy monitoring, and partnership health metrics.](../assets/fig-prd-05-operational-decisions.jpg)
