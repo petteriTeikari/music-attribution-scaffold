@@ -3,42 +3,52 @@
 # Where and how the database is hosted. Tightly coupled with
 # primary database choice and compute platform.
 #
-# Updated 2026-02-11: Added TigerData (Agentic Postgres) as
-# experimental option for AI-agent-optimized managed PostgreSQL.
+# Updated 2026-02-11: Added TigerData (Agentic Postgres).
+# Updated 2026-02-14: Added Ubicloud managed PostgreSQL,
+# updated Neon with scale-to-zero rationale and cost data,
+# added EU data residency details.
+# See docs/planning/deployement-finops-landscape.md
 
 decision_id: database_hosting
 title: "Database Hosting"
 description: >
   Determines how the primary database is hosted and managed. Ranges
   from fully managed serverless (Neon, Supabase) to self-hosted on
-  dedicated hardware. The choice interacts with primary database
-  selection and compute platform. New entrant: TigerData (formerly
-  Timescale) offers "Agentic Postgres" with sub-second database
-  forking, hybrid search (pgvectorscale + pg_textsearch), and
-  built-in MCP server for AI agent workloads.
+  dedicated hardware. Key insight from FinOps analysis: Neon's
+  scale-to-zero is optimal for MVP (90%+ idle time saves EUR 10-15/mo).
+  Ubicloud provides managed PostgreSQL on Hetzner infrastructure for
+  growth stage. All options use standard PostgreSQL, ensuring migration
+  portability via pg_dump/pg_restore.
 
 decision_level: L4_deployment
 status: active
-last_updated: 2026-02-11
+last_updated: 2026-02-14
 
 options:
   - option_id: neon
     title: "Neon (Serverless PostgreSQL)"
     description: >
       Serverless PostgreSQL with auto-scaling, branching, and
-      point-in-time recovery. Pay per compute-second. Excellent
-      developer experience. Current scaffold default.
+      point-in-time recovery. Pay per compute-second. Scale-to-zero
+      means no cost during idle periods (critical for MVP where the
+      database is idle 90%+ of the time). Database branching enables
+      safe schema migration testing (Alembic). pgvector optimized for
+      music attribution embeddings. EU data residency (Frankfurt).
+      ~EUR 17-22/month at growth stage. Current scaffold default.
     prior_probability: 0.30
     status: recommended
     complements:
       - "primary_database.postgresql_unified"
+    cost_profile:
+      mvp_monthly: "EUR 0-10 (scale-to-zero)"
+      growth_monthly: "EUR 17-22"
 
   - option_id: supabase_hosted
     title: "Supabase Hosted"
     description: >
       PostgreSQL managed by Supabase with built-in auth, real-time,
       and storage. Bundled platform experience. Free tier available.
-    prior_probability: 0.25
+    prior_probability: 0.20
     status: viable
     complements:
       - "primary_database.supabase"
@@ -55,16 +65,37 @@ options:
       - "AWS/GCP account and billing setup"
       - "Higher baseline cost than serverless"
 
-  - option_id: self_managed
-    title: "Self-Managed (Hetzner/VPS)"
+  - option_id: ubicloud_managed
+    title: "Ubicloud Managed PostgreSQL"
     description: >
-      PostgreSQL installed on self-managed servers. Maximum control
-      and cost efficiency. Requires DBA skills for backup, replication,
-      upgrades, and monitoring.
+      Managed PostgreSQL on Hetzner Cloud infrastructure via Ubicloud
+      (open-source AWS alternative). pgvector support, automated backups,
+      EU data residency (Germany). ~EUR 11-15/month. Pairs naturally
+      with Hetzner+Ubicloud compute. Preview status (Feb 2026) but
+      uses standard PostgreSQL — easy migration to/from Neon via pg_dump.
+    prior_probability: 0.10
+    status: viable
+    complements:
+      - "primary_database.postgresql_unified"
+      - "compute_platform.hetzner_ubicloud"
+    cost_profile:
+      growth_monthly: "EUR 11-15"
+    constraints:
+      - "Preview status (Feb 2026)"
+      - "Limited regions (Germany, Virginia)"
+
+  - option_id: self_managed
+    title: "Self-Managed (CloudNativePG / Hetzner)"
+    description: >
+      PostgreSQL via CloudNativePG operator on Kubernetes, or direct
+      install on Hetzner/VPS. Maximum control and cost efficiency
+      (~EUR 5-10/month on Hetzner). Requires DBA skills for backup,
+      replication, upgrades, and monitoring. CloudNativePG operator
+      manages HA, failover, and WAL archiving on K8s.
     prior_probability: 0.10
     status: viable
     constraints:
-      - "PostgreSQL administration skills"
+      - "PostgreSQL administration skills (or CloudNativePG K8s operator)"
       - "Backup and recovery procedures"
       - "Monitoring and alerting setup"
 
@@ -73,7 +104,7 @@ options:
     description: >
       Managed libSQL (SQLite fork) with edge replication. Extremely
       low latency, embedded-first. Limited to SQLite feature set.
-    prior_probability: 0.10
+    prior_probability: 0.05
     status: viable
     complements:
       - "primary_database.sqlite_turso"
@@ -123,18 +154,20 @@ conditional_on:
     conditional_table:
       - given_parent_option: postgresql_unified
         then_probabilities:
-          neon: 0.35
-          supabase_hosted: 0.15
-          aws_rds: 0.20
-          self_managed: 0.15
+          neon: 0.30
+          supabase_hosted: 0.10
+          aws_rds: 0.15
+          ubicloud_managed: 0.15
+          self_managed: 0.10
           turso: 0.00
           cockroach_cloud: 0.05
-          tigerdata: 0.10
+          tigerdata: 0.15
       - given_parent_option: supabase
         then_probabilities:
-          neon: 0.10
+          neon: 0.05
           supabase_hosted: 0.70
           aws_rds: 0.05
+          ubicloud_managed: 0.05
           self_managed: 0.05
           turso: 0.00
           cockroach_cloud: 0.10
@@ -144,6 +177,7 @@ conditional_on:
           neon: 0.00
           supabase_hosted: 0.00
           aws_rds: 0.00
+          ubicloud_managed: 0.00
           self_managed: 0.10
           turso: 0.85
           cockroach_cloud: 0.05
@@ -153,6 +187,7 @@ conditional_on:
           neon: 0.05
           supabase_hosted: 0.00
           aws_rds: 0.10
+          ubicloud_managed: 0.00
           self_managed: 0.15
           turso: 0.00
           cockroach_cloud: 0.70
@@ -163,18 +198,20 @@ conditional_on:
     conditional_table:
       - given_parent_option: render
         then_probabilities:
-          neon: 0.35
-          supabase_hosted: 0.25
-          aws_rds: 0.10
-          self_managed: 0.10
+          neon: 0.40
+          supabase_hosted: 0.20
+          aws_rds: 0.05
+          ubicloud_managed: 0.05
+          self_managed: 0.05
           turso: 0.10
           cockroach_cloud: 0.05
-          tigerdata: 0.05
+          tigerdata: 0.10
       - given_parent_option: vercel_plus_backend
         then_probabilities:
           neon: 0.30
-          supabase_hosted: 0.30
+          supabase_hosted: 0.25
           aws_rds: 0.10
+          ubicloud_managed: 0.05
           self_managed: 0.05
           turso: 0.15
           cockroach_cloud: 0.05
@@ -182,39 +219,53 @@ conditional_on:
       - given_parent_option: railway
         then_probabilities:
           neon: 0.30
-          supabase_hosted: 0.25
+          supabase_hosted: 0.20
           aws_rds: 0.10
-          self_managed: 0.10
+          ubicloud_managed: 0.05
+          self_managed: 0.05
           turso: 0.15
           cockroach_cloud: 0.05
-          tigerdata: 0.05
+          tigerdata: 0.10
       - given_parent_option: fly_io
         then_probabilities:
           neon: 0.25
           supabase_hosted: 0.15
           aws_rds: 0.15
-          self_managed: 0.15
-          turso: 0.15
-          cockroach_cloud: 0.10
-          tigerdata: 0.05
-      - given_parent_option: hetzner_dedicated
-        then_probabilities:
-          neon: 0.15
-          supabase_hosted: 0.10
-          aws_rds: 0.10
-          self_managed: 0.45
+          ubicloud_managed: 0.10
+          self_managed: 0.10
           turso: 0.10
           cockroach_cloud: 0.10
-          tigerdata: 0.00
+          tigerdata: 0.05
+      - given_parent_option: hetzner_ubicloud
+        then_probabilities:
+          neon: 0.15
+          supabase_hosted: 0.05
+          aws_rds: 0.05
+          ubicloud_managed: 0.45
+          self_managed: 0.10
+          turso: 0.05
+          cockroach_cloud: 0.05
+          tigerdata: 0.10
+      - given_parent_option: hetzner_baremetal
+        then_probabilities:
+          neon: 0.10
+          supabase_hosted: 0.05
+          aws_rds: 0.05
+          ubicloud_managed: 0.20
+          self_managed: 0.45
+          turso: 0.05
+          cockroach_cloud: 0.05
+          tigerdata: 0.05
       - given_parent_option: aws_ecs
         then_probabilities:
           neon: 0.10
           supabase_hosted: 0.05
           aws_rds: 0.35
-          self_managed: 0.10
+          ubicloud_managed: 0.00
+          self_managed: 0.05
           turso: 0.05
-          cockroach_cloud: 0.20
-          tigerdata: 0.15
+          cockroach_cloud: 0.15
+          tigerdata: 0.25
 
 archetype_weights:
   engineer_heavy_startup:
@@ -285,6 +336,7 @@ tags:
 references:
   - "../infrastructure/toc-infrastructure.md"
   - "../defaults.yaml"
+  - "../../planning/deployement-finops-landscape.md"
   - "https://www.tigerdata.com/agentic-postgres"
   - "https://www.tigerdata.com/blog/its-2026-just-use-postgres"
   - "https://github.com/timescale/pgvectorscale"  # OSS DiskANN extension

@@ -12,12 +12,15 @@
 
 network:
   name: "Probabilistic PRD Decision Network"
-  version: "2.0.0"
-  last_updated: 2026-02-13
+  version: "2.1.0"
+  last_updated: 2026-02-14
   description: >
     Bayesian decision network for the Music Attribution Scaffold.
     5-level hierarchy (L1 Business → L5 Operations) with conditional
     probability edges encoding how upstream choices influence downstream options.
+    v2.1.0: Added object_storage node (L4), corrected Hetzner complexity
+    (bare-metal ≠ simple), promoted Pulumi over Terraform, expanded FinOps
+    with DevOps tax framework and cloud credit strategy.
 
 # --- Node Declarations ---
 
@@ -201,6 +204,11 @@ nodes:
     level: L4_deployment
     file: L4-deployment/orchestrator-choice.decision.yaml
     title: "Pipeline Orchestrator"
+
+  - id: object_storage
+    level: L4_deployment
+    file: L4-deployment/object-storage.decision.yaml
+    title: "Object Storage Provider"
 
   - id: cd_strategy
     level: L4_deployment
@@ -827,6 +835,17 @@ edges:
     influence: moderate
     rationale: "K8s admission controllers (OPA Gatekeeper, Kyverno) require containerization"
 
+  # Object Storage edges
+  - from: compute_platform
+    to: object_storage
+    influence: moderate
+    rationale: "Compute platform creates storage affinity (Hetzner → Hetzner Object, AWS → S3)"
+
+  - from: object_storage
+    to: finops_strategy
+    influence: strong
+    rationale: "Object storage egress is the dominant cost driver for audio workloads at scale"
+
   # FinOps edges
   - from: compute_platform
     to: finops_strategy
@@ -837,6 +856,16 @@ edges:
     to: finops_strategy
     influence: moderate
     rationale: "Scaling decisions directly impact cloud costs and FinOps priorities"
+
+  - from: database_hosting
+    to: finops_strategy
+    influence: moderate
+    rationale: "Database hosting costs vary 10x (Neon scale-to-zero vs always-on RDS)"
+
+  - from: iac_tooling
+    to: finops_strategy
+    influence: weak
+    rationale: "Pulumi/Terraform enable Infracost integration for pre-deploy cost estimation"
 
   # Ethics/Governance edges
   - from: regulatory_posture
