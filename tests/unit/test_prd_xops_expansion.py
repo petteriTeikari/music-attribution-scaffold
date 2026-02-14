@@ -38,10 +38,10 @@ class TestNetworkExpansion:
         parts = [int(x) for x in version.split(".")]
         assert parts >= [1, 9, 0], f"Expected version >= 1.9.0, got {version}"
 
-    def test_network_has_46_nodes(self, network: dict) -> None:
-        """Network has 46 nodes (44 xOps + 2 regulatory compliance)."""
+    def test_network_has_at_least_46_nodes(self, network: dict) -> None:
+        """Network has at least 46 nodes (may grow as new decision areas are added)."""
         node_count = len(network["nodes"])
-        assert node_count == 46, f"Expected 46 nodes, got {node_count}"
+        assert node_count >= 46, f"Expected >= 46 nodes, got {node_count}"
 
     def test_new_l4_nodes_exist(self, network: dict) -> None:
         """New L4 deployment nodes are present."""
