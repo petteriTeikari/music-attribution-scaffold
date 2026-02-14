@@ -10,6 +10,8 @@ This directory contains skill definitions for common development tasks.
 | code-review | Review code changes | `code-review/SKILL.md` |
 | self-learning-iterative-coder | Self-correcting TDD loop for plan-driven code implementation | `self-learning-iterative-coder/SKILL.md` |
 | integrate-prd-research | Integrate research findings into the probabilistic PRD decision network | `integrate-prd-research/SKILL.md` |
+| figure-plan-creator | Create and review Nano Banana Pro figure plans with anti-hallucination guardrails | `figure-plan-creator/SKILL.md` |
+| figure-processor | Post-generation figure processing — convert PNGs to web-optimized JPEGs, SEO/GEO alt text, pre-wire figure plans | `figure-processor/SKILL.md` |
 
 ## Skill Structure
 

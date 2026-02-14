@@ -114,9 +114,10 @@ docs/_build/
 # =============================================================================
 .claude/sessions/archive/*
 *.tar
-docs/knowledge-base/ai/raw-sources/*
-docs/figures/generated/*.png
+docs/knowledge-base/ai/raw-sources/
+docs/figures/generated/
 docs/figures/visual-references/
-docs/knowledge-base/sources/*
+docs/knowledge-base/sources/
 docs/tmp/*
-docs/figures/frontend-figures/*.png
+docs/figures/frontend-figures/
+docs/figures/repo-figures/generated/
