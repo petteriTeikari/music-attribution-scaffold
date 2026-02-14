@@ -14,15 +14,15 @@
 
 ## Purpose & Key Message
 
-Maps the L4 deployment and L5 operations layers, showing how compute platform choice cascades into hosting, CI/CD, observability, and scaling. Highlights the volatility classification -- 12 stable, 12 shifting, 6 volatile decisions. Shows that operational decisions are where archetype differences become most dramatic (Render vs AWS ECS vs Railway).
+Maps the L4 deployment and L5 operations layers as updated in PRD v2.1.0, showing how compute platform choice cascades into hosting, object storage, CI/CD, observability, and FinOps strategy. Highlights the expanded decision network with Object Storage as a new L4 node, Kamal 2 as a container strategy, Pulumi as recommended IaC, and two distinct Hetzner compute paths (Ubicloud managed vs bare-metal). Shows that operational decisions are where archetype differences become most dramatic.
 
-The key message is: "Deployment and operations decisions are the most archetype-sensitive -- the same scaffold deploys on Render (musician), AWS ECS (enterprise), or Railway (solo) depending on team constraints."
+The key message is: "PRD v2.1.0 adds Object Storage, Kamal 2, and Ubicloud paths -- deployment decisions are the most archetype-sensitive layer, with five compute options cascading into six database hosting choices, four container strategies, and a new FinOps cost model."
 
 ## Visual Concept (ASCII Layout)
 
 ```
 +---------------------------------------------------------------+
-|  OPERATIONAL DECISIONS                                         |
+|  OPERATIONAL DECISIONS (v2.1.0)                                |
 |  ■ L4 Deployment + L5 Operations                               |
 +---------------------------------------------------------------+
 |                                                                |
@@ -33,30 +33,34 @@ The key message is: "Deployment and operations decisions are the most archetype-
 |  │  PLATFORM    │    │              │    │  PIPELINE │        |
 |  │  ──────────  │    │  ──────────  │    │  ──────── │        |
 |  │  Render      │    │  Neon        │    │  GitHub   │        |
-|  │  AWS ECS     │    │  Supabase    │    │  Actions  │        |
-|  │  Railway     │    │  AWS RDS     │    │  Auto-Dpl │        |
+|  │  Hetzner +   │    │  Supabase    │    │  Actions  │        |
+|  │    Ubicloud  │    │  Ubicloud PG │    │  Auto-Dpl │        |
+|  │  Hetzner bare│    │  Self-managed│    │           │        |
+|  │  Big Three   │    │  AWS RDS     │    │           │        |
 |  └──────┬───────┘    └──────────────┘    └───────────┘        |
 |         │                                                      |
-|  ┌──────┴──────────┐    ┌───────────────┐                     |
-|  │  IaC TOOLING    │    │  CONTAINER    │                     |
-|  │  ────────────   │    │  STRATEGY     │                     |
-|  │  Terraform      │    │  ──────────   │                     |
-|  │  None (PaaS)    │    │  Docker       │                     |
-|  │  Platform Native│    │  Compose      │                     |
-|  └─────────────────┘    └───────────────┘                     |
+|  ┌──────┴──────────┐  ┌───────────────┐  ┌──────────────┐    |
+|  │  IaC TOOLING    │  │  CONTAINER    │  │ OBJECT       │    |
+|  │  ────────────   │  │  STRATEGY     │  │ STORAGE      │    |
+|  │  Pulumi (rec.)  │  │  ──────────   │  │ ──────────   │    |
+|  │  Terraform      │  │  Docker Comp. │  │ Cloudflare   │    |
+|  │  None (PaaS)    │  │  Kamal 2      │  │ R2 (rec.)    │    |
+|  │                 │  │  Kubernetes   │  │ Hetzner Obj  │    |
+|  └─────────────────┘  └───────────────┘  └──────────────┘    |
 |         │                                                      |
 |  L5: OPERATIONS ───────────────────────────────────────        |
 |                                                                |
 |  ┌──────────┐ ┌────────┐ ┌────────┐ ┌───────┐ ┌───────┐     |
-|  │Observ-   │ │Scaling │ │Backup/ │ │Secrets│ │Schema │     |
-|  │ability   │ │Strategy│ │DR      │ │Mgmt   │ │Govern.│     |
+|  │Observ-   │ │Scaling │ │Backup/ │ │Secrets│ │FinOps │     |
+|  │ability   │ │Strategy│ │DR      │ │Mgmt   │ │Strat. │     |
 |  │──────    │ │──────  │ │──────  │ │────── │ │────── │     |
-|  │PostHog + │ │Vertical│ │Managed │ │Env    │ │DVC +  │     |
-|  │Sentry    │ │        │ │Provider│ │Vars   │ │JSON   │     |
+|  │PostHog + │ │Vertical│ │Managed │ │Env    │ │DevOps │     |
+|  │Sentry    │ │        │ │Provider│ │Vars   │ │Tax +  │     |
+|  │          │ │        │ │        │ │       │ │Egress │     |
 |  └──────────┘ └────────┘ └────────┘ └───────┘ └───────┘     |
 |                                                                |
 +---------------------------------------------------------------+
-|  VOLATILITY: 12 stable | 12 shifting | 6 volatile             |
+|  NEW in v2.1.0: Object Storage node, Kamal 2, Ubicloud paths  |
 +---------------------------------------------------------------+
 ```
 
@@ -64,36 +68,38 @@ The key message is: "Deployment and operations decisions are the most archetype-
 
 | Element | Semantic Tag | Description |
 |---------|--------------|-------------|
-| Title block | `heading_display` | "OPERATIONAL DECISIONS" with coral accent square |
-| L4 Deployment nodes (5) | `decision_point` | Compute Platform, DB Hosting, CI/CD, IaC, Container Strategy |
-| L5 Operations nodes (5) | `decision_point` | Observability, Scaling, Backup/DR, Secrets, Schema Governance |
+| Title block | `heading_display` | "OPERATIONAL DECISIONS (v2.1.0)" with coral accent square |
+| L4 Deployment nodes (6) | `decision_point` | Compute Platform, DB Hosting, CI/CD, IaC, Container Strategy, Object Storage |
+| L5 Operations nodes (5) | `decision_point` | Observability, Scaling, Backup/DR, Secrets, FinOps Strategy |
 | Level banners | `label_editorial` | L4 and L5 horizontal section headers |
 | Option lists per node | `branching_path` | Top candidate options listed inside each node |
-| Cascade arrows | `data_flow` | Compute Platform to DB Hosting, to Observability, to Scaling |
-| Volatility footer | `callout_bar` | Stability classification summary: 12/12/6 |
+| Cascade arrows | `data_flow` | Compute Platform to DB Hosting, to Object Storage, to FinOps |
+| Version footer | `callout_bar` | PRD v2.1.0 additions: Object Storage, Kamal 2, Ubicloud paths |
 
 ## Anti-Hallucination Rules
 
-1. L4 has 5 nodes in REPORT.md: Compute Platform, DB Hosting, CI/CD Pipeline, IaC Tooling, Container Strategy. The _network.yaml adds Orchestrator Choice and CD Strategy in v1.9+.
-2. L5 has 5 nodes in REPORT.md: Observability, Scaling, Backup/DR, Secrets, Schema Governance. The _network.yaml adds ML Monitoring, Documentation Tooling, Policy-as-Code, FinOps, Ethics Governance in v1.9-v2.0.
-3. Volatility counts from REPORT.md: 12 stable, 12 shifting, 6 volatile.
-4. Compute Platform archetype options: Render (Musician-First), AWS ECS (Engineer/Well-Funded), Railway (Solo) -- per REPORT.md cross-archetype table.
-5. Observability options per REPORT.md: Grafana (Engineer), Minimal (Musician/Solo), Datadog (Well-Funded). PostHog + Sentry is the scaffold's reference choice.
-6. Do NOT show pricing -- this is an architectural overview.
-7. Background must be warm cream (#f6f3e6).
+1. L4 has 6 nodes in v2.1.0: Compute Platform (7 options), DB Hosting (6 options), CI/CD Pipeline, IaC Tooling (5 options), Container Strategy (4 options), Object Storage (6 options, NEW).
+2. L5 includes FinOps Strategy (now `active` status) with DevOps tax framework, egress cost analysis, and phased cost projections.
+3. Compute Platform options: Render (0.25), Hetzner+Ubicloud (0.10, managed K8s), Hetzner bare-metal (0.05, self-managed), Big Three AWS/GCP/Azure (0.20), Railway (0.15), Fly.io (0.10), Vercel+backend (0.15).
+4. IaC Tooling: Pulumi is now `recommended` (0.25) over Terraform (0.15) due to BSL license after IBM acquisition. Pulumi has MCP server for Claude and native Python support.
+5. Container Strategy now includes Kamal 2 (0.15) from 37signals -- Docker deployment without K8s complexity.
+6. Object Storage: Cloudflare R2 recommended (0.45) -- zero egress fees save $2,700-9,000/mo at scale vs AWS S3.
+7. DB Hosting now includes Ubicloud managed PG (0.10) on Hetzner -- preview Feb 2026.
+8. Do NOT show pricing -- this is an architectural overview. See `docs/planning/deployement-finops-landscape.md` for costs.
+9. Background must be warm cream (#f6f3e6).
 
 ## Alt Text
 
-Decision diagram: deployment and operations layers of the music attribution scaffold showing compute platform, database hosting, CI/CD, observability, and scaling decisions with candidate options per node -- the most team-archetype-sensitive decisions in the open-source probabilistic PRD, classified by volatility into stable, shifting, and volatile categories.
+Decision diagram: deployment and operations layers of the music attribution scaffold PRD v2.1.0, showing six L4 deployment nodes including new Object Storage with Cloudflare R2, expanded compute platform with Hetzner Ubicloud and bare-metal paths, Kamal 2 container strategy, Pulumi as recommended IaC, and L5 operations with active FinOps strategy -- the most team-archetype-sensitive decisions in the open-source probabilistic PRD.
 
 ## Image Embed
 
 ### For GitHub README / MkDocs (repo-root-relative)
 
-![Decision diagram: deployment and operations layers of the music attribution scaffold showing compute platform, database hosting, CI/CD, observability, and scaling decisions with candidate options per node -- the most team-archetype-sensitive decisions in the open-source probabilistic PRD, classified by volatility into stable, shifting, and volatile categories.](docs/figures/repo-figures/assets/fig-prd-05-operational-decisions.jpg)
+![Decision diagram: deployment and operations layers of the music attribution scaffold PRD v2.1.0, showing six L4 deployment nodes including new Object Storage with Cloudflare R2, expanded compute platform with Hetzner Ubicloud and bare-metal paths, Kamal 2 container strategy, Pulumi as recommended IaC, and L5 operations with active FinOps strategy -- the most team-archetype-sensitive decisions in the open-source probabilistic PRD.](docs/figures/repo-figures/assets/fig-prd-05-operational-decisions.jpg)
 
-*Figure 5. Operational decisions are where team archetype differences become most dramatic: the same music attribution scaffold deploys on Render (musician-first), AWS ECS (engineer-heavy), or Railway (solo hacker) depending on team constraints and budget.*
+*Figure 5. PRD v2.1.0 operational decisions with expanded deployment layer: Object Storage (Cloudflare R2), two Hetzner paths (Ubicloud managed vs bare-metal), Kamal 2 container strategy, and Pulumi as recommended IaC -- cascading into an active FinOps strategy with DevOps tax analysis.*
 
 ### From this figure plan (relative)
 
-![Decision diagram: deployment and operations layers of the music attribution scaffold showing compute platform, database hosting, CI/CD, observability, and scaling decisions with candidate options per node -- the most team-archetype-sensitive decisions in the open-source probabilistic PRD, classified by volatility into stable, shifting, and volatile categories.](../assets/fig-prd-05-operational-decisions.jpg)
+![Decision diagram: deployment and operations layers of the music attribution scaffold PRD v2.1.0, showing six L4 deployment nodes including new Object Storage with Cloudflare R2, expanded compute platform with Hetzner Ubicloud and bare-metal paths, Kamal 2 container strategy, Pulumi as recommended IaC, and L5 operations with active FinOps strategy -- the most team-archetype-sensitive decisions in the open-source probabilistic PRD.](../assets/fig-prd-05-operational-decisions.jpg)
