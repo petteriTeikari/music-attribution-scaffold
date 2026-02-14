@@ -37,7 +37,6 @@ The key message is: "The confidence gauge uses a 270-degree SVG arc with three s
 |     ╰───╯           ╰───╯           ╰───╯                             |
 |                                                                        |
 |   >= 0.85           0.50-0.84       < 0.50                            |
-|   Green             Amber           Red                                |
 |   "High Confidence" "Medium"        "Low Confidence"                   |
 |                                                                        |
 |  II. SIZE VARIANTS                                                     |
@@ -60,8 +59,8 @@ The key message is: "The confidence gauge uses a 270-degree SVG arc with three s
 |  │    <svg> 270° arc background track           │                      |
 |  │           270° arc filled (score * arcLen)   │                      |
 |  │                                              │                      |
-|  │    Center: "92" (editorial-display font)     │                      |
-|  │    Below:  "HIGH CONFIDENCE" (editorial-caps)│                      |
+|  │    Center: "92" in large serif display type     │                      |
+|  │    Below:  "HIGH CONFIDENCE" in small caps│                      |
 |  │  </div>                                      │                      |
 |  └─────────────────────────────────────────────┘                      |
 |                                                                        |

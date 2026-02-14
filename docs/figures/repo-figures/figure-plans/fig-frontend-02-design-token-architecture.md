@@ -58,9 +58,9 @@ The key message is: "Every color in the UI flows from CSS custom properties in g
 |  ───────────────────────                                               |
 |  ┌─────────────────────┐  ┌─────────────────────┐                    |
 |  │ Tailwind Utilities   │  │ Editorial Classes    │                    |
-|  │ bg-surface           │  │ .editorial-display   │                    |
-|  │ text-heading         │  │ .editorial-caps      │                    |
-|  │ border-border        │  │ .data-mono           │                    |
+|  │ bg-surface           │  │ Display Class        │                    |
+|  │ text-heading         │  │ Caps Class           │                    |
+|  │ border-border        │  │ Mono Class           │                    |
 |  └─────────┬───────────┘  └─────────┬───────────┘                    |
 |            └──────────┬──────────────┘                                 |
 |                       ▼                                                |

@@ -35,10 +35,10 @@ The key message is: "Three font families serve distinct roles -- Instrument Seri
 |                                                                        |
 |  ┌──────────────────────────────────────────────┐                     |
 |  │                                               │                     |
-|  │  HIDE AND SEEK                                │ .editorial-display  |
+|  │  HIDE AND SEEK                                │ → Display           |
 |  │  (large editorial heading, tight leading)     │                     |
 |  │                                               │                     |
-|  │  MUSIC ATTRIBUTION SCAFFOLD                   │ .editorial-display  |
+|  │  MUSIC ATTRIBUTION SCAFFOLD                   │ → Display           |
 |  │  (hero title, ALL-CAPS)                       │ + uppercase         |
 |  │                                               │                     |
 |  └──────────────────────────────────────────────┘                     |
@@ -52,13 +52,13 @@ The key message is: "Three font families serve distinct roles -- Instrument Seri
 |                                                                        |
 |  ┌──────────────────────────────────────────────┐                     |
 |  │                                               │                     |
-|  │  WORKS  REVIEW  PERMISSIONS                   │ .editorial-caps     |
+|  │  WORKS  REVIEW  PERMISSIONS                   │ → Caps              |
 |  │  (nav links, uppercase, 0.15em tracking)      │ 500 weight          |
 |  │                                               │                     |
 |  │  Imogen Heap — artist name body text          │ text-sm/text-base   |
 |  │  (regular body, 400-500 weight)               │                     |
 |  │                                               │                     |
-|  │  APPROVE ALL                                  │ .editorial-caps     |
+|  │  APPROVE ALL                                  │ → Caps              |
 |  │  (action text, uppercase, accent underline)   │                     |
 |  │                                               │                     |
 |  └──────────────────────────────────────────────┘                     |
@@ -73,20 +73,20 @@ The key message is: "Three font families serve distinct roles -- Instrument Seri
 |                                                                        |
 |  ┌──────────────────────────────────────────────┐                     |
 |  │                                               │                     |
-|  │  92%  0.87  3/8  v3                           │ .data-mono          |
+|  │  92%  0.87  3/8  v3                           │ → Mono              |
 |  │  (confidence scores, counters, versions)      │                     |
 |  │                                               │                     |
-|  │  Source agreement: 95%                        │ .data-mono          |
+|  │  Source agreement: 95%                        │ → Mono              |
 |  │  (conformal statistics, calibration error)    │                     |
 |  │                                               │                     |
 |  └──────────────────────────────────────────────┘                     |
 |                                                                        |
 |  UTILITY CLASSES                                                       |
 |  ───────────────                                                       |
-|  .editorial-display : Instrument Serif, weight 400, tight leading      |
-|  .editorial-display-italic : Same but italic                           |
-|  .editorial-caps : Uppercase, 0.15em letter-spacing, PJS 500          |
-|  .data-mono : IBM Plex Mono, tabular-nums                             |
+|  Display → Serif, weight 400, tight leading                            |
+|  Display Italic → Same but italic                                      |
+|  Caps → Uppercase, 0.15em letter-spacing, sans 500                     |
+|  Mono → Monospace, tabular-nums                                        |
 +-----------------------------------------------------------------------+
 ```
 

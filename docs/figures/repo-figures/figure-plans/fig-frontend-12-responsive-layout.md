@@ -67,7 +67,7 @@ The key message is: "The layout pivots at the md breakpoint -- desktop uses a fi
 |  │                  │ │ ✕              │                              |
 |  │  Backdrop        │ │                │  w-64 slide-over             |
 |  │  (black/30)      │ │ WORKS          │  right-aligned              |
-|  │                  │ │ REVIEW         │  editorial-caps links        |
+|  │                  │ │ REVIEW         │  uppercase nav links         |
 |  │                  │ │ PERMISSIONS    │                              |
 |  │                  │ │                │                              |
 |  │                  │ │ ─────────     │                              |

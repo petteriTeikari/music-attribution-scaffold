@@ -49,11 +49,10 @@ The key message is: "Four assurance levels -- A0 (No Data, gray) through A3 (Art
 |  ─────────────────                                                     |
 |                                                                        |
 |  ┌──────────────────────────────────────┐                             |
-|  │  <span class="editorial-caps text-xs │                             |
-|  │         border-b-2">                 │                             |
+|  │  Uppercase label, small caps:        │                             |
 |  │    A2 -- Multi-Source                │                             |
 |  │    ═══════════════════  (blue line)  │                             |
-|  │  </span>                             │                             |
+|  │  Colored underline per level         │                             |
 |  │                                      │                             |
 |  │  Color from: getAssuranceCssVar()    │                             |
 |  │  Label from: ASSURANCE_LABELS map    │                             |
