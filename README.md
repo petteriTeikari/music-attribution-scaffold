@@ -13,9 +13,8 @@
 
 > Music metadata is broken — over 40% of records are incorrect or incomplete across databases that don't talk to each other. When generative AI adds millions of new tracks per month, knowing who made what becomes both a legal and economic emergency. This scaffold provides the open-source infrastructure to address it.
 
-<!-- TODO: Replace with fig-repo-01 hero when generated (docs/figures/repo-figures/assets/fig-repo-01-hero-overview.jpg) -->
 <p align="center">
-  <img src="docs/figures/assets/fig-rm-09-what-you-get.jpg" width="720" alt="Overview of the Music Attribution Scaffold: editorial frontend with confidence gauges, assurance badges, review queue, and agentic sidebar for natural-language attribution queries across multi-source music metadata." />
+  <img src="docs/figures/repo-figures/assets/fig-repo-01-hero-overview.jpg" width="720" alt="Overview of the Music Attribution Scaffold: editorial frontend with confidence gauges, assurance badges, review queue, and agentic sidebar for natural-language attribution queries across multi-source music metadata." />
 </p>
 
 <p align="center"><em>The scaffold unifies fragmented music metadata into confidence-scored attribution records with transparent provenance.</em></p>
@@ -56,9 +55,8 @@ Each stage produces a confidence score. The cascade short-circuits: if Stage 1 f
 
 Five sequential pipelines connected by typed Pydantic boundary objects:
 
-<!-- TODO: Replace with fig-repo-02 when generated (docs/figures/repo-figures/assets/fig-repo-02-five-pipeline-architecture.jpg) -->
 <p align="center">
-  <img src="docs/figures/assets/fig-tech-01-attribution-pipeline.jpg" width="720" alt="Architecture diagram: five-pipeline data flow for music attribution showing ETL ingestion from MusicBrainz and Discogs, entity resolution with fuzzy matching, transparent confidence scoring engine, FastAPI REST and MCP permission server, and PydanticAI chat interface." />
+  <img src="docs/figures/repo-figures/assets/fig-repo-02-five-pipeline-architecture.jpg" width="720" alt="Architecture diagram: five-pipeline data flow for music attribution showing ETL ingestion from MusicBrainz and Discogs, entity resolution with fuzzy matching, transparent confidence scoring engine, FastAPI REST and MCP permission server, and PydanticAI chat interface." />
 </p>
 
 ```
@@ -155,7 +153,7 @@ Create a `.env` file in the project root, or export directly. See [`src/music_at
 Every attribution carries an assurance level indicating verification depth. These are mapped to international music industry identifiers:
 
 <p align="center">
-  <img src="docs/figures/assets/fig-rm-03-from-unknown-to-verified.jpg" width="720" alt="Assurance levels diagram: four tiers from A0 (no data, unverified) through A1 (single source, ISRC), A2 (multi-source agreement, ISWC), to A3 (artist-verified identity, ISNI) showing progressive verification depth for music attribution." />
+  <img src="docs/figures/repo-figures/assets/fig-frontend-05-assurance-badge-system.jpg" width="720" alt="Assurance badge system: four tiers from A0 (no data, unverified) through A1 (single source, ISRC), A2 (multi-source agreement, ISWC), to A3 (artist-verified identity, ISNI) showing progressive verification depth for music attribution." />
 </p>
 
 | Level | Verification | Evidence | Typical Identifier | Example |
@@ -188,7 +186,7 @@ The mapping between assurance levels and identifiers is project-defined and refl
 Every attribution field carries a calibrated confidence score. Unlike typical ML "confidence" (often miscalibrated), the scaffold uses **conformal prediction** with Adaptive Prediction Sets (APS) to provide **distribution-free** coverage guarantees.
 
 <p align="center">
-  <img src="docs/figures/assets/fig-rm-07-how-sure-are-we.jpg" width="720" alt="Confidence scoring illustration: comparing traditional miscalibrated ML confidence with conformal prediction providing mathematically guaranteed coverage — a stated 90% confidence interval genuinely contains the true value at least 90% of the time." />
+  <img src="docs/figures/repo-figures/assets/fig-backend-13-conformal-calibration-pipeline.jpg" width="720" alt="Conformal calibration pipeline: comparing traditional miscalibrated ML confidence with conformal prediction providing mathematically guaranteed coverage — a stated 90% confidence interval genuinely contains the true value at least 90% of the time." />
 </p>
 
 <details>
@@ -217,7 +215,7 @@ The scaffold calibrates every attribution field: confidence in creator identity,
 The scaffold includes a [Model Context Protocol](https://modelcontextprotocol.io/) (MCP) server that provides **machine-readable permission queries** for AI training rights. AI platforms can ask "may I use this recording for training?" and receive structured responses.
 
 <p align="center">
-  <img src="docs/figures/assets/fig-rm-06-ai-asks-permission.jpg" width="720" alt="MCP consent infrastructure: AI platforms send machine-readable permission queries to the MCP server, receiving structured ALLOW, DENY, or ASK responses with conditions — enabling automated, auditable consent management for AI training on music data." />
+  <img src="docs/figures/repo-figures/assets/fig-choice-11-mcp-permissions.jpg" width="720" alt="MCP consent infrastructure: AI platforms send machine-readable permission queries to the MCP server, receiving structured ALLOW, DENY, or ASK responses with conditions — enabling automated, auditable consent management for AI training on music data." />
 </p>
 
 ```
@@ -360,8 +358,6 @@ uv sync --group docs && uv run --group docs mkdocs serve
 ## Music AI Attribution Landscape
 
 The music AI attribution space is undergoing rapid consolidation. This section provides a compact overview — see the [full landscape report](docs/planning/music-tech-landscape/README.md) for detailed company profiles, academic papers, and buy-vs-build analysis.
-
-<!-- TODO: Create figure plan for landscape overview infographic -->
 
 ### Attribution Infrastructure
 

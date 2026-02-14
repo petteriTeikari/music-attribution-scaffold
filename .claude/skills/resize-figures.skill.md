@@ -28,8 +28,8 @@ uv run python docs/figures/scripts/resize_and_convert.py --force
 
 ## Configuration
 
-- **Input**: `docs/figures/generated/*.png` (raw Nano Banana Pro output)
-- **Output**: `docs/figures/assets/*.jpg` (web-optimized)
+- **Input**: `docs/figures/repo-figures/generated/*.png` (raw Nano Banana Pro output)
+- **Output**: `docs/figures/repo-figures/assets/*.jpg` (web-optimized)
 - **Width**: 1600px (maintains aspect ratio)
 - **Quality**: 85% JPEG
 - **Corners**: 24px radius with white background
@@ -42,6 +42,6 @@ uv run python docs/figures/scripts/resize_and_convert.py --force
 
 ## After Running
 
-1. Verify output in `docs/figures/assets/`
+1. Verify output in `docs/figures/repo-figures/assets/`
 2. Update README files to reference `.jpg` files from assets
 3. Consider gitignoring the large PNGs in `generated/`

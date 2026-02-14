@@ -532,7 +532,8 @@ graph TB
 
 ### Visual: MCP Security Threat Model
 
-![MCP Security Threat Model](../figures/assets/fig-tech-05-mcp-security-threat-model.jpg)
+<!-- TODO: Generate fig-repo-17-mcp-security-threat-model.jpg via Nano Banana Pro -->
+![MCP security threat model: four attack surfaces (tool manifest, communication, resource access, execution) mitigated by four-layer defense.](../figures/repo-figures/assets/fig-repo-17-mcp-security-threat-model.jpg)
 
 *Four attack surfaces (tool manifest, communication, resource access, execution) mitigated by four-layer defense. Based on [MCP Security Bench](https://arxiv.org/abs/2510.15994) finding 40.71% average attack success rate across nine models.*
 

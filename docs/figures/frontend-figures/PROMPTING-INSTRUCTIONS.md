@@ -14,7 +14,7 @@
    - **Content prompt** → references figure plan spatial anchors + elements
 4. **Generate in Nano Banana Pro**
 5. **Export at target dimensions** (specified in figure plan)
-6. **Save to:** `docs/figures/assets/` (source) and `docs/figures/generated/` (final)
+6. **Save to:** `docs/figures/repo-figures/assets/` (web-optimized) and `docs/figures/repo-figures/generated/` (raw PNGs)
 
 ---
 
