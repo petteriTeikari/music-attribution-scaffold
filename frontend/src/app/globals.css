@@ -69,6 +69,16 @@
   --color-permission-deny: #C44536;
   --color-permission-ask: #E09F3E;
 
+  /* Platform types */
+  --color-platform-ai-generator: #8B5CF6;
+  --color-platform-attribution: #E84C4F;
+  --color-platform-llm-provider: #3B82F6;
+  --color-platform-streaming: #10B981;
+  --color-platform-rights-org: #F59E0B;
+  --color-platform-certification: #06B6D4;
+  --color-platform-registry: #6B7280;
+  --color-platform-individual: #D4A03C;
+
   /* Role accents */
   --color-role-artist: #D4A03C;
   --color-role-query: #5B9BD5;
@@ -177,6 +187,15 @@
   --color-permission-allow: #6BAF7E;
   --color-permission-deny: #E06050;
   --color-permission-ask: #F0B04E;
+
+  --color-platform-ai-generator: #A78BFA;
+  --color-platform-attribution: #F06B6E;
+  --color-platform-llm-provider: #60A5FA;
+  --color-platform-streaming: #34D399;
+  --color-platform-rights-org: #FBBF24;
+  --color-platform-certification: #22D3EE;
+  --color-platform-registry: #9CA3AF;
+  --color-platform-individual: #E8B94A;
 
   --color-role-artist: #E8B94A;
   --color-role-query: #7BB5E5;

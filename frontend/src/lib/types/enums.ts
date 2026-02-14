@@ -120,6 +120,9 @@ export const PermissionType = {
   DOWNLOAD: "DOWNLOAD",
   SYNC_LICENSE: "SYNC_LICENSE",
   AI_TRAINING: "AI_TRAINING",
+  AI_TRAINING_COMPOSITION: "AI_TRAINING_COMPOSITION",
+  AI_TRAINING_RECORDING: "AI_TRAINING_RECORDING",
+  AI_TRAINING_STYLE: "AI_TRAINING_STYLE",
   VOICE_CLONING: "VOICE_CLONING",
   STYLE_LEARNING: "STYLE_LEARNING",
   LYRICS_IN_CHATBOTS: "LYRICS_IN_CHATBOTS",
@@ -127,6 +130,7 @@ export const PermissionType = {
   REMIX: "REMIX",
   SAMPLE: "SAMPLE",
   DERIVATIVE_WORK: "DERIVATIVE_WORK",
+  DATASET_INCLUSION: "DATASET_INCLUSION",
 } as const;
 export type PermissionType =
   (typeof PermissionType)[keyof typeof PermissionType];
@@ -155,6 +159,7 @@ export const DelegationRole = {
   MANAGER: "MANAGER",
   LABEL: "LABEL",
   DISTRIBUTOR: "DISTRIBUTOR",
+  DELEGATE: "DELEGATE",
 } as const;
 export type DelegationRole =
   (typeof DelegationRole)[keyof typeof DelegationRole];
@@ -167,3 +172,16 @@ export const PipelineFeedbackType = {
 } as const;
 export type PipelineFeedbackType =
   (typeof PipelineFeedbackType)[keyof typeof PipelineFeedbackType];
+
+export const PlatformType = {
+  AI_GENERATOR: "ai_generator",
+  ATTRIBUTION_INFRA: "attribution_infra",
+  LLM_PROVIDER: "llm_provider",
+  STREAMING: "streaming",
+  RIGHTS_ORG: "rights_org",
+  LICENSING_BODY: "licensing_body",
+  CERTIFICATION_BODY: "certification_body",
+  REGISTRY: "registry",
+  INDIVIDUAL: "individual",
+} as const;
+export type PlatformType = (typeof PlatformType)[keyof typeof PlatformType];

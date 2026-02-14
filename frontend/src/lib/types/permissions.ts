@@ -5,6 +5,7 @@
 
 import type {
   DelegationRole,
+  PlatformType,
   PermissionScope,
   PermissionType,
   PermissionValue,
@@ -52,7 +53,7 @@ export interface AuditLogEntry {
   id: string;
   timestamp: string; // ISO 8601
   requester_name: string;
-  requester_type: "ai_platform" | "rights_org" | "individual";
+  requester_type: PlatformType;
   permission_type: PermissionType;
   work_title: string | null;
   scope: PermissionScope;
