@@ -55,10 +55,6 @@ class SplinkMatcher:
     3. ``predict()`` -- compute match probabilities for all candidate pairs.
     4. ``cluster()`` -- group records by match probability threshold.
 
-    Parameters
-    ----------
-    None
-
     Attributes
     ----------
     _model_configured : bool

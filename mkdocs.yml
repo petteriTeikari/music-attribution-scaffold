@@ -20,30 +20,33 @@ docs_dir: docs/site
 # Theme configuration
 theme:
   name: material
+  custom_dir: overrides
   language: en
+  font: false  # We load Instrument Serif, Plus Jakarta Sans, IBM Plex Mono via CSS
 
   palette:
     - media: "(prefers-color-scheme: light)"
-      scheme: default
-      primary: indigo
-      accent: deep-orange
+      scheme: music-attribution
       toggle:
         icon: material/brightness-7
         name: Switch to dark mode
     - media: "(prefers-color-scheme: dark)"
-      scheme: slate
-      primary: indigo
-      accent: deep-orange
+      scheme: music-attribution-dark
       toggle:
         icon: material/brightness-4
         name: Switch to light mode
 
   features:
+    - announce.dismiss
+    - header.autohide
     - navigation.tabs
     - navigation.sections
     - navigation.expand
     - navigation.top
     - navigation.indexes
+    - navigation.footer
+    - navigation.instant
+    - navigation.instant.prefetch
     - search.suggest
     - search.highlight
     - content.code.copy
@@ -185,7 +188,13 @@ nav:
   - Troubleshooting: troubleshooting.md
 
 # Footer
+copyright: >
+  &copy; 2026 Petteri Teikari &middot;
+  <a href="https://papers.ssrn.com/sol3/papers.cfm?abstract_id=6109087">SSRN No. 6109087</a> &middot;
+  <a href="https://github.com/petteriTeikari/music-attribution-scaffold/blob/main/LICENSE">MIT License</a>
+
 extra:
+  generator: false
   social:
     - icon: fontawesome/brands/github
       link: https://github.com/petteriTeikari/music-attribution-scaffold
