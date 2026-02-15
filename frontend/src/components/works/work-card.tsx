@@ -5,9 +5,8 @@ import type { AttributionRecord } from "@/lib/types/attribution";
 import { getConfidenceTier, getConfidenceCssVar } from "@/lib/theme/confidence";
 import { AssuranceBadge } from "./assurance-badge";
 import { SourceTag } from "./source-tag";
-import { ExternalLinkBadge } from "./external-link-badge";
 import { ConfidencePopover } from "./confidence-popover";
-import { getExternalLinks } from "@/lib/data/external-links";
+import { getSourceUrl } from "@/lib/data/external-links";
 import { trackEvent, EVENTS } from "@/lib/analytics/events";
 import type { Source } from "@/lib/types/enums";
 
@@ -27,7 +26,6 @@ export function WorkCard({ work }: WorkCardProps) {
   const tier = getConfidenceTier(work.confidence_score);
   const color = getConfidenceCssVar(tier);
   const primaryCredit = work.credits[0];
-  const externalLinks = getExternalLinks(work.attribution_id);
 
   return (
     <Link
@@ -71,38 +69,29 @@ export function WorkCard({ work }: WorkCardProps) {
         </p>
       </div>
 
-      {/* Badges — source tags + external links */}
+      {/* Badges — source tags (clickable when external link exists) */}
       <div className="hidden sm:flex items-center gap-2">
         <AssuranceBadge level={work.assurance_level} />
-        {Array.from(allSources).map((source) => (
-          <SourceTag key={source} source={source} />
-        ))}
-        {externalLinks.musicbrainz_recording_url && (
-          <ExternalLinkBadge
-            source="musicbrainz"
-            url={externalLinks.musicbrainz_recording_url}
-            onClick={() =>
-              trackEvent(EVENTS.EXTERNAL_LINK_CLICKED, {
-                attribution_id: work.attribution_id,
-                source: "musicbrainz",
-                url: externalLinks.musicbrainz_recording_url!,
-              })
-            }
-          />
-        )}
-        {externalLinks.discogs_master_url && (
-          <ExternalLinkBadge
-            source="discogs"
-            url={externalLinks.discogs_master_url}
-            onClick={() =>
-              trackEvent(EVENTS.EXTERNAL_LINK_CLICKED, {
-                attribution_id: work.attribution_id,
-                source: "discogs",
-                url: externalLinks.discogs_master_url!,
-              })
-            }
-          />
-        )}
+        {Array.from(allSources).map((source) => {
+          const url = getSourceUrl(source, work.attribution_id);
+          return (
+            <SourceTag
+              key={source}
+              source={source}
+              href={url ?? undefined}
+              onClick={
+                url
+                  ? () =>
+                      trackEvent(EVENTS.EXTERNAL_LINK_CLICKED, {
+                        attribution_id: work.attribution_id,
+                        source: source.toLowerCase(),
+                        url,
+                      })
+                  : undefined
+              }
+            />
+          );
+        })}
       </div>
 
       {/* Review indicator + version */}

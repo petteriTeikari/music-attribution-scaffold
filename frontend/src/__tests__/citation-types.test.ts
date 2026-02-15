@@ -45,7 +45,7 @@ describe("Citation TypeScript types", () => {
 
   it("mock data conforms to updated TS types", async () => {
     const { MOCK_WORKS } = await import("@/lib/data/mock-works");
-    expect(MOCK_WORKS.length).toBe(8);
+    expect(MOCK_WORKS.length).toBe(9);
 
     for (const work of MOCK_WORKS) {
       // ProvenanceEvent has citation_index field

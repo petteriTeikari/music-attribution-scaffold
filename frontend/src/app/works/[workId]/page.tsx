@@ -68,7 +68,7 @@ export default function WorkDetailPage() {
 
   const externalLinks = getExternalLinks(work.attribution_id);
   const hasExternalLinks =
-    externalLinks.musicbrainz_recording_url || externalLinks.discogs_master_url;
+    externalLinks.musicbrainz_recording_url || externalLinks.discogs_url;
 
   return (
     <div className="px-8 py-10">
@@ -177,15 +177,15 @@ export default function WorkDetailPage() {
                 }
               />
             )}
-            {externalLinks.discogs_master_url && (
+            {externalLinks.discogs_url && (
               <ExternalLinkBadge
                 source="discogs"
-                url={externalLinks.discogs_master_url}
+                url={externalLinks.discogs_url}
                 onClick={() =>
                   trackEvent(EVENTS.EXTERNAL_LINK_CLICKED, {
                     attribution_id: work.attribution_id,
                     source: "discogs",
-                    url: externalLinks.discogs_master_url!,
+                    url: externalLinks.discogs_url!,
                   })
                 }
               />
