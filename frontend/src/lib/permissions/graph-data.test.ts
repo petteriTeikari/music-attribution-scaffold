@@ -24,9 +24,9 @@ describe("buildGraphData", () => {
     const platformNodes = nodes.filter((n) => n.type === "platform");
     // Should have unique platforms from audit log
     expect(platformNodes.length).toBeGreaterThanOrEqual(10);
-    // SoundCloud should appear only once even though it has 2 audit entries
-    const soundcloudNodes = platformNodes.filter((n) => n.label === "SoundCloud");
-    expect(soundcloudNodes).toHaveLength(1);
+    // Suno AI should appear only once even though it has 2 audit entries
+    const sunoNodes = platformNodes.filter((n) => n.label === "Suno AI");
+    expect(sunoNodes).toHaveLength(1);
   });
 
   it("creates links from platforms to groups", () => {
