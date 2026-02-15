@@ -21,6 +21,10 @@ export const EVENTS = {
   CONFIDENCE_EXPLAINED: "confidence_explained",
   WORK_SELECTED: "work_selected",
   PROFICIENCY_LEVEL_CHANGED: "proficiency_level_changed",
+  EXTERNAL_LINK_CLICKED: "external_link_clicked",
+  NODE_OVERLAY_VIEWED: "node_overlay_viewed",
+  CONFIDENCE_POPOVER_VIEWED: "confidence_popover_viewed",
+  PROVENANCE_DAG_EXPANDED: "provenance_dag_expanded",
 } as const;
 
 export type EventName = (typeof EVENTS)[keyof typeof EVENTS];
@@ -39,6 +43,10 @@ interface EventProperties {
   confidence_explained: { attribution_id: string; confidence_score: number };
   work_selected: { attribution_id: string };
   proficiency_level_changed: { skill: string; old_level: string; new_level: string };
+  external_link_clicked: { attribution_id: string; source: string; url: string };
+  node_overlay_viewed: { node_id: string; node_type: string };
+  confidence_popover_viewed: { attribution_id: string; confidence_score: number };
+  provenance_dag_expanded: { attribution_id: string; event_count: number };
 }
 
 /**

@@ -5,6 +5,10 @@ import type { AttributionRecord } from "@/lib/types/attribution";
 import { getConfidenceTier, getConfidenceCssVar } from "@/lib/theme/confidence";
 import { AssuranceBadge } from "./assurance-badge";
 import { SourceTag } from "./source-tag";
+import { ExternalLinkBadge } from "./external-link-badge";
+import { ConfidencePopover } from "./confidence-popover";
+import { getExternalLinks } from "@/lib/data/external-links";
+import { trackEvent, EVENTS } from "@/lib/analytics/events";
 import type { Source } from "@/lib/types/enums";
 
 interface WorkCardProps {
@@ -23,21 +27,33 @@ export function WorkCard({ work }: WorkCardProps) {
   const tier = getConfidenceTier(work.confidence_score);
   const color = getConfidenceCssVar(tier);
   const primaryCredit = work.credits[0];
+  const externalLinks = getExternalLinks(work.attribution_id);
 
   return (
     <Link
       href={`/works/${work.attribution_id}`}
       className="group flex items-center gap-6 py-5 transition-colors duration-150 hover:bg-surface-secondary"
     >
-      {/* Large confidence number — editorial typography */}
-      <div className="flex-shrink-0 w-16 text-right">
-        <span
-          className="editorial-display text-3xl"
-          style={{ color }}
-        >
-          {Math.round(work.confidence_score * 100)}
-        </span>
-      </div>
+      {/* Large confidence number — editorial typography with hover popover */}
+      <ConfidencePopover
+        score={work.confidence_score}
+        conformalSet={work.conformal_set}
+        onView={() =>
+          trackEvent(EVENTS.CONFIDENCE_POPOVER_VIEWED, {
+            attribution_id: work.attribution_id,
+            confidence_score: work.confidence_score,
+          })
+        }
+      >
+        <div className="flex-shrink-0 w-16 text-right">
+          <span
+            className="editorial-display text-3xl"
+            style={{ color }}
+          >
+            {Math.round(work.confidence_score * 100)}
+          </span>
+        </div>
+      </ConfidencePopover>
 
       {/* Work info */}
       <div className="min-w-0 flex-1">
@@ -55,12 +71,38 @@ export function WorkCard({ work }: WorkCardProps) {
         </p>
       </div>
 
-      {/* Badges */}
+      {/* Badges — source tags + external links */}
       <div className="hidden sm:flex items-center gap-2">
         <AssuranceBadge level={work.assurance_level} />
         {Array.from(allSources).map((source) => (
           <SourceTag key={source} source={source} />
         ))}
+        {externalLinks.musicbrainz_recording_url && (
+          <ExternalLinkBadge
+            source="musicbrainz"
+            url={externalLinks.musicbrainz_recording_url}
+            onClick={() =>
+              trackEvent(EVENTS.EXTERNAL_LINK_CLICKED, {
+                attribution_id: work.attribution_id,
+                source: "musicbrainz",
+                url: externalLinks.musicbrainz_recording_url!,
+              })
+            }
+          />
+        )}
+        {externalLinks.discogs_master_url && (
+          <ExternalLinkBadge
+            source="discogs"
+            url={externalLinks.discogs_master_url}
+            onClick={() =>
+              trackEvent(EVENTS.EXTERNAL_LINK_CLICKED, {
+                attribution_id: work.attribution_id,
+                source: "discogs",
+                url: externalLinks.discogs_master_url!,
+              })
+            }
+          />
+        )}
       </div>
 
       {/* Review indicator + version */}

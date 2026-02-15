@@ -11,6 +11,9 @@ interface AgentSuggestion {
   suggested: string;
   reason: string;
   confidence: number;
+  /** Detailed reasoning with source references — shown in 3rd disclosure level */
+  detail?: string;
+  sourceRefs?: string[];
 }
 
 interface AgentReviewQueueProps {
@@ -31,6 +34,11 @@ function generateAgentSuggestions(work: AttributionRecord): AgentSuggestion[] {
       suggested: "LEVEL_2",
       reason: "Cross-referencing MusicBrainz and Discogs confirms credit chain",
       confidence: 0.82,
+      detail:
+        "MusicBrainz recording entry lists performer and songwriter credits with matching entity IDs. " +
+        "Discogs master release corroborates the same credits with additional role details. " +
+        "Combined source agreement (0.81) exceeds the A2 threshold.",
+      sourceRefs: ["MusicBrainz recording", "Discogs master release"],
     });
   }
 
@@ -42,6 +50,11 @@ function generateAgentSuggestions(work: AttributionRecord): AgentSuggestion[] {
       suggested: "Add MusicBrainz cross-reference",
       reason: "Additional source corroboration improves confidence by ~15%",
       confidence: 0.75,
+      detail:
+        "The current attribution relies on a limited source set. Adding a MusicBrainz cross-reference " +
+        "would provide independent verification, typically improving conformal coverage by 12-18%. " +
+        "The MusicBrainz API rate limiter was not triggered in the last fetch cycle.",
+      sourceRefs: ["MusicBrainz API", "Conformal prediction calibration set"],
     });
   }
 
@@ -52,11 +65,21 @@ function generateAgentSuggestions(work: AttributionRecord): AgentSuggestion[] {
       suggested: "Request artist verification",
       reason: "Low-confidence credits benefit from A3 artist verification",
       confidence: 0.88,
+      detail:
+        "Credits with confidence below 0.50 have prediction sets containing 3+ alternative roles, " +
+        "indicating the model is uncertain about the exact attribution. Artist self-verification (A3) " +
+        "would reduce the prediction set to the correct role and apply a Bayesian update.",
+      sourceRefs: [
+        "Conformal prediction set analysis",
+        "A3 verification protocol",
+      ],
     });
   }
 
   return suggestions;
 }
+
+type DisclosureLevel = "hidden" | "summary" | "detail";
 
 export function AgentReviewQueue({
   works,
@@ -66,8 +89,30 @@ export function AgentReviewQueue({
   approvedIds,
 }: AgentReviewQueueProps) {
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [detailSuggestionIdx, setDetailSuggestionIdx] = useState<number | null>(null);
   const pendingWorks = works.filter((w) => !approvedIds.has(w.attribution_id));
   const approvedCount = approvedIds.size;
+
+  function getDisclosureLevel(workId: string, suggestionIdx: number): DisclosureLevel {
+    if (expandedId !== workId) return "hidden";
+    if (detailSuggestionIdx === suggestionIdx) return "detail";
+    return "summary";
+  }
+
+  function handleToggleExpand(workId: string) {
+    setExpandedId((prev) => {
+      if (prev === workId) {
+        setDetailSuggestionIdx(null);
+        return null;
+      }
+      setDetailSuggestionIdx(null);
+      return workId;
+    });
+  }
+
+  function handleToggleDetail(suggestionIdx: number) {
+    setDetailSuggestionIdx((prev) => (prev === suggestionIdx ? null : suggestionIdx));
+  }
 
   return (
     <div>
@@ -140,40 +185,78 @@ export function AgentReviewQueue({
                     {work.artist_name}
                   </p>
 
-                  {/* Agent suggestions */}
+                  {/* Agent suggestions — 3-level progressive disclosure */}
                   {suggestions.length > 0 && (
                     <div className="mt-3">
                       <button
-                        onClick={() => setExpandedId(isExpanded ? null : work.attribution_id)}
+                        onClick={() => handleToggleExpand(work.attribution_id)}
                         className="editorial-caps text-xs text-accent underline underline-offset-2"
+                        aria-expanded={isExpanded}
                       >
                         {isExpanded ? "Hide" : `${suggestions.length} suggestion${suggestions.length !== 1 ? "s" : ""}`}
                       </button>
 
                       {isExpanded && (
                         <div className="mt-3 space-y-3">
-                          {suggestions.map((s, i) => (
-                            <div
-                              key={i}
-                              className="pl-4 border-l-2 border-accent-muted"
-                            >
-                              <div className="flex items-center gap-3 text-sm">
-                                <span className="text-confidence-low line-through">
-                                  {s.current}
-                                </span>
-                                <span className="text-accent">&rarr;</span>
-                                <span className="text-confidence-high font-medium">
-                                  {s.suggested}
-                                </span>
-                                <span className="text-xs text-muted data-mono">
-                                  ({Math.round(s.confidence * 100)}%)
-                                </span>
+                          {suggestions.map((s, i) => {
+                            const level = getDisclosureLevel(work.attribution_id, i);
+                            return (
+                              <div
+                                key={i}
+                                className="pl-4 border-l-2 border-accent-muted"
+                              >
+                                {/* Level 2: Summary (diff view) */}
+                                <div className="flex items-center gap-3 text-sm">
+                                  <span className="text-confidence-low line-through">
+                                    {s.current}
+                                  </span>
+                                  <span className="text-accent">&rarr;</span>
+                                  <span className="text-confidence-high font-medium">
+                                    {s.suggested}
+                                  </span>
+                                  <span className="text-xs text-muted data-mono">
+                                    ({Math.round(s.confidence * 100)}%)
+                                  </span>
+                                </div>
+                                <p className="mt-1 text-xs text-label">
+                                  {s.reason}
+                                </p>
+
+                                {/* Level 3: Detail toggle */}
+                                {s.detail && (
+                                  <div className="mt-1">
+                                    <button
+                                      onClick={() => handleToggleDetail(i)}
+                                      className="text-xs text-muted underline underline-offset-2 hover:text-heading"
+                                      aria-expanded={level === "detail"}
+                                    >
+                                      {level === "detail" ? "Hide detail" : "Why?"}
+                                    </button>
+
+                                    {level === "detail" && (
+                                      <div className="mt-2 pl-3 border-l border-border">
+                                        <p className="text-xs text-body leading-relaxed">
+                                          {s.detail}
+                                        </p>
+                                        {s.sourceRefs && s.sourceRefs.length > 0 && (
+                                          <div className="mt-1.5 flex flex-wrap gap-1.5">
+                                            {s.sourceRefs.map((ref, ri) => (
+                                              <span
+                                                key={ri}
+                                                className="text-xs text-muted bg-surface-secondary px-1.5 py-0.5"
+                                              >
+                                                {ref}
+                                              </span>
+                                            ))}
+                                          </div>
+                                        )}
+                                      </div>
+                                    )}
+                                  </div>
+                                )}
                               </div>
-                              <p className="mt-1 text-xs text-label">
-                                {s.reason}
-                              </p>
-                            </div>
-                          ))}
+                            );
+                          })}
                         </div>
                       )}
                     </div>

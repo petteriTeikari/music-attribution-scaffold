@@ -6,17 +6,23 @@
  *
  * Nodes: Artist (center), 3 consent groups, N platforms from audit log.
  * Links: Platform → Group, colored by result (allow/ask/deny).
- * Interactions: Filter by result type, hover to highlight.
+ * Interactions: Filter by result type, hover to highlight, click for overlay.
  */
 
 import { useRef, useEffect, useState, useMemo, useCallback } from "react";
 import type { AuditLogEntry } from "@/lib/types/permissions";
 import { buildGraphData, type GraphNode, type GraphLink } from "@/lib/permissions/graph-data";
+import { NodeOverlayPanel } from "./node-overlay-panel";
+import { trackEvent, EVENTS } from "@/lib/analytics/events";
 
 type ResultFilter = "all" | "allow" | "ask" | "deny";
 
 interface ConsentGraphProps {
   auditLog: AuditLogEntry[];
+  /** Permission counts per group for overlay display */
+  groupCounts?: Record<string, { allow: number; ask: number; deny: number }>;
+  /** Total permission count for artist overlay */
+  totalPermissionCount?: number;
 }
 
 const WIDTH = 600;
@@ -58,10 +64,22 @@ function matchesFilter(result: string, filter: ResultFilter): boolean {
   return result.toUpperCase() === filter.toUpperCase();
 }
 
-export function ConsentGraph({ auditLog }: ConsentGraphProps) {
+/** Map group node IDs to consent group labels for count lookup */
+const GROUP_ID_MAP: Record<string, string> = {
+  "group-ai": "AI & GENERATION",
+  "group-dist": "DISTRIBUTION & LICENSING",
+  "group-creative": "CREATIVE DERIVATIVES",
+};
+
+export function ConsentGraph({
+  auditLog,
+  groupCounts,
+  totalPermissionCount = 0,
+}: ConsentGraphProps) {
   const svgRef = useRef<SVGSVGElement>(null);
   const [filter, setFilter] = useState<ResultFilter>("all");
   const [hoveredNode, setHoveredNode] = useState<string | null>(null);
+  const [selectedNode, setSelectedNode] = useState<GraphNode | null>(null);
   const [positions, setPositions] = useState<Map<string, { x: number; y: number }>>(new Map());
 
   const { nodes, links } = useMemo(() => buildGraphData(auditLog), [auditLog]);
@@ -154,8 +172,27 @@ export function ConsentGraph({ auditLog }: ConsentGraphProps) {
     setHoveredNode(nodeId);
   }, []);
 
+  const handleNodeClick = useCallback((node: GraphNode) => {
+    setSelectedNode((prev) => (prev?.id === node.id ? null : node));
+    trackEvent(EVENTS.NODE_OVERLAY_VIEWED, {
+      node_id: node.id,
+      node_type: node.type,
+    });
+  }, []);
+
+  const handleOverlayClose = useCallback(() => {
+    setSelectedNode(null);
+  }, []);
+
+  // Resolve group counts for the selected node
+  const selectedGroupCounts = useMemo(() => {
+    if (!selectedNode || selectedNode.type !== "group" || !groupCounts) return undefined;
+    const groupLabel = GROUP_ID_MAP[selectedNode.id];
+    return groupLabel ? groupCounts[groupLabel] : undefined;
+  }, [selectedNode, groupCounts]);
+
   return (
-    <div>
+    <div className="relative">
       {/* Screen reader summary */}
       <p className="sr-only">
         Interactive consent propagation graph showing how {nodes.filter((n) => n.type === "platform").length} platforms
@@ -220,12 +257,23 @@ export function ConsentGraph({ auditLog }: ConsentGraphProps) {
             if (!pos) return null;
             const r = getNodeRadius(node.type);
             const isHovered = hoveredNode === node.id;
+            const isSelected = selectedNode?.id === node.id;
 
             return (
               <g
                 key={node.id}
+                role="button"
+                aria-label={`${node.label} ${node.type} node`}
+                tabIndex={0}
                 onMouseEnter={() => handleNodeHover(node.id)}
                 onMouseLeave={() => handleNodeHover(null)}
+                onClick={() => handleNodeClick(node)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    handleNodeClick(node);
+                  }
+                }}
                 style={{ cursor: "pointer" }}
               >
                 <circle
@@ -233,9 +281,9 @@ export function ConsentGraph({ auditLog }: ConsentGraphProps) {
                   cy={pos.y}
                   r={r}
                   fill={getNodeColor(node.type)}
-                  stroke={isHovered ? "var(--color-heading)" : "none"}
-                  strokeWidth={isHovered ? 2 : 0}
-                  opacity={hoveredNode && !isHovered ? 0.4 : 1}
+                  stroke={isSelected ? "var(--color-accent)" : isHovered ? "var(--color-heading)" : "none"}
+                  strokeWidth={isSelected ? 3 : isHovered ? 2 : 0}
+                  opacity={hoveredNode && !isHovered && !isSelected ? 0.4 : 1}
                 />
                 <text
                   x={pos.x}
@@ -253,6 +301,16 @@ export function ConsentGraph({ auditLog }: ConsentGraphProps) {
             );
           })}
       </svg>
+
+      {/* Node overlay panel — positioned as HTML sibling */}
+      {selectedNode && (
+        <NodeOverlayPanel
+          node={selectedNode}
+          groupCounts={selectedGroupCounts}
+          totalCount={totalPermissionCount}
+          onClose={handleOverlayClose}
+        />
+      )}
 
       {/* Legend */}
       <div className="flex items-center gap-4 mt-3 text-xs text-muted">
