@@ -1,11 +1,20 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import dynamic from "next/dynamic";
 import type { PermissionBundle, AuditLogEntry } from "@/lib/types/permissions";
 import { apiClient } from "@/lib/api/api-client";
 import { PermissionMatrix } from "@/components/permissions/permission-matrix";
-import { AuditLog } from "@/components/permissions/audit-log";
-import { MCPQueryMockup } from "@/components/mcp/mcp-query-mockup";
+
+const AuditLog = dynamic(
+  () => import("@/components/permissions/audit-log").then((mod) => ({ default: mod.AuditLog })),
+  { ssr: false, loading: () => <div className="h-64 animate-pulse bg-surface-secondary" /> },
+);
+
+const MCPQueryMockup = dynamic(
+  () => import("@/components/mcp/mcp-query-mockup").then((mod) => ({ default: mod.MCPQueryMockup })),
+  { ssr: false, loading: () => <div className="h-64 animate-pulse bg-surface-secondary" /> },
+);
 
 type TabId = "permissions" | "mcp" | "audit";
 

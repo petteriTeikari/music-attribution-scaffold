@@ -1,15 +1,21 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+import dynamic from "next/dynamic";
 import { useAtomValue } from "jotai";
 import { useRouter } from "next/navigation";
 import { userRoleAtom } from "@/lib/stores/mode";
 import type { AttributionRecord } from "@/lib/types/attribution";
 import { apiClient } from "@/lib/api/api-client";
 import { AgentReviewQueue } from "@/components/review/agent-review-queue";
-import { AgentFeedbackFlow, type FeedbackData } from "@/components/feedback/agent-feedback-flow";
+import type { FeedbackData } from "@/components/feedback/agent-feedback-flow";
 import { useAttributionContext } from "@/hooks/use-attribution-context";
 import { useAgentActions } from "@/hooks/use-agent-actions";
+
+const AgentFeedbackFlow = dynamic(
+  () => import("@/components/feedback/agent-feedback-flow").then((mod) => ({ default: mod.AgentFeedbackFlow })),
+  { ssr: false },
+);
 
 export default function ReviewPage() {
   const role = useAtomValue(userRoleAtom);
@@ -54,7 +60,7 @@ export default function ReviewPage() {
   const approvedCount = approvedIds.size;
 
   function handleApprove(id: string) {
-    setApprovedIds((prev) => new Set([...prev, id]));
+    setApprovedIds((prev) => { const next = new Set(prev); next.add(id); return next; });
   }
 
   function handleApproveAll() {
