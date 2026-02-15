@@ -14,6 +14,7 @@ const nextConfig: NextConfig = {
       "@copilotkit/react-core",
       "@copilotkit/react-ui",
       "motion",
+      "d3",
     ],
   },
 };
