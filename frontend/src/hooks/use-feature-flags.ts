@@ -2,7 +2,7 @@
 
 import { useAtomValue } from "jotai";
 import { overallProficiencyAtom, type ProficiencyLevel } from "@/lib/stores/proficiency";
-import { posthog } from "@/lib/analytics/posthog-provider";
+import { getPostHogInstance } from "@/lib/analytics/posthog-provider";
 
 export type UiDensity = "comfortable" | "compact" | "dense";
 
@@ -44,7 +44,9 @@ export function useFeatureFlags(): FeatureFlags {
 
 function getFlag(key: string, fallback: boolean): boolean {
   try {
-    const value = posthog.getFeatureFlag(key);
+    const posthog = getPostHogInstance();
+    if (!posthog || typeof posthog.getFeatureFlag !== "function") return fallback;
+    const value = (posthog.getFeatureFlag as (key: string) => unknown)(key);
     if (typeof value === "boolean") return value;
     if (value === "true") return true;
     if (value === "false") return false;
@@ -56,7 +58,9 @@ function getFlag(key: string, fallback: boolean): boolean {
 
 function getStringFlag(key: string, fallback: string): string {
   try {
-    const value = posthog.getFeatureFlag(key);
+    const posthog = getPostHogInstance();
+    if (!posthog || typeof posthog.getFeatureFlag !== "function") return fallback;
+    const value = (posthog.getFeatureFlag as (key: string) => unknown)(key);
     if (typeof value === "string" && value.length > 0) return value;
   } catch {
     // PostHog not initialized

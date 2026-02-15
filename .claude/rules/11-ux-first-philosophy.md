@@ -16,8 +16,7 @@ The interface is **not a generic SaaS dashboard**. It is an editorial experience
 6. **Text links with underlines** — not pill buttons
 7. **Horizontal rows with dividers** — not shadow-box cards
 8. **Stagger reveal animations** — scroll-triggered, motion/react
-9. **Noise grain overlay** — subtle SVG texture at 3.5% opacity
-10. **Roman numerals** for sequential elements (Warp Records homage)
+9. **Roman numerals** for sequential elements (Warp Records homage)
 
 ## Interaction Design Standards
 

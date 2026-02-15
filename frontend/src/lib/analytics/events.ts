@@ -4,7 +4,7 @@
  * All events are no-ops when PostHog is not initialized (env vars missing).
  */
 
-import { posthog } from "./posthog-provider";
+import { getPostHogInstance } from "./posthog-provider";
 
 // Event name constants
 export const EVENTS = {
@@ -49,7 +49,13 @@ export function trackEvent<E extends EventName>(
   properties: EventProperties[E],
 ): void {
   try {
-    posthog.capture(event, properties as Record<string, unknown>);
+    const posthog = getPostHogInstance();
+    if (posthog && typeof posthog.capture === "function") {
+      (posthog.capture as (event: string, properties: Record<string, unknown>) => void)(
+        event,
+        properties as Record<string, unknown>,
+      );
+    }
   } catch {
     // PostHog not initialized — graceful no-op
   }

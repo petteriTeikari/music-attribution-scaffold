@@ -169,6 +169,15 @@ describe("CSS Token Lint", () => {
     });
   });
 
+  describe("globals.css must not contain feTurbulence SVG filter", () => {
+    it("no feTurbulence noise overlay (CPU-rendered, causes jank)", () => {
+      const globalsPath = resolve(SRC_DIR, "app", "globals.css");
+      const content = readFileSync(globalsPath, "utf-8");
+      expect(content).not.toContain("feTurbulence");
+      expect(content).not.toContain("fractalNoise");
+    });
+  });
+
   describe("globals.css does not define --text-* vars (they conflict with Tailwind)", () => {
     it("no --text-* custom properties in :root", () => {
       const globalsPath = resolve(SRC_DIR, "app", "globals.css");

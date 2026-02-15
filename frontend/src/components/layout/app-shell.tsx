@@ -1,8 +1,13 @@
 "use client";
 
 import { useState } from "react";
+import dynamic from "next/dynamic";
 import { Navigation } from "./navigation";
-import { AgentSidebar } from "@/components/chat/copilot-sidebar";
+
+const AgentSidebar = dynamic(
+  () => import("@/components/chat/copilot-sidebar").then((mod) => ({ default: mod.AgentSidebar })),
+  { ssr: false, loading: () => null },
+);
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const [agentOpen, setAgentOpen] = useState(false);

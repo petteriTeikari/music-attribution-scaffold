@@ -2,9 +2,15 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   experimental: {
-    // Deduplicate jotai across server/client boundaries in dev mode
-    // See: https://github.com/pmndrs/jotai/discussions/2044
-    optimizePackageImports: ["jotai"],
+    // Tree-shake barrel exports for heavy packages in Webpack mode.
+    // Turbopack handles this automatically, but Webpack needs the hint.
+    optimizePackageImports: [
+      "jotai",
+      "posthog-js",
+      "@copilotkit/react-core",
+      "@copilotkit/react-ui",
+      "motion",
+    ],
   },
 };
 
