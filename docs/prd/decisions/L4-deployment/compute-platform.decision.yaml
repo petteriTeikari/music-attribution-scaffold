@@ -2,19 +2,35 @@
 #
 # Where application code runs. Directly influenced by build-vs-buy
 # posture and service decomposition strategy.
+#
+# Updated 2026-02-14: Added Hetzner+Ubicloud managed K8s path,
+# corrected Hetzner bare-metal complexity (it is NOT simple),
+# added Kamal 2 as deployment mechanism. See FinOps landscape:
+# docs/planning/deployement-finops-landscape.md
+#
+# Updated 2026-02-14 (v2.1.1): Added geopolitical risk dimension —
+# sovereignty_conscious_eu archetype, CLOUD Act/Schrems III change
+# drivers, jurisdictional constraints on US-owned options. See:
+# docs/planning/deployement-finops-landscape-geopolitical-risk-assessment.md
 
 decision_id: compute_platform
 title: "Compute Platform"
 description: >
   Selects the primary compute platform for running application code.
   The choice spans from zero-config PaaS (Render, Railway) through
-  serverless-first platforms (Vercel) to self-managed infrastructure
-  (Hetzner dedicated, AWS ECS). Key trade-offs: operational complexity
-  vs. cost efficiency vs. scaling flexibility.
+  managed Kubernetes (Ubicloud on Hetzner) to self-managed infrastructure
+  (Hetzner bare-metal + K8s, AWS ECS). Key trade-offs: operational
+  complexity (DevOps tax) vs. cost efficiency vs. scaling flexibility.
+  CRITICAL CORRECTION (v2.1): Hetzner bare-metal is the MOST complex
+  option (requires K8s, CloudNativePG, cert-manager, etc.), NOT the
+  simplest. Render is the lowest-complexity path. There are TWO distinct
+  Hetzner paths: managed (via Ubicloud) and bare-metal (self-hosted K8s).
+  Recommended migration: start on Render, migrate to Hetzner when savings
+  justify the DevOps tax.
 
 decision_level: L4_deployment
 status: active
-last_updated: 2026-02-10
+last_updated: 2026-02-14
 
 options:
   - option_id: render
@@ -32,7 +48,7 @@ options:
       Vercel for frontend (Next.js/SvelteKit), separate backend service
       on Railway/Render/Fly.io. Optimized for frontend-heavy architectures
       with edge deployment capabilities.
-    prior_probability: 0.20
+    prior_probability: 0.15
     status: viable
     complements:
       - "frontend_framework.nextjs"
@@ -58,18 +74,41 @@ options:
       - "Familiarity with Fly.io deployment model"
       - "Volume management for stateful workloads"
 
-  - option_id: hetzner_dedicated
-    title: "Hetzner Dedicated/Cloud"
+  - option_id: hetzner_ubicloud
+    title: "Hetzner Cloud + Ubicloud Managed K8s"
     description: >
-      Self-managed infrastructure on Hetzner's affordable European servers.
-      Maximum cost efficiency and control. Requires Docker Compose or
-      Kubernetes knowledge and all operational responsibilities.
+      Managed Kubernetes on Hetzner Cloud infrastructure via Ubicloud
+      (open-source AWS alternative). Provides K8s orchestration + managed
+      PostgreSQL without self-managing the control plane. Kamal 2 (from
+      37signals) available as lighter alternative for Docker-only deploys.
+      Germany + Virginia regions (preview, Feb 2026). ~EUR 20-60/month.
+      DevOps tax: ~EUR 5K/year (0.05 FTE). Best for growth-stage teams
+      wanting Hetzner cost savings without bare-metal K8s complexity.
     prior_probability: 0.10
     status: viable
+    complements:
+      - "database_hosting.ubicloud_managed"
     constraints:
-      - "Linux server administration skills"
-      - "Self-managed TLS, monitoring, backups"
-      - "No managed database (must self-host or use external)"
+      - "Ubicloud still in preview (Feb 2026)"
+      - "Limited regions (Germany, Virginia)"
+
+  - option_id: hetzner_baremetal
+    title: "Hetzner Bare-Metal + Self-Managed K8s"
+    description: >
+      Self-managed infrastructure on Hetzner dedicated/cloud servers.
+      Maximum cost efficiency (~EUR 7-30/month) but HIGHEST operational
+      complexity. Requires Talos/K3s, CloudNativePG, cert-manager, Ingress
+      NGINX, ExternalDNS — full K8s stack. The Digital Society case study
+      achieved 76% savings vs AWS but had 10 years K8s experience.
+      DevOps tax: ~EUR 35K/year (0.25 FTE). Only viable for teams with
+      dedicated DevOps capacity AND monthly spend exceeding EUR 200.
+    prior_probability: 0.05
+    status: viable
+    constraints:
+      - "Expert Kubernetes administration required"
+      - "Self-managed TLS, monitoring, backups, upgrades"
+      - "No managed database (must self-host CloudNativePG or use external)"
+      - "DevOps tax exceeds savings below EUR 200/month spend"
 
   - option_id: aws_ecs
     title: "AWS ECS / Cloud Run"
@@ -90,115 +129,151 @@ conditional_on:
     conditional_table:
       - given_parent_option: custom_build
         then_probabilities:
-          render: 0.15
-          vercel_plus_backend: 0.10
-          railway: 0.10
-          fly_io: 0.15
-          hetzner_dedicated: 0.25
-          aws_ecs: 0.25
+          render: 0.10
+          vercel_plus_backend: 0.05
+          railway: 0.05
+          fly_io: 0.10
+          hetzner_ubicloud: 0.20
+          hetzner_baremetal: 0.20
+          aws_ecs: 0.30
       - given_parent_option: managed_services
         then_probabilities:
-          render: 0.35
-          vercel_plus_backend: 0.20
-          railway: 0.20
+          render: 0.30
+          vercel_plus_backend: 0.15
+          railway: 0.15
           fly_io: 0.10
-          hetzner_dedicated: 0.05
+          hetzner_ubicloud: 0.15
+          hetzner_baremetal: 0.05
           aws_ecs: 0.10
       - given_parent_option: saas_maximalist
         then_probabilities:
-          render: 0.25
-          vercel_plus_backend: 0.35
+          render: 0.30
+          vercel_plus_backend: 0.30
           railway: 0.20
           fly_io: 0.10
-          hetzner_dedicated: 0.00
-          aws_ecs: 0.10
+          hetzner_ubicloud: 0.05
+          hetzner_baremetal: 0.00
+          aws_ecs: 0.05
 
   - parent_decision_id: service_decomposition
     influence_strength: moderate
     conditional_table:
       - given_parent_option: monolith
         then_probabilities:
-          render: 0.35
-          vercel_plus_backend: 0.10
-          railway: 0.20
-          fly_io: 0.15
-          hetzner_dedicated: 0.10
-          aws_ecs: 0.10
-      - given_parent_option: modular_monolith
-        then_probabilities:
           render: 0.30
-          vercel_plus_backend: 0.15
+          vercel_plus_backend: 0.10
           railway: 0.15
           fly_io: 0.10
-          hetzner_dedicated: 0.10
+          hetzner_ubicloud: 0.15
+          hetzner_baremetal: 0.05
+          aws_ecs: 0.15
+      - given_parent_option: modular_monolith
+        then_probabilities:
+          render: 0.25
+          vercel_plus_backend: 0.10
+          railway: 0.10
+          fly_io: 0.10
+          hetzner_ubicloud: 0.15
+          hetzner_baremetal: 0.10
           aws_ecs: 0.20
       - given_parent_option: microservices
         then_probabilities:
-          render: 0.15
-          vercel_plus_backend: 0.10
-          railway: 0.10
-          fly_io: 0.15
-          hetzner_dedicated: 0.15
-          aws_ecs: 0.35
+          render: 0.10
+          vercel_plus_backend: 0.05
+          railway: 0.05
+          fly_io: 0.10
+          hetzner_ubicloud: 0.15
+          hetzner_baremetal: 0.15
+          aws_ecs: 0.40
       - given_parent_option: serverless_functions
         then_probabilities:
           render: 0.10
-          vercel_plus_backend: 0.45
+          vercel_plus_backend: 0.40
           railway: 0.15
           fly_io: 0.10
-          hetzner_dedicated: 0.00
+          hetzner_ubicloud: 0.05
+          hetzner_baremetal: 0.00
           aws_ecs: 0.20
 
 archetype_weights:
   engineer_heavy_startup:
     probability_overrides:
-      render: 0.15
-      vercel_plus_backend: 0.10
-      railway: 0.10
-      fly_io: 0.15
-      hetzner_dedicated: 0.20
+      render: 0.10
+      vercel_plus_backend: 0.05
+      railway: 0.05
+      fly_io: 0.10
+      hetzner_ubicloud: 0.20
+      hetzner_baremetal: 0.20
       aws_ecs: 0.30
-    rationale: "Engineers can handle AWS/Hetzner complexity and optimize costs."
+    rationale: "Engineers handle AWS/Hetzner complexity. Ubicloud or bare-metal for cost optimization."
 
   musician_first_team:
     probability_overrides:
       render: 0.35
-      vercel_plus_backend: 0.30
+      vercel_plus_backend: 0.25
       railway: 0.20
       fly_io: 0.05
-      hetzner_dedicated: 0.00
+      hetzner_ubicloud: 0.05
+      hetzner_baremetal: 0.00
       aws_ecs: 0.10
-    rationale: "PaaS simplicity is essential. Render or Vercel."
+    rationale: "PaaS simplicity essential. Render git-push deploy, zero DevOps tax."
 
   solo_hacker:
     probability_overrides:
       render: 0.30
-      vercel_plus_backend: 0.25
+      vercel_plus_backend: 0.20
       railway: 0.25
       fly_io: 0.10
-      hetzner_dedicated: 0.05
+      hetzner_ubicloud: 0.05
+      hetzner_baremetal: 0.05
       aws_ecs: 0.05
-    rationale: "PaaS with free tiers. Railway or Render."
+    rationale: "PaaS free tiers. Hetzner only if K8s experienced."
 
   well_funded_startup:
     probability_overrides:
-      render: 0.20
-      vercel_plus_backend: 0.15
-      railway: 0.10
-      fly_io: 0.10
-      hetzner_dedicated: 0.10
-      aws_ecs: 0.35
-    rationale: "AWS ECS for enterprise credibility and scaling. PaaS for speed."
+      render: 0.15
+      vercel_plus_backend: 0.10
+      railway: 0.05
+      fly_io: 0.05
+      hetzner_ubicloud: 0.15
+      hetzner_baremetal: 0.10
+      aws_ecs: 0.40
+    rationale: "AWS ECS for enterprise. Hetzner+Ubicloud for cost-conscious growth."
+
+  sovereignty_conscious_eu:
+    probability_overrides:
+      render: 0.05
+      vercel_plus_backend: 0.00
+      railway: 0.00
+      fly_io: 0.00
+      hetzner_ubicloud: 0.45
+      hetzner_baremetal: 0.20
+      aws_ecs: 0.05
+    rationale: >
+      EU data sovereignty is a hard requirement. Only EU-owned providers
+      acceptable for production workloads handling artist PII and MCP consent
+      data. CLOUD Act exposure from US-headquartered providers is unacceptable
+      for rights infrastructure. Render acceptable for MVP-only phase (open-
+      source research, not production rights data). Hetzner+Ubicloud is the
+      optimal balance of sovereignty + cost. Remaining 0.25 probability
+      reserved for UpCloud (0.15) and OVHcloud (0.10) when added as options.
+      See: docs/planning/deployement-finops-landscape-geopolitical-risk-assessment.md
 
 volatility:
   classification: shifting
-  last_assessed: 2026-02-10
-  next_review: 2026-04-10
+  last_assessed: 2026-02-14
+  next_review: 2026-04-14
   change_drivers:
     - "PaaS pricing changes (Render, Railway, Vercel)"
-    - "AWS/GCP pricing adjustments"
+    - "AWS/GCP/Azure pricing adjustments"
+    - "Ubicloud managed K8s maturity (currently preview)"
     - "Hetzner cloud region expansion"
-    - "Platform-specific feature additions"
+    - "Kamal 2 ecosystem growth (37signals)"
+    - "DevOps tax threshold shifts with team size"
+    - "Schrems III challenge to EU-US Data Privacy Framework"
+    - "Section 301 US trade investigation targeting EU tech (Spotify named)"
+    - "EUCS certification scheme sovereignty requirements"
+    - "PCLOB restoration or permanent dissolution"
 
 domain_applicability:
   music_attribution: 1.0
@@ -213,3 +288,6 @@ tags:
 references:
   - "../infrastructure/toc-infrastructure.md"
   - "../defaults.yaml"
+  - "../../planning/deployement-finops-landscape.md"
+  - "../../planning/deployement-finops-landscape-geopolitical-risk-assessment.md"
+  - "../../knowledge-base/raw-sources/Digital Society _ Posts _ Migrating to Hetzner.md"

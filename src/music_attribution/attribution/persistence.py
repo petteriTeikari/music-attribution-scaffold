@@ -1,8 +1,33 @@
 """AttributionRecord persistence repositories.
 
-Two implementations:
-  - AttributionRecordRepository: In-memory for dev/testing (no database needed).
-  - AsyncAttributionRepository: Async PostgreSQL via SQLAlchemy AsyncSession.
+Provides two repository implementations for ``AttributionRecord`` storage:
+
+- ``AttributionRecordRepository``: In-memory storage for development and
+  testing. No database required; data is lost on process exit.
+- ``AsyncAttributionRepository``: Async PostgreSQL storage via SQLAlchemy
+  ``AsyncSession``. Production-grade with ACID guarantees.
+
+Both repositories expose the same async interface:
+
+- ``store()`` -- persist a new attribution record.
+- ``update()`` -- update an existing record (auto-increments version).
+- ``find_by_id()`` -- lookup by attribution UUID.
+- ``find_by_work_entity_id()`` -- lookup by work entity UUID.
+- ``find_needs_review()`` -- fetch records flagged for human review.
+
+Every update appends a ``ProvenanceEvent`` to the record's provenance
+chain, creating an immutable audit trail.
+
+Notes
+-----
+The provenance chain is a key component of the attribution-by-design
+philosophy described in Teikari (2026), Section 5.3. Every change to
+an attribution record is recorded with timestamp, agent, and details.
+
+See Also
+--------
+music_attribution.schemas.attribution : Pydantic models for attribution.
+music_attribution.db.models.AttributionRecordModel : SQLAlchemy ORM model.
 """
 
 from __future__ import annotations
@@ -30,36 +55,50 @@ logger = logging.getLogger(__name__)
 class AttributionRecordRepository:
     """In-memory repository for AttributionRecord persistence.
 
-    Provides async interface matching what a database-backed
-    implementation would expose.
+    Provides the same async interface as ``AsyncAttributionRepository``
+    so that dev/test code can be written against the same API. Records
+    are stored as deep copies to prevent mutation through references.
+
+    Attributes
+    ----------
+    _records : dict[uuid.UUID, AttributionRecord]
+        In-memory record storage keyed by ``attribution_id``.
     """
 
     def __init__(self) -> None:
         self._records: dict[uuid.UUID, AttributionRecord] = {}
 
     async def store(self, record: AttributionRecord) -> uuid.UUID:
-        """Store an attribution record.
+        """Store an attribution record (deep copy).
 
-        Args:
-            record: The attribution record to store.
+        Parameters
+        ----------
+        record : AttributionRecord
+            The attribution record to store.
 
-        Returns:
-            The attribution_id of the stored record.
+        Returns
+        -------
+        uuid.UUID
+            The ``attribution_id`` of the stored record.
         """
         self._records[record.attribution_id] = copy.deepcopy(record)
         return record.attribution_id
 
     async def update(self, record: AttributionRecord) -> uuid.UUID:
-        """Update an existing attribution record.
+        """Update an existing attribution record with provenance tracking.
 
-        Increments the version, updates the timestamp, and appends
-        a provenance event.
+        Increments the version number, updates the timestamp, and appends
+        an ``UPDATE`` provenance event to the record's provenance chain.
 
-        Args:
-            record: The record to update.
+        Parameters
+        ----------
+        record : AttributionRecord
+            The record to update.
 
-        Returns:
-            The attribution_id of the updated record.
+        Returns
+        -------
+        uuid.UUID
+            The ``attribution_id`` of the updated record.
         """
         now = datetime.now(UTC)
         old_version = record.version
@@ -89,13 +128,17 @@ class AttributionRecordRepository:
         return updated.attribution_id
 
     async def find_by_id(self, attribution_id: uuid.UUID) -> AttributionRecord | None:
-        """Find an attribution record by its ID.
+        """Find an attribution record by its UUID.
 
-        Args:
-            attribution_id: The attribution record UUID.
+        Parameters
+        ----------
+        attribution_id : uuid.UUID
+            The attribution record UUID to look up.
 
-        Returns:
-            The record if found, None otherwise.
+        Returns
+        -------
+        AttributionRecord | None
+            Deep copy of the record if found, ``None`` otherwise.
         """
         record = self._records.get(attribution_id)
         return copy.deepcopy(record) if record is not None else None
@@ -106,11 +149,15 @@ class AttributionRecordRepository:
     ) -> AttributionRecord | None:
         """Find an attribution record by work entity ID.
 
-        Args:
-            work_entity_id: The work entity UUID.
+        Parameters
+        ----------
+        work_entity_id : uuid.UUID
+            The work entity UUID.
 
-        Returns:
-            The most recent record for this work, or None.
+        Returns
+        -------
+        AttributionRecord | None
+            Deep copy of the first matching record, or ``None``.
         """
         for record in self._records.values():
             if record.work_entity_id == work_entity_id:
@@ -118,13 +165,18 @@ class AttributionRecordRepository:
         return None
 
     async def find_needs_review(self, limit: int = 50) -> list[AttributionRecord]:
-        """Find records that need review, sorted by priority descending.
+        """Find records that need human review, sorted by priority descending.
 
-        Args:
-            limit: Maximum number of records to return.
+        Parameters
+        ----------
+        limit : int, optional
+            Maximum number of records to return. Default is 50.
 
-        Returns:
-            List of records needing review, highest priority first.
+        Returns
+        -------
+        list[AttributionRecord]
+            Deep copies of records with ``needs_review=True``, sorted
+            by ``review_priority`` descending (highest priority first).
         """
         needs_review = [copy.deepcopy(r) for r in self._records.values() if r.needs_review]
         needs_review.sort(key=lambda r: r.review_priority, reverse=True)
@@ -132,7 +184,21 @@ class AttributionRecordRepository:
 
 
 def _record_to_model(record: AttributionRecord) -> AttributionRecordModel:
-    """Convert a Pydantic AttributionRecord to an ORM model."""
+    """Convert a Pydantic AttributionRecord to a SQLAlchemy ORM model.
+
+    Serializes nested Pydantic models (credits, conformal_set,
+    provenance_chain) to JSON-compatible dicts for JSONB storage.
+
+    Parameters
+    ----------
+    record : AttributionRecord
+        The Pydantic attribution record.
+
+    Returns
+    -------
+    AttributionRecordModel
+        SQLAlchemy ORM model ready for database insertion.
+    """
     return AttributionRecordModel(
         attribution_id=record.attribution_id,
         schema_version=record.schema_version,
@@ -157,10 +223,21 @@ def _record_to_model(record: AttributionRecord) -> AttributionRecordModel:
 
 
 def _model_to_record(model: AttributionRecordModel) -> AttributionRecord:
-    """Convert an ORM model to a Pydantic AttributionRecord.
+    """Convert a SQLAlchemy ORM model to a Pydantic AttributionRecord.
 
     Pydantic validates and coerces the raw values from SQLAlchemy,
-    so we pass through directly and let Pydantic handle type conversion.
+    so JSONB fields are passed through directly and Pydantic handles
+    type conversion (including nested model reconstruction).
+
+    Parameters
+    ----------
+    model : AttributionRecordModel
+        SQLAlchemy ORM model from database query.
+
+    Returns
+    -------
+    AttributionRecord
+        Validated Pydantic attribution record.
     """
     return AttributionRecord(
         schema_version=model.schema_version,
@@ -188,17 +265,31 @@ def _model_to_record(model: AttributionRecordModel) -> AttributionRecord:
 
 
 class AsyncAttributionRepository:
-    """Async PostgreSQL repository for AttributionRecord persistence."""
+    """Async PostgreSQL repository for AttributionRecord persistence.
+
+    Production-grade repository using SQLAlchemy ``AsyncSession`` for
+    database access. All methods require an active session; the caller
+    is responsible for transaction management (commit/rollback).
+
+    Provides the same logical operations as ``AttributionRecordRepository``
+    but backed by PostgreSQL with ACID guarantees and JSONB storage for
+    nested Pydantic models.
+    """
 
     async def store(self, record: AttributionRecord, session: AsyncSession) -> uuid.UUID:
-        """Store an attribution record.
+        """Store an attribution record in PostgreSQL.
 
-        Args:
-            record: The attribution record to store.
-            session: Active async database session.
+        Parameters
+        ----------
+        record : AttributionRecord
+            The attribution record to store.
+        session : AsyncSession
+            Active async database session.
 
-        Returns:
-            The attribution_id of the stored record.
+        Returns
+        -------
+        uuid.UUID
+            The ``attribution_id`` of the stored record.
         """
         model = _record_to_model(record)
         session.add(model)
@@ -206,16 +297,28 @@ class AsyncAttributionRepository:
         return record.attribution_id
 
     async def update(self, record: AttributionRecord, session: AsyncSession) -> uuid.UUID:
-        """Update an existing attribution record.
+        """Update an existing attribution record with provenance tracking.
 
-        Increments version, updates timestamp, appends provenance event.
+        Increments the version number, updates the timestamp, appends an
+        ``UPDATE`` provenance event, and persists changes via
+        ``session.flush()``.
 
-        Args:
-            record: The record to update.
-            session: Active async database session.
+        Parameters
+        ----------
+        record : AttributionRecord
+            The record to update.
+        session : AsyncSession
+            Active async database session.
 
-        Returns:
-            The attribution_id of the updated record.
+        Returns
+        -------
+        uuid.UUID
+            The ``attribution_id`` of the updated record.
+
+        Raises
+        ------
+        sqlalchemy.exc.NoResultFound
+            If no record with the given ``attribution_id`` exists.
         """
         now = datetime.now(UTC)
         old_version = record.version
@@ -263,14 +366,19 @@ class AsyncAttributionRepository:
         attribution_id: uuid.UUID,
         session: AsyncSession,
     ) -> AttributionRecord | None:
-        """Find an attribution record by its ID.
+        """Find an attribution record by its UUID.
 
-        Args:
-            attribution_id: The attribution record UUID.
-            session: Active async database session.
+        Parameters
+        ----------
+        attribution_id : uuid.UUID
+            The attribution record UUID to look up.
+        session : AsyncSession
+            Active async database session.
 
-        Returns:
-            The record if found, None otherwise.
+        Returns
+        -------
+        AttributionRecord | None
+            The validated Pydantic record if found, ``None`` otherwise.
         """
         stmt = select(AttributionRecordModel).where(
             AttributionRecordModel.attribution_id == attribution_id,
@@ -284,14 +392,22 @@ class AsyncAttributionRepository:
         work_entity_id: uuid.UUID,
         session: AsyncSession,
     ) -> AttributionRecord | None:
-        """Find an attribution record by work entity ID.
+        """Find the most recent attribution record for a work entity.
 
-        Args:
-            work_entity_id: The work entity UUID.
-            session: Active async database session.
+        Returns the record with the highest version number if multiple
+        versions exist for the same work entity.
 
-        Returns:
-            The most recent record for this work, or None.
+        Parameters
+        ----------
+        work_entity_id : uuid.UUID
+            The work entity UUID.
+        session : AsyncSession
+            Active async database session.
+
+        Returns
+        -------
+        AttributionRecord | None
+            The most recent record for this work, or ``None``.
         """
         stmt = (
             select(AttributionRecordModel)
@@ -309,14 +425,20 @@ class AsyncAttributionRepository:
         *,
         session: AsyncSession,
     ) -> list[AttributionRecord]:
-        """Find records that need review, sorted by priority descending.
+        """Find records that need human review, sorted by priority descending.
 
-        Args:
-            limit: Maximum number of records to return.
-            session: Active async database session.
+        Parameters
+        ----------
+        limit : int, optional
+            Maximum number of records to return. Default is 50.
+        session : AsyncSession
+            Active async database session.
 
-        Returns:
-            List of records needing review, highest priority first.
+        Returns
+        -------
+        list[AttributionRecord]
+            Records with ``needs_review=True``, sorted by
+            ``review_priority`` descending (highest priority first).
         """
         stmt = (
             select(AttributionRecordModel)
@@ -336,13 +458,21 @@ class AsyncAttributionRepository:
     ) -> list[AttributionRecord]:
         """List all attribution records with pagination.
 
-        Args:
-            limit: Maximum number of records to return.
-            offset: Number of records to skip.
-            session: Active async database session.
+        Returns records ordered by ``created_at`` ascending (oldest first).
 
-        Returns:
-            List of attribution records.
+        Parameters
+        ----------
+        limit : int, optional
+            Maximum number of records to return. Default is 50.
+        offset : int, optional
+            Number of records to skip for pagination. Default is 0.
+        session : AsyncSession
+            Active async database session.
+
+        Returns
+        -------
+        list[AttributionRecord]
+            Paginated list of attribution records.
         """
         stmt = select(AttributionRecordModel).order_by(AttributionRecordModel.created_at).offset(offset).limit(limit)
         result = await session.execute(stmt)

@@ -1,0 +1,71 @@
+# SoundExchange Registry Integration
+#
+# Whether and how the scaffold integrates with SoundExchange's AI training
+# authorization registry.
+
+decision_id: soundexchange_registry
+title: "SoundExchange Registry Integration"
+description: >
+  Determines integration depth with SoundExchange's AI training authorization
+  registry. SoundExchange manages 126M+ ISRCs for the U.S. digital performance
+  rights market. Their registry enables rights holders to declare training
+  authorization preferences per recording.
+
+decision_level: L3_components
+status: stub
+last_updated: 2026-02-14
+
+options:
+  - option_id: no_integration
+    title: "No Integration"
+    description: >
+      No integration with SoundExchange. The scaffold uses other data
+      sources for rights information.
+    prior_probability: 0.40
+    status: selected
+
+  - option_id: read_only_lookup
+    title: "Read-Only Lookup"
+    description: >
+      Query SoundExchange's registry for training authorization status
+      per ISRC. Integrate authorization signals into the scaffold's
+      confidence scoring and permissions infrastructure. Read-only API
+      access.
+    prior_probability: 0.40
+    status: candidate
+
+  - option_id: bidirectional
+    title: "Bidirectional Integration"
+    description: >
+      Full bidirectional integration: query authorization status AND
+      provide attribution data back to SoundExchange to enrich their
+      registry. Requires data sharing agreement and API partnership.
+    prior_probability: 0.20
+    status: candidate
+
+research_notes: >
+  SoundExchange announced the AI training authorization registry in
+  September 2024, with operational deployment progressing through 2025.
+  126M+ ISRCs make it the most comprehensive U.S. recording identifier
+  database. The registry concept aligns directly with the scaffold's
+  check_permissions MCP tool — SoundExchange provides authoritative
+  training consent data for U.S. repertoire.
+
+influences:
+  - from: external_registry_integration
+    direction: upstream
+    rationale: "External registry scope determines SoundExchange integration"
+  - from: regulatory_posture
+    direction: upstream
+    rationale: "Compliance requirements drive integration with authoritative registries"
+
+references:
+  - "SoundExchange AI Training Authorization Registry (Sep 2024)"
+  - "126M+ ISRCs managed by SoundExchange"
+
+tags:
+  - registry
+  - soundexchange
+  - rights
+  - named-partner
+  - discussion-expansion

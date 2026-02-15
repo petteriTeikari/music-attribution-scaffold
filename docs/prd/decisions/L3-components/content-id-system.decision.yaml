@@ -1,0 +1,69 @@
+# Content Identification System
+#
+# Audio fingerprinting and content identification approach.
+
+decision_id: content_id_system
+title: "Content Identification System"
+description: >
+  Determines the audio fingerprinting and content identification approach.
+  Options range from Chromaprint-only (the open-source standard via AcoustID)
+  to multi-fingerprint systems to commercial content ID partnerships.
+
+decision_level: L3_components
+status: stub
+last_updated: 2026-02-14
+
+options:
+  - option_id: chromaprint_only
+    title: "Chromaprint Only"
+    description: >
+      Use Chromaprint (via AcoustID) as the sole fingerprinting system.
+      Open source, well-understood, sufficient for recording-level
+      identification. Limited for derivative works or AI-generated content
+      that reuses fragments.
+    prior_probability: 0.45
+    status: selected
+
+  - option_id: multi_fingerprint
+    title: "Multi-Fingerprint System"
+    description: >
+      Combine multiple fingerprinting approaches: Chromaprint for
+      recording-level, spectral fingerprints for fragment-level, and
+      melody extraction for compositional similarity. Requires more
+      engineering but covers more attribution scenarios.
+    prior_probability: 0.35
+    status: candidate
+
+  - option_id: content_id_partner
+    title: "Content ID Partner"
+    description: >
+      Integrate with commercial content ID services (Audible Magic,
+      YouTube Content ID API, Pex). Highest accuracy for production
+      music catalogs but introduces vendor dependency and licensing costs.
+    prior_probability: 0.20
+    status: candidate
+
+research_notes: >
+  Chromaprint is the de facto standard for open-source audio fingerprinting.
+  For AI-generated music attribution, traditional fingerprinting may be
+  insufficient — the generated output may not match any existing recording
+  fingerprint. Spectral and melodic similarity approaches are more relevant
+  but less mature.
+
+influences:
+  - from: build_vs_buy_posture
+    direction: upstream
+    rationale: "Custom builders implement multi-fingerprint; SaaS teams use Chromaprint or partner"
+  - from: data_model_complexity
+    direction: upstream
+    rationale: "Graph-enriched models can represent fragment-level similarity relationships"
+
+references:
+  - "AcoustID / Chromaprint — open-source audio fingerprinting"
+  - "Audible Magic — commercial content identification"
+
+tags:
+  - fingerprinting
+  - content-id
+  - ecosystem
+  - discussion-expansion

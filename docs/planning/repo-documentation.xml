@@ -1,0 +1,1896 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Comprehensive Repository Documentation Plan
+  Branch: docs/repo-documentation
+  Supersedes: docs/planning/documentation-tasks-for-ssrn-repo.xml (coarse plan)
+
+  Design philosophy:
+    1. This repo is companion code to SSRN No. 6109087 — docs should be PEDAGOGIC
+    2. Bridge the gap between domain experts (musicians, lawyers, A&R) and engineers
+    3. Three-tier progressive disclosure: ELI5 → Practitioner → Architect
+    4. 120+ Nano Banana Pro figures explain concepts visually
+    5. MkDocs auto-deploy to GitHub Pages for web-native reading
+    6. All docstrings, all READMEs, all figures — comprehensive
+
+  Target user personas:
+    A. PhD Student — reading the SSRN paper, wants to clone & verify claims
+    B. Music Industry Professional — understands attribution, limited SWE background
+    C. Software Engineer — understands code, limited music domain knowledge
+    D. AI/ML Researcher — interested in confidence calibration, entity resolution
+    E. Policy Researcher — interested in regulatory frameworks, MCP consent
+
+  Reference projects:
+    - foundation-PLR: ~120 figure plans, MkDocs Material, GitHub Pages
+    - sci-llm-writer manuscript: HYBRID DATA-VECTOR COLLAGE style guide v2.1
+    - Frontend figures: Warp Records + constructivist editorial style
+-->
+<plan version="2.0" project="music-attribution-scaffold">
+  <metadata>
+    <title>Comprehensive Repository Documentation Plan</title>
+    <branch>docs/repo-documentation</branch>
+    <estimated_tasks>12 phases, ~35 execution tasks</estimated_tasks>
+    <estimated_figures>121 figure plans</estimated_figures>
+    <supersedes>docs/planning/documentation-tasks-for-ssrn-repo.xml</supersedes>
+    <style_reference>docs/figures/frontend-figures/STYLE-GUIDE-FRONTEND.md</style_reference>
+    <figure_template>Adapted from foundation-PLR CONTENT-TEMPLATE.md v2.3</figure_template>
+  </metadata>
+
+  <!-- ================================================================= -->
+  <!-- PHASE 0: INFRASTRUCTURE — MkDocs + GitHub Pages                   -->
+  <!-- Must be done FIRST so all subsequent docs deploy automatically    -->
+  <!-- ================================================================= -->
+
+  <phase id="P0" title="MkDocs Infrastructure">
+    <description>
+      Set up MkDocs Material with auto-deploy to GitHub Pages.
+      Mirrors foundation-PLR setup: mkdocs.yml, deploy-docs.yml,
+      dependency group, API autodoc via mkdocstrings.
+    </description>
+
+    <task id="P0.1" status="PENDING" priority="P0">
+      <title>Create mkdocs.yml configuration</title>
+      <files>
+        <create>mkdocs.yml</create>
+      </files>
+      <details>
+        Adapted from foundation-PLR mkdocs.yml:
+        - site_name: "Music Attribution Scaffold"
+        - site_url: https://petteriTeikari.github.io/music-attribution-scaffold/
+        - theme: material (indigo primary, coral accent #E84C4F)
+        - plugins: search, mkdocstrings (numpy-style), git-revision-date-localized, mermaid2
+        - markdown_extensions: full PyMdown suite (arithmatex, superfences/mermaid, tabs, emoji, tasklists)
+        - extra_javascript: MathJax 3
+        - strict: true
+        - Navigation structure (see P0.3 for full nav tree)
+      </details>
+    </task>
+
+    <task id="P0.2" status="PENDING" priority="P0">
+      <title>Create GitHub Actions deploy-docs workflow</title>
+      <files>
+        <create>.github/workflows/deploy-docs.yml</create>
+      </files>
+      <details>
+        Adapted from foundation-PLR deploy-docs.yml:
+        - Trigger: push to main (paths: docs/**, mkdocs.yml, src/**/*.py)
+        - Also: manual dispatch, PR builds (no deploy)
+        - Uses: astral-sh/setup-uv@v4
+        - Build: uv sync --only-group docs --frozen → uv run mkdocs build --strict
+        - Deploy: actions/deploy-pages@v4 (only on main)
+        - fetch-depth: 0 (for git-revision-date plugin)
+        - Concurrency: single deployment, no cancel-in-progress
+      </details>
+    </task>
+
+    <task id="P0.3" status="PENDING" priority="P0">
+      <title>Add docs dependency group to pyproject.toml</title>
+      <files>
+        <modify>pyproject.toml</modify>
+      </files>
+      <details>
+        Add [dependency-groups] docs = [...]:
+        - mkdocs>=1.6.1
+        - mkdocs-material>=9.7.1
+        - mkdocstrings>=1.0.2
+        - mkdocstrings-python>=2.0.1
+        - mkdocs-git-revision-date-localized-plugin>=1.5.1
+        - mkdocs-mermaid2-plugin>=1.2.3
+      </details>
+    </task>
+
+    <task id="P0.4" status="PENDING" priority="P0">
+      <title>Create docs site skeleton (index.md + nav structure)</title>
+      <files>
+        <create>docs/site/index.md</create>
+        <create>docs/site/getting-started/index.md</create>
+        <create>docs/site/getting-started/installation.md</create>
+        <create>docs/site/getting-started/quickstart.md</create>
+        <create>docs/site/user-guide/index.md</create>
+        <create>docs/site/user-guide/architecture.md</create>
+        <create>docs/site/user-guide/backend.md</create>
+        <create>docs/site/user-guide/frontend.md</create>
+        <create>docs/site/user-guide/agent.md</create>
+        <create>docs/site/concepts/index.md</create>
+        <create>docs/site/concepts/oracle-problem.md</create>
+        <create>docs/site/concepts/assurance-levels.md</create>
+        <create>docs/site/concepts/two-friction-taxonomy.md</create>
+        <create>docs/site/concepts/conformal-prediction.md</create>
+        <create>docs/site/concepts/mcp-consent.md</create>
+        <create>docs/site/concepts/entity-resolution.md</create>
+        <create>docs/site/api-reference/index.md</create>
+        <create>docs/site/tutorials/index.md</create>
+        <create>docs/site/tutorials/reproducing-the-paper.md</create>
+        <create>docs/site/tutorials/adding-data-sources.md</create>
+        <create>docs/site/tutorials/api-examples.md</create>
+        <create>docs/site/troubleshooting.md</create>
+        <create>docs/site/assets/</create>
+        <create>docs/site/stylesheets/extra.css</create>
+        <create>docs/site/javascripts/mathjax.js</create>
+      </files>
+      <details>
+        MkDocs nav tree:
+        - Home (index.md)
+        - Getting Started
+          - Installation
+          - Quick Start (clone → run in 5 min)
+        - Concepts (theory — ELI5 to advanced)
+          - Oracle Problem
+          - Assurance Levels (A0-A3)
+          - Two-Friction Taxonomy
+          - Conformal Prediction &amp; Calibration
+          - MCP Consent Infrastructure
+          - Entity Resolution
+        - User Guide
+          - Architecture Overview (5-pipeline diagram)
+          - Backend (ETL → Resolution → Attribution → API)
+          - Frontend (Next.js, design system, CopilotKit)
+          - Agentic UI (PydanticAI, AG-UI, sidebar)
+        - API Reference (auto-generated from docstrings)
+          - schemas
+          - etl
+          - resolution
+          - attribution
+          - api (routes)
+          - chat (agent, state)
+          - mcp
+        - Tutorials
+          - Reproducing the Paper
+          - Adding a New Data Source
+          - API Examples (curl commands)
+        - Troubleshooting
+
+        docs/site/ is used to separate MkDocs source from existing docs/ content.
+        mkdocs.yml docs_dir will point to docs/site/.
+      </details>
+    </task>
+  </phase>
+
+  <!-- ================================================================= -->
+  <!-- PHASE 1: README HIERARCHY                                         -->
+  <!-- Root README + subdirectory READMEs for progressive discovery      -->
+  <!-- ================================================================= -->
+
+  <phase id="P1" title="README Hierarchy">
+    <description>
+      Expand the bare-minimum README.md into a rich landing page,
+      plus subdirectory READMEs for progressive discovery.
+      Three tiers: hero → quick start → deep dive.
+    </description>
+
+    <task id="P1.1" status="PENDING" priority="P0">
+      <title>Expand root README.md to full project documentation</title>
+      <files>
+        <modify>README.md</modify>
+      </files>
+      <details>
+        Target: ~300 lines. Sections:
+        1. Header: badges, one-liner, SSRN link, "Companion code to..." tagline
+        2. Hero: What this repo demonstrates (3 bullet points)
+        3. Quick Start: 3 commands (clone → make setup → make dev-frontend)
+        4. Architecture Overview: text-based 5-pipeline diagram (renders on GitHub)
+        5. Project Structure: annotated directory tree
+        6. Running the Stack: backend, frontend, full stack, Docker
+        7. API Examples: 3 curl commands with expected output
+        8. Running Tests: make test-local / make test / make test-frontend
+        9. Sample Data: Imogen Heap 8 works table
+        10. Key Concepts: brief definitions linking to docs site
+        11. Technology Stack: table (Backend + Frontend)
+        12. Documentation: link to GitHub Pages site
+        13. Reproducing the Paper: brief map + link to full doc
+        14. Contributing: link to CONTRIBUTING.md
+        15. License: MIT + "all deps verified compatible"
+        16. Citation: BibTeX block (keep existing)
+      </details>
+    </task>
+
+    <task id="P1.2" status="PENDING" priority="P1">
+      <title>Create src/music_attribution/README.md</title>
+      <files>
+        <create>src/music_attribution/README.md</create>
+      </files>
+      <details>
+        Backend package overview:
+        - Module map with one-line descriptions
+        - 5-pipeline architecture diagram (mermaid for docs site, text for GitHub)
+        - Key patterns: boundary objects, batch envelope, pipeline feedback
+        - Entry points: API app, MCP server, CLI
+      </details>
+    </task>
+
+    <task id="P1.3" status="PENDING" priority="P1">
+      <title>Create frontend/README.md</title>
+      <files>
+        <create>frontend/README.md</create>
+      </files>
+      <details>
+        Frontend package overview:
+        - Prerequisites (Node.js 22+)
+        - npm install → npm run dev
+        - Design system overview (link to rules)
+        - Component architecture: pages, components, lib, hooks
+        - Testing: Vitest + RTL
+        - CopilotKit integration
+        - Environment: NEXT_PUBLIC_API_URL
+      </details>
+    </task>
+
+    <task id="P1.4" status="PENDING" priority="P1">
+      <title>Create tests/README.md</title>
+      <files>
+        <create>tests/README.md</create>
+      </files>
+      <details>
+        Test suite overview:
+        - Testing pyramid: unit (351) / integration (42) / frontend (265)
+        - How to run each tier
+        - Test naming conventions
+        - Fixtures and conftest structure
+        - Docker vs local testing
+        - Adding new tests
+      </details>
+    </task>
+
+    <task id="P1.5" status="PENDING" priority="P1">
+      <title>Create docs/README.md</title>
+      <files>
+        <create>docs/README.md</create>
+      </files>
+      <details>
+        Documentation guide:
+        - Where to find what (planning/, prd/, knowledge-base/, site/)
+        - How MkDocs works
+        - How to build docs locally
+        - How to add a new page
+        - Figure creation workflow (Nano Banana Pro)
+      </details>
+    </task>
+
+    <task id="P1.6" status="PENDING" priority="P2">
+      <title>Create per-module READMEs for key directories</title>
+      <files>
+        <create>src/music_attribution/etl/README.md</create>
+        <create>src/music_attribution/resolution/README.md</create>
+        <create>src/music_attribution/attribution/README.md</create>
+        <create>src/music_attribution/api/README.md</create>
+        <create>src/music_attribution/chat/README.md</create>
+        <create>src/music_attribution/mcp/README.md</create>
+        <create>src/music_attribution/schemas/README.md</create>
+      </files>
+      <details>
+        Each ~50-80 lines:
+        - Purpose of this module
+        - Key classes/functions
+        - How it connects to adjacent modules
+        - Config/env vars it uses
+        - Link to MkDocs API reference
+      </details>
+    </task>
+  </phase>
+
+  <!-- ================================================================= -->
+  <!-- PHASE 2: DOCSTRINGS                                               -->
+  <!-- Comprehensive docstrings for all public functions/classes          -->
+  <!-- ================================================================= -->
+
+  <phase id="P2" title="Docstrings">
+    <description>
+      Add numpy-style docstrings to all public functions, classes, and modules.
+      mkdocstrings will auto-generate API reference from these.
+      Priority order: schemas (boundary objects) → API routes → pipelines → internals.
+    </description>
+
+    <task id="P2.1" status="PENDING" priority="P0">
+      <title>Add docstrings to all schema modules</title>
+      <files>
+        <modify>src/music_attribution/schemas/normalized.py</modify>
+        <modify>src/music_attribution/schemas/resolved.py</modify>
+        <modify>src/music_attribution/schemas/attribution.py</modify>
+        <modify>src/music_attribution/schemas/permissions.py</modify>
+        <modify>src/music_attribution/schemas/feedback.py</modify>
+        <modify>src/music_attribution/schemas/batch_metadata.py</modify>
+        <modify>src/music_attribution/schemas/pipeline_feedback.py</modify>
+        <modify>src/music_attribution/schemas/uncertainty.py</modify>
+      </files>
+      <details>
+        Schemas are the primary interface — docstrings must explain:
+        - What each field means in music attribution context
+        - Valid ranges and units
+        - Relationship to paper concepts (A0-A3, confidence tiers)
+        - Examples
+        Style: numpy-style for mkdocstrings compatibility.
+      </details>
+    </task>
+
+    <task id="P2.2" status="PENDING" priority="P0">
+      <title>Add docstrings to API routes</title>
+      <files>
+        <modify>src/music_attribution/api/app.py</modify>
+        <modify>src/music_attribution/api/routes/attribution.py</modify>
+        <modify>src/music_attribution/api/routes/health.py</modify>
+        <modify>src/music_attribution/api/routes/permissions.py</modify>
+        <modify>src/music_attribution/api/dependencies.py</modify>
+      </files>
+      <details>
+        FastAPI routes already have some OpenAPI docs via decorators.
+        Add comprehensive docstrings for:
+        - Each route function (what it does, params, responses)
+        - Request/response models (if not covered by schemas)
+        - Error handling
+      </details>
+    </task>
+
+    <task id="P2.3" status="PENDING" priority="P1">
+      <title>Add docstrings to ETL modules</title>
+      <files>
+        <modify>src/music_attribution/etl/musicbrainz.py</modify>
+        <modify>src/music_attribution/etl/discogs.py</modify>
+        <modify>src/music_attribution/etl/acoustid.py</modify>
+        <modify>src/music_attribution/etl/file_metadata.py</modify>
+        <modify>src/music_attribution/etl/data_quality.py</modify>
+      </files>
+      <details>
+        Each extractor needs:
+        - Module docstring explaining the data source
+        - What data it extracts and normalizes
+        - Rate limiting / API key requirements
+        - How to extend for new sources
+      </details>
+    </task>
+
+    <task id="P2.4" status="PENDING" priority="P1">
+      <title>Add docstrings to resolution modules</title>
+      <files>
+        <modify>src/music_attribution/resolution/identifier_match.py</modify>
+        <modify>src/music_attribution/resolution/string_similarity.py</modify>
+        <modify>src/music_attribution/resolution/embedding_match.py</modify>
+        <modify>src/music_attribution/resolution/splink_linkage.py</modify>
+        <modify>src/music_attribution/resolution/graph_resolution.py</modify>
+        <modify>src/music_attribution/resolution/llm_disambiguation.py</modify>
+        <modify>src/music_attribution/resolution/orchestrator.py</modify>
+      </files>
+      <details>
+        Resolution is the most complex pipeline.
+        Docstrings must explain:
+        - Each resolution strategy and when it's used
+        - Cascade logic (identifier → string → embedding → LLM)
+        - Graph store operations
+        - Splink integration
+      </details>
+    </task>
+
+    <task id="P2.5" status="PENDING" priority="P1">
+      <title>Add docstrings to attribution modules</title>
+      <files>
+        <modify>src/music_attribution/attribution/aggregation.py</modify>
+        <modify>src/music_attribution/attribution/conformal.py</modify>
+        <modify>src/music_attribution/attribution/persistence.py</modify>
+        <modify>src/music_attribution/attribution/priority_queue.py</modify>
+      </files>
+      <details>
+        Attribution engine needs:
+        - Confidence aggregation algorithm explained
+        - Conformal prediction methodology
+        - Source agreement scoring
+        - Priority queue for review workflow
+      </details>
+    </task>
+
+    <task id="P2.6" status="PENDING" priority="P1">
+      <title>Add docstrings to chat/agent and MCP modules</title>
+      <files>
+        <modify>src/music_attribution/chat/agent.py</modify>
+        <modify>src/music_attribution/chat/state.py</modify>
+        <modify>src/music_attribution/chat/agui_endpoint.py</modify>
+        <modify>src/music_attribution/mcp/server.py</modify>
+      </files>
+      <details>
+        Agent/MCP layer needs:
+        - PydanticAI agent configuration and tools
+        - AG-UI endpoint setup
+        - Chat state management
+        - MCP server tools and permissions
+      </details>
+    </task>
+
+    <task id="P2.7" status="PENDING" priority="P2">
+      <title>Add docstrings to infrastructure modules</title>
+      <files>
+        <modify>src/music_attribution/config.py</modify>
+        <modify>src/music_attribution/db/engine.py</modify>
+        <modify>src/music_attribution/db/models.py</modify>
+        <modify>src/music_attribution/monitoring/metrics.py</modify>
+        <modify>src/music_attribution/pipeline_dag.py</modify>
+      </files>
+      <details>
+        Infrastructure modules:
+        - Configuration loading and env vars
+        - Database engine setup (async SQLAlchemy + pgvector)
+        - ORM models and relationships
+        - Prometheus metrics
+        - Pipeline DAG orchestration
+      </details>
+    </task>
+  </phase>
+
+  <!-- ================================================================= -->
+  <!-- PHASE 3: CONCEPT DOCS (Theory — ELI5 to Advanced)                 -->
+  <!-- These are the pedagogic core for SSRN companion repo              -->
+  <!-- ================================================================= -->
+
+  <phase id="P3" title="Concept Documentation">
+    <description>
+      Theory pages for the MkDocs site explaining key concepts from the paper.
+      Each page has three tiers:
+        - ELI5 (analogy-based, no jargon, 30 seconds)
+        - Practitioner (music industry context, 3 minutes)
+        - Architect (implementation details, citations, 10 minutes)
+    </description>
+
+    <task id="P3.1" status="PENDING" priority="P0">
+      <title>Write Oracle Problem concept page</title>
+      <files>
+        <modify>docs/site/concepts/oracle-problem.md</modify>
+      </files>
+      <details>
+        The foundational concept of the paper:
+        - ELI5: "Mixing paint" analogy — once colors are blended, you can't separate them
+        - Practitioner: Why post-hoc attribution fails for generative AI training
+        - Architect: Three destructive stages (weight averaging, gradient descent, temperature sampling)
+        - Link to paper §2.2, fig03 from manuscript
+        - Code pointer: how the scaffold designs around this limitation
+      </details>
+    </task>
+
+    <task id="P3.2" status="PENDING" priority="P0">
+      <title>Write Assurance Levels concept page</title>
+      <files>
+        <modify>docs/site/concepts/assurance-levels.md</modify>
+      </files>
+      <details>
+        A0-A3 tiered provenance:
+        - ELI5: "ID card" analogy — selfie vs passport vs biometric
+        - Practitioner: Mapping to ISRC/ISWC/ISNI standards
+        - Architect: Implementation in schemas, seed data, confidence thresholds
+        - Link to paper §3.1, fig04 from manuscript
+        - Code pointer: AssuranceLevel enum, seed data A0-A3 distribution
+      </details>
+    </task>
+
+    <task id="P3.3" status="PENDING" priority="P0">
+      <title>Write Two-Friction Taxonomy concept page</title>
+      <files>
+        <modify>docs/site/concepts/two-friction-taxonomy.md</modify>
+      </files>
+      <details>
+        Primary theoretical contribution:
+        - ELI5: "Airport security" analogy — remove admin friction, keep safety friction
+        - Practitioner: Admin friction (automate) vs discovery friction (preserve)
+        - Architect: Diagnostic test (Agency? Identity? Community?), Bourdieu + Akerlof grounding
+        - Link to paper §2.4, fig11 from manuscript
+        - Code pointer: how the UI preserves discovery friction (review queue)
+      </details>
+    </task>
+
+    <task id="P3.4" status="PENDING" priority="P1">
+      <title>Write Conformal Prediction concept page</title>
+      <files>
+        <modify>docs/site/concepts/conformal-prediction.md</modify>
+      </files>
+      <details>
+        Statistical methodology:
+        - ELI5: "Weather forecast" analogy — "70-90% chance of rain" vs just "80%"
+        - Practitioner: Why interval estimates are more honest than point estimates
+        - Architect: Conformal prediction theory, calibration (ECE), SConU from paper
+        - Code pointer: conformal.py, confidence scoring in attribution engine
+      </details>
+    </task>
+
+    <task id="P3.5" status="PENDING" priority="P1">
+      <title>Write MCP Consent Infrastructure concept page</title>
+      <files>
+        <modify>docs/site/concepts/mcp-consent.md</modify>
+      </files>
+      <details>
+        MCP as permission patchbay:
+        - ELI5: "robots.txt for AI" — machine-readable permission queries
+        - Practitioner: How artists declare training permissions
+        - Architect: MCP server implementation, tool definitions, permission checking
+        - Code pointer: mcp/server.py, permissions routes
+      </details>
+    </task>
+
+    <task id="P3.6" status="PENDING" priority="P1">
+      <title>Write Entity Resolution concept page</title>
+      <files>
+        <modify>docs/site/concepts/entity-resolution.md</modify>
+      </files>
+      <details>
+        Multi-strategy entity resolution:
+        - ELI5: "Name matching" — same person, different spellings
+        - Practitioner: Why music metadata is messy (70% license omission rate)
+        - Architect: Cascade strategy (identifier → string → embedding → LLM → Splink)
+        - Code pointer: resolution/ module, orchestrator.py
+      </details>
+    </task>
+  </phase>
+
+  <!-- ================================================================= -->
+  <!-- PHASE 4: REPRODUCING THE PAPER                                    -->
+  <!-- Critical for SSRN companion repo                                  -->
+  <!-- ================================================================= -->
+
+  <phase id="P4" title="Paper Reproduction Guide">
+    <task id="P4.1" status="PENDING" priority="P0">
+      <title>Create comprehensive paper-to-code mapping</title>
+      <files>
+        <modify>docs/site/tutorials/reproducing-the-paper.md</modify>
+      </files>
+      <details>
+        Section-by-section mapping:
+        | Paper Section | Claim | Code File | Test File | Demo Command |
+        Cover: ETL, entity resolution, attribution engine, confidence scoring,
+        conformal prediction, MCP permissions, agentic UI.
+        Include: what the scaffold demonstrates vs what production would need.
+        Explicit: "This is a research scaffold, not a production system."
+      </details>
+    </task>
+
+    <task id="P4.2" status="PENDING" priority="P1">
+      <title>Create API examples tutorial</title>
+      <files>
+        <modify>docs/site/tutorials/api-examples.md</modify>
+      </files>
+      <details>
+        5-8 curl examples with actual JSON responses:
+        1. Health check
+        2. List all attributions (paginated)
+        3. Get specific work (Hide and Seek)
+        4. Filter needs_review=true
+        5. Search by keyword
+        6. Check permission (streaming → ALLOW)
+        7. Check permission (voice cloning → DENY)
+        Each with expected status code and JSON response.
+      </details>
+    </task>
+  </phase>
+
+  <!-- ================================================================= -->
+  <!-- PHASE 5: FIGURE INFRASTRUCTURE                                    -->
+  <!-- Style guide + template adapted for repo documentation figures     -->
+  <!-- ================================================================= -->
+
+  <phase id="P5" title="Figure Infrastructure">
+    <description>
+      Create the style guide and template for repo documentation figures.
+      Adapts the frontend figure style (Warp Records + constructivist editorial)
+      for repo explanation figures. Uses same Nano Banana Pro workflow.
+    </description>
+
+    <task id="P5.1" status="PENDING" priority="P0">
+      <title>Create repo figure style guide</title>
+      <files>
+        <create>docs/figures/repo-figures/STYLE-GUIDE-REPO.md</create>
+      </files>
+      <details>
+        Adapts STYLE-GUIDE-FRONTEND.md with repo-specific additions:
+        - Same palette: cream #f6f3e6, coral #E84C4F, navy #1E3A5F, teal #2E7D7B
+        - Same typography: Instrument Serif display, Plus Jakarta Sans labels, IBM Plex Mono data
+        - Same composition: asymmetric, accent squares, negative space
+        - Additions for repo figures:
+          - Pipeline flow diagrams (horizontal L→R)
+          - Architecture diagrams (layered)
+          - Comparison diagrams (split panel, ELI5 vs expert)
+          - "How to" step diagrams (numbered with Roman numerals)
+          - Decision trees (diamond nodes)
+        - Progressive disclosure visual pattern:
+          Level markers on figures: "ELI5" / "PRACTITIONER" / "ARCHITECT"
+        - Same anti-slop rules as frontend
+        - Same quality checklist
+      </details>
+    </task>
+
+    <task id="P5.2" status="PENDING" priority="P0">
+      <title>Create repo figure content template</title>
+      <files>
+        <create>docs/figures/repo-figures/CONTENT-TEMPLATE-REPO.md</create>
+      </files>
+      <details>
+        Adapts foundation-PLR CONTENT-TEMPLATE.md v2.3:
+        - Same metadata table (ID, Title, Complexity Level, Target Persona, Location, Priority)
+        - Same structure (Purpose, Key Message, Visual Concept, Content Elements, etc.)
+        - Persona mapping for this project:
+          L1: Music Industry Professional (non-technical)
+          L2: PhD Student / Policy Researcher
+          L3: Software Engineer
+          L4: AI/ML Architect
+        - Semantic tags adapted for music attribution domain
+        - Same anti-hallucination rules
+        - Same JSON export block for Gemini
+      </details>
+    </task>
+
+    <task id="P5.3" status="PENDING" priority="P0">
+      <title>Create repo figure prompting instructions</title>
+      <files>
+        <create>docs/figures/repo-figures/PROMPTING-INSTRUCTIONS-REPO.md</create>
+      </files>
+      <details>
+        Adapts frontend PROMPTING-INSTRUCTIONS.md:
+        - Same workflow: read plan → read style → compose prompt → generate → verify
+        - Master prompt template with style + content sections
+        - Quality checklist specific to repo figures
+        - Output paths: docs/figures/repo-figures/assets/ → docs/figures/repo-figures/generated/
+      </details>
+    </task>
+
+    <task id="P5.4" status="PENDING" priority="P0">
+      <title>Create figure plan directory structure</title>
+      <files>
+        <create>docs/figures/repo-figures/figure-plans/.gitkeep</create>
+        <create>docs/figures/repo-figures/assets/.gitkeep</create>
+        <create>docs/figures/repo-figures/generated/.gitkeep</create>
+      </files>
+    </task>
+  </phase>
+
+  <!-- ================================================================= -->
+  <!-- PHASE 6: FIGURE PLANS — Repository Overview (fig-repo-01 to -15)  -->
+  <!-- "What is this repo and how do I use it?"                          -->
+  <!-- ================================================================= -->
+
+  <phase id="P6" title="Figure Plans: Repository Overview">
+    <description>
+      15 figures explaining the repository structure, development workflow,
+      and how to get started. Target: someone who just cloned the repo.
+    </description>
+
+    <figure_plan id="fig-repo-01" priority="P0" complexity="L1" persona="All">
+      <title>What This Repository Does — Hero Overview</title>
+      <location>README.md, docs/site/index.md</location>
+      <concept>
+        Split-panel hero: LEFT shows the problem (fragmented attribution,
+        messy metadata, no confidence), RIGHT shows the solution (this scaffold:
+        multi-source ETL → entity resolution → confidence scoring → AI-ready permissions).
+        Bold editorial feel with Instrument Serif heading.
+      </concept>
+    </figure_plan>
+
+    <figure_plan id="fig-repo-02" priority="P0" complexity="L2" persona="All">
+      <title>Five-Pipeline Architecture</title>
+      <location>README.md, docs/site/user-guide/architecture.md</location>
+      <concept>
+        Horizontal flow: ETL → Entity Resolution → Attribution Engine → API/MCP → Chat.
+        Each pipeline as a distinct block with key components inside.
+        Coral accent arrows connecting them. Cross-cutting concerns (BatchEnvelope,
+        DriftDetector, PipelineFeedback) shown as horizontal bars above.
+      </concept>
+    </figure_plan>
+
+    <figure_plan id="fig-repo-03" priority="P1" complexity="L1" persona="All">
+      <title>Repository Directory Map</title>
+      <location>README.md, docs/site/getting-started/index.md</location>
+      <concept>
+        Annotated directory tree as infographic. src/, tests/, frontend/, docs/
+        as major blocks with one-line descriptions. Color-coded by pipeline stage.
+      </concept>
+    </figure_plan>
+
+    <figure_plan id="fig-repo-04" priority="P1" complexity="L2" persona="Engineer">
+      <title>Technology Stack Overview</title>
+      <location>README.md, docs/site/user-guide/architecture.md</location>
+      <concept>
+        Two-column layout: Backend (Python 3.13, FastAPI, PostgreSQL+pgvector,
+        PydanticAI, SQLAlchemy, Alembic) and Frontend (Next.js 15, Tailwind v4,
+        CopilotKit, Jotai, PostHog). Each tech with role and version.
+      </concept>
+    </figure_plan>
+
+    <figure_plan id="fig-repo-05" priority="P1" complexity="L1" persona="All">
+      <title>Quick Start Flow — Clone to Running in 5 Minutes</title>
+      <location>README.md, docs/site/getting-started/quickstart.md</location>
+      <concept>
+        Step diagram (I, II, III, IV — Roman numerals):
+        I. git clone → II. make setup → III. make agent → IV. open localhost:3000.
+        Each step with expected output preview.
+      </concept>
+    </figure_plan>
+
+    <figure_plan id="fig-repo-06" priority="P1" complexity="L3" persona="Engineer">
+      <title>Development Workflow — Make Commands Map</title>
+      <location>docs/site/user-guide/backend.md</location>
+      <concept>
+        Make target dependency graph as flowchart:
+        install-dev → test-local / lint-local / typecheck
+        test → (Docker) → test-frontend
+        agent / dev-frontend / dev-agent
+        CI targets: ci-docker
+      </concept>
+    </figure_plan>
+
+    <figure_plan id="fig-repo-07" priority="P1" complexity="L3" persona="Engineer">
+      <title>Pre-commit Quality Gates</title>
+      <location>docs/site/user-guide/backend.md</location>
+      <concept>
+        Horizontal chain: ruff check → ruff format → mypy → detect-secrets → YAML check.
+        Each gate as a tollbooth. Failed gate blocks commit. Shows which errors each catches.
+      </concept>
+    </figure_plan>
+
+    <figure_plan id="fig-repo-08" priority="P1" complexity="L3" persona="Engineer">
+      <title>CI/CD Pipeline</title>
+      <location>docs/site/user-guide/backend.md</location>
+      <concept>
+        GitHub Actions workflow visualization: lint job → test job → integration job.
+        Path-based filtering shown. Docker build for test container.
+      </concept>
+    </figure_plan>
+
+    <figure_plan id="fig-repo-09" priority="P2" complexity="L4" persona="Architect">
+      <title>Docker Architecture</title>
+      <location>docs/site/user-guide/backend.md</location>
+      <concept>
+        Multi-container layout: API container, PostgreSQL + pgvector, Next.js frontend.
+        Docker Compose service relationships. Volume mounts. Port mappings.
+      </concept>
+    </figure_plan>
+
+    <figure_plan id="fig-repo-10" priority="P1" complexity="L2" persona="All">
+      <title>Testing Pyramid</title>
+      <location>tests/README.md, docs/site/user-guide/backend.md</location>
+      <concept>
+        Classic pyramid: Unit (351) → Integration (42) → Frontend (265).
+        Each tier with what it tests and how to run.
+        Docker vs local split shown.
+      </concept>
+    </figure_plan>
+
+    <figure_plan id="fig-repo-11" priority="P1" complexity="L3" persona="Engineer">
+      <title>Frontend Architecture</title>
+      <location>frontend/README.md, docs/site/user-guide/frontend.md</location>
+      <concept>
+        Next.js App Router page tree: / (landing), /works (list), /works/[id] (detail),
+        /permissions, /review. Component hierarchy beneath. Jotai stores. CopilotKit sidebar.
+      </concept>
+    </figure_plan>
+
+    <figure_plan id="fig-repo-12" priority="P2" complexity="L3" persona="Engineer">
+      <title>Backend ↔ Frontend Connection</title>
+      <location>docs/site/user-guide/architecture.md</location>
+      <concept>
+        Shows how frontend talks to backend:
+        REST API (fetch) for CRUD, AG-UI SSE for agent sidebar.
+        Mock client for development. API client for production.
+      </concept>
+    </figure_plan>
+
+    <figure_plan id="fig-repo-13" priority="P2" complexity="L3" persona="Engineer">
+      <title>Environment Variables Map</title>
+      <location>docs/site/getting-started/installation.md</location>
+      <concept>
+        Table-style infographic: DATABASE_URL, NEXT_PUBLIC_API_URL, ANTHROPIC_API_KEY,
+        POSTHOG_KEY, ATTRIBUTION_AGENT_MODEL. Required vs optional. Which component uses each.
+      </concept>
+    </figure_plan>
+
+    <figure_plan id="fig-repo-14" priority="P2" complexity="L4" persona="Architect">
+      <title>Database Schema (ERD)</title>
+      <location>docs/site/user-guide/backend.md</location>
+      <concept>
+        Entity-relationship diagram: works, contributors, sources, permissions, feedback tables.
+        pgvector embedding columns highlighted. Alembic migration chain shown.
+      </concept>
+    </figure_plan>
+
+    <figure_plan id="fig-repo-15" priority="P2" complexity="L3" persona="Engineer">
+      <title>CLAUDE.md Hierarchy — AI-Assisted Development</title>
+      <location>docs/site/user-guide/backend.md</location>
+      <concept>
+        Tree showing CLAUDE.md → .claude/CLAUDE.md → .claude/rules/*.md → .claude/skills/*.
+        What each level controls. How Claude Code uses them.
+      </concept>
+    </figure_plan>
+  </phase>
+
+  <!-- ================================================================= -->
+  <!-- PHASE 7: FIGURE PLANS — Theory (fig-theory-01 to -22)             -->
+  <!-- "What is the paper about and why does this code exist?"            -->
+  <!-- ================================================================= -->
+
+  <phase id="P7" title="Figure Plans: Music Attribution Theory">
+    <description>
+      22 figures explaining the theoretical concepts from the SSRN paper.
+      These are the pedagogic core — making complex ideas accessible.
+      Each concept has ELI5 + Expert variant where applicable.
+    </description>
+
+    <figure_plan id="fig-theory-01" priority="P0" complexity="L1" persona="All">
+      <title>The Oracle Problem — ELI5 (Mixing Paint Analogy)</title>
+      <location>docs/site/concepts/oracle-problem.md</location>
+      <concept>
+        Visual metaphor: three distinct paint tubes (red=Artist A, blue=Artist B,
+        yellow=Artist C) being poured into a blender → uniform purple mixture comes out.
+        Question mark: "Which paint made the purple?" Answer: you can't tell.
+        Maps to: training data → model weights → generated output.
+      </concept>
+    </figure_plan>
+
+    <figure_plan id="fig-theory-02" priority="P0" complexity="L3" persona="Engineer">
+      <title>The Oracle Problem — Technical Pipeline</title>
+      <location>docs/site/concepts/oracle-problem.md</location>
+      <concept>
+        Horizontal flowchart adapted from manuscript fig03:
+        INPUT (creator data, teal) → TRAINING (black box, three destructive stages:
+        tokenization/encoding, gradient descent, weight averaging) → OUTPUT
+        (generated content, orange, with unanswerable questions).
+        Analog hole bypass shown as separate path.
+      </concept>
+    </figure_plan>
+
+    <figure_plan id="fig-theory-03" priority="P0" complexity="L1" persona="All">
+      <title>Assurance Levels A0-A3 — ELI5 (ID Card Analogy)</title>
+      <location>docs/site/concepts/assurance-levels.md</location>
+      <concept>
+        Four-step staircase: A0 (sticky note with name → "I said so"),
+        A1 (business card → documented but not verified), A2 (passport → verified by authority),
+        A3 (biometric scan → forensic verification). Each step more trustworthy.
+        Real-world parallel: self-declared → documented → certified → forensic.
+      </concept>
+    </figure_plan>
+
+    <figure_plan id="fig-theory-04" priority="P0" complexity="L3" persona="Engineer">
+      <title>Assurance Levels — Standards Mapping</title>
+      <location>docs/site/concepts/assurance-levels.md</location>
+      <concept>
+        Detailed pyramid adapted from manuscript fig04:
+        A0 (grey) → A1 (grey-teal) → A2 (teal) → A3 (deep teal).
+        Right side: mapping to ISRC, ISWC, ISNI, IPI codes.
+        Warning: analog hole bypasses all digital levels.
+      </concept>
+    </figure_plan>
+
+    <figure_plan id="fig-theory-05" priority="P0" complexity="L1" persona="All">
+      <title>Two-Friction Taxonomy — ELI5 (Airport Analogy)</title>
+      <location>docs/site/concepts/two-friction-taxonomy.md</location>
+      <concept>
+        Split panel: LEFT (orange, "Admin Friction") shows a person drowning in paperwork,
+        forms, bureaucracy → AUTOMATE THIS. RIGHT (teal, "Discovery Friction") shows
+        a person browsing a record store, discovering music → PRESERVE THIS.
+        The diagnostic test: "Does removing this friction diminish agency, identity, or community?"
+      </concept>
+    </figure_plan>
+
+    <figure_plan id="fig-theory-06" priority="P1" complexity="L3" persona="Architect">
+      <title>Two-Friction Diagnostic Test Flowchart</title>
+      <location>docs/site/concepts/two-friction-taxonomy.md</location>
+      <concept>
+        Decision flowchart with three diamond nodes:
+        "Does it reduce Agency?" → "Does it reduce Identity?" → "Does it reduce Community?"
+        If ANY yes → Discovery friction (preserve). If all no → Admin friction (automate).
+        Grounded in Bourdieu + Akerlof.
+      </concept>
+    </figure_plan>
+
+    <figure_plan id="fig-theory-07" priority="P1" complexity="L1" persona="All">
+      <title>Attribution-by-Design Concept</title>
+      <location>docs/site/concepts/oracle-problem.md</location>
+      <concept>
+        Two contrasted approaches: LEFT (orange) "Post-hoc detection" — trying to
+        reverse-engineer attribution after the fact (broken arrows, question marks).
+        RIGHT (teal) "Attribution-by-design" — embedding provenance at training time
+        (solid arrows, clean data flow). Quote: "Design it in, don't detect it after."
+      </concept>
+    </figure_plan>
+
+    <figure_plan id="fig-theory-08" priority="P1" complexity="L2" persona="Policy">
+      <title>Deterrence Economics</title>
+      <location>docs/site/concepts/oracle-problem.md</location>
+      <concept>
+        Formula visualization: p × d × F ≥ g (probability of detection × depth of audit ×
+        fine ≥ gain from infringement). Shows why deterrence works even when detection is
+        imperfect. Tax audit analogy: IRS audits &lt;1% but compliance is high.
+      </concept>
+    </figure_plan>
+
+    <figure_plan id="fig-theory-09" priority="P1" complexity="L1" persona="All">
+      <title>Confidence vs Uncertainty — ELI5</title>
+      <location>docs/site/concepts/conformal-prediction.md</location>
+      <concept>
+        Weather analogy: "80% chance of rain" (point estimate, overconfident) vs
+        "70-90% chance of rain" (interval estimate, honest). Applied to attribution:
+        "90% confident Imogen Heap is songwriter" vs "85-95% confident" with calibration.
+      </concept>
+    </figure_plan>
+
+    <figure_plan id="fig-theory-10" priority="P1" complexity="L3" persona="Engineer">
+      <title>Conformal Prediction Methodology</title>
+      <location>docs/site/concepts/conformal-prediction.md</location>
+      <concept>
+        Technical diagram: calibration set → nonconformity scores → quantile threshold →
+        prediction sets with coverage guarantee. Reliability diagram showing
+        calibrated vs uncalibrated curves (adapted from frontend fig-topic-01).
+      </concept>
+    </figure_plan>
+
+    <figure_plan id="fig-theory-11" priority="P1" complexity="L2" persona="All">
+      <title>Source Agreement Scoring</title>
+      <location>docs/site/concepts/entity-resolution.md</location>
+      <concept>
+        Venn diagram style: MusicBrainz ∩ Discogs ∩ AcoustID ∩ File Metadata ∩ Artist Input.
+        More overlap = higher confidence. Shows how agreement between sources
+        increases assurance level.
+      </concept>
+    </figure_plan>
+
+    <figure_plan id="fig-theory-12" priority="P1" complexity="L1" persona="All">
+      <title>MCP as robots.txt for AI — ELI5</title>
+      <location>docs/site/concepts/mcp-consent.md</location>
+      <concept>
+        Split: LEFT shows robots.txt (web crawlers obey simple rules).
+        RIGHT shows MCP (AI agents query permission in real-time).
+        "Can I use this for training?" → ALLOW / DENY / CONDITIONS.
+        Machine-readable consent at scale.
+      </concept>
+    </figure_plan>
+
+    <figure_plan id="fig-theory-13" priority="P1" complexity="L3" persona="Engineer">
+      <title>MCP Permission Patchbay Architecture</title>
+      <location>docs/site/concepts/mcp-consent.md</location>
+      <concept>
+        Network diagram: AI agents on left, rights holders on right, MCP server in center.
+        Tool definitions: check_permission, list_permissions. Request/response flow.
+        JSON-RPC protocol shown.
+      </concept>
+    </figure_plan>
+
+    <figure_plan id="fig-theory-14" priority="P1" complexity="L1" persona="All">
+      <title>Entity Resolution — Why Metadata is Messy</title>
+      <location>docs/site/concepts/entity-resolution.md</location>
+      <concept>
+        Shows same person with different names across sources:
+        "I. Heap" (MusicBrainz) vs "Imogen Heap" (Discogs) vs "Imogen J. Heap" (file tag)
+        vs "HEAP, IMOGEN" (ISNI). The challenge: are these the same person?
+        70% license omission rate callout.
+      </concept>
+    </figure_plan>
+
+    <figure_plan id="fig-theory-15" priority="P1" complexity="L3" persona="Engineer">
+      <title>Entity Resolution Cascade</title>
+      <location>docs/site/concepts/entity-resolution.md</location>
+      <concept>
+        Waterfall/cascade: Identifier Match (ISRC/ISWC exact) → String Similarity
+        (Jaro-Winkler) → Embedding Match (pgvector cosine) → LLM Disambiguation →
+        Splink Probabilistic Linkage. Each step catches what previous missed.
+        Confidence increases with each confirming stage.
+      </concept>
+    </figure_plan>
+
+    <figure_plan id="fig-theory-16" priority="P2" complexity="L2" persona="All">
+      <title>Paradigm Shift — Streaming to Training Era</title>
+      <location>docs/site/concepts/oracle-problem.md</location>
+      <concept>
+        Adapted from manuscript fig01: LEFT (teal) streaming era — economic link intact
+        (play → royalty → artist). RIGHT (orange) training era — economic link severed
+        (train → generate → ???). "Soul, groove, voice → model weights" transition.
+      </concept>
+    </figure_plan>
+
+    <figure_plan id="fig-theory-17" priority="P2" complexity="L2" persona="Policy">
+      <title>Agent Archetypes — BYO vs Bowling Shoe</title>
+      <location>docs/site/concepts/mcp-consent.md</location>
+      <concept>
+        Two agent models: BYO (Bring Your Own) — user controls the agent, like bringing
+        your own laptop. Bowling Shoe — platform-controlled agent, sandboxed.
+        Different trust and permission models for each.
+      </concept>
+    </figure_plan>
+
+    <figure_plan id="fig-theory-18" priority="P2" complexity="L2" persona="All">
+      <title>Stakeholder Value Flows</title>
+      <location>docs/site/index.md</location>
+      <concept>
+        Three-column layout: ARTISTS (claim identity, organize, get paid) →
+        POLICYMAKERS (mandate transparency, fund infrastructure) →
+        TECHNOLOGISTS (attribution-by-design, open standards). Value flowing between them.
+      </concept>
+    </figure_plan>
+
+    <figure_plan id="fig-theory-19" priority="P2" complexity="L2" persona="Policy">
+      <title>Music Industry Data Standards Landscape</title>
+      <location>docs/site/concepts/assurance-levels.md</location>
+      <concept>
+        Standards ecosystem: ISRC (recordings), ISWC (works), ISNI (names), IPI (rights holders),
+        DDEX (supply chain). How they interconnect. Gaps and overlaps.
+      </concept>
+    </figure_plan>
+
+    <figure_plan id="fig-theory-20" priority="P2" complexity="L2" persona="All">
+      <title>Commercial Landscape — Tool Fragmentation</title>
+      <location>docs/site/concepts/oracle-problem.md</location>
+      <concept>
+        Adapted from manuscript fig20: 6 tool categories around central void.
+        Simplified version: Session Studio, Spawning.ai, Glaze, Audible Magic, C2PA, Watermarks.
+        None solves the central attribution problem alone.
+      </concept>
+    </figure_plan>
+
+    <figure_plan id="fig-theory-21" priority="P2" complexity="L2" persona="Policy">
+      <title>Voice Cloning Threat Model</title>
+      <location>docs/site/concepts/oracle-problem.md</location>
+      <concept>
+        Attack tree: voice recording → cloning model → synthetic voice.
+        Permission check at each stage. Why MCP consent matters.
+        Real cases: Drake/Weeknd deepfake, Scarlett Johansson incident.
+      </concept>
+    </figure_plan>
+
+    <figure_plan id="fig-theory-22" priority="P2" complexity="L2" persona="Policy">
+      <title>Regulatory Landscape (EU AI Act, DMCA, etc.)</title>
+      <location>docs/site/concepts/mcp-consent.md</location>
+      <concept>
+        World map with regulatory zones: EU (AI Act + DSA), US (DMCA + proposed bills),
+        UK (copyright exceptions debate), Japan (loose training rules).
+        How this scaffold's A0-A3 maps to different regulatory requirements.
+      </concept>
+    </figure_plan>
+  </phase>
+
+  <!-- ================================================================= -->
+  <!-- PHASE 8: FIGURE PLANS — Backend Architecture (fig-be-01 to -20)   -->
+  <!-- "How does the backend code work?"                                 -->
+  <!-- ================================================================= -->
+
+  <phase id="P8" title="Figure Plans: Backend Architecture">
+    <description>
+      20 figures explaining backend modules, data flow, and implementation patterns.
+      Focus on code paths, configuration, and extension points.
+    </description>
+
+    <figure_plan id="fig-be-01" priority="P0" complexity="L2" persona="Engineer">
+      <title>ETL Pipeline — Data Source Extractors</title>
+      <location>src/music_attribution/etl/README.md</location>
+      <concept>
+        Four data sources flowing into NormalizedRecord:
+        MusicBrainz (purple) + Discogs (grey) + AcoustID (teal) + File Metadata (light grey).
+        Each with what fields they provide. Data quality checks at output.
+      </concept>
+    </figure_plan>
+
+    <figure_plan id="fig-be-02" priority="P0" complexity="L3" persona="Engineer">
+      <title>Entity Resolution Pipeline — Full Cascade</title>
+      <location>src/music_attribution/resolution/README.md</location>
+      <concept>
+        Detailed cascade: NormalizedRecords → Identifier Match → String Similarity →
+        Embedding Match → LLM Disambiguation → Splink Linkage → Graph Resolution →
+        ResolvedEntities. Each stage with match confidence threshold.
+        Orchestrator shown as conductor.
+      </concept>
+    </figure_plan>
+
+    <figure_plan id="fig-be-03" priority="P0" complexity="L3" persona="Engineer">
+      <title>Attribution Engine — Confidence Aggregation</title>
+      <location>src/music_attribution/attribution/README.md</location>
+      <concept>
+        Shows how multiple sources contribute to final confidence:
+        per-source confidence → weighted aggregation → conformal calibration →
+        source agreement bonus → final AttributionRecord with per-field scores.
+      </concept>
+    </figure_plan>
+
+    <figure_plan id="fig-be-04" priority="P1" complexity="L3" persona="Engineer">
+      <title>API Layer — Route Architecture</title>
+      <location>src/music_attribution/api/README.md</location>
+      <concept>
+        FastAPI route tree: /api/v1/attributions/ (CRUD), /api/v1/permissions/ (check),
+        /api/v1/copilotkit (SSE), /health. Middleware layers. Dependencies injection.
+      </concept>
+    </figure_plan>
+
+    <figure_plan id="fig-be-05" priority="P1" complexity="L2" persona="Engineer">
+      <title>Pydantic Schema Hierarchy — Boundary Objects</title>
+      <location>src/music_attribution/schemas/README.md</location>
+      <concept>
+        Type hierarchy: NormalizedRecord → ResolvedEntity → AttributionRecord.
+        Shows field inheritance and transformation at each boundary.
+        Confidence and uncertainty fields highlighted.
+      </concept>
+    </figure_plan>
+
+    <figure_plan id="fig-be-06" priority="P1" complexity="L4" persona="Architect">
+      <title>Database Schema — PostgreSQL + pgvector</title>
+      <location>docs/site/user-guide/backend.md</location>
+      <concept>
+        ERD showing all tables: works, contributors, source_records, permissions,
+        feedback, embeddings (vector column). Relationships and indexes.
+        pgvector operations: cosine similarity search.
+      </concept>
+    </figure_plan>
+
+    <figure_plan id="fig-be-07" priority="P1" complexity="L3" persona="Engineer">
+      <title>Alembic Migration Chain</title>
+      <location>docs/site/user-guide/backend.md</location>
+      <concept>
+        Linear migration history: 001_initial → 002_add_display_fields → ...
+        Shows what each migration adds. Connection to db/models.py ORM.
+      </concept>
+    </figure_plan>
+
+    <figure_plan id="fig-be-08" priority="P1" complexity="L3" persona="Engineer">
+      <title>Batch Processing Envelope</title>
+      <location>docs/site/user-guide/backend.md</location>
+      <concept>
+        BatchEnvelope wrapping pipeline stages: metadata (batch_id, timestamp, source),
+        payload (records), metrics (counts, timing). Cross-cutting pattern.
+      </concept>
+    </figure_plan>
+
+    <figure_plan id="fig-be-09" priority="P2" complexity="L3" persona="Engineer">
+      <title>Drift Detection System</title>
+      <location>docs/site/user-guide/backend.md</location>
+      <concept>
+        Time series showing confidence distribution shifting.
+        DriftDetector monitoring window. Alert thresholds.
+        Connection to pipeline feedback loop.
+      </concept>
+    </figure_plan>
+
+    <figure_plan id="fig-be-10" priority="P2" complexity="L3" persona="Engineer">
+      <title>Pipeline Feedback Loop</title>
+      <location>docs/site/user-guide/backend.md</location>
+      <concept>
+        Circular flow: Pipeline output → User feedback → Retraining signal →
+        Confidence recalibration → Pipeline output. PipelineFeedback schema.
+      </concept>
+    </figure_plan>
+
+    <figure_plan id="fig-be-11" priority="P1" complexity="L2" persona="All">
+      <title>Seed Data — Imogen Heap 8 Works</title>
+      <location>docs/site/tutorials/reproducing-the-paper.md</location>
+      <concept>
+        Table visualization: 8 works (Hide and Seek through Lifeline) with
+        confidence scores spanning 0.0-0.95, assurance levels A0-A3,
+        needs_review flags. Shows designed test coverage.
+      </concept>
+    </figure_plan>
+
+    <figure_plan id="fig-be-12" priority="P1" complexity="L3" persona="Engineer">
+      <title>Confidence Scoring Algorithm — Step by Step</title>
+      <location>src/music_attribution/attribution/README.md</location>
+      <concept>
+        Numbered steps: 1. Per-source extraction → 2. Field-level confidence →
+        3. Source agreement calculation → 4. Weighted aggregation →
+        5. Conformal calibration → 6. Final score with prediction interval.
+      </concept>
+    </figure_plan>
+
+    <figure_plan id="fig-be-13" priority="P2" complexity="L3" persona="Engineer">
+      <title>MusicBrainz Integration — API Flow</title>
+      <location>src/music_attribution/etl/README.md</location>
+      <concept>
+        Request/response flow: query → rate limiter → API call → JSON response →
+        field extraction → NormalizedRecord. Rate limiting shown.
+      </concept>
+    </figure_plan>
+
+    <figure_plan id="fig-be-14" priority="P2" complexity="L3" persona="Engineer">
+      <title>Discogs Integration — API Flow</title>
+      <location>src/music_attribution/etl/README.md</location>
+      <concept>Same pattern as fig-be-13 for Discogs-specific fields and quirks.</concept>
+    </figure_plan>
+
+    <figure_plan id="fig-be-15" priority="P2" complexity="L3" persona="Engineer">
+      <title>AcoustID Integration — Fingerprint Flow</title>
+      <location>src/music_attribution/etl/README.md</location>
+      <concept>
+        Audio file → chromaprint fingerprint → AcoustID lookup → recording match →
+        MusicBrainz link. Shows acoustic fingerprinting concept.
+      </concept>
+    </figure_plan>
+
+    <figure_plan id="fig-be-16" priority="P2" complexity="L3" persona="Engineer">
+      <title>File Metadata Extraction — tinytag</title>
+      <location>src/music_attribution/etl/README.md</location>
+      <concept>
+        Audio file structure: ID3 tags, Vorbis comments, MP4 atoms.
+        tinytag extraction → NormalizedRecord fields. MIT license advantage over mutagen.
+      </concept>
+    </figure_plan>
+
+    <figure_plan id="fig-be-17" priority="P1" complexity="L3" persona="Engineer">
+      <title>MCP Server — Tools and Permissions</title>
+      <location>src/music_attribution/mcp/README.md</location>
+      <concept>
+        MCP server tools: check_permission, list_permissions, get_work, search_works.
+        Request/response for each. Connection to permissions persistence.
+      </concept>
+    </figure_plan>
+
+    <figure_plan id="fig-be-18" priority="P2" complexity="L4" persona="Architect">
+      <title>Prometheus Metrics — Observability</title>
+      <location>docs/site/user-guide/backend.md</location>
+      <concept>
+        Metrics exported: request_duration, pipeline_batch_count, confidence_distribution,
+        attribution_count. Grafana dashboard panels shown.
+      </concept>
+    </figure_plan>
+
+    <figure_plan id="fig-be-19" priority="P2" complexity="L4" persona="Architect">
+      <title>Pipeline DAG — Orchestration</title>
+      <location>docs/site/user-guide/backend.md</location>
+      <concept>
+        DAG visualization: pipeline stages as nodes, dependencies as edges.
+        Parallel execution where possible. Error handling paths.
+      </concept>
+    </figure_plan>
+
+    <figure_plan id="fig-be-20" priority="P2" complexity="L3" persona="Engineer">
+      <title>Hybrid Search — Text + Vector</title>
+      <location>docs/site/user-guide/backend.md</location>
+      <concept>
+        Two search paths: full-text (PostgreSQL tsvector) and semantic (pgvector cosine).
+        Reciprocal rank fusion for combining results. Score normalization.
+      </concept>
+    </figure_plan>
+  </phase>
+
+  <!-- ================================================================= -->
+  <!-- PHASE 9: FIGURE PLANS — Frontend (fig-fe-01 to -15)               -->
+  <!-- "How does the frontend work?"                                     -->
+  <!-- ================================================================= -->
+
+  <phase id="P9" title="Figure Plans: Frontend Architecture">
+    <figure_plan id="fig-fe-01" priority="P1" complexity="L2" persona="Engineer">
+      <title>Design System — Color Token Architecture</title>
+      <location>frontend/README.md, docs/site/user-guide/frontend.md</location>
+      <concept>
+        Token hierarchy: CSS custom properties → Tailwind v4 utility classes → component usage.
+        Shows confidence colors, assurance colors, source colors. Light/dark mode switch.
+        Warning: text-[var(--anything)] pitfall.
+      </concept>
+    </figure_plan>
+
+    <figure_plan id="fig-fe-02" priority="P1" complexity="L2" persona="Engineer">
+      <title>Typography System — Three Font Families</title>
+      <location>docs/site/user-guide/frontend.md</location>
+      <concept>
+        Instrument Serif (display, 48-96px) + Plus Jakarta Sans (body, 12-18px) +
+        IBM Plex Mono (data). Sample text at each size. Editorial CSS classes.
+      </concept>
+    </figure_plan>
+
+    <figure_plan id="fig-fe-03" priority="P1" complexity="L2" persona="Engineer">
+      <title>Sidebar Navigation — Fixed Left Layout</title>
+      <location>docs/site/user-guide/frontend.md</location>
+      <concept>
+        Sidebar anatomy: "MA" logo, rotated nav links (vertical-rl), role toggle (A/Q),
+        notifications, theme toggle, accent square. 60px width.
+        Mobile: hamburger overlay variant.
+      </concept>
+    </figure_plan>
+
+    <figure_plan id="fig-fe-04" priority="P1" complexity="L2" persona="All">
+      <title>Works List Page — Confidence at a Glance</title>
+      <location>docs/site/user-guide/frontend.md</location>
+      <concept>
+        Annotated wireframe: horizontal rows with dividers (not cards), each showing
+        work title, artist, confidence gauge (green/amber/red), assurance level badge,
+        needs_review flag. Review queue tab.
+      </concept>
+    </figure_plan>
+
+    <figure_plan id="fig-fe-05" priority="P1" complexity="L2" persona="All">
+      <title>Work Detail Page — Per-Field Confidence</title>
+      <location>docs/site/user-guide/frontend.md</location>
+      <concept>
+        Detailed view: work metadata fields each with confidence score and source indicators.
+        Provenance panel showing which sources contributed to each field.
+        Citation references from paper.
+      </concept>
+    </figure_plan>
+
+    <figure_plan id="fig-fe-06" priority="P1" complexity="L3" persona="Engineer">
+      <title>Confidence Gauge Component — SVG Arc</title>
+      <location>docs/site/user-guide/frontend.md</location>
+      <concept>
+        Component anatomy: SVG arc with teal/amber/coral fill, IBM Plex Mono score,
+        mount animation (fill up), role="meter" ARIA. Three states shown.
+      </concept>
+    </figure_plan>
+
+    <figure_plan id="fig-fe-07" priority="P2" complexity="L3" persona="Engineer">
+      <title>CopilotKit Integration — Agent Sidebar</title>
+      <location>docs/site/user-guide/agent.md</location>
+      <concept>
+        Provider → sidebar component. useCopilotReadable (context), useCopilotAction (tools).
+        SSE streaming from /api/v1/copilotkit. Agent conversation flow.
+      </concept>
+    </figure_plan>
+
+    <figure_plan id="fig-fe-08" priority="P2" complexity="L3" persona="Engineer">
+      <title>Jotai State Management — Atom Graph</title>
+      <location>docs/site/user-guide/frontend.md</location>
+      <concept>
+        Atom dependency graph: themeAtom, roleModeAtom, worksAtom, proficiencyAtom.
+        Which components subscribe to which atoms. localStorage persistence.
+      </concept>
+    </figure_plan>
+
+    <figure_plan id="fig-fe-09" priority="P2" complexity="L3" persona="Engineer">
+      <title>PostHog Analytics — Event Types</title>
+      <location>docs/site/user-guide/frontend.md</location>
+      <concept>
+        Typed events: work_viewed, confidence_explored, permission_checked, agent_query.
+        Privacy-first: no PII, posthog-js opt-out. Event → insight pipeline.
+      </concept>
+    </figure_plan>
+
+    <figure_plan id="fig-fe-10" priority="P2" complexity="L3" persona="Engineer">
+      <title>Adaptive UI — Proficiency Model</title>
+      <location>docs/site/user-guide/frontend.md</location>
+      <concept>
+        Proficiency levels: Novice → Intermediate → Expert.
+        Adaptive tooltips that simplify/disappear based on usage.
+        localStorage-backed Jotai atom. Feature flag integration.
+      </concept>
+    </figure_plan>
+
+    <figure_plan id="fig-fe-11" priority="P2" complexity="L2" persona="All">
+      <title>Permissions Checker Page</title>
+      <location>docs/site/user-guide/frontend.md</location>
+      <concept>
+        Use case selector → permission query → result (ALLOW/DENY/CONDITIONS).
+        Example: "Can I use this for streaming?" → ALLOW.
+        "Can I use this for voice cloning?" → DENY.
+      </concept>
+    </figure_plan>
+
+    <figure_plan id="fig-fe-12" priority="P2" complexity="L2" persona="All">
+      <title>Review Queue — Batch Attribution Workflow</title>
+      <location>docs/site/user-guide/frontend.md</location>
+      <concept>
+        Queue interface: AI suggestions as diffs (before/after), "Approve All" button,
+        progress counter, smart sorting by review priority.
+        Tab between fields like a spreadsheet.
+      </concept>
+    </figure_plan>
+
+    <figure_plan id="fig-fe-13" priority="P2" complexity="L1" persona="All">
+      <title>Light vs Dark Theme</title>
+      <location>docs/site/user-guide/frontend.md</location>
+      <concept>
+        Side-by-side comparison: light (cream #f6f3e6 primary) and dark (#1A1A2E).
+        Same content, different token values. CSS custom property switching.
+      </concept>
+    </figure_plan>
+
+    <figure_plan id="fig-fe-14" priority="P2" complexity="L2" persona="Engineer">
+      <title>Landing Page — Section Anatomy</title>
+      <location>docs/site/user-guide/frontend.md</location>
+      <concept>
+        Landing page sections: Hero (waveform tapestry), Confidence group, Pipeline group,
+        Governance group, assurance levels, CTA. Stagger reveal animations.
+      </concept>
+    </figure_plan>
+
+    <figure_plan id="fig-fe-15" priority="P2" complexity="L2" persona="Engineer">
+      <title>Mobile Responsive Design</title>
+      <location>docs/site/user-guide/frontend.md</location>
+      <concept>
+        Breakpoint comparison: Desktop (sidebar + main) → Tablet (collapsed sidebar) →
+        Mobile (top bar + hamburger, full width). Touch targets 44×44px.
+      </concept>
+    </figure_plan>
+  </phase>
+
+  <!-- ================================================================= -->
+  <!-- PHASE 10: FIGURE PLANS — Agentic UI (fig-agent-01 to -10)         -->
+  <!-- ================================================================= -->
+
+  <phase id="P10" title="Figure Plans: Agentic UI">
+    <figure_plan id="fig-agent-01" priority="P1" complexity="L2" persona="All">
+      <title>PydanticAI Agent — Architecture Overview</title>
+      <location>docs/site/user-guide/agent.md</location>
+      <concept>
+        Agent anatomy: system prompt + 4 tools (get_work, search_works, explain_confidence,
+        check_permission). Model routing: Haiku default, Sonnet for complex.
+        FallbackModel chain.
+      </concept>
+    </figure_plan>
+
+    <figure_plan id="fig-agent-02" priority="P1" complexity="L3" persona="Engineer">
+      <title>AG-UI Protocol Flow</title>
+      <location>docs/site/user-guide/agent.md</location>
+      <concept>
+        Sequence diagram: Frontend → SSE connection → /api/v1/copilotkit →
+        PydanticAI agent → tool calls → API → Database → response stream.
+        AG-UI message types shown.
+      </concept>
+    </figure_plan>
+
+    <figure_plan id="fig-agent-03" priority="P2" complexity="L3" persona="Engineer">
+      <title>Agent Tools — Request/Response Patterns</title>
+      <location>docs/site/user-guide/agent.md</location>
+      <concept>
+        Four tool cards: get_work (by ID), search_works (keyword), explain_confidence
+        (why this score), check_permission (use case query). Input → output for each.
+      </concept>
+    </figure_plan>
+
+    <figure_plan id="fig-agent-04" priority="P2" complexity="L4" persona="Architect">
+      <title>FallbackModel Routing Strategy</title>
+      <location>docs/site/user-guide/agent.md</location>
+      <concept>
+        Decision tree: ATTRIBUTION_AGENT_MODEL env var → primary model →
+        on failure → fallback chain. PydanticAI FallbackModel wrapper.
+        Runtime override via API parameter.
+      </concept>
+    </figure_plan>
+
+    <figure_plan id="fig-agent-05" priority="P2" complexity="L2" persona="All">
+      <title>Agent Conversation Example</title>
+      <location>docs/site/user-guide/agent.md</location>
+      <concept>
+        Chat transcript visualization: User asks "What's the confidence for Hide and Seek?"
+        → Agent calls get_work tool → Returns formatted answer with confidence breakdown.
+        Shows the agent in action with real data.
+      </concept>
+    </figure_plan>
+
+    <figure_plan id="fig-agent-06" priority="P2" complexity="L3" persona="Engineer">
+      <title>useCopilotReadable — Context Injection</title>
+      <location>docs/site/user-guide/agent.md</location>
+      <concept>
+        Shows how frontend state becomes agent context:
+        current work → useCopilotReadable → agent system prompt → contextual responses.
+        Multiple readable sources composing into agent knowledge.
+      </concept>
+    </figure_plan>
+
+    <figure_plan id="fig-agent-07" priority="P2" complexity="L3" persona="Engineer">
+      <title>useCopilotAction — Frontend Tool Binding</title>
+      <location>docs/site/user-guide/agent.md</location>
+      <concept>
+        Agent decides to show data → useCopilotAction triggers UI update →
+        component renders result. Bidirectional: agent ↔ UI.
+      </concept>
+    </figure_plan>
+
+    <figure_plan id="fig-agent-08" priority="P2" complexity="L2" persona="All">
+      <title>Voice Agent — Pro Feature Upsell Surface</title>
+      <location>docs/site/user-guide/agent.md</location>
+      <concept>
+        Aspirational UI: mic animation, example queries, "Upgrade to Pro" banner.
+        NOT functional — just the upsell surface. Subtle and editorial.
+      </concept>
+    </figure_plan>
+
+    <figure_plan id="fig-agent-09" priority="P2" complexity="L3" persona="Engineer">
+      <title>Lazy Singleton Agent Pattern</title>
+      <location>docs/site/user-guide/agent.md</location>
+      <concept>
+        Code pattern: _get_agent() lazy init → avoids requiring API key at import →
+        thread-safe singleton. Testing: @patch("..._get_agent") for mock agent.
+      </concept>
+    </figure_plan>
+
+    <figure_plan id="fig-agent-10" priority="P2" complexity="L3" persona="Engineer">
+      <title>Agent Testing — Mock Strategy</title>
+      <location>docs/site/user-guide/agent.md</location>
+      <concept>
+        Test architecture: mock agent (no API key needed) → mock tools → assert responses.
+        11 frontend agent integration tests. Backend agent tests with patching.
+      </concept>
+    </figure_plan>
+  </phase>
+
+  <!-- ================================================================= -->
+  <!-- PHASE 11: FIGURE PLANS — PRD + Library Choices (fig-prd/choice)    -->
+  <!-- ================================================================= -->
+
+  <phase id="P11" title="Figure Plans: PRD &amp; Library Choices">
+    <description>
+      25 figures: 10 PRD decision network + 15 library/tool choice explanations.
+      Library choice figures follow ELI5/expert pattern from foundation-PLR.
+    </description>
+
+    <!-- PRD Decision Network -->
+    <figure_plan id="fig-prd-01" priority="P1" complexity="L2" persona="Architect">
+      <title>PRD Decision Network — 30-Node Overview</title>
+      <location>docs/site/user-guide/architecture.md</location>
+      <concept>
+        Full network visualization: 30 nodes across 5 levels.
+        Selected paths highlighted in teal, alternatives in grey.
+        Level labels: Business → Architecture → Components → Deployment → Operations.
+      </concept>
+    </figure_plan>
+
+    <figure_plan id="fig-prd-02" priority="P2" complexity="L2" persona="Architect">
+      <title>PRD Level 1 — Business Decisions</title>
+      <location>docs/prd/decisions/REPORT.md</location>
+      <concept>Level 1 nodes with selected options and rationale.</concept>
+    </figure_plan>
+
+    <figure_plan id="fig-prd-03" priority="P2" complexity="L3" persona="Architect">
+      <title>PRD Level 2 — Architecture Decisions</title>
+      <location>docs/prd/decisions/REPORT.md</location>
+      <concept>Level 2 nodes: LLM provider, routing, UI framework.</concept>
+    </figure_plan>
+
+    <figure_plan id="fig-prd-04" priority="P2" complexity="L3" persona="Architect">
+      <title>PRD Level 3 — Component Decisions</title>
+      <location>docs/prd/decisions/REPORT.md</location>
+      <concept>Level 3 nodes: database, search, embeddings.</concept>
+    </figure_plan>
+
+    <figure_plan id="fig-prd-05" priority="P2" complexity="L3" persona="Architect">
+      <title>PRD Level 4-5 — Deployment &amp; Operations</title>
+      <location>docs/prd/decisions/REPORT.md</location>
+      <concept>Deployment and operations decisions.</concept>
+    </figure_plan>
+
+    <figure_plan id="fig-prd-06" priority="P2" complexity="L2" persona="Architect">
+      <title>Team Archetypes — Engineer-Heavy vs Musician-Heavy</title>
+      <location>docs/prd/archetypes/</location>
+      <concept>
+        Two team profiles: custom-code heavy (full SWE team) vs low-code heavy
+        (domain experts + minimal SWE). Different PRD paths for each.
+      </concept>
+    </figure_plan>
+
+    <figure_plan id="fig-prd-07" priority="P2" complexity="L2" persona="Architect">
+      <title>Domain Overlay System — Music + DPP</title>
+      <location>docs/prd/domains/</location>
+      <concept>
+        Core decisions shared, domain-specific overlays branching.
+        Music attribution focus vs DPP traceability focus.
+      </concept>
+    </figure_plan>
+
+    <figure_plan id="fig-prd-08" priority="P2" complexity="L1" persona="All">
+      <title>Probabilistic PRD Concept — ELI5</title>
+      <location>docs/site/user-guide/architecture.md</location>
+      <concept>
+        "Choose your own adventure" analogy: decision nodes with multiple paths,
+        each with probability weights. Different teams take different paths.
+        Not a single architecture — a decision space.
+      </concept>
+    </figure_plan>
+
+    <figure_plan id="fig-prd-09" priority="P2" complexity="L3" persona="Architect">
+      <title>PRD Decision Dependency Graph</title>
+      <location>docs/prd/decisions/REPORT.md</location>
+      <concept>
+        Which decisions constrain which others. DAG of dependencies.
+        E.g., llm_provider → llm_routing_strategy → agent_framework.
+      </concept>
+    </figure_plan>
+
+    <figure_plan id="fig-prd-10" priority="P2" complexity="L3" persona="Architect">
+      <title>Selected Path Through PRD — This Scaffold's Choices</title>
+      <location>docs/site/user-guide/architecture.md</location>
+      <concept>
+        Highlighted path through the full network showing THIS scaffold's selections:
+        anthropic_primary → pydantic_ai_native → copilotkit_agui → postgresql_pgvector → etc.
+      </concept>
+    </figure_plan>
+
+    <!-- Library Choice Explanations (ELI5 + Expert pairs) -->
+    <figure_plan id="fig-choice-01a" priority="P1" complexity="L1" persona="All">
+      <title>Why uv — ELI5</title>
+      <location>docs/site/getting-started/installation.md</location>
+      <concept>
+        "Package managers are like store clerks": pip is slow, finds things one at a time.
+        uv is like having a personal shopper who knows exactly where everything is.
+        Speed comparison visualization (10-100x faster).
+      </concept>
+    </figure_plan>
+
+    <figure_plan id="fig-choice-01b" priority="P2" complexity="L4" persona="Architect">
+      <title>Why uv — Expert (Resolution + Lock Strategy)</title>
+      <location>docs/site/getting-started/installation.md</location>
+      <concept>
+        Dependency resolution algorithm, lock file format, PEP 735 groups,
+        comparison with poetry/pdm/pip-tools. CI integration pattern.
+      </concept>
+    </figure_plan>
+
+    <figure_plan id="fig-choice-02" priority="P2" complexity="L2" persona="Engineer">
+      <title>Why FastAPI</title>
+      <location>docs/site/user-guide/backend.md</location>
+      <concept>
+        Async-first, auto-OpenAPI, Pydantic integration, dependency injection.
+        Comparison: FastAPI vs Django REST vs Flask. Why it fits this project.
+      </concept>
+    </figure_plan>
+
+    <figure_plan id="fig-choice-03" priority="P2" complexity="L2" persona="Engineer">
+      <title>Why PostgreSQL + pgvector</title>
+      <location>docs/site/user-guide/backend.md</location>
+      <concept>
+        Single database for relational + vector: no separate Pinecone/Weaviate needed.
+        Hybrid search (text + semantic) in one query. Transactional consistency.
+      </concept>
+    </figure_plan>
+
+    <figure_plan id="fig-choice-04" priority="P2" complexity="L2" persona="Engineer">
+      <title>Why PydanticAI (not LangChain)</title>
+      <location>docs/site/user-guide/agent.md</location>
+      <concept>
+        Type-safe, minimal abstraction, native Pydantic models.
+        FallbackModel for resilience. No chain-of-thought magic — explicit tool definitions.
+        Comparison: PydanticAI vs LangChain vs CrewAI.
+      </concept>
+    </figure_plan>
+
+    <figure_plan id="fig-choice-05" priority="P2" complexity="L2" persona="Engineer">
+      <title>Why Next.js 15 (App Router)</title>
+      <location>docs/site/user-guide/frontend.md</location>
+      <concept>
+        Server Components + client islands. App Router file-based routing.
+        React Server Components for initial load. Why not Remix/Astro/SvelteKit.
+      </concept>
+    </figure_plan>
+
+    <figure_plan id="fig-choice-06" priority="P2" complexity="L2" persona="Engineer">
+      <title>Why Tailwind v4</title>
+      <location>docs/site/user-guide/frontend.md</location>
+      <concept>
+        CSS-first config, design token integration, v4 improvements.
+        Pitfall: text-[var()] disambiguation issue. Zero-runtime CSS.
+      </concept>
+    </figure_plan>
+
+    <figure_plan id="fig-choice-07" priority="P2" complexity="L2" persona="Engineer">
+      <title>Why CopilotKit for Agentic UI</title>
+      <location>docs/site/user-guide/agent.md</location>
+      <concept>
+        AG-UI protocol, SSE streaming, useCopilotReadable/Action hooks.
+        Comparison: CopilotKit vs Vercel AI SDK vs custom SSE.
+      </concept>
+    </figure_plan>
+
+    <figure_plan id="fig-choice-08" priority="P2" complexity="L2" persona="Engineer">
+      <title>Why Jotai (not Redux/Zustand)</title>
+      <location>docs/site/user-guide/frontend.md</location>
+      <concept>
+        Atomic state, no boilerplate, bottom-up composition.
+        Perfect for isolated atoms (theme, role, works).
+        Comparison: Jotai vs Redux Toolkit vs Zustand.
+      </concept>
+    </figure_plan>
+
+    <figure_plan id="fig-choice-09" priority="P2" complexity="L2" persona="All">
+      <title>Why MCP Protocol</title>
+      <location>docs/site/concepts/mcp-consent.md</location>
+      <concept>
+        Protocol comparison: MCP vs A2A vs ACP vs custom REST.
+        Why MCP: standard tool interface, permission model, growing ecosystem.
+        Connection to paper's "consent infrastructure" thesis.
+      </concept>
+    </figure_plan>
+
+    <figure_plan id="fig-choice-10" priority="P2" complexity="L2" persona="Engineer">
+      <title>Why tinytag (not mutagen)</title>
+      <location>docs/site/user-guide/backend.md</location>
+      <concept>
+        License swap story: mutagen (GPL) → tinytag (MIT).
+        Read-only use case fits perfectly. Lighter dependency. MIT-compatible.
+      </concept>
+    </figure_plan>
+
+    <figure_plan id="fig-choice-11" priority="P2" complexity="L3" persona="Engineer">
+      <title>Why Splink for Entity Resolution</title>
+      <location>docs/site/concepts/entity-resolution.md</location>
+      <concept>
+        Probabilistic record linkage theory: Fellegi-Sunter model.
+        Splink's approach: blocking rules, comparison vectors, EM algorithm.
+        Why not dedupe/RecordLinkage.
+      </concept>
+    </figure_plan>
+
+    <figure_plan id="fig-choice-12" priority="P2" complexity="L3" persona="Engineer">
+      <title>Why Conformal Prediction (not Bayesian)</title>
+      <location>docs/site/concepts/conformal-prediction.md</location>
+      <concept>
+        Distribution-free coverage guarantee. No prior needed.
+        Comparison: conformal vs Bayesian credible intervals vs bootstrap CI.
+        Paper's SConU methodology.
+      </concept>
+    </figure_plan>
+
+    <figure_plan id="fig-choice-13" priority="P2" complexity="L1" persona="All">
+      <title>Why Instrument Serif (Typography Choice)</title>
+      <location>docs/site/user-guide/frontend.md</location>
+      <concept>
+        Editorial bold feel. Warp Records inspiration. Not a tech font.
+        "Music attribution is creative work — the UI should feel creative too."
+        Comparison with corporate alternatives (Inter, SF Pro, Geist).
+      </concept>
+    </figure_plan>
+  </phase>
+
+  <!-- ================================================================= -->
+  <!-- PHASE 12: FIGURE PLANS — How-To Guides (fig-howto-01 to -09)      -->
+  <!-- ================================================================= -->
+
+  <phase id="P12" title="Figure Plans: How-To Guides">
+    <description>
+      9 step-by-step how-to diagrams for common development tasks.
+      These serve both as documentation and onboarding material.
+    </description>
+
+    <figure_plan id="fig-howto-01" priority="P1" complexity="L3" persona="Engineer">
+      <title>How to Add a New Data Source</title>
+      <location>docs/site/tutorials/adding-data-sources.md</location>
+      <concept>
+        Step-by-step: 1. Create extractor in etl/ → 2. Implement extract() method →
+        3. Map to NormalizedRecord → 4. Add data quality checks → 5. Register in pipeline →
+        6. Write tests → 7. Add to seed data.
+      </concept>
+    </figure_plan>
+
+    <figure_plan id="fig-howto-02" priority="P2" complexity="L3" persona="Engineer">
+      <title>How to Add a New API Endpoint</title>
+      <location>docs/site/user-guide/backend.md</location>
+      <concept>
+        Step-by-step: 1. Define Pydantic schema → 2. Create route function →
+        3. Add to router → 4. Write tests → 5. Update OpenAPI docs.
+      </concept>
+    </figure_plan>
+
+    <figure_plan id="fig-howto-03" priority="P2" complexity="L3" persona="Engineer">
+      <title>How to Add a New Frontend Page</title>
+      <location>docs/site/user-guide/frontend.md</location>
+      <concept>
+        Step-by-step: 1. Create page.tsx in app/ → 2. Use design tokens →
+        3. Add navigation link → 4. Write tests → 5. Mobile responsiveness.
+      </concept>
+    </figure_plan>
+
+    <figure_plan id="fig-howto-04" priority="P2" complexity="L3" persona="Engineer">
+      <title>How to Add a New Agent Tool</title>
+      <location>docs/site/user-guide/agent.md</location>
+      <concept>
+        Step-by-step: 1. Define tool function in agent.py → 2. Add type hints →
+        3. Register with PydanticAI → 4. Add useCopilotAction hook →
+        5. Write tests → 6. Document.
+      </concept>
+    </figure_plan>
+
+    <figure_plan id="fig-howto-05" priority="P1" complexity="L2" persona="All">
+      <title>How to Run the Full Stack</title>
+      <location>docs/site/getting-started/quickstart.md</location>
+      <concept>
+        Three modes: 1. Development (make agent + make dev-frontend separately),
+        2. Docker Compose (docker compose up), 3. Production (Dockerfile.prod).
+        Expected output at each step.
+      </concept>
+    </figure_plan>
+
+    <figure_plan id="fig-howto-06" priority="P2" complexity="L2" persona="All">
+      <title>How to Contribute</title>
+      <location>CONTRIBUTING.md</location>
+      <concept>
+        Fork → Branch → Develop → Test → PR flow.
+        Pre-commit hooks required. PR template.
+        Code of conduct. License: MIT.
+      </concept>
+    </figure_plan>
+
+    <figure_plan id="fig-howto-07" priority="P1" complexity="L1" persona="All">
+      <title>How to Read Confidence Scores</title>
+      <location>docs/site/concepts/conformal-prediction.md</location>
+      <concept>
+        Visual guide: Green gauge (≥0.85 = high confidence, reliable),
+        Amber gauge (0.50-0.84 = medium, needs review), Red gauge (&lt;0.50 = low, unreliable).
+        "What should I do?" action for each tier.
+      </concept>
+    </figure_plan>
+
+    <figure_plan id="fig-howto-08" priority="P1" complexity="L1" persona="All">
+      <title>How to Understand Assurance Levels</title>
+      <location>docs/site/concepts/assurance-levels.md</location>
+      <concept>
+        Visual guide: A0 (grey, "we don't know") → A1 (light teal, "one source says") →
+        A2 (teal, "multiple sources agree") → A3 (deep teal, "artist verified").
+        Icon: shield filling up with each level. Action: what each level means for trust.
+      </concept>
+    </figure_plan>
+
+    <figure_plan id="fig-howto-09" priority="P2" complexity="L2" persona="All">
+      <title>How to Check AI Training Permissions</title>
+      <location>docs/site/concepts/mcp-consent.md</location>
+      <concept>
+        User flow: select work → choose use case (streaming, sync licensing, AI training,
+        voice cloning) → see permission result (ALLOW/DENY/CONDITIONS).
+        MCP query shown alongside.
+      </concept>
+    </figure_plan>
+  </phase>
+
+  <!-- ================================================================= -->
+  <!-- EXECUTION ORDER                                                   -->
+  <!--                                                                   -->
+  <!-- P0  MkDocs Infrastructure ─── foundation for all docs             -->
+  <!-- P5  Figure Infrastructure ─── style guide before figure plans     -->
+  <!-- P1  README Hierarchy ────── highest impact, visible on GitHub     -->
+  <!-- P2  Docstrings ──────────── enables API reference auto-gen        -->
+  <!-- P3  Concept Docs ─────────── pedagogic core                       -->
+  <!-- P4  Paper Reproduction ──── SSRN-specific                         -->
+  <!-- P6  Figures: Repo Overview ─ first batch of figures               -->
+  <!-- P7  Figures: Theory ──────── second batch                         -->
+  <!-- P8  Figures: Backend ─────── third batch                          -->
+  <!-- P9  Figures: Frontend ────── fourth batch                         -->
+  <!-- P10 Figures: Agent ───────── fifth batch                          -->
+  <!-- P11 Figures: PRD + Choices ─ sixth batch                          -->
+  <!-- P12 Figures: How-To ──────── seventh batch                        -->
+  <!--                                                                   -->
+  <!-- Total: 121 figure plans                                           -->
+  <!--   - 15 repo overview                                              -->
+  <!--   - 22 theory                                                     -->
+  <!--   - 20 backend                                                    -->
+  <!--   - 15 frontend                                                   -->
+  <!--   - 10 agent                                                      -->
+  <!--   - 25 PRD + library choices (10 PRD + 15 choices)                -->
+  <!--   - 9 how-to guides                                               -->
+  <!--   + 5 figure infrastructure files                                 -->
+  <!-- ================================================================= -->
+
+  <!-- ================================================================= -->
+  <!-- FIGURE COUNT SUMMARY                                              -->
+  <!-- ================================================================= -->
+
+  <summary>
+    <total_figures>121</total_figures>
+    <categories>
+      <category name="Repository Overview" prefix="fig-repo" count="15"/>
+      <category name="Music Attribution Theory" prefix="fig-theory" count="22"/>
+      <category name="Backend Architecture" prefix="fig-be" count="20"/>
+      <category name="Frontend Architecture" prefix="fig-fe" count="15"/>
+      <category name="Agentic UI" prefix="fig-agent" count="10"/>
+      <category name="PRD Decision Network" prefix="fig-prd" count="10"/>
+      <category name="Library/Tool Choices" prefix="fig-choice" count="15" note="includes 4 ELI5/expert pairs"/>
+      <category name="How-To Guides" prefix="fig-howto" count="9"/>
+    </categories>
+    <priority_breakdown>
+      <p0>~25 figures (hero, architecture, key concepts)</p0>
+      <p1>~45 figures (important but not blocking)</p1>
+      <p2>~51 figures (nice-to-have, complete coverage)</p2>
+    </priority_breakdown>
+    <persona_coverage>
+      <persona name="Music Industry Professional" level="L1" figures="~30"/>
+      <persona name="PhD Student / Policy" level="L2" figures="~40"/>
+      <persona name="Software Engineer" level="L3" figures="~35"/>
+      <persona name="AI/ML Architect" level="L4" figures="~16"/>
+    </persona_coverage>
+    <infrastructure>
+      <item>mkdocs.yml</item>
+      <item>.github/workflows/deploy-docs.yml</item>
+      <item>pyproject.toml docs dependency group</item>
+      <item>docs/site/ skeleton (~25 pages)</item>
+      <item>STYLE-GUIDE-REPO.md</item>
+      <item>CONTENT-TEMPLATE-REPO.md</item>
+      <item>PROMPTING-INSTRUCTIONS-REPO.md</item>
+    </infrastructure>
+  </summary>
+
+</plan>

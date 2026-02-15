@@ -1,8 +1,28 @@
 """Vector similarity search service for entity embeddings.
 
-Uses pgvector cosine distance on PostgreSQL. Falls back to Python-side
-cosine similarity on SQLite (unit tests). Production deployments use
-HNSW indexes for sub-linear search performance.
+Provides cosine similarity search across entity embeddings stored in
+the ``entity_embeddings`` table. On PostgreSQL with pgvector, the
+``<=>`` (cosine distance) operator can be used with HNSW indexes for
+sub-linear search performance. This implementation uses Python-side
+cosine computation for cross-database compatibility with SQLite in
+unit tests.
+
+Functions
+---------
+_cosine_similarity
+    Compute cosine similarity between two vectors.
+_parse_embedding
+    Parse embeddings from various database storage formats.
+
+Classes
+-------
+VectorSearchService
+    Async service for finding similar entities by embedding distance.
+
+See Also
+--------
+music_attribution.search.hybrid_search : Uses this as modality 2.
+music_attribution.db.models.EntityEmbeddingModel : Embedding storage.
 """
 
 from __future__ import annotations
@@ -21,10 +41,24 @@ logger = logging.getLogger(__name__)
 
 
 def _cosine_similarity(vec_a: list[float], vec_b: list[float]) -> float:
-    """Compute cosine similarity between two vectors.
+    """Compute cosine similarity between two float vectors.
 
-    Returns:
-        Score between -1 and 1 (clamped to 0-1 for search results).
+    Uses a pure-Python dot-product implementation for cross-database
+    compatibility (no numpy dependency). For production workloads,
+    pgvector's ``<=>`` operator provides hardware-accelerated distance.
+
+    Parameters
+    ----------
+    vec_a : list[float]
+        First vector.
+    vec_b : list[float]
+        Second vector (must have the same length as ``vec_a``).
+
+    Returns
+    -------
+    float
+        Cosine similarity score. Mathematically in [-1, 1], but
+        callers typically clamp to [0, 1] for search ranking.
     """
     dot_product = sum(a * b for a, b in zip(vec_a, vec_b, strict=True))
     norm_a = math.sqrt(sum(a * a for a in vec_a))
@@ -35,9 +69,30 @@ def _cosine_similarity(vec_a: list[float], vec_b: list[float]) -> float:
 
 
 def _parse_embedding(raw: object) -> list[float]:
-    """Parse embedding from database storage format.
+    """Parse an embedding vector from database storage format.
 
-    PostgreSQL returns a HalfVector via pgvector; SQLite stores as JSON string.
+    Handles three storage formats depending on the database backend:
+
+    - **PostgreSQL + pgvector**: Returns a ``HalfVector`` object with
+      a ``.to_list()`` method.
+    - **SQLite**: Returns a JSON string that must be deserialised.
+    - **In-memory / test fixtures**: Returns a Python ``list`` or
+      ``tuple`` directly.
+
+    Parameters
+    ----------
+    raw : object
+        Raw embedding value from the ORM column.
+
+    Returns
+    -------
+    list[float]
+        Parsed embedding as a list of Python floats.
+
+    Raises
+    ------
+    TypeError
+        If the raw value does not match any known storage format.
     """
     if isinstance(raw, list | tuple):
         return [float(v) for v in raw]
@@ -53,10 +108,13 @@ def _parse_embedding(raw: object) -> list[float]:
 class VectorSearchService:
     """Vector similarity search across entity embeddings.
 
-    Fetches embeddings from the database and computes cosine similarity.
-    On PostgreSQL with pgvector, the <=> operator can be used for
-    index-accelerated search (HNSW). This implementation uses Python-side
-    computation for cross-database compatibility in tests.
+    Fetches embeddings from the ``entity_embeddings`` table and computes
+    cosine similarity in Python. On PostgreSQL with pgvector, the
+    ``<=>`` operator with HNSW indexes provides hardware-accelerated
+    approximate nearest neighbour search. This Python-side implementation
+    ensures cross-database compatibility for unit tests on SQLite.
+
+    The service is stateless and can be instantiated freely.
     """
 
     async def find_similar(
@@ -68,18 +126,35 @@ class VectorSearchService:
         entity_type: str | None = None,
         session: AsyncSession,
     ) -> list[tuple[uuid.UUID, float]]:
-        """Find entities with similar embeddings.
+        """Find entities with similar embeddings to a given entity.
 
-        Args:
-            entity_id: UUID of the query entity.
-            limit: Maximum number of results.
-            threshold: Minimum cosine similarity (0-1).
-            entity_type: Optional filter to restrict results by entity type.
-            session: Active async database session.
+        Fetches the query entity's embedding, then computes cosine
+        similarity against all candidate embeddings in the database.
+        Results are filtered by minimum threshold, optionally filtered
+        by entity type, and sorted by similarity descending.
 
-        Returns:
-            List of (entity_id, similarity_score) tuples sorted by
-            similarity descending. The query entity is excluded.
+        Parameters
+        ----------
+        entity_id : uuid.UUID
+            UUID of the query entity whose embedding is the reference.
+        limit : int, optional
+            Maximum number of results to return. Default is 10.
+        threshold : float, optional
+            Minimum cosine similarity (0.0--1.0) for inclusion in
+            results. Default is 0.0 (include all).
+        entity_type : str | None, optional
+            If provided, restricts candidate entities to this type
+            (e.g. ``"artist"``, ``"work"``). Requires a join with
+            ``resolved_entities``.
+        session : AsyncSession
+            Active async database session.
+
+        Returns
+        -------
+        list[tuple[uuid.UUID, float]]
+            List of ``(entity_id, similarity_score)`` tuples sorted by
+            similarity descending. The query entity is excluded from
+            results. Similarity scores are clamped to [0.0, 1.0].
         """
         # Fetch the query entity's embedding
         query_stmt = select(EntityEmbeddingModel.embedding).where(

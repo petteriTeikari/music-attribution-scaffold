@@ -1,0 +1,72 @@
+# AI Music Platform Connector
+#
+# Whether and how the scaffold connects to AI music generation platforms
+# (Suno, Udio, Beatoven.ai) to ingest attribution metadata from their outputs.
+
+decision_id: ai_music_platform_connector
+title: "AI Music Platform Connector"
+description: >
+  Determines integration with AI music generation platforms. As platforms
+  like Suno and Udio begin embedding attribution metadata in their outputs,
+  downstream systems need infrastructure to consume, normalize, and verify
+  this metadata against other sources.
+
+decision_level: L3_components
+status: stub
+last_updated: 2026-02-14
+
+options:
+  - option_id: none
+    title: "None — No Platform Connection"
+    description: >
+      No integration with AI music platforms. Attribution relies on
+      traditional metadata sources (MusicBrainz, Discogs, file tags).
+      Platform-generated attribution metadata is ignored.
+    prior_probability: 0.50
+    status: selected
+
+  - option_id: read_only_metadata
+    title: "Read-Only Metadata Ingestion"
+    description: >
+      Ingest attribution metadata from platform outputs (API or file
+      metadata). Normalize against NormalizedRecord schema and score
+      confidence. No data flows back to platforms.
+    prior_probability: 0.35
+    status: candidate
+
+  - option_id: bidirectional_api
+    title: "Bidirectional API"
+    description: >
+      Full bidirectional integration: ingest platform metadata AND provide
+      attribution verification results back to platforms. Enables platforms
+      to improve their own attribution based on the scaffold's multi-source
+      confidence scoring.
+    prior_probability: 0.15
+    status: candidate
+
+research_notes: >
+  Suno ($2.45B valuation, Warner Music deal) and Udio (UMG/WMG settlements)
+  are the dominant AI music platforms. Both are shifting toward licensing-based
+  models with attribution metadata. Beatoven.ai has partnered with Musical AI
+  for training-time attribution. The platform metadata format landscape is
+  fragmented — no standard exists for AI-generated music attribution metadata.
+
+influences:
+  - from: platform_strategy
+    direction: upstream
+    rationale: "Integration platform strategy requires platform connectors"
+  - from: api_protocol
+    direction: upstream
+    rationale: "MCP protocol enables standardized tool-based platform queries"
+
+references:
+  - "Suno $250M raise at $2.45B valuation, Warner Music deal"
+  - "Udio UMG/WMG copyright settlements"
+  - "Beatoven.ai + Musical AI partnership"
+
+tags:
+  - platforms
+  - ai-music
+  - metadata
+  - ecosystem
+  - discussion-expansion

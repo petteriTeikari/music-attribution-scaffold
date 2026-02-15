@@ -1,8 +1,38 @@
 """Conformal prediction confidence scoring for attribution.
 
-Wraps attribution confidence in conformal prediction sets. "90% confident"
-must actually mean 90% coverage. Implements Adaptive Prediction Sets (APS)
-method for calibrated uncertainty quantification.
+Wraps attribution confidence in conformal prediction sets to ensure
+calibrated uncertainty quantification. When the system says "90% confident",
+this module guarantees that the prediction set covers the true label at
+least 90% of the time.
+
+Implements the **Adaptive Prediction Sets (APS)** method:
+
+1. Sort candidate labels by decreasing confidence.
+2. Include labels in the prediction set until cumulative confidence
+   reaches the target coverage level.
+3. The resulting set size reflects true uncertainty: larger sets mean
+   more ambiguity.
+
+The ``CalibrationReport`` tracks Expected Calibration Error (ECE) using
+equal-width binning to detect systematic over- or under-confidence.
+
+Notes
+-----
+Implements the conformal prediction framework described in Teikari (2026),
+Section 5.2. Based on the theoretical foundations of Vovk et al. (2005),
+"Algorithmic Learning in a Random World."
+
+References
+----------
+.. [1] Vovk, V., Gammerman, A., & Shafer, G. (2005). "Algorithmic
+   Learning in a Random World." Springer.
+.. [2] Romano, Y., Sesia, M., & Candes, E. (2020). "Classification
+   with Valid and Adaptive Coverage." NeurIPS.
+
+See Also
+--------
+music_attribution.attribution.aggregator : Upstream confidence aggregation.
+music_attribution.schemas.attribution.ConformalSet : Pydantic model for prediction sets.
 """
 
 from __future__ import annotations
@@ -19,7 +49,33 @@ logger = logging.getLogger(__name__)
 
 
 class CalibrationReport(BaseModel):
-    """Report on calibration quality."""
+    """Report on calibration quality using equal-width binning.
+
+    Tracks Expected Calibration Error (ECE) and per-bin accuracy vs.
+    confidence, enabling detection of systematic over- or
+    under-confidence in the scoring model.
+
+    Attributes
+    ----------
+    ece : float
+        Expected Calibration Error -- weighted average of per-bin
+        ``|accuracy - confidence|``. Lower is better; 0.0 means
+        perfectly calibrated. Must be >= 0.0.
+    marginal_coverage : float
+        Achieved coverage (fraction of correct predictions) in [0, 1].
+    target_coverage : float
+        Target coverage level (e.g., 0.9 for 90% coverage).
+    calibration_method : str
+        Name of the calibration method (e.g., ``"APS"``).
+    calibration_set_size : int
+        Number of samples used for calibration.
+    bin_accuracies : list[float]
+        Per-bin accuracy values (10 bins by default).
+    bin_confidences : list[float]
+        Per-bin mean confidence values (10 bins by default).
+    timestamp : datetime
+        When the calibration was computed (UTC).
+    """
 
     ece: float = Field(ge=0.0)  # Expected Calibration Error
     marginal_coverage: float = Field(ge=0.0, le=1.0)
@@ -34,8 +90,21 @@ class CalibrationReport(BaseModel):
 class ConformalScorer:
     """Conformal prediction scorer for attribution confidence.
 
-    Uses Adaptive Prediction Sets (APS) method to produce
-    calibrated prediction sets at specified coverage levels.
+    Uses the Adaptive Prediction Sets (APS) method to produce calibrated
+    prediction sets at specified coverage levels. The prediction set
+    includes the minimum number of candidate labels needed to achieve
+    the target coverage.
+
+    Notes
+    -----
+    A well-calibrated model produces small prediction sets (often just 1
+    label) for high-confidence predictions and larger sets for ambiguous
+    cases. The set size itself is a useful uncertainty signal.
+
+    See Also
+    --------
+    music_attribution.attribution.aggregator.CreditAggregator :
+        Produces the raw confidence scores that are calibrated here.
     """
 
     def score(
@@ -43,14 +112,27 @@ class ConformalScorer:
         predictions: list[tuple[CreditRoleEnum, float]],
         coverage: float = 0.90,
     ) -> ConformalSet:
-        """Produce a conformal prediction set at specified coverage.
+        """Produce a conformal prediction set at the specified coverage level.
 
-        Args:
-            predictions: List of (role, confidence) tuples.
-            coverage: Target coverage level (e.g., 0.90 for 90%).
+        Sorts candidate roles by confidence descending, then includes
+        roles until cumulative confidence reaches the target coverage.
+        If total confidence across all candidates is less than the target,
+        all candidates are included.
 
-        Returns:
-            ConformalSet with prediction sets and calibration info.
+        Parameters
+        ----------
+        predictions : list[tuple[CreditRoleEnum, float]]
+            List of ``(role, confidence)`` tuples. Confidence values
+            should sum to approximately 1.0 for well-calibrated models.
+        coverage : float, optional
+            Target coverage level. Default is 0.90 (90% coverage).
+
+        Returns
+        -------
+        ConformalSet
+            Prediction set with coverage metadata. The ``set_sizes``
+            field indicates how many labels were needed to achieve
+            coverage (smaller = more confident).
         """
         if not predictions:
             return ConformalSet(
@@ -100,13 +182,34 @@ class ConformalScorer:
         self,
         predictions: list[tuple[float, bool]],
     ) -> CalibrationReport:
-        """Compute calibration metrics from predictions vs actuals.
+        """Compute calibration metrics from predictions vs. actual outcomes.
 
-        Args:
-            predictions: List of (predicted_probability, actual_outcome) tuples.
+        Uses equal-width binning (10 bins spanning [0, 1]) to compute:
 
-        Returns:
-            CalibrationReport with ECE and per-bin metrics.
+        - **ECE** (Expected Calibration Error): weighted average of
+          per-bin ``|accuracy - confidence|``.
+        - **Per-bin accuracy**: fraction of correct predictions in each bin.
+        - **Per-bin confidence**: mean predicted probability in each bin.
+        - **Marginal coverage**: overall fraction of correct predictions.
+
+        Parameters
+        ----------
+        predictions : list[tuple[float, bool]]
+            List of ``(predicted_probability, actual_outcome)`` tuples.
+            ``predicted_probability`` is in [0, 1]; ``actual_outcome``
+            is ``True`` if the prediction was correct.
+
+        Returns
+        -------
+        CalibrationReport
+            Calibration metrics including ECE and per-bin breakdowns.
+            Returns an empty report (ECE=0) if no predictions are provided.
+
+        Notes
+        -----
+        A perfectly calibrated model has ECE=0 and bin accuracies that
+        match bin confidences (i.e., the reliability diagram is a 45-degree
+        line). See Naeini et al. (2015) for ECE methodology.
         """
         if not predictions:
             return CalibrationReport(

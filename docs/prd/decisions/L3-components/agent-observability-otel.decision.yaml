@@ -1,0 +1,71 @@
+# Agent Observability (OpenTelemetry)
+#
+# OpenTelemetry-based observability for agent interactions and LLM calls.
+
+decision_id: agent_observability_otel
+title: "Agent Observability (OpenTelemetry)"
+description: >
+  Determines the agent observability approach. Options range from no
+  dedicated agent observability to Logfire/Langfuse integration to
+  full OpenTelemetry-native tracing with GenAI semantic conventions.
+
+decision_level: L3_components
+status: stub
+last_updated: 2026-02-14
+
+options:
+  - option_id: none
+    title: "None — Basic Logging Only"
+    description: >
+      Standard Python logging for agent interactions. No structured
+      tracing or span creation. Simple but loses the ability to
+      correlate agent actions across tool calls and model invocations.
+    prior_probability: 0.30
+    status: candidate
+
+  - option_id: logfire_langfuse
+    title: "Logfire / Langfuse Integration"
+    description: >
+      Integrate Pydantic Logfire or Langfuse for structured agent
+      tracing. Automatic span creation for tool calls, model invocations,
+      and validation errors. Dashboard for cost tracking and latency
+      analysis.
+    prior_probability: 0.45
+    status: selected
+
+  - option_id: full_otel
+    title: "Full OpenTelemetry Native"
+    description: >
+      Full OTel-native tracing with GenAI semantic conventions. Agent
+      traces export to any OTel-compatible backend (Jaeger, Grafana
+      Tempo, Datadog). Maximum portability and standards compliance
+      but higher integration effort.
+    prior_probability: 0.25
+    status: candidate
+
+research_notes: >
+  OpenTelemetry GenAI semantic conventions are on the experimental-to-stable
+  track, defining standard span attributes for LLM calls. Pydantic Logfire
+  provides OTel-native observability specifically for PydanticAI agents.
+  AG2 (AutoGen successor) integrated OTel in Feb 2026, validating the
+  approach. Langfuse remains popular but is not OTel-native.
+
+influences:
+  - from: observability_stack
+    direction: upstream
+    rationale: "Existing observability stack constrains agent-specific tooling"
+  - from: ai_framework_strategy
+    direction: upstream
+    rationale: "PydanticAI → Logfire natural fit; LangChain → LangSmith"
+
+references:
+  - "OpenTelemetry GenAI semantic conventions"
+  - "Pydantic Logfire"
+  - "Langfuse — LLM observability"
+  - "AG2 OTel integration (Feb 2026)"
+
+tags:
+  - observability
+  - otel
+  - tracing
+  - discussion-expansion

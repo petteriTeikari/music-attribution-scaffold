@@ -1,11 +1,23 @@
 """MusicBrainz ETL connector.
 
 Fetches recordings, works, artists, and relationships from the MusicBrainz
-API. Transforms raw API responses into NormalizedRecord boundary objects.
-Handles rate limiting (1 req/s), pagination, and retries.
+API and transforms raw API responses into ``NormalizedRecord`` boundary
+objects.  Handles rate limiting (1 req/s per MusicBrainz policy),
+pagination, and exponential-backoff retries.
 
-Note: musicbrainzngs is synchronous — all calls are wrapped in
-asyncio.to_thread() for async compatibility.
+MusicBrainz is the highest-confidence open data source (``source_confidence
+= 0.9``) because it is community-curated with editorial review.  It provides
+ISRC, ISWC, and ISNI identifiers that map directly to the A0-A3 assurance
+levels described in the companion paper (Section 3).
+
+Notes
+-----
+``musicbrainzngs`` is synchronous — all API calls are wrapped in
+``asyncio.to_thread()`` to avoid blocking the event loop.
+
+The ``_RELATION_TYPE_MAP`` translates MusicBrainz relationship type
+strings (e.g., ``"producer"``, ``"lyricist"``) into the normalised
+``RelationshipTypeEnum`` used throughout the attribution pipeline.
 """
 
 from __future__ import annotations
@@ -48,13 +60,37 @@ _RELATION_TYPE_MAP: dict[str, RelationshipTypeEnum] = {
 
 
 class MusicBrainzConnector:
-    """ETL connector for MusicBrainz API.
+    """ETL connector for the MusicBrainz API.
 
-    Args:
-        user_agent: User-Agent string for API compliance.
-            Must include app name and contact info.
-        rate: Maximum requests per second (default: 1.0 per MusicBrainz policy).
-        max_retries: Maximum retry attempts on transient errors.
+    Provides async ``fetch_*`` methods that query the MusicBrainz web
+    service and ``transform_*`` methods that convert raw JSON responses
+    into ``NormalizedRecord`` boundary objects for the downstream entity
+    resolution pipeline.
+
+    Parameters
+    ----------
+    user_agent : str
+        User-Agent string for API compliance.  Must include the
+        application name, version, and contact email (e.g.,
+        ``"MusicAttribution/0.1.0 (user@example.com)"``).
+    rate : float, optional
+        Maximum requests per second, by default 1.0 (MusicBrainz
+        policy).
+    max_retries : int, optional
+        Maximum retry attempts on transient API errors, by default 3.
+        Uses exponential backoff (2^attempt seconds).
+
+    Attributes
+    ----------
+    _rate_limiter : TokenBucketRateLimiter
+        Token-bucket limiter enforcing the per-second request cap.
+
+    Examples
+    --------
+    >>> connector = MusicBrainzConnector("MusicAttribution/0.1.0 (user@example.com)")
+    >>> record = await connector.fetch_recording("some-mbid")
+    >>> record.source
+    <SourceEnum.MUSICBRAINZ: 'musicbrainz'>
     """
 
     def __init__(
@@ -70,7 +106,20 @@ class MusicBrainzConnector:
 
     @staticmethod
     def _parse_user_agent(ua: str) -> tuple[str, str, str]:
-        """Parse user agent string into (app, version, contact)."""
+        """Parse a user-agent string into musicbrainzngs components.
+
+        Parameters
+        ----------
+        ua : str
+            User-agent string in the format
+            ``"AppName/version (contact@email.com)"``.
+
+        Returns
+        -------
+        tuple[str, str, str]
+            ``(app_name, version, contact_info)`` for
+            ``musicbrainzngs.set_useragent()``.
+        """
         parts = ua.split("/", 1)
         app = parts[0] if parts else "MusicAttribution"
         rest = parts[1] if len(parts) > 1 else "0.1.0"
@@ -82,11 +131,25 @@ class MusicBrainzConnector:
     async def fetch_recording(self, mbid: str) -> NormalizedRecord:
         """Fetch a recording by MusicBrainz ID.
 
-        Args:
-            mbid: MusicBrainz recording ID.
+        Retrieves the recording with artist credits, ISRCs, releases,
+        and artist relationships, then transforms the response into a
+        ``NormalizedRecord``.
 
-        Returns:
-            NormalizedRecord for the recording.
+        Parameters
+        ----------
+        mbid : str
+            MusicBrainz recording UUID (e.g.,
+            ``"b10bbbfc-cf9e-42e0-be17-e2c3e1d2600d"``).
+
+        Returns
+        -------
+        NormalizedRecord
+            Normalised recording with relationships and identifiers.
+
+        Raises
+        ------
+        musicbrainzngs.WebServiceError
+            If the MusicBrainz API returns an error after all retries.
         """
         data = await self._api_call(
             musicbrainzngs.get_recording_by_id,
@@ -98,11 +161,24 @@ class MusicBrainzConnector:
     async def fetch_artist(self, mbid: str) -> NormalizedRecord:
         """Fetch an artist by MusicBrainz ID.
 
-        Args:
-            mbid: MusicBrainz artist ID.
+        Retrieves the artist profile with aliases, then transforms the
+        response into a ``NormalizedRecord`` with ISNI identifiers and
+        alternative name variants.
 
-        Returns:
-            NormalizedRecord for the artist.
+        Parameters
+        ----------
+        mbid : str
+            MusicBrainz artist UUID.
+
+        Returns
+        -------
+        NormalizedRecord
+            Normalised artist with identifiers and alternative names.
+
+        Raises
+        ------
+        musicbrainzngs.WebServiceError
+            If the MusicBrainz API returns an error after all retries.
         """
         data = await self._api_call(
             musicbrainzngs.get_artist_by_id,
@@ -112,13 +188,24 @@ class MusicBrainzConnector:
         return self.transform_artist(data["artist"])
 
     def transform_recording(self, data: dict) -> NormalizedRecord:
-        """Transform a MusicBrainz recording response to NormalizedRecord.
+        """Transform a MusicBrainz recording response to a NormalizedRecord.
 
-        Args:
-            data: Raw MusicBrainz recording dict.
+        Extracts ISRC identifiers, artist relationships, and structured
+        metadata (roles, release date, country, duration) from the raw
+        API response.  The ``source_confidence`` is set to 0.9
+        reflecting MusicBrainz's community-curated editorial quality.
 
-        Returns:
-            NormalizedRecord for the recording.
+        Parameters
+        ----------
+        data : dict
+            Raw MusicBrainz recording dictionary as returned by
+            ``musicbrainzngs.get_recording_by_id()``.
+
+        Returns
+        -------
+        NormalizedRecord
+            Normalised recording with identifiers, relationships, and
+            source metadata.
         """
         isrc_list = data.get("isrc-list", [])
         isrc = isrc_list[0] if isrc_list else None
@@ -140,13 +227,22 @@ class MusicBrainzConnector:
         )
 
     def transform_artist(self, data: dict) -> NormalizedRecord:
-        """Transform a MusicBrainz artist response to NormalizedRecord.
+        """Transform a MusicBrainz artist response to a NormalizedRecord.
 
-        Args:
-            data: Raw MusicBrainz artist dict.
+        Extracts ISNI identifiers and alias-list name variants.  The
+        ``source_confidence`` is set to 0.9 reflecting MusicBrainz's
+        community-curated editorial quality.
 
-        Returns:
-            NormalizedRecord for the artist.
+        Parameters
+        ----------
+        data : dict
+            Raw MusicBrainz artist dictionary as returned by
+            ``musicbrainzngs.get_artist_by_id()``.
+
+        Returns
+        -------
+        NormalizedRecord
+            Normalised artist with identifiers and alternative names.
         """
         isni_list = data.get("isni-list", [])
         isni = isni_list[0] if isni_list else None
@@ -167,7 +263,24 @@ class MusicBrainzConnector:
         )
 
     def _extract_relationships(self, data: dict) -> list[Relationship]:
-        """Extract relationships from MusicBrainz response."""
+        """Extract artist relationships from a MusicBrainz response.
+
+        Iterates over ``artist-relation-list`` entries and maps each
+        MusicBrainz relation type to the normalised
+        ``RelationshipTypeEnum`` via ``_RELATION_TYPE_MAP``.  Unmapped
+        relation types are silently skipped.
+
+        Parameters
+        ----------
+        data : dict
+            Raw MusicBrainz recording or work dictionary containing
+            an ``artist-relation-list`` key.
+
+        Returns
+        -------
+        list[Relationship]
+            List of normalised relationships, empty if none are found.
+        """
         relationships = []
         for rel in data.get("artist-relation-list", []):
             rel_type = rel.get("type", "").lower()
@@ -188,7 +301,22 @@ class MusicBrainzConnector:
         return relationships
 
     def _extract_recording_metadata(self, data: dict) -> SourceMetadata:
-        """Extract structured metadata from recording response."""
+        """Extract structured metadata from a recording response.
+
+        Pulls release date, country, duration, and artist credit roles
+        from the raw MusicBrainz recording dictionary.
+
+        Parameters
+        ----------
+        data : dict
+            Raw MusicBrainz recording dictionary.
+
+        Returns
+        -------
+        SourceMetadata
+            Structured metadata with roles, release date, country,
+            and duration in milliseconds.
+        """
         release_list = data.get("release-list", [])
         first_release = release_list[0] if release_list else {}
 
@@ -206,18 +334,31 @@ class MusicBrainzConnector:
         )
 
     async def _api_call(self, func, *args, **kwargs):
-        """Make a rate-limited API call with retry logic.
+        """Make a rate-limited API call with exponential-backoff retry.
 
-        Args:
-            func: musicbrainzngs function to call.
-            *args: Positional arguments.
-            **kwargs: Keyword arguments.
+        Acquires a token from the rate limiter before each attempt, then
+        delegates the synchronous ``musicbrainzngs`` call to a thread
+        via ``asyncio.to_thread()``.
 
-        Returns:
-            API response dict.
+        Parameters
+        ----------
+        func : callable
+            A ``musicbrainzngs`` function (e.g.,
+            ``musicbrainzngs.get_recording_by_id``).
+        *args : Any
+            Positional arguments forwarded to *func*.
+        **kwargs : Any
+            Keyword arguments forwarded to *func*.
 
-        Raises:
-            musicbrainzngs.WebServiceError: After max retries exhausted.
+        Returns
+        -------
+        dict
+            Raw API response dictionary.
+
+        Raises
+        ------
+        musicbrainzngs.WebServiceError
+            If all ``max_retries`` attempts fail.
         """
         for attempt in range(self._max_retries):
             await self._rate_limiter.acquire()

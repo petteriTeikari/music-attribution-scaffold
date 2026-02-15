@@ -1,0 +1,69 @@
+# Edge Inference Strategy
+#
+# Whether and how the scaffold deploys lightweight inference at edge locations.
+
+decision_id: edge_inference_strategy
+title: "Edge Inference Strategy"
+description: >
+  Determines whether the scaffold deploys any inference capabilities
+  at edge locations for reduced latency on fingerprinting and metadata
+  extraction tasks. Server-only is the default; edge options trade
+  deployment complexity for latency reduction.
+
+decision_level: L3_components
+status: stub
+last_updated: 2026-02-14
+
+options:
+  - option_id: none_server_only
+    title: "None — Server Only"
+    description: >
+      All inference runs on the central server. Simplest deployment.
+      Latency depends on geographic proximity to the server.
+    prior_probability: 0.50
+    status: selected
+
+  - option_id: lightweight_fingerprint
+    title: "Lightweight Fingerprint at Edge"
+    description: >
+      Deploy audio fingerprint computation (Chromaprint) at edge locations.
+      Initial matching happens at the edge; detailed attribution queries
+      go to the central server. Reduces latency for the initial
+      identification step.
+    prior_probability: 0.35
+    status: candidate
+
+  - option_id: full_edge
+    title: "Full Edge Inference"
+    description: >
+      Deploy full attribution inference at edge locations including
+      fingerprinting, metadata extraction, and confidence scoring.
+      Requires edge-compatible model serving and database access.
+    prior_probability: 0.15
+    status: candidate
+
+research_notes: >
+  Cloudflare Workers AI supports inference on 100+ models at edge
+  locations. Deno Deploy provides V8-based edge functions with KV
+  storage. Supabase Edge Functions integrate with PostgreSQL. Edge
+  inference is production-ready for lightweight workloads but adds
+  significant deployment complexity for database-dependent operations.
+
+influences:
+  - from: build_vs_buy_posture
+    direction: upstream
+    rationale: "Custom builders invest in edge; SaaS teams use central server"
+  - from: compute_platform
+    direction: upstream
+    rationale: "Compute platform determines available edge options"
+
+references:
+  - "Cloudflare Workers AI — edge inference"
+  - "Deno Deploy — V8-based edge functions"
+  - "Supabase Edge Functions"
+
+tags:
+  - edge
+  - inference
+  - infrastructure
+  - discussion-expansion

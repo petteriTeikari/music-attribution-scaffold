@@ -1,0 +1,206 @@
+# Object Storage Provider
+#
+# Where audio files, model artifacts, and static assets are stored.
+# Critical for music platforms where egress costs can dominate the bill.
+#
+# Added 2026-02-14: Based on FinOps landscape analysis showing
+# Cloudflare R2 zero-egress as the single highest-impact cost decision.
+# See docs/planning/deployement-finops-landscape.md
+
+decision_id: object_storage
+title: "Object Storage Provider"
+description: >
+  Determines where audio files, model artifacts, embedding caches, and
+  static assets are stored. For music platforms, egress cost is the
+  dominant factor — at 10,000 tracks/day (~30-100GB egress), AWS S3
+  egress at $0.09/GB costs $2,700-9,000/month. Cloudflare R2 zero-egress
+  eliminates this entirely. All options use S3-compatible APIs, ensuring
+  portability. This is the single highest-impact FinOps decision for
+  audio-heavy workloads.
+
+decision_level: L4_deployment
+status: active
+last_updated: 2026-02-14
+
+options:
+  - option_id: cloudflare_r2
+    title: "Cloudflare R2"
+    description: >
+      S3-compatible object storage with zero egress fees. Storage at
+      $0.015/GB/month, Class A operations $4.50/million, Class B
+      $0.36/million. Free tier: 10GB storage, 1M Class A, 10M Class B
+      per month. Automatic CDN via Cloudflare's edge network. EU data
+      residency available (jurisdiction hints). No minimum storage
+      duration or retrieval fees. The clear winner for any workload
+      with significant read traffic (audio streaming, API responses).
+    prior_probability: 0.45
+    status: recommended
+    cost_profile:
+      storage_per_gb: "$0.015"
+      egress_per_gb: "$0.00"
+      free_tier: "10GB storage, 1M Class A ops, 10M Class B ops/month"
+
+  - option_id: hetzner_object_storage
+    title: "Hetzner Object Storage"
+    description: >
+      S3-compatible storage on Hetzner infrastructure. Storage at
+      EUR 0.005/GB, egress EUR 1/TB with 4.99 EUR/month base fee
+      including 1TB egress. Cheapest raw storage but limited regions
+      (Falkenstein, Helsinki). Best for backups, cold storage, and
+      workloads co-located on Hetzner compute. No CDN — pair with
+      Cloudflare for delivery.
+    prior_probability: 0.20
+    status: viable
+    cost_profile:
+      storage_per_gb: "EUR 0.005"
+      egress_per_tb: "EUR 1.00 (1TB included with EUR 4.99/mo base)"
+      free_tier: "none"
+
+  - option_id: backblaze_b2
+    title: "Backblaze B2"
+    description: >
+      Budget object storage at $0.005/GB. Free egress to Cloudflare
+      via Bandwidth Alliance. Best for archival/cold storage. Limited
+      API features compared to S3. Useful as secondary/backup tier.
+    prior_probability: 0.15
+    status: viable
+    cost_profile:
+      storage_per_gb: "$0.005"
+      egress_per_gb: "$0.01 (free via Cloudflare Bandwidth Alliance)"
+      free_tier: "10GB storage"
+
+  - option_id: aws_s3
+    title: "AWS S3"
+    description: >
+      Industry standard object storage with maximum feature set (lifecycle
+      policies, intelligent tiering, event triggers). Storage at $0.021/GB,
+      egress at $0.09/GB. Enterprise-grade durability and compliance
+      certifications. The egress cost makes this prohibitively expensive
+      for audio streaming at scale — only justified when deeply integrated
+      with other AWS services (Lambda triggers, SageMaker pipelines).
+    prior_probability: 0.10
+    status: viable
+    cost_profile:
+      storage_per_gb: "$0.021"
+      egress_per_gb: "$0.09"
+      free_tier: "5GB storage, 20K GET, 2K PUT (12 months)"
+    constraints:
+      - "Egress costs dominate at scale ($2,700-9,000/mo for audio workloads)"
+      - "AWS account required"
+
+  - option_id: gcp_gcs
+    title: "GCP Cloud Storage"
+    description: >
+      Google Cloud Storage with similar pricing to S3. Storage at
+      $0.020/GB, egress at $0.12/GB (higher than AWS). Strong ML
+      integration (Vertex AI, BigQuery). Same egress concern as S3.
+    prior_probability: 0.05
+    status: deferred
+    cost_profile:
+      storage_per_gb: "$0.020"
+      egress_per_gb: "$0.12"
+
+  - option_id: azure_blob
+    title: "Azure Blob Storage"
+    description: >
+      Microsoft Azure blob storage. Storage at $0.018/GB, egress at
+      $0.087/GB. Hot/Cool/Archive tiers. Same egress concern as S3/GCS.
+    prior_probability: 0.05
+    status: deferred
+    cost_profile:
+      storage_per_gb: "$0.018"
+      egress_per_gb: "$0.087"
+
+conditional_on:
+  - parent_decision_id: compute_platform
+    influence_strength: moderate
+    conditional_table:
+      - given_parent_option: render
+        then_probabilities:
+          cloudflare_r2: 0.50
+          hetzner_object_storage: 0.10
+          backblaze_b2: 0.20
+          aws_s3: 0.10
+          gcp_gcs: 0.05
+          azure_blob: 0.05
+      - given_parent_option: hetzner_dedicated
+        then_probabilities:
+          cloudflare_r2: 0.35
+          hetzner_object_storage: 0.35
+          backblaze_b2: 0.15
+          aws_s3: 0.05
+          gcp_gcs: 0.05
+          azure_blob: 0.05
+      - given_parent_option: aws_ecs
+        then_probabilities:
+          cloudflare_r2: 0.30
+          hetzner_object_storage: 0.05
+          backblaze_b2: 0.10
+          aws_s3: 0.40
+          gcp_gcs: 0.05
+          azure_blob: 0.10
+
+archetype_weights:
+  engineer_heavy_startup:
+    probability_overrides:
+      cloudflare_r2: 0.40
+      hetzner_object_storage: 0.20
+      backblaze_b2: 0.15
+      aws_s3: 0.15
+      gcp_gcs: 0.05
+      azure_blob: 0.05
+    rationale: "Engineers optimize for cost — R2 zero-egress or Hetzner co-location."
+
+  musician_first_team:
+    probability_overrides:
+      cloudflare_r2: 0.50
+      hetzner_object_storage: 0.05
+      backblaze_b2: 0.20
+      aws_s3: 0.15
+      gcp_gcs: 0.05
+      azure_blob: 0.05
+    rationale: "R2 simplicity + free egress. S3 if already on AWS via credits."
+
+  solo_hacker:
+    probability_overrides:
+      cloudflare_r2: 0.55
+      hetzner_object_storage: 0.10
+      backblaze_b2: 0.25
+      aws_s3: 0.05
+      gcp_gcs: 0.03
+      azure_blob: 0.02
+    rationale: "Free tiers and zero egress. R2 or B2+Cloudflare."
+
+  well_funded_startup:
+    probability_overrides:
+      cloudflare_r2: 0.35
+      hetzner_object_storage: 0.10
+      backblaze_b2: 0.10
+      aws_s3: 0.25
+      gcp_gcs: 0.10
+      azure_blob: 0.10
+    rationale: "R2 for cost efficiency, but S3/GCS for deep cloud integration."
+
+volatility:
+  classification: stable
+  last_assessed: 2026-02-14
+  next_review: 2026-08-14
+  change_drivers:
+    - "AWS S3 egress pricing changes (unlikely but possible competitive pressure)"
+    - "Cloudflare R2 feature parity with S3 (lifecycle policies, event triggers)"
+    - "Hetzner Object Storage region expansion"
+
+domain_applicability:
+  music_attribution: 1.0
+  dpp_traceability: 0.8
+  generic_graph_rag: 0.7
+
+tags:
+  - deployment
+  - storage
+  - finops
+  - egress
+
+references:
+  - "../infrastructure/toc-infrastructure.md"
+  - "../../planning/deployement-finops-landscape.md"

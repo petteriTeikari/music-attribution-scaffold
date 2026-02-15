@@ -1,0 +1,76 @@
+# Partnership Model
+#
+# How the scaffold engages with external companies and organizations
+# in the music attribution ecosystem.
+
+decision_id: partnership_model
+title: "Partnership Model"
+description: >
+  Determines the engagement model for external partnerships. API marketplace
+  offers broad but shallow integrations. Strategic alliance provides deep
+  integration with selected partners. CMO federation creates institutional
+  infrastructure for collective management organizations.
+
+decision_level: L2_architecture
+status: stub
+last_updated: 2026-02-14
+
+options:
+  - option_id: api_marketplace
+    title: "API Marketplace"
+    description: >
+      Broad integration surface. The scaffold provides APIs that any
+      partner can consume. Standardized data formats, self-service
+      onboarding, usage-based billing. Maximizes breadth but limits
+      depth of any single integration.
+    prior_probability: 0.35
+    status: candidate
+
+  - option_id: strategic_alliance
+    title: "Strategic Alliance"
+    description: >
+      Deep integration with selected partners. Bilateral data exchange
+      agreements, custom integration work, shared roadmap alignment.
+      Requires significant business development but creates defensible
+      relationships and unique data advantages.
+    prior_probability: 0.40
+    status: selected
+
+  - option_id: cmo_federated
+    title: "CMO Federated"
+    description: >
+      Institutional infrastructure serving collective management
+      organizations. Federation protocol for cross-CMO data sharing,
+      licensing decision support, and compliance reporting. Highest
+      complexity but addresses the largest addressable market (global
+      music rights management).
+    prior_probability: 0.25
+    status: candidate
+
+research_notes: >
+  The partnership model must align with platform strategy. Standalone
+  tools favor API marketplace (low integration overhead). Integration
+  platforms favor strategic alliances (deep technical partnerships).
+  CMO federation is the most ambitious path but addresses the institutional
+  gap in AI music licensing infrastructure that STIM's pilot has exposed.
+
+influences:
+  - from: target_market_segment
+    direction: upstream
+    rationale: "Enterprise/CMO segments favor federation; indie creators favor marketplace"
+  - from: revenue_model
+    direction: upstream
+    rationale: "Revenue model determines partnership economics"
+  - from: regulatory_posture
+    direction: upstream
+    rationale: "Compliance requirements drive institutional partnership needs"
+
+references:
+  - "STIM collective AI music licence pilot (Sep 2025)"
+  - "Teikari, P. (2026). Music Attribution with Transparent Confidence. SSRN No. 6109087."
+
+tags:
+  - strategy
+  - partnerships
+  - ecosystem
+  - discussion-expansion

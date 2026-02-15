@@ -1,0 +1,76 @@
+# Edge Deployment Target
+#
+# Which edge platform to target if edge inference is adopted.
+
+decision_id: edge_deployment_target
+title: "Edge Deployment Target"
+description: >
+  Determines the target platform for edge inference deployment, if the
+  edge_inference_strategy selects an edge option. Each platform has
+  different runtime constraints, pricing models, and integration patterns.
+
+decision_level: L4_deployment
+status: stub
+last_updated: 2026-02-14
+
+options:
+  - option_id: no_edge
+    title: "No Edge Deployment"
+    description: >
+      No edge deployment. All processing runs on the central server.
+      Default when edge_inference_strategy selects server-only.
+    prior_probability: 0.50
+    status: selected
+
+  - option_id: cloudflare_workers
+    title: "Cloudflare Workers"
+    description: >
+      Deploy edge functions on Cloudflare Workers with Workers AI for
+      inference. Global edge network, V8 runtime, pay-per-request
+      pricing. Good for lightweight fingerprint computation.
+    prior_probability: 0.25
+    status: candidate
+
+  - option_id: deno_deploy
+    title: "Deno Deploy"
+    description: >
+      Deploy on Deno Deploy with built-in KV storage. V8 runtime with
+      TypeScript-first development. Good for metadata extraction and
+      caching.
+    prior_probability: 0.15
+    status: candidate
+
+  - option_id: supabase_edge
+    title: "Supabase Edge Functions"
+    description: >
+      Deploy via Supabase Edge Functions (Deno-based) with direct
+      PostgreSQL access. Tightest database integration but Supabase-
+      specific lock-in.
+    prior_probability: 0.10
+    status: candidate
+
+research_notes: >
+  Edge deployment only relevant if edge_inference_strategy selects a
+  non-server-only option. Cloudflare Workers AI supports 100+ models
+  including audio processing. Deno Deploy is simpler but less
+  AI-focused. Supabase Edge Functions provide database integration
+  but create Supabase dependency.
+
+influences:
+  - from: edge_inference_strategy
+    direction: upstream
+    rationale: "Edge strategy determines whether deployment is needed"
+  - from: compute_platform
+    direction: upstream
+    rationale: "Central compute platform creates edge platform affinity"
+
+references:
+  - "Cloudflare Workers AI"
+  - "Deno Deploy"
+  - "Supabase Edge Functions"
+
+tags:
+  - edge
+  - deployment
+  - infrastructure
+  - discussion-expansion

@@ -121,9 +121,10 @@ graph TB
 
 ### Visual: Agentic Commerce Ecosystem
 
-![Agentic Commerce Ecosystem](../../figures/assets/fig-domain-06-agentic-commerce-ecosystem.jpg)
+<!-- TODO: Generate fig-repo-19-agentic-commerce-ecosystem.jpg via Nano Banana Pro -->
+![Agentic commerce ecosystem: MCP-based attribution data flows to commerce protocols (ACP, AP2, TAP) enabling verified AI music transactions.](../../figures/repo-figures/assets/fig-repo-19-agentic-commerce-ecosystem.jpg)
 
-*the system in agentic commerce: MCP-based attribution data flows to commerce protocols (ACP, AP2, TAP) enabling verified AI music transactions. [Market opportunity $1T US / $3-5T global by 2030](https://www.mckinsey.com/capabilities/quantumblack/our-insights/the-agentic-commerce-opportunity-how-ai-agents-are-ushering-in-a-new-era-for-consumers-and-merchants); [top AI shopping models achieve only 56%](https://arxiv.org/abs/2512.04921) due to hallucination on prices/links.*
+*Attribution in agentic commerce: MCP-based attribution data flows to commerce protocols (ACP, AP2, TAP) enabling verified AI music transactions. [Market opportunity $1T US / $3-5T global by 2030](https://www.mckinsey.com/capabilities/quantumblack/our-insights/the-agentic-commerce-opportunity-how-ai-agents-are-ushering-in-a-new-era-for-consumers-and-merchants); [top AI shopping models achieve only 56%](https://arxiv.org/abs/2512.04921) due to hallucination on prices/links.*
 
 ### MCP Payment Servers
 

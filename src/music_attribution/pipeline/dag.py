@@ -1,19 +1,40 @@
 """Declarative pipeline DAG definition.
 
-The attribution pipeline is defined as a Pydantic model — the DAG
-is *data*, not imperative code. A generic runner (runner.py) executes
-stages in topological order.
+The attribution pipeline is defined as a Pydantic model -- the DAG is
+*data*, not imperative code. A generic runner (``runner.py``) executes
+stages in topological order using Kahn's algorithm.
 
 This design pattern separates the "what" (stage definitions, dependencies,
 I/O types) from the "how" (execution engine). The same DAG definition
 could be executed by a simple sequential runner, Prefect, Dagster, or
-any future orchestrator.
+any future orchestrator via an adapter class.
 
-Architecture (5 stages):
-    ETL → Entity Resolution → Attribution → API/MCP → Chat
+Architecture (5 stages)::
 
-Boundary objects between stages:
-    RawRecord → NormalizedRecord → ResolvedEntity → AttributionRecord → (API response)
+    ETL -> Entity Resolution -> Attribution -> API/MCP -> Chat
+
+Boundary objects between stages::
+
+    RawRecord -> NormalizedRecord -> ResolvedEntity -> AttributionRecord -> APIResponse
+
+Classes
+-------
+PipelineStage
+    A single stage in the pipeline with name, dependencies, module
+    path, and I/O types.
+PipelineDAG
+    Directed acyclic graph of ``PipelineStage`` instances with
+    dependency validation, cycle detection, and topological sorting.
+
+Module Attributes
+-----------------
+ATTRIBUTION_DAG : PipelineDAG
+    Canonical 5-stage pipeline definition used by the runner and
+    referenced by the PRD decision network.
+
+See Also
+--------
+music_attribution.pipeline.runner : Executes this DAG.
 """
 
 from __future__ import annotations
@@ -29,14 +50,32 @@ logger = logging.getLogger(__name__)
 class PipelineStage(BaseModel):
     """A single stage in the attribution pipeline.
 
-    Attributes:
-        name: Unique stage identifier (snake_case).
-        description: Human-readable description of what this stage does.
-        depends_on: List of stage names that must complete before this one.
-        module_path: Python module path containing the stage implementation.
-        entry_class: Optional class name within the module (for documentation).
-        input_type: Pydantic boundary object type consumed by this stage.
-        output_type: Pydantic boundary object type produced by this stage.
+    Each stage declares its dependencies, implementation module, and
+    I/O boundary object types. The runner uses this metadata to
+    validate and execute the pipeline.
+
+    Attributes
+    ----------
+    name : str
+        Unique stage identifier in ``snake_case``
+        (e.g. ``"entity_resolution"``).
+    description : str
+        Human-readable description of what this stage does.
+    depends_on : list[str]
+        List of stage names that must complete before this one.
+        Empty list for root stages (e.g. ETL).
+    module_path : str
+        Python module path containing the stage implementation
+        (e.g. ``"music_attribution.resolution"``).
+    entry_class : str | None
+        Optional class name within the module (for documentation
+        and potential reflection-based execution).
+    input_type : str | None
+        Name of the Pydantic boundary object consumed by this stage
+        (e.g. ``"NormalizedRecord"``). ``None`` for the ETL root stage.
+    output_type : str
+        Name of the Pydantic boundary object produced by this stage
+        (e.g. ``"ResolvedEntity"``).
     """
 
     name: str
@@ -52,8 +91,18 @@ class PipelineDAG(BaseModel):
     """Declarative directed acyclic graph of pipeline stages.
 
     The DAG is the single source of truth for pipeline architecture.
-    It can be validated, topologically sorted, and executed by a
-    generic runner.
+    It can be validated (dependency existence, acyclicity), topologically
+    sorted, and executed by a generic runner.
+
+    Attributes
+    ----------
+    name : str
+        Pipeline name (e.g. ``"music_attribution"``).
+    description : str
+        Human-readable description of the pipeline's purpose.
+    stages : list[PipelineStage]
+        Ordered list of pipeline stages. Order in this list does not
+        imply execution order -- use ``topological_sort()`` for that.
     """
 
     name: str
@@ -62,7 +111,13 @@ class PipelineDAG(BaseModel):
 
     @model_validator(mode="after")
     def validate_dependencies_exist(self) -> PipelineDAG:
-        """All depends_on references must point to declared stages."""
+        """Validate that all ``depends_on`` references point to declared stages.
+
+        Raises
+        ------
+        ValueError
+            If any stage references an undeclared dependency.
+        """
         stage_names = {s.name for s in self.stages}
         for stage in self.stages:
             for dep in stage.depends_on:
@@ -72,10 +127,16 @@ class PipelineDAG(BaseModel):
         return self
 
     def validate_acyclic(self) -> None:
-        """Validate that the DAG contains no cycles (Kahn's algorithm).
+        """Validate that the DAG contains no cycles using Kahn's algorithm.
 
-        Raises:
-            ValueError: If a cycle is detected.
+        Performs a topological traversal and verifies that all nodes are
+        visited. If the number of visited nodes is less than the total,
+        at least one cycle exists.
+
+        Raises
+        ------
+        ValueError
+            If a cycle is detected (visited count < total stage count).
         """
         # Build adjacency list and in-degree count
         in_degree: dict[str, int] = defaultdict(int)
@@ -107,13 +168,21 @@ class PipelineDAG(BaseModel):
             raise ValueError(msg)
 
     def topological_sort(self) -> list[PipelineStage]:
-        """Return stages in topological order (dependencies first).
+        """Return stages in topological execution order.
 
-        Returns:
-            List of PipelineStage in execution order.
+        Uses Kahn's algorithm with deterministic tie-breaking (sorted
+        alphabetically) to produce a stable execution order.
+        Dependencies are guaranteed to appear before their dependents.
 
-        Raises:
-            ValueError: If the DAG contains a cycle.
+        Returns
+        -------
+        list[PipelineStage]
+            Stages in execution order (dependencies first).
+
+        Raises
+        ------
+        ValueError
+            If the DAG contains a cycle.
         """
         self.validate_acyclic()
 

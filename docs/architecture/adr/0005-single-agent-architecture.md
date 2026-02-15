@@ -97,7 +97,7 @@ graph TD
 
 ### Visual: Single vs Multi-Agent Decision
 
-![Single vs Multi-Agent Architecture](../../figures/assets/fig-tech-06-single-vs-multiagent.jpg)
+![Architecture diagram: end-to-end agentic UI stack for music attribution showing single-agent architecture with async tool calls for parallel source fetching.](../../figures/repo-figures/assets/fig-agent-01-full-stack.jpg)
 
 *Decision framework for agent architecture: sequential tasks require single-agent due to 17.2x error amplification in multi-agent systems on sequential workloads ([Kim et al., 2025](https://arxiv.org/abs/2512.08296)).*
 

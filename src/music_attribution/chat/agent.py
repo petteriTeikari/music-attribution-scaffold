@@ -1,10 +1,39 @@
 """PydanticAI attribution agent with domain tools.
 
-Provides 4 tools for CopilotKit frontend interaction via AG-UI protocol:
-- explain_confidence: Explain why a work has its confidence score
-- search_attributions: Search across attribution records
-- suggest_correction: Propose a correction to an attribution field
-- submit_feedback: Submit a FeedbackCard for an attribution record
+Provides four domain tools for CopilotKit frontend interaction via the
+AG-UI (Agent-GUI) protocol. The agent acts as a conversational interface
+to the attribution scaffold, enabling artists, managers, and musicologists
+to query, review, and improve attribution records through natural language.
+
+Tools
+-----
+explain_confidence
+    Explain why a work has a given confidence score by decomposing
+    source agreement, corroborating sources, and assurance level.
+search_attributions
+    Search across attribution records by title, artist, or keyword
+    using the hybrid search service (text + vector + graph).
+suggest_correction
+    Propose a correction to a specific field on an attribution record,
+    generating a CorrectionPreview for frontend review.
+submit_feedback
+    Submit a structured FeedbackCard for an attribution record,
+    including overall assessment and optional free-text notes.
+
+Notes
+-----
+The agent uses PydanticAI's ``Agent`` class with dependency injection
+(``AgentDeps``) for database access. The system prompt encodes domain
+knowledge about A0-A3 assurance levels, the Oracle Problem, and
+conformal prediction (see Teikari 2026, Sections 3-5).
+
+The model identifier is loaded lazily from ``Settings.attribution_agent_model``
+so that import-time side effects are avoided and tests can mock the model.
+
+See Also
+--------
+music_attribution.chat.state : Shared agent/frontend state model.
+music_attribution.chat.agui_endpoint : AG-UI SSE streaming endpoint.
 """
 
 from __future__ import annotations
@@ -46,7 +75,17 @@ Be concise. Prefer bullet points. Reference specific data sources by name.
 
 
 def _get_agent_model() -> str:
-    """Get the agent model string from Settings."""
+    """Get the PydanticAI model identifier from application settings.
+
+    Performs a lazy import of ``Settings`` to avoid requiring environment
+    variables at module import time. This allows tests to patch the
+    function without triggering configuration validation.
+
+    Returns
+    -------
+    str
+        PydanticAI model string (e.g. ``"anthropic:claude-haiku-4-5"``).
+    """
     from music_attribution.config import Settings
 
     settings = Settings()  # type: ignore[call-arg]
@@ -55,9 +94,22 @@ def _get_agent_model() -> str:
 
 @dataclass
 class AgentDeps:
-    """Dependencies injected into agent tools at runtime.
+    """Dependencies injected into PydanticAI agent tools at runtime.
 
-    Tools use async_session_factory for PostgreSQL access.
+    PydanticAI's dependency injection system passes this object to every
+    tool call via ``ctx.deps``. Tools use the session factory for
+    async database access and the state object for AG-UI state
+    synchronisation with the CopilotKit frontend.
+
+    Attributes
+    ----------
+    state : AttributionAgentState
+        Shared mutable state that is serialised as AG-UI StateSnapshot
+        events and consumed by CopilotKit ``useCopilotReadable`` hooks.
+    session_factory : async_sessionmaker[AsyncSession] | None
+        SQLAlchemy async session factory bound to the PostgreSQL engine.
+        ``None`` when running without a database (e.g. unit tests),
+        in which case tools return a graceful fallback message.
     """
 
     state: AttributionAgentState
@@ -65,7 +117,24 @@ class AgentDeps:
 
 
 class ExplainConfidenceResult(BaseModel):
-    """Result of explain_confidence tool."""
+    """Structured result of the ``explain_confidence`` tool.
+
+    Captures both the numeric score and the human-readable explanation
+    with contributing factors, enabling the frontend to render a rich
+    confidence breakdown panel.
+
+    Attributes
+    ----------
+    work_id : str
+        Attribution record identifier that was explained.
+    confidence_score : float
+        Overall confidence score (0.0--1.0).
+    explanation : str
+        Human-readable explanation combining all factors.
+    factors : list[str]
+        Individual contributing factors (source agreement, number of
+        sources, assurance level) as separate strings.
+    """
 
     work_id: str
     confidence_score: float
@@ -74,7 +143,24 @@ class ExplainConfidenceResult(BaseModel):
 
 
 class SearchResult(BaseModel):
-    """A single search result."""
+    """A single attribution search result returned by the agent.
+
+    Provides the minimal fields needed for the frontend to render
+    a search result row: title, artist, confidence, and assurance.
+
+    Attributes
+    ----------
+    attribution_id : str
+        UUID of the matching attribution record.
+    work_title : str
+        Display title of the musical work.
+    artist_name : str
+        Primary artist name.
+    confidence_score : float
+        Overall confidence score (0.0--1.0).
+    assurance_level : str
+        A0--A3 assurance level string (e.g. ``"A3"``).
+    """
 
     attribution_id: str
     work_title: str
@@ -84,7 +170,19 @@ class SearchResult(BaseModel):
 
 
 class SearchResultSet(BaseModel):
-    """Result of search_attributions tool."""
+    """Aggregated result set from the ``search_attributions`` tool.
+
+    Wraps the query, matching results, and total count for pagination.
+
+    Attributes
+    ----------
+    query : str
+        The original search query string.
+    results : list[SearchResult]
+        Matching attribution records (up to the limit).
+    total_count : int
+        Total number of matches (may exceed ``len(results)``).
+    """
 
     query: str
     results: list[SearchResult]
@@ -92,14 +190,41 @@ class SearchResultSet(BaseModel):
 
 
 class SuggestCorrectionResult(BaseModel):
-    """Result of suggest_correction tool."""
+    """Result of the ``suggest_correction`` tool.
+
+    Pairs the target work with a ``CorrectionPreview`` that the frontend
+    renders as a diff (current value vs. suggested value) for user
+    approval before submission.
+
+    Attributes
+    ----------
+    work_id : str
+        Attribution record identifier to correct.
+    correction : CorrectionPreview
+        Structured preview of the proposed change.
+    """
 
     work_id: str
     correction: CorrectionPreview
 
 
 class SubmitFeedbackResult(BaseModel):
-    """Result of submit_feedback tool."""
+    """Result of the ``submit_feedback`` tool.
+
+    Returned after a FeedbackCard is persisted, confirming the
+    submission and indicating whether center-bias was detected.
+
+    Attributes
+    ----------
+    feedback_id : str
+        UUID of the created FeedbackCard.
+    attribution_id : str
+        UUID of the attribution record the feedback targets.
+    accepted : bool
+        Whether the feedback was successfully stored.
+    message : str
+        Human-readable confirmation message (may include bias warning).
+    """
 
     feedback_id: str
     attribution_id: str
@@ -110,8 +235,29 @@ class SubmitFeedbackResult(BaseModel):
 def create_attribution_agent() -> Agent[AgentDeps, str]:
     """Create and configure the PydanticAI attribution agent.
 
-    Returns:
-        Configured PydanticAI Agent with 4 domain tools.
+    Instantiates a PydanticAI ``Agent`` with a domain-specific system
+    prompt and registers four tool functions (``explain_confidence``,
+    ``search_attributions``, ``suggest_correction``, ``submit_feedback``).
+
+    The agent model identifier is resolved lazily from application
+    settings via ``_get_agent_model()``. The agent is configured with
+    ``retries=2`` for transient LLM failures.
+
+    Returns
+    -------
+    Agent[AgentDeps, str]
+        Configured PydanticAI Agent with four domain tools, typed to
+        accept ``AgentDeps`` and return ``str`` responses.
+
+    Notes
+    -----
+    Tool functions are registered using PydanticAI's ``@agent.tool``
+    decorator, which provides automatic parameter validation and
+    dependency injection via ``ctx.deps``.
+
+    Each tool updates ``ctx.deps.state`` to synchronise AG-UI state
+    with the CopilotKit frontend (e.g. setting ``current_work_id``
+    after explaining a confidence score).
     """
     agent = Agent(
         _get_agent_model(),
@@ -124,12 +270,26 @@ def create_attribution_agent() -> Agent[AgentDeps, str]:
     async def explain_confidence(ctx, work_id: str) -> str:
         """Explain the confidence score for a specific attribution record.
 
-        Args:
-            ctx: Agent context with dependencies.
-            work_id: Attribution ID to explain.
+        Fetches the full ``AttributionRecord`` from the database and
+        decomposes the confidence score into contributing factors:
+        source agreement level, number of corroborating data sources,
+        and the A0--A3 assurance level.
 
-        Returns:
-            Human-readable explanation of the confidence score.
+        Updates ``ctx.deps.state`` with the current work context so the
+        CopilotKit frontend can highlight the relevant record.
+
+        Parameters
+        ----------
+        ctx : RunContext[AgentDeps]
+            PydanticAI run context providing access to ``AgentDeps``.
+        work_id : str
+            UUID string of the attribution record to explain.
+
+        Returns
+        -------
+        str
+            Human-readable explanation combining all confidence factors,
+            or an error message if the record is not found.
         """
         import uuid as _uuid
 
@@ -174,12 +334,26 @@ def create_attribution_agent() -> Agent[AgentDeps, str]:
     async def search_attributions(ctx, query: str) -> str:
         """Search attribution records by title, artist, or keyword.
 
-        Args:
-            ctx: Agent context with dependencies.
-            query: Search query string.
+        Delegates to ``HybridSearchService`` which fuses text search,
+        vector similarity, and graph context via Reciprocal Rank Fusion
+        (RRF). Results are formatted as a bullet list with title,
+        artist, confidence, and assurance level.
 
-        Returns:
-            Formatted search results.
+        Updates ``ctx.deps.state`` with the search query and result
+        count for the CopilotKit frontend to display.
+
+        Parameters
+        ----------
+        ctx : RunContext[AgentDeps]
+            PydanticAI run context providing access to ``AgentDeps``.
+        query : str
+            Free-text search query (title, artist name, or keyword).
+
+        Returns
+        -------
+        str
+            Formatted search results as a bullet list, or a "not found"
+            message if no records match.
         """
         results: list[str] = []
 
@@ -217,16 +391,32 @@ def create_attribution_agent() -> Agent[AgentDeps, str]:
     ) -> str:
         """Suggest a correction to an attribution record field.
 
-        Args:
-            ctx: Agent context with dependencies.
-            work_id: Attribution ID to correct.
-            field: Field name to correct.
-            current_value: Current value of the field.
-            suggested_value: Suggested new value.
-            reason: Reason for the correction.
+        Creates a ``CorrectionPreview`` and stores it in
+        ``ctx.deps.state.pending_correction`` so the CopilotKit
+        frontend can render a before/after diff for user approval.
+        The correction is not applied until the user confirms via
+        ``submit_feedback``.
 
-        Returns:
-            Confirmation message with correction preview.
+        Parameters
+        ----------
+        ctx : RunContext[AgentDeps]
+            PydanticAI run context providing access to ``AgentDeps``.
+        work_id : str
+            UUID string of the attribution record to correct.
+        field : str
+            Name of the field being corrected (e.g. ``"role_detail"``).
+        current_value : str
+            Current value of the field in the attribution record.
+        suggested_value : str
+            Proposed replacement value.
+        reason : str
+            Justification for the correction.
+
+        Returns
+        -------
+        str
+            Confirmation message with a human-readable correction
+            preview and instructions to finalise via ``submit_feedback``.
         """
         preview = CorrectionPreview(
             field=field,
@@ -255,14 +445,31 @@ def create_attribution_agent() -> Agent[AgentDeps, str]:
     ) -> str:
         """Submit structured feedback for an attribution record.
 
-        Args:
-            ctx: Agent context with dependencies.
-            work_id: Attribution ID to submit feedback for.
-            overall_assessment: Overall quality assessment (0.0-1.0).
-            free_text: Optional free-text notes.
+        Creates and persists a ``FeedbackCard`` (BO-4 boundary object)
+        via ``AsyncFeedbackRepository``. Detects center-bias when the
+        assessment falls in the 0.45--0.55 range and includes a warning
+        in the response (see Teikari 2026, Section 5 on calibration).
 
-        Returns:
-            Confirmation message.
+        Clears ``ctx.deps.state.pending_correction`` after successful
+        submission.
+
+        Parameters
+        ----------
+        ctx : RunContext[AgentDeps]
+            PydanticAI run context providing access to ``AgentDeps``.
+        work_id : str
+            UUID string of the attribution record to submit feedback for.
+        overall_assessment : float
+            Overall quality assessment on a 0.0--1.0 scale. Values in
+            the 0.45--0.55 range trigger a center-bias warning.
+        free_text : str | None, optional
+            Optional free-text notes from the reviewer.
+
+        Returns
+        -------
+        str
+            Confirmation message including feedback ID, assessment
+            value, and any bias warning.
         """
         import uuid as _uuid
 

@@ -1,0 +1,67 @@
+# Agent Interop Protocol
+#
+# Multi-protocol agent communication strategy beyond MCP.
+
+decision_id: agent_interop_protocol
+title: "Agent Interop Protocol"
+description: >
+  Determines the scaffold's agent communication protocol strategy.
+  MCP provides tool access; A2A enables agent-to-agent coordination;
+  multi-protocol approaches combine both with additional layers.
+
+decision_level: L3_components
+status: stub
+last_updated: 2026-02-14
+
+options:
+  - option_id: mcp_only
+    title: "MCP Only"
+    description: >
+      MCP as the sole agent communication protocol. Sufficient for
+      tool-based interactions. The scaffold's current approach.
+    prior_probability: 0.50
+    status: selected
+
+  - option_id: mcp_plus_a2a
+    title: "MCP + A2A"
+    description: >
+      Combine MCP (tool access) with A2A (agent coordination). Enables
+      the scaffold's agents to delegate tasks to external agents and
+      receive delegated tasks from other systems.
+    prior_probability: 0.35
+    status: candidate
+
+  - option_id: multi_protocol
+    title: "Multi-Protocol"
+    description: >
+      Full multi-protocol stack: MCP (tools) + A2A (coordination) +
+      identity layer (XAA or OAuth 2.1 profiles). Maximum interoperability
+      but highest integration complexity.
+    prior_probability: 0.15
+    status: candidate
+
+research_notes: >
+  MCP governance via AAIF (Linux Foundation) reduces protocol risk.
+  A2A v0.3 introduces Agent Cards and task lifecycle management.
+  The convergence thesis (MCP + A2A + identity) is emerging but
+  not yet stable. XAA (Okta) proposes agent-specific auth flows.
+
+influences:
+  - from: api_protocol
+    direction: upstream
+    rationale: "MCP-primary protocol determines baseline agent communication"
+  - from: ai_framework_strategy
+    direction: upstream
+    rationale: "Framework choice affects multi-protocol support"
+
+references:
+  - "AAIF — MCP governance under Linux Foundation (Dec 2025)"
+  - "A2A v0.3 — Agent-to-Agent protocol (Linux Foundation)"
+  - "XAA — eXtended Agent Authentication (Okta)"
+
+tags:
+  - protocols
+  - mcp
+  - a2a
+  - interoperability
+  - discussion-expansion

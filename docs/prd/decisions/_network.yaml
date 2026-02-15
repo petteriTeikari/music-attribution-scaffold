@@ -12,12 +12,22 @@
 
 network:
   name: "Probabilistic PRD Decision Network"
-  version: "2.0.0"
-  last_updated: 2026-02-13
+  version: "3.0.0"
+  last_updated: 2026-02-14
   description: >
     Bayesian decision network for the Music Attribution Scaffold.
     5-level hierarchy (L1 Business → L5 Operations) with conditional
     probability edges encoding how upstream choices influence downstream options.
+    v3.0.0: Discussion expansion — 28 new ecosystem integration nodes
+    (2 L2 architecture, 18 L3 components, 4 L4 deployment, 4 L5 operations)
+    covering platform strategy, partnerships, CMO licensing, edge inference,
+    agent interop, compliance reporting, and company-specific integration
+    decisions. ~63 new edges bringing total to ~131.
+    v2.2.0: Added mcp_security_strategy (L3), mcp_production_deployment (L3),
+    mcp_input_validation (L4) nodes based on MCP security research synthesis.
+    v2.1.0: Added object_storage node (L4), corrected Hetzner complexity
+    (bare-metal ≠ simple), promoted Pulumi over Terraform, expanded FinOps
+    with DevOps tax framework and cloud credit strategy.
 
 # --- Node Declarations ---
 
@@ -78,6 +88,17 @@ nodes:
     level: L2_architecture
     file: L2-architecture/provenance-strategy.decision.yaml
     title: "Provenance & Citation Strategy"
+
+  # L2: Architecture Decisions (Discussion expansion v3.0.0)
+  - id: platform_strategy
+    level: L2_architecture
+    file: L2-architecture/platform-strategy.decision.yaml
+    title: "Platform Strategy"
+
+  - id: partnership_model
+    level: L2_architecture
+    file: L2-architecture/partnership-model.decision.yaml
+    title: "Partnership Model"
 
   # L3: Implementation Decisions
   - id: primary_database
@@ -140,6 +161,16 @@ nodes:
     file: L3-implementation/audio-metadata-library.decision.yaml
     title: "Audio Metadata Library"
 
+  - id: mcp_security_strategy
+    level: L3_implementation
+    file: L3-implementation/mcp-security-strategy.decision.yaml
+    title: "MCP Security Strategy"
+
+  - id: mcp_production_deployment
+    level: L3_implementation
+    file: L3-implementation/mcp-production-deployment.decision.yaml
+    title: "MCP Production Deployment"
+
   # L3: Component Decisions (commercial landscape stubs)
   - id: training_attribution_integration
     level: L3_components
@@ -170,6 +201,99 @@ nodes:
     level: L3_components
     file: L3-components/tdm-rights-reservation.decision.yaml
     title: "TDM Rights Reservation Infrastructure"
+
+  # L3: Component Decisions — Ecosystem integration (Discussion expansion v3.0.0)
+  # Category nodes (12): capability decisions independent of specific vendors
+  - id: tda_provider_integration
+    level: L3_components
+    file: L3-components/tda-provider-integration.decision.yaml
+    title: "Training Data Attribution Provider Integration"
+
+  - id: cmo_licensing_integration
+    level: L3_components
+    file: L3-components/cmo-licensing-integration.decision.yaml
+    title: "CMO Licensing Integration"
+
+  - id: content_id_system
+    level: L3_components
+    file: L3-components/content-id-system.decision.yaml
+    title: "Content Identification System"
+
+  - id: ai_music_platform_connector
+    level: L3_components
+    file: L3-components/ai-music-platform-connector.decision.yaml
+    title: "AI Music Platform Connector"
+
+  - id: metadata_registry_integration
+    level: L3_components
+    file: L3-components/metadata-registry-integration.decision.yaml
+    title: "Metadata Registry Integration"
+
+  - id: watermark_detection
+    level: L3_components
+    file: L3-components/watermark-detection.decision.yaml
+    title: "Watermark Detection"
+
+  - id: agent_interop_protocol
+    level: L3_components
+    file: L3-components/agent-interop-protocol.decision.yaml
+    title: "Agent Interoperability Protocol"
+
+  - id: edge_inference_strategy
+    level: L3_components
+    file: L3-components/edge-inference-strategy.decision.yaml
+    title: "Edge Inference Strategy"
+
+  - id: attribution_eval_framework
+    level: L3_components
+    file: L3-components/attribution-eval-framework.decision.yaml
+    title: "Attribution Evaluation Framework"
+
+  - id: agent_observability_otel
+    level: L3_components
+    file: L3-components/agent-observability-otel.decision.yaml
+    title: "Agent Observability (OpenTelemetry)"
+
+  - id: agentic_commerce_protocol
+    level: L3_components
+    file: L3-components/agentic-commerce-protocol.decision.yaml
+    title: "Agentic Commerce Protocol"
+
+  - id: knowledge_graph_backend
+    level: L3_components
+    file: L3-components/knowledge-graph-backend.decision.yaml
+    title: "Knowledge Graph Backend"
+
+  # Named company nodes (6): specific partnership decisions
+  - id: musical_ai_partnership
+    level: L3_components
+    file: L3-components/musical-ai-partnership.decision.yaml
+    title: "Musical AI Partnership"
+
+  - id: sureel_ai_partnership
+    level: L3_components
+    file: L3-components/sureel-ai-partnership.decision.yaml
+    title: "Sureel AI Partnership"
+
+  - id: stim_cmo_pilot
+    level: L3_components
+    file: L3-components/stim-cmo-pilot.decision.yaml
+    title: "STIM CMO Pilot"
+
+  - id: soundexchange_registry
+    level: L3_components
+    file: L3-components/soundexchange-registry.decision.yaml
+    title: "SoundExchange Registry Integration"
+
+  - id: fairly_trained_certification
+    level: L3_components
+    file: L3-components/fairly-trained-certification.decision.yaml
+    title: "Fairly Trained Certification"
+
+  - id: suno_udio_licensing
+    level: L3_components
+    file: L3-components/suno-udio-licensing.decision.yaml
+    title: "Suno/Udio Licensing Integration"
 
   # L4: Deployment Decisions
   - id: compute_platform
@@ -202,10 +326,46 @@ nodes:
     file: L4-deployment/orchestrator-choice.decision.yaml
     title: "Pipeline Orchestrator"
 
+  - id: object_storage
+    level: L4_deployment
+    file: L4-deployment/object-storage.decision.yaml
+    title: "Object Storage Provider"
+
+  - id: mcp_input_validation
+    level: L4_deployment
+    file: L4-deployment/mcp-input-validation.decision.yaml
+    title: "MCP Input Validation Strategy"
+
   - id: cd_strategy
     level: L4_deployment
     file: L4-deployment/cd-strategy.decision.yaml
     title: "Continuous Deployment Strategy"
+
+  # L4: Deployment Decisions (Discussion expansion v3.0.0)
+  - id: compliance_reporting_pipeline
+    level: L4_deployment
+    file: L4-deployment/compliance-reporting-pipeline.decision.yaml
+    title: "Compliance Reporting Pipeline"
+
+  - id: training_data_provenance_store
+    level: L4_deployment
+    file: L4-deployment/training-data-provenance-store.decision.yaml
+    title: "Training Data Provenance Store"
+
+  - id: golden_dataset_management
+    level: L4_deployment
+    file: L4-deployment/golden-dataset-management.decision.yaml
+    title: "Golden Dataset Management"
+
+  - id: edge_deployment_target
+    level: L4_deployment
+    file: L4-deployment/edge-deployment-target.decision.yaml
+    title: "Edge Deployment Target"
+
+  - id: code_attribution_tracing
+    level: L4_deployment
+    file: L4-deployment/code-attribution-tracing.decision.yaml
+    title: "Code Attribution Tracing"
 
   # L5: Operations Decisions
   - id: observability_stack
@@ -257,6 +417,27 @@ nodes:
     level: L5_operations
     file: L5-operations/ethics-governance.decision.yaml
     title: "EthicsOps & Governance-as-Code"
+
+  # L5: Operations Decisions (Discussion expansion v3.0.0)
+  - id: regulatory_monitoring
+    level: L5_operations
+    file: L5-operations/regulatory-monitoring.decision.yaml
+    title: "Regulatory Monitoring"
+
+  - id: market_intelligence
+    level: L5_operations
+    file: L5-operations/market-intelligence.decision.yaml
+    title: "Market Intelligence"
+
+  - id: attribution_accuracy_monitoring
+    level: L5_operations
+    file: L5-operations/attribution-accuracy-monitoring.decision.yaml
+    title: "Attribution Accuracy Monitoring"
+
+  - id: partnership_health_metrics
+    level: L5_operations
+    file: L5-operations/partnership-health-metrics.decision.yaml
+    title: "Partnership Health Metrics"
 
 # --- Edge Declarations ---
 
@@ -827,6 +1008,17 @@ edges:
     influence: moderate
     rationale: "K8s admission controllers (OPA Gatekeeper, Kyverno) require containerization"
 
+  # Object Storage edges
+  - from: compute_platform
+    to: object_storage
+    influence: moderate
+    rationale: "Compute platform creates storage affinity (Hetzner → Hetzner Object, AWS → S3)"
+
+  - from: object_storage
+    to: finops_strategy
+    influence: strong
+    rationale: "Object storage egress is the dominant cost driver for audio workloads at scale"
+
   # FinOps edges
   - from: compute_platform
     to: finops_strategy
@@ -837,6 +1029,16 @@ edges:
     to: finops_strategy
     influence: moderate
     rationale: "Scaling decisions directly impact cloud costs and FinOps priorities"
+
+  - from: database_hosting
+    to: finops_strategy
+    influence: moderate
+    rationale: "Database hosting costs vary 10x (Neon scale-to-zero vs always-on RDS)"
+
+  - from: iac_tooling
+    to: finops_strategy
+    influence: weak
+    rationale: "Pulumi/Terraform enable Infracost integration for pre-deploy cost estimation"
 
   # Ethics/Governance edges
   - from: regulatory_posture
@@ -853,3 +1055,439 @@ edges:
     to: ethics_governance
     influence: moderate
     rationale: "Data quality practices inform bias detection and fairness metrics"
+
+  # --- MCP Security / Production / Validation edges (v2.2.0) ---
+
+  # L2 → L3 edges (api_protocol → mcp security)
+  - from: api_protocol
+    to: mcp_security_strategy
+    influence: strong
+    rationale: "MCP-primary protocol necessitates defense-in-depth security (85%+ compromise rate)"
+
+  - from: api_protocol
+    to: mcp_production_deployment
+    influence: moderate
+    rationale: "MCP protocol choice influences deployment sandboxing requirements"
+
+  # L1 → L3 edges (regulatory → mcp security)
+  - from: regulatory_posture
+    to: mcp_security_strategy
+    influence: moderate
+    rationale: "EU AI Act Art. 12 logging requirements drive audit layer in security strategy"
+
+  # L3 → L4 edges (mcp security → input validation)
+  - from: mcp_security_strategy
+    to: mcp_input_validation
+    influence: strong
+    rationale: "Security strategy determines validation pipeline depth (schema-only vs hybrid vs LLM)"
+
+  # L3 → L5 edges (mcp security → observability)
+  - from: mcp_security_strategy
+    to: observability_stack
+    influence: moderate
+    rationale: "Defense-in-depth generates security telemetry that feeds observability stack"
+
+  # L3 → L3 edges (mcp security → auth strategy)
+  - from: mcp_security_strategy
+    to: auth_strategy
+    influence: moderate
+    rationale: "MCP security strategy mandates OAuth 2.1 upgrade and token scoping via RFC 8707"
+
+  # L3 → L4 edges (mcp production deployment → container strategy)
+  - from: mcp_production_deployment
+    to: container_strategy
+    influence: moderate
+    rationale: "Docker isolation option requires container orchestration decisions"
+
+  # L3 → L4 edges (mcp production deployment → compute platform)
+  - from: mcp_production_deployment
+    to: compute_platform
+    influence: moderate
+    rationale: "Cloudflare Workers vs Docker vs Deno constrains compute platform selection"
+
+  # =================================================================
+  # Discussion Expansion Edges (v3.0.0)
+  # 28 new ecosystem integration nodes, ~63 new edges
+  # =================================================================
+
+  # --- L1 → L2 edges (Business → new Architecture nodes) ---
+
+  - from: build_vs_buy_posture
+    to: platform_strategy
+    influence: strong
+    rationale: "Build posture determines standalone tool vs integration platform positioning"
+
+  - from: target_market_segment
+    to: platform_strategy
+    influence: moderate
+    rationale: "Market segment informs platform vs tool positioning (creators need tools, labels need platforms)"
+
+  - from: revenue_model
+    to: platform_strategy
+    influence: moderate
+    rationale: "Revenue model shapes platform strategy (open core → standalone, licensing → platform)"
+
+  - from: target_market_segment
+    to: partnership_model
+    influence: strong
+    rationale: "Market segment determines partner ecosystem (indie → API marketplace, enterprise → strategic)"
+
+  - from: revenue_model
+    to: partnership_model
+    influence: moderate
+    rationale: "Revenue model influences partnership economics (SaaS → API marketplace, licensing → alliance)"
+
+  - from: regulatory_posture
+    to: partnership_model
+    influence: moderate
+    rationale: "Compliance requirements drive CMO federation and institutional partnerships"
+
+  # --- L2 → L3 edges (new Architecture → new Components) ---
+
+  - from: platform_strategy
+    to: ai_music_platform_connector
+    influence: moderate
+    rationale: "Platform strategy shapes depth of AI music platform integration"
+
+  - from: platform_strategy
+    to: agentic_commerce_protocol
+    influence: strong
+    rationale: "Platform strategy drives need for machine-readable commerce"
+
+  - from: platform_strategy
+    to: agent_interop_protocol
+    influence: moderate
+    rationale: "Platform strategy determines multi-protocol interoperability needs"
+
+  - from: partnership_model
+    to: cmo_licensing_integration
+    influence: strong
+    rationale: "Partnership model shapes CMO licensing approach (single pilot vs federation)"
+
+  - from: partnership_model
+    to: tda_provider_integration
+    influence: moderate
+    rationale: "Partnership model affects TDA provider selection and integration depth"
+
+  - from: partnership_model
+    to: musical_ai_partnership
+    influence: moderate
+    rationale: "Partnership model determines Musical AI engagement level"
+
+  - from: partnership_model
+    to: sureel_ai_partnership
+    influence: moderate
+    rationale: "Partnership model determines Sureel AI engagement level"
+
+  # --- Existing L2 → new L3 edges ---
+
+  - from: api_protocol
+    to: agent_interop_protocol
+    influence: strong
+    rationale: "MCP-primary protocol determines agent interop starting point"
+
+  - from: api_protocol
+    to: ai_music_platform_connector
+    influence: moderate
+    rationale: "API protocol choice shapes platform connector design (REST vs MCP tools)"
+
+  - from: api_protocol
+    to: agentic_commerce_protocol
+    influence: moderate
+    rationale: "API protocol determines commerce protocol feasibility (MCP enables machine-readable licensing)"
+
+  - from: ai_framework_strategy
+    to: agent_interop_protocol
+    influence: moderate
+    rationale: "AI framework determines viable agent interop patterns (PydanticAI → MCP native)"
+
+  - from: ai_framework_strategy
+    to: agent_observability_otel
+    influence: moderate
+    rationale: "AI framework determines agent telemetry approach (PydanticAI → Logfire native)"
+
+  - from: provenance_strategy
+    to: watermark_detection
+    influence: moderate
+    rationale: "Provenance strategy determines whether watermark detection is needed"
+
+  - from: data_model_complexity
+    to: knowledge_graph_backend
+    influence: strong
+    rationale: "Data model complexity drives graph backend requirements"
+
+  - from: data_model_complexity
+    to: content_id_system
+    influence: weak
+    rationale: "Data model influences content ID system complexity and entity resolution needs"
+
+  - from: data_model_complexity
+    to: metadata_registry_integration
+    influence: moderate
+    rationale: "Complex data models require multi-registry entity resolution"
+
+  - from: service_decomposition
+    to: edge_inference_strategy
+    influence: moderate
+    rationale: "Service architecture determines whether edge inference is feasible"
+
+  # --- Existing L1 → new L3 skip-connections ---
+
+  - from: build_vs_buy_posture
+    to: tda_provider_integration
+    influence: moderate
+    rationale: "Custom builders may self-host TDA; SaaS teams use partner APIs"
+
+  - from: build_vs_buy_posture
+    to: content_id_system
+    influence: moderate
+    rationale: "Build posture affects fingerprinting approach (custom vs API partner)"
+
+  - from: build_vs_buy_posture
+    to: edge_inference_strategy
+    influence: moderate
+    rationale: "Build posture determines willingness to invest in edge infrastructure"
+
+  - from: build_vs_buy_posture
+    to: attribution_eval_framework
+    influence: moderate
+    rationale: "Custom builders invest in automated eval; SaaS teams do manual spot checks"
+
+  - from: build_vs_buy_posture
+    to: agent_observability_otel
+    influence: moderate
+    rationale: "Custom builders invest in full OTel; SaaS teams use basic logging"
+
+  - from: regulatory_posture
+    to: cmo_licensing_integration
+    influence: moderate
+    rationale: "Compliance requirements drive CMO engagement for licensing transparency"
+
+  - from: regulatory_posture
+    to: stim_cmo_pilot
+    influence: moderate
+    rationale: "Regulatory posture influences whether STIM pilot engagement is worthwhile"
+
+  - from: regulatory_posture
+    to: fairly_trained_certification
+    influence: moderate
+    rationale: "Compliance posture drives certification pursuit for market signaling"
+
+  # --- Existing L3 → new L3 same-level edges ---
+
+  - from: ai_framework_strategy
+    to: tda_provider_integration
+    influence: moderate
+    rationale: "AI framework determines whether TDA computation is architecturally feasible"
+
+  - from: external_registry_integration
+    to: metadata_registry_integration
+    influence: strong
+    rationale: "Existing registry integration scope extends to new registry breadth decisions"
+
+  - from: provenance_verification
+    to: watermark_detection
+    influence: moderate
+    rationale: "Provenance verification scope determines watermark detection needs"
+
+  - from: data_quality_strategy
+    to: attribution_eval_framework
+    influence: strong
+    rationale: "Data quality practices drive attribution evaluation framework needs"
+
+  - from: graph_strategy
+    to: knowledge_graph_backend
+    influence: strong
+    rationale: "Graph query strategy constrains knowledge graph backend options"
+
+  - from: primary_database
+    to: knowledge_graph_backend
+    influence: strong
+    rationale: "PostgreSQL enables AGE in-process; other databases require dedicated backend"
+
+  # --- L3 category → L3 company same-level edges ---
+
+  - from: tda_provider_integration
+    to: musical_ai_partnership
+    influence: strong
+    rationale: "TDA provider decision directly shapes Musical AI partnership scope"
+
+  - from: cmo_licensing_integration
+    to: sureel_ai_partnership
+    influence: moderate
+    rationale: "CMO licensing approach affects Sureel AI engagement (STIM provider)"
+
+  - from: cmo_licensing_integration
+    to: stim_cmo_pilot
+    influence: strong
+    rationale: "CMO licensing integration decision gates STIM pilot participation"
+
+  - from: content_id_system
+    to: sureel_ai_partnership
+    influence: moderate
+    rationale: "Content ID system choice affects Sureel AI integration (audio identification provider)"
+
+  - from: external_registry_integration
+    to: soundexchange_registry
+    influence: moderate
+    rationale: "Registry integration scope determines SoundExchange engagement depth"
+
+  - from: metadata_registry_integration
+    to: soundexchange_registry
+    influence: strong
+    rationale: "Metadata registry breadth decision directly shapes SoundExchange integration"
+
+  - from: compliance_framework_mapping
+    to: fairly_trained_certification
+    influence: moderate
+    rationale: "Compliance framework adoption informs Fairly Trained certification pursuit"
+
+  - from: ai_music_platform_connector
+    to: suno_udio_licensing
+    influence: strong
+    rationale: "Platform connector capability gates Suno/Udio licensing integration"
+
+  - from: rights_management_scope
+    to: suno_udio_licensing
+    influence: moderate
+    rationale: "Rights management scope determines Suno/Udio licensing granularity"
+
+  # --- L3 → L4 edges (new Components → new Deployment) ---
+
+  - from: compliance_framework_mapping
+    to: compliance_reporting_pipeline
+    influence: strong
+    rationale: "Compliance framework mapping determines reporting pipeline requirements"
+
+  - from: edge_inference_strategy
+    to: edge_deployment_target
+    influence: strong
+    rationale: "Edge inference decision gates deployment target selection"
+
+  - from: attribution_eval_framework
+    to: golden_dataset_management
+    influence: strong
+    rationale: "Eval framework determines golden dataset versioning and management needs"
+
+  # --- Existing nodes → new L4 edges ---
+
+  - from: regulatory_posture
+    to: compliance_reporting_pipeline
+    influence: strong
+    rationale: "Regulatory posture determines compliance reporting automation depth"
+
+  - from: ci_cd_pipeline
+    to: compliance_reporting_pipeline
+    influence: moderate
+    rationale: "CI/CD pipeline provides automation substrate for compliance reporting"
+
+  - from: primary_database
+    to: training_data_provenance_store
+    influence: strong
+    rationale: "Primary database choice determines provenance store co-location feasibility"
+
+  - from: provenance_strategy
+    to: training_data_provenance_store
+    influence: strong
+    rationale: "Provenance strategy shapes training data provenance storage approach"
+
+  - from: data_quality_strategy
+    to: golden_dataset_management
+    influence: moderate
+    rationale: "Data quality practices inform golden dataset curation standards"
+
+  - from: compute_platform
+    to: edge_deployment_target
+    influence: moderate
+    rationale: "Compute platform creates edge deployment affinity (Cloudflare ecosystem)"
+
+  # --- L3 → L5 skip-connections (new) ---
+
+  - from: agent_observability_otel
+    to: observability_stack
+    influence: moderate
+    rationale: "Agent OTel instrumentation feeds into and extends observability stack"
+
+  - from: attribution_eval_framework
+    to: attribution_accuracy_monitoring
+    influence: strong
+    rationale: "Eval framework provides the metrics foundation for accuracy monitoring"
+
+  # --- Existing/new L2 → L5 skip-connections ---
+
+  - from: platform_strategy
+    to: market_intelligence
+    influence: strong
+    rationale: "Platform strategy drives competitive intelligence and market monitoring needs"
+
+  - from: partnership_model
+    to: market_intelligence
+    influence: moderate
+    rationale: "Partnership model determines market intelligence scope (partner ecosystem monitoring)"
+
+  - from: partnership_model
+    to: partnership_health_metrics
+    influence: strong
+    rationale: "Partnership model determines which partner health metrics to track"
+
+  # --- Existing/new L1 → L5 skip-connections ---
+
+  - from: regulatory_posture
+    to: regulatory_monitoring
+    influence: strong
+    rationale: "Regulatory posture determines monitoring depth (best-effort → automated)"
+
+  - from: compliance_framework_mapping
+    to: regulatory_monitoring
+    influence: moderate
+    rationale: "Compliance framework mapping identifies which regulations to monitor"
+
+  # --- L5 → L5 same-level cross-influences ---
+
+  - from: ml_monitoring
+    to: attribution_accuracy_monitoring
+    influence: moderate
+    rationale: "ML monitoring infrastructure supports attribution accuracy tracking"
+
+  - from: observability_stack
+    to: partnership_health_metrics
+    influence: moderate
+    rationale: "Observability stack provides the telemetry substrate for partner health metrics"
+
+  # --- Code Attribution Tracing edges (v3.0.0+) ---
+
+  # L2 → L4 edges (artifact decoupling → code attribution)
+  - from: artifact_decoupling_strategy
+    to: code_attribution_tracing
+    influence: moderate
+    rationale: "Artifact decoupling determines whether code provenance is tracked as a separate artifact type"
+
+  # L4 → L4 edges (CI/CD → code attribution)
+  - from: ci_cd_pipeline
+    to: code_attribution_tracing
+    influence: strong
+    rationale: "CI/CD pipeline provides automation substrate for trace aggregation and SBOM generation"
+
+  # L3 → L4 edges (agent observability → code attribution)
+  - from: agent_observability_otel
+    to: code_attribution_tracing
+    influence: moderate
+    rationale: "Agent OTel instrumentation provides runtime trace data that feeds code attribution records"
+
+  # L4 → L5 edges (code attribution → observability)
+  - from: code_attribution_tracing
+    to: observability_stack
+    influence: weak
+    rationale: "Code attribution traces generate telemetry for authorship analytics dashboards"
+
+  # L4 → L5 edges (code attribution → policy as code)
+  - from: code_attribution_tracing
+    to: policy_as_code
+    influence: moderate
+    rationale: "Code attribution enables policy rules like 'AI-generated code requires human review'"
+
+  # L4 → L5 edges (code attribution → ethics governance)
+  - from: code_attribution_tracing
+    to: ethics_governance
+    influence: moderate
+    rationale: "Code authorship transparency feeds governance-as-code for AI Act compliance"

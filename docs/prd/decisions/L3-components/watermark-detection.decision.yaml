@@ -1,0 +1,75 @@
+# Watermark Detection
+#
+# Whether and how the scaffold integrates digital watermark detection
+# for AI-generated content provenance.
+
+decision_id: watermark_detection
+title: "Watermark Detection"
+description: >
+  Determines the scaffold's approach to digital watermark detection for
+  establishing AI-generated content provenance. Options range from no
+  watermark capability to passive detection of existing watermarks to
+  active watermarking of attributed content.
+
+decision_level: L3_components
+status: stub
+last_updated: 2026-02-14
+
+options:
+  - option_id: none
+    title: "None — No Watermark Capability"
+    description: >
+      No watermark detection or embedding. Attribution relies entirely
+      on metadata and content identification. Simplest approach but
+      misses provenance signals embedded by AI generation platforms.
+    prior_probability: 0.50
+    status: selected
+
+  - option_id: passive_detection
+    title: "Passive Watermark Detection"
+    description: >
+      Detect existing watermarks embedded by AI platforms (SynthID,
+      AudioSeal, C2PA manifests) without embedding new ones. Adds a
+      provenance signal to confidence scoring. Requires decoding
+      libraries for each watermark format.
+    prior_probability: 0.35
+    status: candidate
+
+  - option_id: active_watermarking
+    title: "Active Watermarking"
+    description: >
+      Both detect existing watermarks AND embed attribution watermarks
+      in scaffold-processed content. Creates a chain of provenance.
+      Requires watermark embedding infrastructure and careful audio
+      quality management.
+    prior_probability: 0.15
+    status: candidate
+
+research_notes: >
+  Google's SynthID and Meta's AudioSeal are the leading AI audio
+  watermarking systems. C2PA (Coalition for Content Provenance and
+  Authenticity) provides a content credentials standard. EU AI Act
+  Article 52 requires AI-generated content labeling, which may drive
+  watermark adoption. However, audio watermarking robustness against
+  transcoding and compression remains an active research challenge.
+
+influences:
+  - from: provenance_verification
+    direction: upstream
+    rationale: "Provenance verification strategy determines watermark detection need"
+  - from: provenance_strategy
+    direction: upstream
+    rationale: "L2 provenance strategy shapes watermark integration depth"
+
+references:
+  - "Google SynthID — AI content watermarking"
+  - "Meta AudioSeal — audio watermarking"
+  - "C2PA — Content Provenance and Authenticity standard"
+  - "EU AI Act Art. 52 — AI-generated content labeling"
+
+tags:
+  - watermarking
+  - provenance
+  - c2pa
+  - ecosystem
+  - discussion-expansion

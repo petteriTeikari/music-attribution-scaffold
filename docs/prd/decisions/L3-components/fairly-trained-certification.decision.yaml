@@ -1,0 +1,71 @@
+# Fairly Trained Certification
+#
+# Whether the scaffold pursues or integrates with Fairly Trained certification.
+
+decision_id: fairly_trained_certification
+title: "Fairly Trained Certification"
+description: >
+  Determines the scaffold's relationship with Fairly Trained certification.
+  Founded by Ed Newton-Rex (former VP Audio at Stability AI), Fairly
+  Trained certifies entities that train only on licensed or public domain
+  data. 19 certified entities as of early 2026.
+
+decision_level: L3_components
+status: stub
+last_updated: 2026-02-14
+
+options:
+  - option_id: no_certification
+    title: "No Certification"
+    description: >
+      No engagement with Fairly Trained. The scaffold operates
+      independently of certification frameworks.
+    prior_probability: 0.45
+    status: selected
+
+  - option_id: pursue
+    title: "Pursue Certification"
+    description: >
+      Seek Fairly Trained certification for the scaffold itself (if
+      applicable) or display Fairly Trained status for certified
+      entities within the attribution UI. Market signal for ethical
+      positioning.
+    prior_probability: 0.40
+    status: candidate
+
+  - option_id: integration
+    title: "Certification Data Integration"
+    description: >
+      Integrate Fairly Trained certification status as a signal in the
+      scaffold's confidence scoring. Works attributed to Fairly Trained
+      certified sources receive higher provenance confidence.
+    prior_probability: 0.15
+    status: candidate
+
+research_notes: >
+  Fairly Trained provides a binary certified/not-certified signal that
+  complements the scaffold's continuous confidence scoring. Ed Newton-Rex's
+  visibility (former Stability AI VP Audio, TED speaker) gives the
+  certification high media profile. 19 certified entities include music
+  generation companies and training data providers. The certification
+  addresses the "was the training data properly licensed?" question that
+  the scaffold's metadata-based attribution cannot answer directly.
+
+influences:
+  - from: provenance_verification
+    direction: upstream
+    rationale: "Provenance verification strategy determines certification integration"
+  - from: regulatory_posture
+    direction: upstream
+    rationale: "Compliance-first posture increases certification value"
+
+references:
+  - "Fairly Trained — fairlytrained.org, 19 certified entities"
+  - "Ed Newton-Rex, founder (former VP Audio at Stability AI)"
+
+tags:
+  - certification
+  - ethics
+  - provenance
+  - named-partner
+  - discussion-expansion

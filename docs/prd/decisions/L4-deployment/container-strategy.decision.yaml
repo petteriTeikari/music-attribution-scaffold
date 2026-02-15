@@ -1,17 +1,24 @@
 # Container Strategy
 #
 # How application code is packaged for deployment.
+#
+# Updated 2026-02-14: Added Kamal 2 (Docker deployment from 37signals)
+# as a mid-complexity option between Docker Compose and Kubernetes.
+# See docs/planning/deployement-finops-landscape.md
 
 decision_id: container_strategy
 title: "Container Strategy"
 description: >
   Determines how application code is packaged and distributed for
   deployment. Containerization (Docker) is the de facto standard
-  but not always necessary for simple PaaS deployments.
+  but not always necessary for simple PaaS deployments. Kamal 2
+  (from 37signals) bridges the gap between Docker Compose and
+  Kubernetes — zero-downtime deploys with rolling restarts, custom
+  Kamal Proxy (replaced Traefik in v2.8), and multi-host support.
 
 decision_level: L4_deployment
 status: active
-last_updated: 2026-02-10
+last_updated: 2026-02-14
 
 options:
   - option_id: docker_compose
@@ -20,7 +27,7 @@ options:
       Dockerfiles for each service, docker-compose.yaml for local
       development and simple production. Standard containerization
       without orchestration complexity.
-    prior_probability: 0.40
+    prior_probability: 0.30
     status: recommended
 
   - option_id: buildpacks
@@ -29,19 +36,38 @@ options:
       Let the platform detect and build containers automatically
       (Heroku/Render buildpacks, Cloud Native Buildpacks). Zero
       Docker knowledge required.
-    prior_probability: 0.25
+    prior_probability: 0.20
     status: viable
 
+  - option_id: kamal
+    title: "Kamal 2 (Docker Deploy)"
+    description: >
+      Docker deployment tool from 37signals (creators of Rails/Basecamp).
+      Zero-downtime rolling deploys to any server with Docker. Custom
+      Kamal Proxy (replaced Traefik in v2.8+, stable since Aug 2025),
+      built-in SSL via Let's Encrypt, multi-host support, accessory
+      containers (PostgreSQL, Redis). Simpler than Kubernetes but more
+      capable than bare Docker Compose for production. Ruby-based CLI.
+      Ideal for Hetzner Cloud deployments without K8s overhead.
+    prior_probability: 0.15
+    status: viable
+    constraints:
+      - "Ruby runtime for CLI"
+      - "No auto-scaling (manual horizontal scaling)"
+
   - option_id: kubernetes
-    title: "Kubernetes"
+    title: "Kubernetes (Self-Managed or Ubicloud)"
     description: >
       Full container orchestration with Kubernetes. Helm charts or
       Kustomize for configuration. Maximum scaling flexibility,
-      highest operational complexity.
+      highest operational complexity for self-managed. Ubicloud
+      managed K8s on Hetzner reduces ops burden significantly.
+      Two sub-paths: (a) managed K8s (Ubicloud, GKE, EKS) or
+      (b) self-managed (Talos, K3s) — very different complexity.
     prior_probability: 0.10
     status: deferred
     constraints:
-      - "Kubernetes expertise on team"
+      - "Kubernetes expertise (self-managed) or managed K8s cost"
       - "Higher infrastructure cost"
       - "Complex local development setup"
 
@@ -60,79 +86,98 @@ conditional_on:
     conditional_table:
       - given_parent_option: render
         then_probabilities:
-          docker_compose: 0.40
+          docker_compose: 0.35
+          kamal: 0.05
           buildpacks: 0.35
           kubernetes: 0.05
           no_containers: 0.20
       - given_parent_option: vercel_plus_backend
         then_probabilities:
-          docker_compose: 0.25
+          docker_compose: 0.20
+          kamal: 0.05
           buildpacks: 0.30
           kubernetes: 0.05
           no_containers: 0.40
       - given_parent_option: railway
         then_probabilities:
-          docker_compose: 0.35
+          docker_compose: 0.30
+          kamal: 0.05
           buildpacks: 0.35
           kubernetes: 0.05
           no_containers: 0.25
       - given_parent_option: fly_io
         then_probabilities:
-          docker_compose: 0.55
+          docker_compose: 0.45
+          kamal: 0.10
           buildpacks: 0.15
           kubernetes: 0.10
           no_containers: 0.20
-      - given_parent_option: hetzner_dedicated
+      - given_parent_option: hetzner_ubicloud
         then_probabilities:
-          docker_compose: 0.50
+          docker_compose: 0.20
+          kamal: 0.30
           buildpacks: 0.05
-          kubernetes: 0.20
-          no_containers: 0.25
+          kubernetes: 0.35
+          no_containers: 0.10
+      - given_parent_option: hetzner_baremetal
+        then_probabilities:
+          docker_compose: 0.15
+          kamal: 0.35
+          buildpacks: 0.00
+          kubernetes: 0.40
+          no_containers: 0.10
       - given_parent_option: aws_ecs
         then_probabilities:
-          docker_compose: 0.30
+          docker_compose: 0.20
+          kamal: 0.05
           buildpacks: 0.10
-          kubernetes: 0.40
+          kubernetes: 0.45
           no_containers: 0.20
 
 archetype_weights:
   engineer_heavy_startup:
     probability_overrides:
-      docker_compose: 0.40
-      buildpacks: 0.10
-      kubernetes: 0.25
-      no_containers: 0.25
-    rationale: "Docker standard, Kubernetes when scaling."
+      docker_compose: 0.25
+      kamal: 0.20
+      buildpacks: 0.05
+      kubernetes: 0.30
+      no_containers: 0.20
+    rationale: "Docker standard, Kamal for Hetzner, K8s when scaling."
 
   musician_first_team:
     probability_overrides:
-      docker_compose: 0.25
+      docker_compose: 0.20
+      kamal: 0.05
       buildpacks: 0.40
       kubernetes: 0.00
       no_containers: 0.35
-    rationale: "Buildpacks or direct deploy. Avoid Docker complexity."
+    rationale: "Buildpacks or direct deploy. Avoid Docker/K8s complexity."
 
   solo_hacker:
     probability_overrides:
-      docker_compose: 0.30
-      buildpacks: 0.30
+      docker_compose: 0.25
+      kamal: 0.10
+      buildpacks: 0.25
       kubernetes: 0.00
       no_containers: 0.40
-    rationale: "Direct deploy for speed, Docker when reproducibility matters."
+    rationale: "Direct deploy for speed, Kamal when ready for VPS."
 
   well_funded_startup:
     probability_overrides:
-      docker_compose: 0.35
-      buildpacks: 0.15
-      kubernetes: 0.30
-      no_containers: 0.20
-    rationale: "Docker standard, Kubernetes path for enterprise."
+      docker_compose: 0.25
+      kamal: 0.15
+      buildpacks: 0.10
+      kubernetes: 0.35
+      no_containers: 0.15
+    rationale: "K8s for enterprise, Kamal for cost-conscious growth phase."
 
 volatility:
   classification: stable
-  last_assessed: 2026-02-10
-  next_review: 2026-05-10
+  last_assessed: 2026-02-14
+  next_review: 2026-05-14
   change_drivers:
+    - "Kamal 2 ecosystem maturity and adoption"
+    - "Ubicloud managed K8s availability (preview → GA)"
     - "Container alternative technologies (Firecracker, Wasm)"
     - "Kubernetes simplification efforts"
 
@@ -149,3 +194,4 @@ tags:
 references:
   - "../infrastructure/toc-infrastructure.md"
   - "../REJECTED.md"
+  - "../../planning/deployement-finops-landscape.md"

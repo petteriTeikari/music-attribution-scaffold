@@ -6,15 +6,9 @@ This directory contains PRDs for the Music Attribution Scaffold.
 
 ## The Problem We're Solving
 
-![The Attribution Crisis](../figures/assets/fig-domain-01-attribution-crisis.jpg)
+![Overview of the Music Attribution Scaffold: editorial frontend with confidence gauges, assurance badges, review queue, and agentic sidebar.](../figures/repo-figures/assets/fig-repo-01-hero-overview.jpg)
 
-*40%+ of music metadata is wrong, causing $2.5B+ in unclaimed royalties annually.*
-
-## Our Solution
-
-![Attribution Solution](../figures/assets/fig-domain-02-auracles-solution.jpg)
-
-*The system aggregates multiple sources to create verified, confidence-scored attribution records.*
+*40%+ of music metadata is wrong, causing $2.5B+ in unclaimed royalties annually. The scaffold unifies fragmented metadata into confidence-scored attribution records.*
 
 ---
 
@@ -111,7 +105,7 @@ flowchart TB
 
 ## Quick Navigation (For Both Audiences)
 
-**For Stakeholders**: Start with [vision-v1.md](vision-v1.md) for the big picture, then [UNKNOWNS-FOR-DOMAIN-EXPERTS.md](UNKNOWNS-FOR-DOMAIN-EXPERTS.md) to provide input.
+**For Stakeholders**: Start with the problem/solution overview above, then [UNKNOWNS-FOR-DOMAIN-EXPERTS.md](UNKNOWNS-FOR-DOMAIN-EXPERTS.md) to provide input.
 
 **For Engineers**: Start with [llm-context.md](llm-context.md) for system context, then dive into specific domain TOCs.
 
@@ -123,7 +117,7 @@ flowchart TB
 %%{init: {'theme': 'base', 'themeVariables': {'background': '#fcfaf5', 'primaryColor': '#1E3A5F', 'lineColor': '#5C5C5C'}}}%%
 graph TB
     subgraph level1[" L1: Vision & Context "]
-        V[vision-v1.md<br/>MASTER VISION]
+        V[decisions/<br/>PRD NETWORK]
         LLM[llm-context.md<br/>System Context]
         SYN[SYNTHESIS.md<br/>Cross-cutting]
     end
@@ -188,7 +182,7 @@ graph TB
 
 | PRD | Description | Status | Last Updated |
 |-----|-------------|--------|--------------|
-| [vision-v1.md](vision-v1.md) | Master vision and product strategy | Draft v0.8 | 2026-02-04 |
+| *(vision content integrated into PRD decisions)* | Master vision and product strategy | Merged | 2026-02-14 |
 | [llm-context.md](llm-context.md) | System prompt for AI assistants | Active | 2026-02-04 |
 | [SYNTHESIS.md](SYNTHESIS.md) | Cross-PRD insights and decisions | Active | 2026-02-04 |
 
@@ -237,8 +231,7 @@ graph TB
 %%{init: {'theme': 'base', 'themeVariables': {'background': '#fcfaf5', 'primaryColor': '#1E3A5F', 'lineColor': '#5C5C5C'}}}%%
 flowchart LR
     subgraph stakeholder[" Stakeholder Path "]
-        S1[README.md<br/>YOU ARE HERE] --> S2[vision-v1.md]
-        S2 --> S3[UNKNOWNS-FOR-DOMAIN-EXPERTS.md]
+        S1[README.md<br/>YOU ARE HERE] --> S3[UNKNOWNS-FOR-DOMAIN-EXPERTS.md]
     end
 
     subgraph engineer[" Engineer Path "]

@@ -6,7 +6,9 @@ Human-readable synthesis of the Bayesian decision network with mermaid visualiza
 
 ## Network Topology
 
-The complete decision network: 30 nodes across 5 levels with conditional probability edges.
+The complete decision network: 79 nodes across 5 levels with conditional probability edges.
+
+### Core Infrastructure (50 nodes)
 
 ```mermaid
 %%{init: {'theme': 'base', 'themeVariables': {'background': '#fcfaf5', 'primaryColor': '#1E3A5F', 'lineColor': '#5C5C5C'}}}%%
@@ -25,6 +27,7 @@ flowchart TB
         AFS[AI Framework<br/>Strategy]
         ADS[Artifact<br/>Decoupling]
         UAS[UI Adaptation<br/>Strategy]
+        PRS[Provenance<br/>Strategy]
     end
 
     subgraph L3["L3: Implementation Decisions"]
@@ -38,6 +41,19 @@ flowchart TB
         AUF[Agentic UI<br/>Framework]
         VAS[Voice Agent<br/>Stack]
         GRE[Graph RAG<br/>Engine]
+        MSS[MCP Security<br/>Strategy]
+        MPD[MCP Production<br/>Deployment]
+        LRS[LLM Routing<br/>Strategy]
+        AML[Audio Metadata<br/>Library]
+    end
+
+    subgraph L3C["L3: Component Decisions"]
+        TAI[Training Attribution<br/>Integration]
+        RMS[Rights Management<br/>Scope]
+        PV[Provenance<br/>Verification]
+        ERI[External Registry<br/>Integration]
+        CFM[Compliance Framework<br/>Mapping]
+        TDM[TDM Rights<br/>Reservation]
     end
 
     subgraph L4["L4: Deployment Decisions"]
@@ -46,6 +62,11 @@ flowchart TB
         CI[CI/CD<br/>Pipeline]
         IAC[IaC<br/>Tooling]
         CS[Container<br/>Strategy]
+        ORC[Pipeline<br/>Orchestrator]
+        OBJ[Object<br/>Storage]
+        MIV[MCP Input<br/>Validation]
+        CDS[CD<br/>Strategy]
+        CAT[Code Attribution<br/>Tracing]
     end
 
     subgraph L5["L5: Operations Decisions"]
@@ -54,6 +75,11 @@ flowchart TB
         BDR[Backup &<br/>DR Strategy]
         SM[Secrets<br/>Management]
         SG[Schema<br/>Governance]
+        MLM[ML<br/>Monitoring]
+        DOC[Documentation<br/>Tooling]
+        PAC[Policy as<br/>Code]
+        FIN[FinOps<br/>Strategy]
+        ETH[Ethics<br/>Governance]
     end
 
     %% L1 → L1
@@ -66,15 +92,26 @@ flowchart TB
     BVB --> AFS
     TMS --> AP
     TMS --> FF
+    BVB --> ADS
+    AFS --> ADS
+    TMS --> UAS
+    BVB --> PRS
+    RP --> PRS
+
+    %% L2 → L2
+    AFS --> UAS
+    DMC --> PRS
 
     %% L1 → L3 skip
     BVB --> PD
     BVB --> AS
     BVB --> LLM
     BVB --> DQS
-    BVB --> ADS
-    AFS --> ADS
     TMS --> AS
+    BVB --> VAS
+    TMS --> VAS
+    BVB --> LRS
+    BVB --> AML
 
     %% L2 → L3
     DMC --> PD
@@ -86,6 +123,38 @@ flowchart TB
     AFS --> LLM
     AFS --> VS
     SD --> FF
+    UAS --> AUF
+    AP --> AUF
+    AFS --> AUF
+    AP --> MSS
+    AP --> MPD
+    RP --> MSS
+    AFS --> LRS
+    DMC --> AML
+
+    %% L3 → L3
+    FF --> AUF
+    AUF --> VAS
+    GS --> GRE
+    VS --> GRE
+    LLM --> GRE
+    PD --> GRE
+    LLM --> LRS
+    MSS --> AS
+
+    %% L2 → L3C
+    AFS --> TAI
+    BVB --> TAI
+    DMC --> RMS
+    RP --> RMS
+    PRS --> PV
+    RP --> PV
+    DMC --> ERI
+    BVB --> ERI
+    RP --> CFM
+    RP --> TDM
+    PRS --> TDM
+    RMS --> TDM
 
     %% L1 → L4 skip
     BVB --> CP
@@ -95,27 +164,61 @@ flowchart TB
     %% L2 → L4
     SD --> CP
     SD --> CS
+    ADS --> CI
+    SD --> ORC
 
     %% L3 → L4
     PD --> DH
     PD --> BDR
+    MSS --> MIV
+    MPD --> CS
+    MPD --> CP
 
     %% L4 → L4
     CP --> DH
     CP --> CS
     CP --> IAC
+    CP --> ORC
+    CP --> OBJ
+    CI --> CDS
+    CP --> CDS
+    CS --> CDS
+
+    %% L2 → L4 (code attribution)
+    ADS --> CAT
+
+    %% L4 → L4
+    CI --> CAT
 
     %% L4 → L5
     CP --> OS
     CP --> SS
     CP --> SM
     DH --> BDR
-
-    %% L2 → L4
-    ADS --> CI
+    CP --> FIN
+    OBJ --> FIN
+    SS --> FIN
+    DH --> FIN
+    IAC --> FIN
+    CDS --> OS
+    CAT --> OS
+    CAT --> PAC
+    CAT --> ETH
 
     %% L3 → L5
     DQS --> SG
+    MSS --> OS
+    AUF --> OS
+    LRS --> OS
+    DQS --> MLM
+    AFS --> MLM
+    CFM --> ETH
+    CFM --> PAC
+    DQS --> ETH
+    AFS --> ETH
+
+    %% L5 → L5
+    OS --> MLM
 
     %% L1 → L5 skip
     BVB --> OS
@@ -125,37 +228,25 @@ flowchart TB
     RP --> SM
     RP --> SG
     TMS --> SS
-
-    %% L1 → L2 (UI adaptation)
-    TMS --> UAS
-
-    %% L2 → L2 (UI adaptation)
-    AFS --> UAS
-
-    %% L2 → L3 (agentic UI)
-    UAS --> AUF
-    AP --> AUF
-    AFS --> AUF
-
-    %% L3 → L3 (agentic UI, voice, graph RAG)
-    FF --> AUF
-    AUF --> VAS
-    GS --> GRE
-    VS --> GRE
-    LLM --> GRE
-    PD --> GRE
-
-    %% L1 → L3 (voice agent)
-    TMS --> VAS
-    BVB --> VAS
-
-    %% L2 → L5 skip
     AFS --> OS
+    PRS --> SG
+    RP --> PAC
+    RP --> ETH
+    BVB --> DOC
+    CI --> DOC
+    IAC --> PAC
+    CS --> PAC
 
+    style MSS fill:#D4A03C,color:#000
+    style MPD fill:#D4A03C,color:#000
+    style MIV fill:#4A7C59,color:#fff
     style UAS fill:#2E7D7B,color:#fff
     style AUF fill:#D4A03C,color:#000
     style VAS fill:#D4A03C,color:#000
     style GRE fill:#D4A03C,color:#000
+    style LRS fill:#D4A03C,color:#000
+    style AML fill:#D4A03C,color:#000
+    style PRS fill:#2E7D7B,color:#fff
     style BVB fill:#1E3A5F,color:#fff
     style TMS fill:#1E3A5F,color:#fff
     style RM fill:#1E3A5F,color:#fff
@@ -172,16 +263,162 @@ flowchart TB
     style FF fill:#D4A03C,color:#000
     style AS fill:#D4A03C,color:#000
     style DQS fill:#D4A03C,color:#000
+    style TAI fill:#D4A03C,color:#000
+    style RMS fill:#D4A03C,color:#000
+    style PV fill:#D4A03C,color:#000
+    style ERI fill:#D4A03C,color:#000
+    style CFM fill:#D4A03C,color:#000
+    style TDM fill:#D4A03C,color:#000
     style CP fill:#4A7C59,color:#fff
     style DH fill:#4A7C59,color:#fff
     style CI fill:#4A7C59,color:#fff
     style IAC fill:#4A7C59,color:#fff
     style CS fill:#4A7C59,color:#fff
+    style ORC fill:#4A7C59,color:#fff
+    style OBJ fill:#4A7C59,color:#fff
+    style CDS fill:#4A7C59,color:#fff
+    style CAT fill:#4A7C59,color:#fff
     style OS fill:#C75050,color:#fff
     style SS fill:#C75050,color:#fff
     style BDR fill:#C75050,color:#fff
     style SM fill:#C75050,color:#fff
     style SG fill:#C75050,color:#fff
+    style MLM fill:#C75050,color:#fff
+    style DOC fill:#C75050,color:#fff
+    style PAC fill:#C75050,color:#fff
+    style FIN fill:#C75050,color:#fff
+    style ETH fill:#C75050,color:#fff
+```
+
+The ecosystem integration subgraph extends the core infrastructure with 28 new decision nodes covering platform strategy, industry partnerships, compliance automation, and operational intelligence.
+
+### Ecosystem Integration (28 nodes)
+
+```mermaid
+%%{init: {'theme': 'base', 'themeVariables': {'background': '#fcfaf5', 'primaryColor': '#1E3A5F', 'lineColor': '#5C5C5C'}}}%%
+flowchart TB
+    subgraph L1_REF["L1: Business (reference)"]
+        BVB[Build vs Buy<br/>Posture]
+        TMS[Target Market<br/>Segment]
+        RM[Revenue<br/>Model]
+        RP[Regulatory<br/>Posture]
+    end
+
+    subgraph L2_ECO["L2: Platform & Partnership"]
+        PS[Platform<br/>Strategy]
+        PM[Partnership<br/>Model]
+    end
+
+    subgraph L3_CAT["L3: Ecosystem Categories"]
+        TDA[TDA<br/>Provider]
+        CMO[CMO<br/>Licensing]
+        CID[Content ID<br/>System]
+        AIPC[AI Music Platform<br/>Connector]
+        MRI[Metadata Registry<br/>Integration]
+        WD[Watermark<br/>Detection]
+        AIP[Agent Interop<br/>Protocol]
+        EIS[Edge Inference<br/>Strategy]
+        AEF[Attribution Eval<br/>Framework]
+        AOT[Agent Observability<br/>OTel]
+        ACP[Agentic Commerce<br/>Protocol]
+        KGB[Knowledge Graph<br/>Backend]
+    end
+
+    subgraph L3_CO["L3: Strategic Partners"]
+        MAI[Musical AI]
+        SAI[Sureel AI]
+        STIM[STIM CMO<br/>Pilot]
+        SX[SoundExchange]
+        FT[Fairly Trained]
+        SUL[Suno/Udio<br/>Licensing]
+    end
+
+    subgraph L4_ECO["L4: Compliance & Edge"]
+        CRP[Compliance<br/>Reporting]
+        TDPS[Training Data<br/>Provenance]
+        GDM[Golden Dataset<br/>Mgmt]
+        EDT[Edge Deploy<br/>Target]
+        CAT[Code Attribution<br/>Tracing]
+    end
+
+    subgraph L5_ECO["L5: Intelligence & Monitoring"]
+        RGM[Regulatory<br/>Monitoring]
+        MKI[Market<br/>Intelligence]
+        AAM[Attribution Accuracy<br/>Monitor]
+        PHM[Partnership<br/>Health]
+    end
+
+    %% L1 → L2_ECO
+    BVB --> PS
+    TMS --> PS
+    RM --> PS
+    TMS --> PM
+    RM --> PM
+    RP --> PM
+
+    %% L2_ECO → L3_CAT
+    PS --> AIPC
+    PS --> ACP
+    PS --> AIP
+    PM --> CMO
+    PM --> TDA
+
+    %% L3_CAT → L3_CO (category → company)
+    TDA --> MAI
+    CMO --> SAI
+    CMO --> STIM
+    CID --> SAI
+    MRI --> SX
+    AIPC --> SUL
+    AEF --> AAM
+
+    %% L3_CAT → L4_ECO
+    EIS --> EDT
+    AEF --> GDM
+    AOT --> CAT
+
+    %% L1/L2 → L4_ECO
+    RP --> CRP
+    RP --> RGM
+
+    %% L2_ECO → L5_ECO
+    PS --> MKI
+    PM --> MKI
+    PM --> PHM
+
+    style BVB fill:#1E3A5F,color:#fff
+    style TMS fill:#1E3A5F,color:#fff
+    style RM fill:#1E3A5F,color:#fff
+    style RP fill:#1E3A5F,color:#fff
+    style PS fill:#3A9D9B,color:#fff
+    style PM fill:#3A9D9B,color:#fff
+    style TDA fill:#E8B64C,color:#000
+    style CMO fill:#E8B64C,color:#000
+    style CID fill:#E8B64C,color:#000
+    style AIPC fill:#E8B64C,color:#000
+    style MRI fill:#E8B64C,color:#000
+    style WD fill:#E8B64C,color:#000
+    style AIP fill:#E8B64C,color:#000
+    style EIS fill:#E8B64C,color:#000
+    style AEF fill:#E8B64C,color:#000
+    style AOT fill:#E8B64C,color:#000
+    style ACP fill:#E8B64C,color:#000
+    style KGB fill:#E8B64C,color:#000
+    style MAI fill:#D4A03C,color:#000
+    style SAI fill:#D4A03C,color:#000
+    style STIM fill:#D4A03C,color:#000
+    style SX fill:#D4A03C,color:#000
+    style FT fill:#D4A03C,color:#000
+    style SUL fill:#D4A03C,color:#000
+    style CRP fill:#5A9C69,color:#fff
+    style TDPS fill:#5A9C69,color:#fff
+    style GDM fill:#5A9C69,color:#fff
+    style EDT fill:#5A9C69,color:#fff
+    style CAT fill:#5A9C69,color:#fff
+    style RGM fill:#D06060,color:#fff
+    style MKI fill:#D06060,color:#fff
+    style AAM fill:#D06060,color:#fff
+    style PHM fill:#D06060,color:#fff
 ```
 
 **Reading the graph**: Arrows indicate conditional probability dependencies. An arrow from A to B means "the choice made at A shifts the probability distribution at B." Thick conceptual clusters exist within levels, but skip-connections (e.g., L1 Build-vs-Buy directly to L3 Primary Database) represent strong cross-level influences.
@@ -453,6 +690,96 @@ This scenario extends the Music Attribution MVP path with four new nodes. Copilo
 
 ---
 
+## Scenario Path: Partnership-Focused
+
+The ecosystem partnership path through the network — from platform positioning to partner health monitoring:
+
+```mermaid
+%%{init: {'theme': 'base', 'themeVariables': {'background': '#fcfaf5', 'primaryColor': '#1E3A5F', 'lineColor': '#5C5C5C'}}}%%
+flowchart LR
+    subgraph L2["L2"]
+        PS["Platform Strategy<br/>(integration_platform)"]
+    end
+
+    subgraph L3A["L3: Category"]
+        TDA["TDA Provider<br/>(strategic_alliance)"]
+    end
+
+    subgraph L3B["L3: Partner"]
+        MAI["Musical AI<br/>(data_exchange)"]
+        STIM["STIM CMO Pilot<br/>(observer_status)"]
+    end
+
+    subgraph L4["L4"]
+        CRP["Compliance Reporting<br/>(semi_automated)"]
+    end
+
+    subgraph L5["L5"]
+        PHM["Partnership Health<br/>(basic_uptime)"]
+    end
+
+    PS --> TDA --> MAI
+    MAI --> STIM
+    STIM --> CRP --> PHM
+
+    style PS fill:#3A9D9B,color:#fff
+    style TDA fill:#E8B64C,color:#000
+    style MAI fill:#D4A03C,color:#000
+    style STIM fill:#D4A03C,color:#000
+    style CRP fill:#5A9C69,color:#fff
+    style PHM fill:#D06060,color:#fff
+```
+
+This scenario traces the partnership-first path: begin with platform positioning (integration platform over standalone tool), select a strategic TDA provider alliance, engage Musical AI for training data exchange, run a STIM CMO observer pilot for Nordic licensing, automate compliance reporting, and monitor partnership health metrics.
+
+---
+
+## Scenario Path: Compliance-First
+
+The regulatory compliance path through the network — from compliance posture to automated monitoring:
+
+```mermaid
+%%{init: {'theme': 'base', 'themeVariables': {'background': '#fcfaf5', 'primaryColor': '#1E3A5F', 'lineColor': '#5C5C5C'}}}%%
+flowchart LR
+    subgraph L1["L1"]
+        RP["Regulatory Posture<br/>(compliance_first)"]
+    end
+
+    subgraph L3A["L3: Component"]
+        CFM["Compliance Framework<br/>(dual_track)"]
+    end
+
+    subgraph L3B["L3: Partner"]
+        FT["Fairly Trained<br/>(pursue)"]
+        SX["SoundExchange<br/>(read_only_lookup)"]
+    end
+
+    subgraph L4["L4"]
+        CRP["Compliance Reporting<br/>(fully_automated)"]
+    end
+
+    subgraph L5["L5"]
+        RGM["Regulatory Monitoring<br/>(automated_check)"]
+    end
+
+    RP --> CFM --> FT
+    CFM --> SX
+    FT --> CRP
+    SX --> CRP
+    CRP --> RGM
+
+    style RP fill:#1E3A5F,color:#fff
+    style CFM fill:#D4A03C,color:#000
+    style FT fill:#D4A03C,color:#000
+    style SX fill:#D4A03C,color:#000
+    style CRP fill:#5A9C69,color:#fff
+    style RGM fill:#D06060,color:#fff
+```
+
+This scenario traces the compliance-first path: start from a compliance-first regulatory posture, adopt a dual-track compliance framework (ISO 42001 + EU AI Act), pursue Fairly Trained certification for market signaling, integrate SoundExchange for registry lookups, build a fully automated compliance reporting pipeline, and establish automated regulatory monitoring.
+
+---
+
 ## Volatility Heatmap
 
 Decision stability across the network:
@@ -474,6 +801,10 @@ mindmap
       Secrets Management
       Observability Stack
       Auth Strategy
+      Attribution Eval Framework
+      Knowledge Graph Backend
+      Training Data Provenance
+      Golden Dataset Mgmt
     Shifting
       Target Market Segment
       Revenue Model
@@ -487,6 +818,20 @@ mindmap
       Schema Governance
       Artifact Decoupling
       UI Adaptation Strategy
+      MCP Production Deployment
+      Platform Strategy
+      Partnership Model
+      Agent Interop Protocol
+      Edge Inference Strategy
+      Agent Observability OTel
+      Agentic Commerce Protocol
+      Content ID System
+      Metadata Registry Integration
+      Watermark Detection
+      Edge Deployment Target
+      Compliance Reporting Pipeline
+      Attribution Accuracy Monitoring
+      Market Intelligence
     Volatile
       Regulatory Posture
       AI Framework Strategy
@@ -494,12 +839,27 @@ mindmap
       Agentic UI Framework
       Voice Agent Stack
       Graph RAG Engine
+      MCP Security Strategy
+      MCP Input Validation
+      TDA Provider Integration
+      CMO Licensing Integration
+      AI Music Platform Connector
+      Musical AI Partnership
+      Sureel AI Partnership
+      STIM CMO Pilot
+      SoundExchange Registry
+      Fairly Trained Certification
+      Suno/Udio Licensing
+      Regulatory Monitoring
+      Partnership Health Metrics
+      Code Attribution Tracing
 ```
 
 **Interpretation**:
-- **Stable** (12 decisions): Core architectural choices unlikely to change within 6 months. Review quarterly.
-- **Shifting** (12 decisions): Actively evolving areas where market or technology changes may shift probabilities. Review monthly. Includes data quality strategy, schema governance, artifact decoupling, and UI adaptation strategy.
-- **Volatile** (6 decisions): High uncertainty zones — regulatory posture (EU AI Act timeline), AI framework strategy (ecosystem consolidation), LLM provider (model capability leaps), agentic UI framework (AG-UI protocol evolving), voice agent stack (platform consolidation), and graph RAG engine (new frameworks emerging weekly). Review biweekly.
+- **Stable** (16 decisions, 21%): Core architectural choices unlikely to change within 6 months. Review quarterly. Includes new infrastructure-layer nodes (attribution eval framework, knowledge graph backend, training data provenance store, golden dataset management) whose technical fundamentals are well-established.
+- **Shifting** (25 decisions, 32%): Actively evolving areas where market or technology changes may shift probabilities. Review monthly. Includes ecosystem category decisions (platform strategy, agent interop, edge inference, content ID) where the capability landscape is maturing but not settled, plus operational nodes (compliance reporting, attribution accuracy monitoring, market intelligence) that depend on regulatory timeline clarity.
+- **Volatile** (12 decisions, 15%): High uncertainty zones. Includes all company-specific partnership nodes (Musical AI, Sureel AI, STIM, SoundExchange, Fairly Trained, Suno/Udio) whose viability depends on external business decisions and negotiation outcomes, plus regulatory monitoring and partnership health metrics that track inherently unpredictable external signals. Also retains original volatile nodes: regulatory posture (EU AI Act timeline), AI framework strategy (ecosystem consolidation), LLM provider (model capability leaps), agentic UI framework (AG-UI protocol evolving), voice agent stack (platform consolidation), graph RAG engine (new frameworks emerging weekly), and code attribution tracing (Agent Trace spec is nascent, regulatory scope for code unclear). Review biweekly.
+- **Ecosystem stub nodes** (28 new in v3.0.0): Not yet classified in the traditional stable/shifting/volatile framework — these are expansion stubs representing the full discussion-paper scope. The 26 nodes shown above in shifting + volatile categories are the initial volatility assessments; 2 additional nodes overlap with existing core classifications.
 
 ---
 
@@ -591,22 +951,21 @@ Given **Neon** hosting (P=0.40):
 
 | Metric | Value |
 |--------|-------|
-| Total nodes | 30 |
+| Total nodes | 79 |
 | L1 Business nodes | 4 |
-| L2 Architecture nodes | 6 |
-| L3 Implementation nodes | 10 |
-| L4 Deployment nodes | 5 |
-| L5 Operations nodes | 5 |
-| Total edges | 60 |
-| Same-level edges | 15 |
-| Adjacent-level edges | 21 |
-| Skip-connection edges | 24 |
+| L2 Architecture nodes | 9 |
+| L3 Implementation nodes | 14 |
+| L3 Components nodes | 24 |
+| L4 Deployment nodes | 14 |
+| L5 Operations nodes | 14 |
+| Total edges | 187 |
 | Team archetypes | 4 |
 | Domain overlays | 2 (+ 1 planned) |
-| Scenario compositions | 4 |
-| Stable decisions | 12 (40%) |
-| Shifting decisions | 12 (40%) |
-| Volatile decisions | 6 (20%) |
+| Scenario compositions | 6 |
+| Stable decisions | 16 (21%) |
+| Shifting decisions | 25 (32%) |
+| Volatile decisions | 12 (15%) |
+| Ecosystem stub nodes | 28 (new in v3.0.0) |
 
 ---
 
@@ -643,3 +1002,5 @@ Academic grounding for UI/UX decision nodes. Full details in [`../research-influ
 - [`../../planning/quality-tooling-contextualization.md`](../../planning/quality-tooling-contextualization.md) — Quality tooling analysis with conditional probabilities
 - [`../../planning/artifact-decoupling-contextualization.md`](../../planning/artifact-decoupling-contextualization.md) — 4-artifact decoupling (code/config/data/prompts) for reproducibility
 - [`../research-influences/agentic-ux-research.md`](../research-influences/agentic-ux-research.md) — Academic UX research mapped to PRD nodes
+- [`../../planning/expand-probabilistic-prd-to-discussion.md`](../../planning/expand-probabilistic-prd-to-discussion.md) — PRD expansion strategy (MVP → Discussion)
+- [`../../planning/tech-trends-agentic-infrastructure-2026.md`](../../planning/tech-trends-agentic-infrastructure-2026.md) — Technology trends research

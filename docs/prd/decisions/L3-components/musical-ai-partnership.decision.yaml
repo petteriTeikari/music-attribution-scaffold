@@ -1,0 +1,70 @@
+# Musical AI Partnership
+#
+# Whether and how the scaffold partners with Musical AI for training-time
+# attribution data.
+
+decision_id: musical_ai_partnership
+title: "Musical AI Partnership"
+description: >
+  Determines the partnership model with Musical AI, a company specializing
+  in training-time Training Data Attribution (TDA). Musical AI's approach
+  requires integration during model training (not post-hoc), making their
+  offering architecturally unique. Partnership with Beatoven.ai validates
+  their commercial model.
+
+decision_level: L3_components
+status: stub
+last_updated: 2026-02-14
+
+options:
+  - option_id: no_partnership
+    title: "No Partnership"
+    description: >
+      No partnership with Musical AI. The scaffold relies on metadata-based
+      attribution without training-time TDA data.
+    prior_probability: 0.50
+    status: selected
+
+  - option_id: data_exchange
+    title: "Data Exchange Partnership"
+    description: >
+      Bilateral data exchange: Musical AI provides TDA influence percentages
+      for works in their coverage; the scaffold provides multi-source
+      metadata enrichment. API-based, limited scope.
+    prior_probability: 0.35
+    status: candidate
+
+  - option_id: deep_integration
+    title: "Deep Integration"
+    description: >
+      Full integration of Musical AI's TDA engine into the scaffold's
+      attribution pipeline. Training-time influence data becomes a
+      first-class signal alongside metadata and fingerprint matches.
+      Requires significant engineering coordination and commercial terms.
+    prior_probability: 0.15
+    status: candidate
+
+research_notes: >
+  Musical AI has raised $7.3M. Their training-time approach requires
+  integration during model training, not post-hoc analysis. Partnership
+  with Beatoven.ai demonstrates commercial viability. Key differentiation:
+  Musical AI can quantify "how much" a specific work influenced a generated
+  output, not just "whether" it was similar.
+
+influences:
+  - from: tda_provider_integration
+    direction: upstream
+    rationale: "TDA provider integration strategy determines Musical AI engagement level"
+  - from: build_vs_buy_posture
+    direction: upstream
+    rationale: "Custom builders may build own TDA; SaaS teams partner"
+
+references:
+  - "Musical AI — $7.3M funded, training-time TDA"
+  - "Musical AI + Beatoven.ai partnership"
+
+tags:
+  - partnership
+  - tda
+  - named-partner
+  - discussion-expansion

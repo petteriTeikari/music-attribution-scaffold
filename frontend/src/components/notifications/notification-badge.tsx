@@ -3,42 +3,7 @@
 import { useState } from "react";
 import { useAtomValue } from "jotai";
 import { userRoleAtom } from "@/lib/stores/mode";
-
-interface Notification {
-  id: string;
-  type: "review" | "feedback" | "permission";
-  title: string;
-  description: string;
-  timestamp: string;
-  read: boolean;
-}
-
-const MOCK_NOTIFICATIONS: Notification[] = [
-  {
-    id: "notif-1",
-    type: "review",
-    title: "3 attributions need review",
-    description: "Headlock, Just for Now, and 2-1 have conflicting data",
-    timestamp: "2025-02-10T14:00:00Z",
-    read: false,
-  },
-  {
-    id: "notif-2",
-    type: "permission",
-    title: "New permission request",
-    description: "Suno AI requested style learning access",
-    timestamp: "2025-02-09T10:00:00Z",
-    read: false,
-  },
-  {
-    id: "notif-3",
-    type: "feedback",
-    title: "Feedback processed",
-    description: "Your correction on Goodnight and Go was applied",
-    timestamp: "2025-02-08T16:00:00Z",
-    read: true,
-  },
-];
+import { MOCK_NOTIFICATIONS } from "@/lib/data/mock-notifications";
 
 export function NotificationBadge() {
   const role = useAtomValue(userRoleAtom);

@@ -80,36 +80,37 @@ Per [MCP security research](../knowledge-base/technical/agentic-systems-research
 
 ### Attribution Pipeline
 
-![Attribution Pipeline](../figures/assets/fig-tech-01-attribution-pipeline.jpg)
+![Architecture diagram: five-pipeline data flow for music attribution showing ETL ingestion, entity resolution, confidence scoring engine, FastAPI REST and MCP permission server, and PydanticAI chat interface.](../figures/repo-figures/assets/fig-repo-02-five-pipeline-architecture.jpg)
 
 *Multi-source data flows through entity resolution to produce unified entities with per-field confidence scores.*
 
 ### MCP Server Architecture
 
-![MCP Architecture](../figures/assets/fig-tech-02-mcp-architecture.jpg)
+![Architecture choice diagram: MCP permissions framework for machine-readable AI training consent with three-tier access control.](../figures/repo-figures/assets/fig-choice-11-mcp-permissions.jpg)
 
 *MCP server exposes attribution data via tools, resources, and prompts with three-tier access control.*
 
 ### Confidence Scoring
 
-![Confidence Scoring](../figures/assets/fig-tech-03-confidence-scoring.jpg)
+![Backend diagram: conformal calibration pipeline providing distribution-free coverage guarantees on attribution confidence.](../figures/repo-figures/assets/fig-backend-13-conformal-calibration-pipeline.jpg)
 
 *Conformal prediction provides calibrated uncertainty bounds on attribution confidence.*
 
 ### Database Schema
 
-![Database Schema](../figures/assets/fig-tech-04-database-schema.jpg)
+![Backend diagram: PostgreSQL + pgvector entity-relationship diagram for artists, tracks, contributions with full provenance tracking.](../figures/repo-figures/assets/fig-backend-17-database-erd.jpg)
 
 *PostgreSQL + pgvector schema for artists, tracks, contributions with full provenance tracking.*
 
-### MCP Access Control (Visual)
+### Agent Architecture
 
-![Backstage / VIP / General — The Three-Tier Trust Model](../figures/assets/fig-mcp-01-backstage-vip-general.jpg)
-*Your data, your rules. We just make sure the right people get the right level of access.*
+![Architecture diagram: end-to-end agentic UI stack for music attribution showing CopilotKit sidebar, AG-UI SSE protocol, PydanticAI agent with four domain tools.](../figures/repo-figures/assets/fig-agent-01-full-stack.jpg)
 
-### Chat Interface Processing
+*Full-stack agentic UI architecture tracing the request path from CopilotKit sidebar through AG-UI SSE to PydanticAI agent.*
 
-![Conversation as Cochlea — How Your Words Become Verified Credits](../figures/assets/fig-chat-01-conversation-as-cochlea.jpg)
+### Conversation Flow
+
+![Flow diagram: agent conversation flow showing natural language input transformed into structured attribution queries and verified credit data.](../figures/repo-figures/assets/fig-agent-08-conversation-flow.jpg)
 *Natural language input is transformed into structured, verified credit data.*
 
 ---

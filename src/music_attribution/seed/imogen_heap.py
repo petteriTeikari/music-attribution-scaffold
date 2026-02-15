@@ -1,10 +1,41 @@
-"""Seed data loader: Imogen Heap mock attribution data → PostgreSQL.
+"""Seed data loader: Imogen Heap mock attribution data to PostgreSQL.
 
 Ports the 8 Imogen Heap attribution records from the frontend mock data
-(frontend/src/lib/data/mock-works.ts) into Pydantic objects, then stores
-them via the async attribution repository.
+(``frontend/src/lib/data/mock-works.ts``) into fully-populated Pydantic
+``AttributionRecord`` objects with credits, provenance chains, conformal
+prediction sets, and uncertainty metadata. Records are then persisted
+via the async attribution repository.
 
-Uses deterministic UUIDs (uuid5) for idempotent seeding.
+The 8 records span the full confidence range (0.0--0.95) and
+assurance levels (A0--A3), providing a representative dataset for
+development, demonstration, and testing:
+
+1. Hide and Seek -- 0.95 (A3, 4 sources, reviewed by musicologist)
+2. Tiny Human -- 0.91 (A3, artist self-confirmed)
+3. The Moment I Said It -- 0.82 (A2, 3 sources)
+4. Goodnight and Go -- 0.72 (A2, 2 sources, rate-limited fetch)
+5. Headlock -- 0.58 (A1, conflicting producer credits)
+6. Just for Now -- 0.35 (A1, single source penalty)
+7. 2-1 -- 0.28 (A1, file metadata only)
+8. Blanket (unreleased) -- 0.0 (A0, no external verification)
+
+All UUIDs are deterministic (``uuid5`` with a fixed namespace) to
+ensure idempotent seeding -- running the loader multiple times produces
+identical records.
+
+Functions
+---------
+deterministic_uuid
+    Generate a deterministic UUID from a string key.
+build_imogen_heap_records
+    Build the 8 records as Pydantic objects (public API).
+seed_imogen_heap
+    Persist the records to the database via ``AsyncAttributionRepository``.
+
+See Also
+--------
+music_attribution.schemas.attribution : AttributionRecord schema.
+music_attribution.schemas.uncertainty : UncertaintyAwareProvenance.
 """
 
 from __future__ import annotations
@@ -51,22 +82,71 @@ _SEED_NAMESPACE = uuid.UUID("a1b2c3d4-e5f6-7890-abcd-ef1234567890")
 
 
 def deterministic_uuid(key: str) -> uuid.UUID:
-    """Generate a deterministic UUID from a string key."""
+    """Generate a deterministic UUID from a string key.
+
+    Uses ``uuid5`` with a fixed namespace UUID to produce the same
+    UUID for the same key on every invocation. This ensures idempotent
+    seeding -- records have stable IDs across environments.
+
+    Parameters
+    ----------
+    key : str
+        String key to hash (e.g. ``"work-001"``, ``"artist-imogen-heap"``).
+
+    Returns
+    -------
+    uuid.UUID
+        Deterministic UUIDv5.
+    """
     return uuid.uuid5(_SEED_NAMESPACE, key)
 
 
 def _dt(iso: str) -> datetime:
-    """Parse ISO datetime string to timezone-aware datetime."""
+    """Parse an ISO datetime string to a timezone-aware UTC datetime.
+
+    Parameters
+    ----------
+    iso : str
+        ISO 8601 datetime string (e.g. ``"2024-06-15T10:00:00Z"``).
+
+    Returns
+    -------
+    datetime
+        Parsed datetime with UTC timezone attached.
+    """
     return datetime.fromisoformat(iso).replace(tzinfo=UTC)
 
 
 def _build_uncertainty_for_record(record: AttributionRecord) -> UncertaintyAwareProvenance:
-    """Build mock uncertainty metadata for a single record.
+    """Build mock uncertainty metadata for a single attribution record.
 
-    Returns uncertainty values that tell a coherent story:
-    - High-confidence records (>= 0.85) have low total uncertainty
-    - Low-confidence records (< 0.50) have high epistemic uncertainty
-    - Source contributions match the credit sources
+    Generates coherent uncertainty values derived from the record's
+    confidence score and credit sources. The mapping follows the
+    uncertainty decomposition framework from the manuscript:
+
+    - **High confidence (>= 0.85)**: Low total uncertainty, aleatoric
+      dominant, calibrated.
+    - **Medium confidence (0.50--0.84)**: Moderate uncertainty, extrinsic
+      dominant, calibrated.
+    - **Low confidence (0.20--0.49)**: High uncertainty, epistemic
+      dominant, pending calibration.
+    - **Very low confidence (< 0.20)**: Very high uncertainty, epistemic
+      dominant, uncalibrated.
+
+    Step uncertainties are derived from the provenance chain events,
+    and source contributions are derived from the credit sources.
+
+    Parameters
+    ----------
+    record : AttributionRecord
+        Attribution record to generate uncertainty metadata for.
+
+    Returns
+    -------
+    UncertaintyAwareProvenance
+        Complete uncertainty metadata including per-step uncertainties,
+        source contributions, calibration metadata, and the dominant
+        uncertainty source.
     """
     confidence = record.confidence_score
     credit_sources: set[SourceEnum] = set()
@@ -158,7 +238,17 @@ def _build_uncertainty_for_record(record: AttributionRecord) -> UncertaintyAware
 
 
 def _add_citation_indexes(record: AttributionRecord) -> None:
-    """Add sequential citation_index to provenance events (mutate in place)."""
+    """Add sequential citation indexes to provenance events.
+
+    Mutates the record's provenance chain in place, assigning a
+    1-based ``citation_index`` to each event for use as footnote
+    references in the frontend provenance timeline.
+
+    Parameters
+    ----------
+    record : AttributionRecord
+        Record whose provenance events will be annotated.
+    """
     idx = 1
     for event in record.provenance_chain:
         event.citation_index = idx
@@ -166,7 +256,18 @@ def _add_citation_indexes(record: AttributionRecord) -> None:
 
 
 def _build_works() -> list[AttributionRecord]:
-    """Build the 8 Imogen Heap attribution records."""
+    """Build the 8 Imogen Heap attribution records with full metadata.
+
+    Creates all records with credits, provenance chains, conformal
+    prediction sets, then enriches them with uncertainty metadata,
+    citation indexes, and entity display names.
+
+    Returns
+    -------
+    list[AttributionRecord]
+        8 fully-populated ``AttributionRecord`` objects ordered by
+        descending confidence score.
+    """
     ih = deterministic_uuid("artist-imogen-heap")
     gs = deterministic_uuid("artist-guy-sigsworth")
 
@@ -865,9 +966,16 @@ def _build_works() -> list[AttributionRecord]:
 def build_imogen_heap_records() -> list[AttributionRecord]:
     """Build the 8 Imogen Heap attribution records (public API).
 
-    Returns:
-        List of 8 fully-populated AttributionRecord objects with display
-        fields (work_title, artist_name, entity_name) set.
+    Convenience wrapper around ``_build_works()`` for external consumers.
+    Records include all display fields (``work_title``, ``artist_name``,
+    ``entity_name`` on each credit), full provenance chains with
+    citation indexes, and uncertainty metadata.
+
+    Returns
+    -------
+    list[AttributionRecord]
+        List of 8 fully-populated ``AttributionRecord`` objects
+        spanning confidence 0.0--0.95 and assurance levels A0--A3.
     """
     return _build_works()
 
@@ -875,10 +983,18 @@ def build_imogen_heap_records() -> list[AttributionRecord]:
 async def seed_imogen_heap(session: AsyncSession) -> None:
     """Seed the database with 8 Imogen Heap attribution records.
 
-    Uses upsert semantics — safe to call multiple times.
+    Uses check-then-insert semantics for idempotency -- existing
+    records (matched by ``attribution_id``) are skipped. Safe to
+    call multiple times without duplicating data.
 
-    Args:
-        session: Active async database session.
+    The session is flushed but not committed, allowing the caller
+    to control transaction boundaries.
+
+    Parameters
+    ----------
+    session : AsyncSession
+        Active async database session. The caller is responsible
+        for committing after this function returns.
     """
     repo = AsyncAttributionRepository()
     works = _build_works()

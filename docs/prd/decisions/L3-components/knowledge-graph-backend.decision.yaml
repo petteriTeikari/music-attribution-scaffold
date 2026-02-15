@@ -1,0 +1,69 @@
+# Knowledge Graph Backend
+#
+# The graph storage implementation for attribution knowledge graphs.
+
+decision_id: knowledge_graph_backend
+title: "Knowledge Graph Backend"
+description: >
+  Determines the graph storage implementation for attribution knowledge
+  graphs. Options range from Apache AGE (PostgreSQL extension) to
+  dedicated Neo4j to hybrid approaches combining both.
+
+decision_level: L3_components
+status: stub
+last_updated: 2026-02-14
+
+options:
+  - option_id: age_in_postgres
+    title: "Apache AGE in PostgreSQL"
+    description: >
+      Graph queries via Apache AGE extension in the existing PostgreSQL
+      instance. Single database process for relational, vector, and graph
+      queries. Lower operational overhead. Current scaffold approach.
+    prior_probability: 0.45
+    status: selected
+
+  - option_id: dedicated_neo4j
+    title: "Dedicated Neo4j"
+    description: >
+      Dedicated Neo4j instance (Neo4j Aura managed or self-hosted) for
+      graph queries. Better graph query performance and native Cypher
+      support. Requires data synchronization between PostgreSQL and Neo4j.
+    prior_probability: 0.30
+    status: candidate
+
+  - option_id: hybrid
+    title: "Hybrid (AGE + Neo4j)"
+    description: >
+      AGE for transactional graph queries within PostgreSQL, Neo4j for
+      analytics and knowledge graph exploration. Best of both worlds
+      but highest operational complexity.
+    prior_probability: 0.25
+    status: candidate
+
+research_notes: >
+  Apache AGE provides Cypher-compatible graph queries within PostgreSQL.
+  Neo4j Aura Agent adds LLM-powered natural language graph queries.
+  For the scaffold's current data volumes (thousands of works), AGE is
+  sufficient. Neo4j becomes advantageous at scale (millions of entities)
+  or when complex graph analytics (community detection, centrality) are
+  needed.
+
+influences:
+  - from: graph_strategy
+    direction: upstream
+    rationale: "Graph strategy determines baseline graph infrastructure"
+  - from: primary_database
+    direction: upstream
+    rationale: "PostgreSQL enables AGE; other databases require Neo4j"
+
+references:
+  - "Apache AGE — PostgreSQL graph extension"
+  - "Neo4j Aura Agent — managed graph database with LLM integration"
+  - "LightRAG — PostgreSQL-native graph RAG"
+
+tags:
+  - graph
+  - knowledge-graph
+  - infrastructure
+  - discussion-expansion

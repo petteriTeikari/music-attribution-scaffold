@@ -1,4 +1,24 @@
-"""Attribution query endpoints backed by async PostgreSQL repository."""
+"""Attribution query endpoints backed by async PostgreSQL repository.
+
+Provides CRUD-style read endpoints for attribution records:
+
+* ``GET /api/v1/attributions/work/{work_id}`` — single attribution by work ID
+* ``GET /api/v1/attributions/`` — paginated list with optional filters
+* ``GET /api/v1/attributions/{attribution_id}/provenance`` — provenance chain
+* ``GET /api/v1/attributions/search`` — hybrid search via RRF fusion
+
+All endpoints return JSON representations of ``AttributionRecord``
+domain objects.  The provenance endpoint exposes the full evidence chain
+with uncertainty metadata, enabling *Perplexity-style* inline source
+references (see companion paper, Section 5.2).
+
+Notes
+-----
+Sessions are obtained from ``app.state.async_session_factory`` via the
+``_get_session`` helper rather than ``Depends`` — this keeps the router
+self-contained without requiring the caller to wire up a dependency
+override.
+"""
 
 from __future__ import annotations
 
@@ -13,7 +33,19 @@ router = APIRouter()
 
 
 async def _get_session(request: Request) -> AsyncSession:
-    """Get an async session from the app's session factory."""
+    """Get an async session from the application's session factory.
+
+    Parameters
+    ----------
+    request : Request
+        FastAPI request object with access to ``app.state``.
+
+    Returns
+    -------
+    AsyncSession
+        A new async database session (caller must use it as a context
+        manager to ensure proper cleanup).
+    """
     factory: async_sessionmaker[AsyncSession] = request.app.state.async_session_factory
     return factory()
 
@@ -23,14 +55,29 @@ async def get_attribution_by_work_id(
     request: Request,
     work_id: uuid.UUID,
 ) -> dict:
-    """Get attribution record by work entity ID.
+    """Get a single attribution record by work entity ID.
 
-    Args:
-        request: FastAPI request with app state.
-        work_id: Work entity UUID.
+    ``GET /api/v1/attributions/work/{work_id}``
 
-    Returns:
-        Attribution record as JSON.
+    Looks up the attribution record associated with a specific musical
+    work entity.  Returns 404 if no attribution exists for the given ID.
+
+    Parameters
+    ----------
+    request : Request
+        FastAPI request with access to ``app.state``.
+    work_id : uuid.UUID
+        UUID of the work entity to look up.
+
+    Returns
+    -------
+    dict
+        JSON-serializable attribution record.
+
+    Raises
+    ------
+    HTTPException
+        404 if no attribution is found for the given ``work_id``.
     """
     repo = AsyncAttributionRepository()
     async with await _get_session(request) as session:
@@ -50,15 +97,33 @@ async def list_attributions(
 ) -> list[dict]:
     """List attribution records with pagination, filtering, and sorting.
 
-    Args:
-        request: FastAPI request with app state.
-        limit: Maximum number of results.
-        offset: Number of records to skip.
-        needs_review: Filter by needs_review flag.
-        assurance_level: Filter by assurance level (e.g., LEVEL_3).
+    ``GET /api/v1/attributions/``
 
-    Returns:
-        List of attribution records sorted by confidence descending.
+    Returns attribution records ordered by confidence score (descending).
+    Supports pagination via ``limit``/``offset`` and optional filtering
+    by ``needs_review`` flag or ``assurance_level`` tier (A0-A3).
+
+    Parameters
+    ----------
+    request : Request
+        FastAPI request with access to ``app.state``.
+    limit : int, optional
+        Maximum number of records to return (1-100), by default 50.
+    offset : int, optional
+        Number of records to skip for pagination, by default 0.
+    needs_review : bool or None, optional
+        If ``True``, return only records flagged for human review.
+        If ``None`` (default), no review filter is applied.
+    assurance_level : str or None, optional
+        Filter by assurance level value (e.g., ``"LEVEL_3"`` for
+        artist-verified).  Maps to the A0-A3 tiered provenance system
+        described in the companion paper (Section 3).
+
+    Returns
+    -------
+    list[dict]
+        JSON-serializable list of attribution records sorted by
+        confidence score descending.
     """
     repo = AsyncAttributionRepository()
     async with await _get_session(request) as session:
@@ -83,17 +148,38 @@ async def get_provenance(
     request: Request,
     attribution_id: uuid.UUID,
 ) -> dict:
-    """Get full provenance chain with uncertainty metadata for an attribution.
+    """Get the full provenance chain with uncertainty metadata.
 
-    Returns the provenance chain, uncertainty summary, and citation-ready data
-    for Perplexity-like inline source references.
+    ``GET /api/v1/attributions/{attribution_id}/provenance``
 
-    Args:
-        request: FastAPI request with app state.
-        attribution_id: Attribution record UUID.
+    Returns the ordered provenance chain (evidence trail) and the
+    uncertainty summary for a specific attribution record.  This data
+    enables *Perplexity-style* inline source references in the frontend,
+    where each claim can be traced back to its originating data source.
 
-    Returns:
-        Provenance chain with uncertainty metadata.
+    The uncertainty summary includes conformal prediction intervals and
+    source agreement metrics (see companion paper, Section 5.2).
+
+    Parameters
+    ----------
+    request : Request
+        FastAPI request with access to ``app.state``.
+    attribution_id : uuid.UUID
+        UUID of the attribution record whose provenance is requested.
+
+    Returns
+    -------
+    dict
+        Dictionary with keys:
+
+        * ``attribution_id`` : str — UUID as string.
+        * ``provenance_chain`` : list[dict] — ordered evidence entries.
+        * ``uncertainty_summary`` : dict or None — calibration metadata.
+
+    Raises
+    ------
+    HTTPException
+        404 if no attribution record exists for the given ID.
     """
     repo = AsyncAttributionRepository()
     async with await _get_session(request) as session:
@@ -117,15 +203,33 @@ async def search_attributions(
 ) -> list[dict]:
     """Hybrid search across attribution records using RRF fusion.
 
-    Combines full-text search, vector similarity, and graph context.
+    ``GET /api/v1/attributions/search``
 
-    Args:
-        request: FastAPI request with app state.
-        q: Search query string.
-        limit: Maximum number of results.
+    Combines three retrieval signals via Reciprocal Rank Fusion (RRF):
 
-    Returns:
-        List of results with attribution record and RRF score.
+    1. Full-text search (PostgreSQL ``tsvector``)
+    2. Vector similarity (pgvector cosine distance)
+    3. Graph context (entity relationship traversal)
+
+    This multi-signal approach reduces the risk of any single retrieval
+    method dominating results.
+
+    Parameters
+    ----------
+    request : Request
+        FastAPI request with access to ``app.state``.
+    q : str, optional
+        Search query string, by default ``""``.
+    limit : int, optional
+        Maximum number of results to return (1-100), by default 20.
+
+    Returns
+    -------
+    list[dict]
+        List of dictionaries, each containing:
+
+        * ``attribution`` : dict — full attribution record.
+        * ``rrf_score`` : float — fused relevance score (higher is better).
     """
     from music_attribution.search.hybrid_search import HybridSearchService
 

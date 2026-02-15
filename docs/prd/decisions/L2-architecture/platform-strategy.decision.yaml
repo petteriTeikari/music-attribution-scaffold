@@ -1,0 +1,75 @@
+# Platform Strategy
+#
+# Whether the scaffold evolves as a standalone tool, an integration
+# platform with developer APIs, or positions for acquisition.
+
+decision_id: platform_strategy
+title: "Platform Strategy"
+description: >
+  Determines the scaffold's strategic positioning in the music attribution
+  ecosystem. A standalone tool focuses on end-user UX and self-contained
+  functionality. An integration platform exposes developer APIs and enables
+  third-party extensions. An acquisition target focuses on defensible IP
+  and demonstrable technology differentiation.
+
+decision_level: L2_architecture
+status: stub
+last_updated: 2026-02-14
+
+options:
+  - option_id: standalone_tool
+    title: "Standalone Tool"
+    description: >
+      Focus on end-user experience. The scaffold is a self-contained
+      application that users interact with directly. Investment goes into
+      UX polish, documentation, and community building. Revenue comes from
+      usage (freemium/subscription).
+    prior_probability: 0.40
+    status: selected
+
+  - option_id: integration_platform
+    title: "Integration Platform"
+    description: >
+      Expose developer APIs and extension points. The scaffold becomes
+      infrastructure that other tools build on. Investment goes into API
+      design, SDKs, and developer experience. Revenue comes from API
+      usage and marketplace fees.
+    prior_probability: 0.35
+    status: candidate
+
+  - option_id: acquisition_target
+    title: "Acquisition Target"
+    description: >
+      Focus on defensible IP and technology demonstration. The scaffold
+      showcases novel attribution approaches (probabilistic PRD, Bayesian
+      confidence, MCP consent infrastructure) to attract acquirer interest.
+      Investment goes into patents, benchmarks, and academic publications.
+    prior_probability: 0.25
+    status: candidate
+
+research_notes: >
+  The standalone vs platform decision is the most consequential strategic
+  choice after MVP. Standalone tools can iterate faster but face
+  distribution challenges. Platforms create network effects but require
+  10x more API surface maintenance. Acquisition positioning is a valid
+  strategy for research-heavy projects with novel IP but limited
+  go-to-market resources.
+
+influences:
+  - from: build_vs_buy_posture
+    direction: upstream
+    rationale: "Custom builders lean toward platform; SaaS teams toward standalone"
+  - from: target_market_segment
+    direction: upstream
+    rationale: "Enterprise segments favor platform; indie creators favor standalone tool"
+  - from: revenue_model
+    direction: upstream
+    rationale: "Revenue model constrains viable platform strategies"
+
+references:
+  - "Teikari, P. (2026). Music Attribution with Transparent Confidence. SSRN No. 6109087."
+
+tags:
+  - strategy
+  - ecosystem
+  - discussion-expansion

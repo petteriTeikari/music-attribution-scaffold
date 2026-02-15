@@ -1,8 +1,28 @@
 """Data quality gate for NormalizedRecord batches.
 
-Validates batches of NormalizedRecords before they are passed to the
-Entity Resolution pipeline. Checks statistical properties beyond what
-Pydantic validators cover.
+Validates batches of ``NormalizedRecord`` objects before they are passed
+to the Entity Resolution pipeline.  Checks statistical properties beyond
+what Pydantic field validators can cover, including:
+
+* **Identifier coverage** — what fraction of records carry at least one
+  standard identifier (ISRC, MBID, ISNI, etc.)
+* **Duplicate detection** — same ``(source, source_id)`` appearing more
+  than once in the batch
+* **Source distribution** — whether the batch is dangerously skewed
+  toward a single data source
+
+These checks form a *quality firewall* between the ETL layer and the
+downstream entity resolution layer, preventing garbage-in/garbage-out
+propagation through the attribution pipeline.
+
+Notes
+-----
+The gate operates in two modes:
+
+1. **Reporting** (``validate_batch``) — produces a ``QualityReport``
+   without modifying the input.
+2. **Enforcement** (``enforce``) — raises ``ValueError`` on critical
+   failures and removes duplicates on success.
 """
 
 from __future__ import annotations
@@ -21,7 +41,21 @@ logger = logging.getLogger(__name__)
 
 
 class QualityCheckResult(BaseModel):
-    """Result of a single quality check."""
+    """Result of a single quality check.
+
+    Attributes
+    ----------
+    check_name : str
+        Machine-readable name of the check (e.g.,
+        ``"identifier_coverage"``).
+    status : {'pass', 'warn', 'fail'}
+        Outcome of the check.
+    message : str
+        Human-readable description of the result.
+    metric_value : float or None
+        Numeric metric associated with the check (e.g., coverage
+        fraction), or ``None`` if not applicable.
+    """
 
     check_name: str
     status: Literal["pass", "warn", "fail"]
@@ -30,7 +64,23 @@ class QualityCheckResult(BaseModel):
 
 
 class QualityReport(BaseModel):
-    """Aggregate quality report for a batch of records."""
+    """Aggregate quality report for a batch of NormalizedRecords.
+
+    Attributes
+    ----------
+    batch_id : uuid.UUID
+        Unique identifier for this quality report.
+    checks : list[QualityCheckResult]
+        Individual check results.
+    overall_status : {'pass', 'warn', 'fail'}
+        Worst status across all checks (``fail`` > ``warn`` > ``pass``).
+    records_in : int
+        Number of records in the input batch.
+    records_passed : int
+        Number of unique (non-duplicate) records.
+    timestamp : datetime
+        UTC timestamp when the report was generated.
+    """
 
     batch_id: uuid.UUID = Field(default_factory=uuid.uuid4)
     checks: list[QualityCheckResult] = Field(default_factory=list)
@@ -41,13 +91,32 @@ class QualityReport(BaseModel):
 
 
 class DataQualityGate:
-    """Validates batches of NormalizedRecords.
+    """Validates batches of NormalizedRecords before entity resolution.
 
-    Runs a series of quality checks and produces a QualityReport.
+    Runs a configurable series of quality checks and produces a
+    ``QualityReport``.  The gate can operate in *report-only* mode
+    (``validate_batch``) or *enforcement* mode (``enforce``) which
+    raises on critical failures.
 
-    Args:
-        min_identifier_coverage: Minimum fraction of records with at least one identifier.
-        max_single_source_fraction: Maximum fraction of records from a single source.
+    Parameters
+    ----------
+    min_identifier_coverage : float, optional
+        Minimum fraction of records that must have at least one
+        standard identifier (ISRC, MBID, etc.), by default 0.5.
+        Below this threshold the check emits a warning; zero coverage
+        is a hard failure.
+    max_single_source_fraction : float, optional
+        Maximum fraction of records allowed from a single data source,
+        by default 0.95.  If 100% of records come from one source, a
+        warning is emitted (not a failure, since single-source batches
+        are valid for targeted fetches).
+
+    Examples
+    --------
+    >>> gate = DataQualityGate(min_identifier_coverage=0.6)
+    >>> report = gate.validate_batch(records)
+    >>> report.overall_status
+    'pass'
     """
 
     def __init__(
@@ -59,13 +128,21 @@ class DataQualityGate:
         self._max_single_source_fraction = max_single_source_fraction
 
     def validate_batch(self, records: list[NormalizedRecord]) -> QualityReport:
-        """Validate a batch of NormalizedRecords.
+        """Validate a batch of NormalizedRecords (report-only mode).
 
-        Args:
-            records: Batch of NormalizedRecords to validate.
+        Runs all quality checks and returns a ``QualityReport`` without
+        modifying the input batch.
 
-        Returns:
-            QualityReport with results of all checks.
+        Parameters
+        ----------
+        records : list[NormalizedRecord]
+            Batch of NormalizedRecords to validate.
+
+        Returns
+        -------
+        QualityReport
+            Report containing individual check results, overall status,
+            and record counts.
         """
         checks: list[QualityCheckResult] = []
 
@@ -102,14 +179,26 @@ class DataQualityGate:
     def enforce(self, records: list[NormalizedRecord]) -> list[NormalizedRecord]:
         """Validate and filter a batch, raising on critical failures.
 
-        Args:
-            records: Batch of NormalizedRecords.
+        First runs ``validate_batch()``.  If the overall status is
+        ``"fail"``, raises ``ValueError`` with details of the failing
+        checks.  Otherwise, returns the deduplicated record list.
 
-        Returns:
-            Validated records (duplicates removed).
+        Parameters
+        ----------
+        records : list[NormalizedRecord]
+            Batch of NormalizedRecords to validate and filter.
 
-        Raises:
-            ValueError: If batch fails critical quality checks.
+        Returns
+        -------
+        list[NormalizedRecord]
+            Validated records with duplicates (same ``source`` +
+            ``source_id``) removed, preserving first-seen order.
+
+        Raises
+        ------
+        ValueError
+            If any quality check has status ``"fail"`` (e.g., zero
+            identifier coverage or duplicate records).
         """
         report = self.validate_batch(records)
         if report.overall_status == "fail":
@@ -132,7 +221,23 @@ class DataQualityGate:
         self,
         records: list[NormalizedRecord],
     ) -> QualityCheckResult:
-        """Check what fraction of records have at least one identifier."""
+        """Check what fraction of records have at least one identifier.
+
+        Uses ``IdentifierBundle.has_any()`` to test whether each record
+        carries at least one standard identifier (ISRC, MBID, ISNI,
+        Discogs ID, AcoustID).
+
+        Parameters
+        ----------
+        records : list[NormalizedRecord]
+            Batch of records to check.
+
+        Returns
+        -------
+        QualityCheckResult
+            ``"fail"`` if coverage is 0%, ``"warn"`` if below the
+            configured minimum, ``"pass"`` otherwise.
+        """
         if not records:
             return QualityCheckResult(
                 check_name="identifier_coverage",
@@ -169,7 +274,20 @@ class DataQualityGate:
         self,
         records: list[NormalizedRecord],
     ) -> QualityCheckResult:
-        """Check for duplicate source+source_id combinations."""
+        """Check for duplicate ``(source, source_id)`` combinations.
+
+        Parameters
+        ----------
+        records : list[NormalizedRecord]
+            Batch of records to check.
+
+        Returns
+        -------
+        QualityCheckResult
+            ``"fail"`` if any duplicates are found, ``"pass"`` otherwise.
+            The ``metric_value`` is the total number of excess duplicate
+            entries.
+        """
         seen: Counter[tuple] = Counter()
         for r in records:
             seen[(r.source, r.source_id)] += 1
@@ -194,7 +312,24 @@ class DataQualityGate:
         self,
         records: list[NormalizedRecord],
     ) -> QualityCheckResult:
-        """Check that records aren't all from a single source."""
+        """Check that records are not all from a single data source.
+
+        A batch consisting entirely of one source may indicate a
+        pipeline misconfiguration (e.g., only MusicBrainz fetched,
+        Discogs and AcoustID skipped).
+
+        Parameters
+        ----------
+        records : list[NormalizedRecord]
+            Batch of records to check.
+
+        Returns
+        -------
+        QualityCheckResult
+            ``"warn"`` if 100% of records come from a single source,
+            ``"pass"`` otherwise.  The ``metric_value`` is the fraction
+            of the most common source.
+        """
         if not records:
             return QualityCheckResult(
                 check_name="source_distribution",

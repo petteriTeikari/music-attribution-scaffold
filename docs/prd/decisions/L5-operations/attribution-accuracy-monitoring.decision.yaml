@@ -1,0 +1,67 @@
+# Attribution Accuracy Monitoring
+#
+# Ongoing monitoring of attribution accuracy in production.
+
+decision_id: attribution_accuracy_monitoring
+title: "Attribution Accuracy Monitoring"
+description: >
+  Determines how attribution accuracy is monitored over time in
+  production. Options range from manual spot-checking to continuous
+  automated monitoring with drift detection.
+
+decision_level: L5_operations
+status: stub
+last_updated: 2026-02-14
+
+options:
+  - option_id: manual_spot
+    title: "Manual Spot-Check"
+    description: >
+      Periodic manual review of attribution results against known-good
+      data. Ad-hoc schedule, human judgment for quality assessment.
+    prior_probability: 0.35
+    status: candidate
+
+  - option_id: periodic_eval
+    title: "Periodic Evaluation"
+    description: >
+      Scheduled evaluation runs against gold-standard datasets with
+      automated scoring and regression alerts. Weekly or monthly
+      cadence. Dashboard for trend visualization.
+    prior_probability: 0.45
+    status: selected
+
+  - option_id: continuous
+    title: "Continuous Monitoring"
+    description: >
+      Real-time monitoring of attribution confidence distributions,
+      data source availability, and model performance metrics. Alerts
+      on drift detection and anomaly signals.
+    prior_probability: 0.20
+    status: candidate
+
+research_notes: >
+  The scaffold's DriftDetector cross-cutting concern provides the
+  foundation for continuous monitoring. Periodic evaluation against
+  gold datasets is the practical middle ground — catching regressions
+  without the infrastructure overhead of real-time monitoring. The
+  attribution_eval_framework provides the evaluation tooling;
+  this node covers the operational scheduling and alerting.
+
+influences:
+  - from: attribution_eval_framework
+    direction: upstream
+    rationale: "Eval framework provides the evaluation infrastructure"
+  - from: ml_monitoring
+    direction: upstream
+    rationale: "ML monitoring provides the operational monitoring patterns"
+
+references:
+  - "DriftDetector — scaffold's existing drift detection"
+  - "Braintrust — scheduled evaluation runs"
+
+tags:
+  - monitoring
+  - accuracy
+  - quality
+  - discussion-expansion

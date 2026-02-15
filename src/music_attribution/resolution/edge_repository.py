@@ -1,8 +1,25 @@
-"""Async PostgreSQL edge repository with recursive CTE graph traversal.
+"""Async PostgreSQL edge repository with iterative graph traversal.
 
-Tier 1 graph implementation: uses recursive CTEs for graph traversal
-without Apache AGE dependency. Supports depth-limited neighbor queries,
-relationship type filtering, and cycle prevention.
+Tier 1 graph implementation: uses iterative SQLAlchemy queries for graph
+traversal without Apache AGE dependency. Supports depth-limited neighbor
+queries, relationship type filtering, and cycle prevention via visited-set
+tracking.
+
+This is the production-grade persistence layer for graph edges, replacing
+the in-memory ``GraphStore`` for deployed environments. Compatible with
+both PostgreSQL and SQLite backends.
+
+Notes
+-----
+The original design called for recursive CTEs, but the current
+implementation uses an iterative frontier-expansion approach for broader
+database compatibility. The traversal semantics are identical.
+
+See Also
+--------
+music_attribution.resolution.graph_store : In-memory graph for dev/testing.
+music_attribution.resolution.graph_resolution : Graph-based entity resolution.
+music_attribution.db.models.EdgeModel : SQLAlchemy ORM model for edges.
 """
 
 from __future__ import annotations
@@ -21,7 +38,21 @@ logger = logging.getLogger(__name__)
 
 
 class EdgeResult(NamedTuple):
-    """Lightweight result for edge queries."""
+    """Lightweight result for edge queries.
+
+    Attributes
+    ----------
+    edge_id : uuid.UUID
+        Unique identifier for the edge.
+    from_entity_id : uuid.UUID
+        Source entity ID.
+    to_entity_id : uuid.UUID
+        Target entity ID.
+    relationship_type : str
+        Relationship type (e.g., ``"PERFORMED"``, ``"WROTE"``).
+    confidence : float
+        Confidence score for this edge in range [0.0, 1.0].
+    """
 
     edge_id: uuid.UUID
     from_entity_id: uuid.UUID
@@ -31,7 +62,12 @@ class EdgeResult(NamedTuple):
 
 
 class AsyncEdgeRepository:
-    """Async PostgreSQL repository for graph edges with recursive CTE traversal."""
+    """Async PostgreSQL repository for graph edges with iterative traversal.
+
+    Provides CRUD operations for directed edges between entities and
+    depth-limited graph traversal via iterative frontier expansion.
+    All methods require an ``AsyncSession`` for database access.
+    """
 
     async def add_edge(
         self,
@@ -43,7 +79,31 @@ class AsyncEdgeRepository:
         metadata: dict[str, object] | None = None,
         session: AsyncSession,
     ) -> uuid.UUID:
-        """Add a directed edge between two entities."""
+        """Add a directed edge between two entities.
+
+        Creates a new edge record in the database. The caller is
+        responsible for committing the transaction.
+
+        Parameters
+        ----------
+        from_entity_id : uuid.UUID
+            Source entity ID.
+        to_entity_id : uuid.UUID
+            Target entity ID.
+        relationship_type : str
+            Edge type (e.g., ``"PERFORMED"``, ``"WROTE"``).
+        confidence : float
+            Confidence score for this relationship in [0.0, 1.0].
+        metadata : dict[str, object] | None, optional
+            Additional edge metadata stored as JSONB.
+        session : AsyncSession
+            Active async database session.
+
+        Returns
+        -------
+        uuid.UUID
+            The auto-generated edge UUID.
+        """
         edge = EdgeModel(
             from_entity_id=from_entity_id,
             to_entity_id=to_entity_id,
@@ -62,7 +122,23 @@ class AsyncEdgeRepository:
         *,
         session: AsyncSession,
     ) -> list[EdgeResult]:
-        """Get all edges where entity is from_entity_id or to_entity_id."""
+        """Get all edges where the entity appears as source or target.
+
+        Returns both outgoing and incoming edges for the given entity,
+        enabling bidirectional graph traversal.
+
+        Parameters
+        ----------
+        entity_id : uuid.UUID
+            Entity ID to query edges for.
+        session : AsyncSession
+            Active async database session.
+
+        Returns
+        -------
+        list[EdgeResult]
+            All edges involving this entity.
+        """
         stmt = select(EdgeModel).where(
             or_(
                 EdgeModel.from_entity_id == entity_id,
@@ -89,20 +165,28 @@ class AsyncEdgeRepository:
         rel_type: str | None = None,
         session: AsyncSession,
     ) -> list[EdgeResult]:
-        """Get neighbors up to N hops away using recursive CTE.
+        """Get neighbors up to N hops away using iterative frontier expansion.
 
-        Uses an iterative approach with SQLAlchemy queries to traverse
-        the graph, preventing cycles by tracking visited nodes.
-        Compatible with both PostgreSQL and SQLite.
+        Traverses the graph from ``entity_id`` outward, following directed
+        edges up to ``depth`` hops. Prevents cycles by tracking visited
+        entity IDs. Compatible with both PostgreSQL and SQLite.
 
-        Args:
-            entity_id: Starting entity ID.
-            depth: Maximum traversal depth.
-            rel_type: Optional relationship type filter.
-            session: Active async database session.
+        Parameters
+        ----------
+        entity_id : uuid.UUID
+            Starting entity ID.
+        depth : int, optional
+            Maximum traversal depth (number of hops). Default is 1.
+        rel_type : str | None, optional
+            If specified, only follow edges of this relationship type.
+        session : AsyncSession
+            Active async database session.
 
-        Returns:
-            List of EdgeResults for reachable edges.
+        Returns
+        -------
+        list[EdgeResult]
+            All edges discovered during traversal. The starting entity's
+            direct edges at depth 1, plus transitive edges at deeper levels.
         """
         visited: set[uuid.UUID] = {entity_id}
         current_frontier: set[uuid.UUID] = {entity_id}

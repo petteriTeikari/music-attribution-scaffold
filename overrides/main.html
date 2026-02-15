@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+
+{# Preconnect to Google Fonts for faster loading #}
+{% block extrahead %}
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+{% endblock %}
+
+{# Announcement bar — paper reference #}
+{% block announce %}
+  Companion code to: Teikari, P. (2026).
+  <a href="https://papers.ssrn.com/sol3/papers.cfm?abstract_id=6109087">
+    <strong>Music Attribution with Transparent Confidence</strong>
+  </a>
+  &mdash; SSRN No. 6109087
+{% endblock %}

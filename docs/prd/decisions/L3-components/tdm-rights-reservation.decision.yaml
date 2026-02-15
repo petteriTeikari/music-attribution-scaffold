@@ -78,6 +78,17 @@ research_notes: >
   biographical data could be processed for AI training under legitimate
   interest, shifting the burden to the data subject to opt out.
 
+  MCP consent infrastructure context (Feb 2026): The MCP Permission Patchbay
+  architecture provides the technical substrate for TDM reservation enforcement.
+  MCP servers can expose machine-readable permission queries (check_permissions
+  tool) that AI providers must consult before training. However, MCP security
+  research reveals that 53% of deployed servers use insecure authentication
+  (Guo et al. 2025), meaning TDM reservations expressed via MCP may not be
+  reliably enforced without defense-in-depth security (see mcp_security_strategy
+  node). The AAIF governance of MCP under the Linux Foundation provides
+  institutional backing for standardizing TDM reservation protocols, but no
+  finalized specification exists as of February 2026.
+
 influences:
   - from: regulatory_posture
     direction: upstream

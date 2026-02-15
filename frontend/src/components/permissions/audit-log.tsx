@@ -2,12 +2,17 @@
 
 import { useState } from "react";
 import type { AuditLogEntry } from "@/lib/types/permissions";
+import { PlatformBadge } from "@/components/ui/platform-badge";
 
-const REQUESTER_TYPE_LABELS: Record<string, string> = {
-  ai_platform: "AI Platform",
-  rights_org: "Rights Org",
-  individual: "Individual",
-};
+const FILTER_TABS = [
+  { key: "all", label: "All" },
+  { key: "ai_generator", label: "AI Generators" },
+  { key: "llm_provider", label: "LLM Providers" },
+  { key: "attribution_infra", label: "Attribution" },
+  { key: "certification_body", label: "Certification" },
+  { key: "rights_org", label: "Rights Orgs" },
+  { key: "individual", label: "Individual" },
+] as const;
 
 function formatTimestamp(iso: string): string {
   const date = new Date(iso);
@@ -40,21 +45,21 @@ export function AuditLog({ entries }: AuditLogProps) {
   return (
     <div>
       {/* Filter controls — editorial underline tabs */}
-      <div className="mb-4 flex items-center gap-4">
-        <span className="editorial-caps text-xs text-label">
+      <div className="mb-4 flex items-center gap-4 overflow-x-auto">
+        <span className="editorial-caps text-xs text-label flex-shrink-0">
           Filter:
         </span>
-        {["all", "ai_platform", "rights_org", "individual"].map((type) => (
+        {FILTER_TABS.map(({ key, label }) => (
           <button
-            key={type}
-            onClick={() => setFilter(type)}
-            className={`editorial-caps text-xs pb-1 transition-colors duration-150 border-b-2 ${
-              filter === type
+            key={key}
+            onClick={() => setFilter(key)}
+            className={`editorial-caps text-xs pb-1 transition-colors duration-150 border-b-2 whitespace-nowrap ${
+              filter === key
                 ? "border-accent text-heading"
                 : "border-transparent text-label hover:text-heading"
             }`}
           >
-            {type === "all" ? "All" : REQUESTER_TYPE_LABELS[type] ?? type}
+            {label}
           </button>
         ))}
       </div>
@@ -80,6 +85,7 @@ export function AuditLog({ entries }: AuditLogProps) {
                   <span className="font-medium text-heading text-sm">
                     {entry.requester_name}
                   </span>
+                  <PlatformBadge type={entry.requester_type} />
                   <span
                     className="editorial-caps text-xs"
                     style={{ color }}

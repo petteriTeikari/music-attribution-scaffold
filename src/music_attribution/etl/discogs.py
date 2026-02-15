@@ -1,11 +1,24 @@
 """Discogs ETL connector.
 
-Fetches release credits, artist profiles, and label info from the Discogs API.
-Transforms raw API responses into NormalizedRecord boundary objects.
-Handles rate limiting (60 req/min authenticated, 25 req/min unauthenticated).
+Fetches release credits, artist profiles, and label information from the
+Discogs API and transforms raw API responses into ``NormalizedRecord``
+boundary objects.  Handles rate limiting (60 req/min authenticated,
+25 req/min unauthenticated) and exponential-backoff retries.
 
-Note: python3-discogs-client is synchronous — all calls are wrapped in
-asyncio.to_thread() for async compatibility.
+Discogs is particularly valuable for detailed credit information (producer,
+engineer, mix, mastering) that is often missing from other sources.  The
+``source_confidence`` is set to 0.85, slightly below MusicBrainz, because
+Discogs data is user-contributed without the same editorial review process.
+
+Notes
+-----
+``python3-discogs-client`` is synchronous — all API calls are wrapped in
+``asyncio.to_thread()`` to avoid blocking the event loop.
+
+The ``_ROLE_MAP`` translates Discogs credit role strings (e.g.,
+``"Producer"``, ``"Mixed By"``) into the normalised
+``RelationshipTypeEnum``.  Discogs roles can be comma-separated (e.g.,
+``"Producer, Engineer"``), so each role part is mapped independently.
 """
 
 from __future__ import annotations
@@ -62,7 +75,29 @@ _ROLE_MAP: dict[str, RelationshipTypeEnum] = {
 
 
 def _map_role(role_str: str) -> RelationshipTypeEnum | None:
-    """Map a Discogs role string to a RelationshipTypeEnum."""
+    """Map a Discogs role string to a ``RelationshipTypeEnum``.
+
+    Performs case-insensitive matching, first attempting a direct
+    dictionary lookup and then falling back to substring containment.
+
+    Parameters
+    ----------
+    role_str : str
+        Raw role string from a Discogs credit entry (e.g.,
+        ``"Executive Producer"``).
+
+    Returns
+    -------
+    RelationshipTypeEnum or None
+        The mapped relationship type, or ``None`` if no mapping exists.
+
+    Examples
+    --------
+    >>> _map_role("Producer")
+    <RelationshipTypeEnum.PRODUCED: 'produced'>
+    >>> _map_role("Unknown Role") is None
+    True
+    """
     normalized = role_str.strip().lower()
     # Direct match
     if normalized in _ROLE_MAP:
@@ -75,13 +110,40 @@ def _map_role(role_str: str) -> RelationshipTypeEnum | None:
 
 
 class DiscogsConnector:
-    """ETL connector for Discogs API.
+    """ETL connector for the Discogs API.
 
-    Args:
-        user_agent: User-Agent string for API compliance.
-        token: Discogs personal access token (optional, for higher rate limits).
-        rate: Override requests per second (default: auto based on auth).
-        max_retries: Maximum retry attempts on transient errors.
+    Provides async ``fetch_*`` methods that query the Discogs web
+    service and ``transform_*`` methods that convert raw JSON responses
+    into ``NormalizedRecord`` boundary objects.
+
+    Parameters
+    ----------
+    user_agent : str
+        User-Agent string for API compliance.  Discogs requires a
+        unique user-agent identifying the application.
+    token : str or None, optional
+        Discogs personal access token.  When provided, the rate limit
+        increases from 25 req/min to 60 req/min.
+    rate : float or None, optional
+        Override the requests-per-second cap.  If ``None`` (default),
+        the rate is auto-selected based on authentication status.
+    max_retries : int, optional
+        Maximum retry attempts on transient errors, by default 3.
+        Uses exponential backoff (2^attempt seconds).
+
+    Attributes
+    ----------
+    _authenticated : bool
+        Whether a personal access token was provided.
+    _rate_limiter : TokenBucketRateLimiter
+        Token-bucket limiter enforcing the per-second request cap.
+
+    Examples
+    --------
+    >>> connector = DiscogsConnector("MyApp/1.0", token="secret")
+    >>> records = await connector.fetch_release(12345)
+    >>> len(records) > 0
+    True
     """
 
     def __init__(
@@ -113,36 +175,72 @@ class DiscogsConnector:
     async def fetch_release(self, release_id: int) -> list[NormalizedRecord]:
         """Fetch a release by Discogs ID.
 
-        Args:
-            release_id: Discogs release ID.
+        Retrieves the release with full credits and tracklist, then
+        transforms it into one ``NormalizedRecord`` per track plus one
+        for the release itself.
 
-        Returns:
-            List of NormalizedRecords (tracks + release-level record).
+        Parameters
+        ----------
+        release_id : int
+            Discogs release ID (numeric).
+
+        Returns
+        -------
+        list[NormalizedRecord]
+            List containing one release-level record followed by one
+            record per track.
+
+        Raises
+        ------
+        Exception
+            If the Discogs API returns an error after all retries.
         """
         release = await self._api_call(self._client.release, release_id)
         data = release.data
         return self.transform_release(data)
 
     async def fetch_artist(self, artist_id: int) -> NormalizedRecord:
-        """Fetch an artist by Discogs ID.
+        """Fetch an artist profile by Discogs ID.
 
-        Args:
-            artist_id: Discogs artist ID.
+        Retrieves the artist profile with name variations and transforms
+        it into a ``NormalizedRecord``.
 
-        Returns:
-            NormalizedRecord for the artist.
+        Parameters
+        ----------
+        artist_id : int
+            Discogs artist ID (numeric).
+
+        Returns
+        -------
+        NormalizedRecord
+            Normalised artist with alternative name variants.
+
+        Raises
+        ------
+        Exception
+            If the Discogs API returns an error after all retries.
         """
         artist = await self._api_call(self._client.artist, artist_id)
         return self.transform_artist(artist.data)
 
     async def search_releases(self, query: str) -> list[NormalizedRecord]:
-        """Search for releases by query string.
+        """Search for releases by a free-text query string.
 
-        Args:
-            query: Search query.
+        Parameters
+        ----------
+        query : str
+            Search query (e.g., artist name, album title).
 
-        Returns:
-            List of NormalizedRecords from matching releases.
+        Returns
+        -------
+        list[NormalizedRecord]
+            Flattened list of ``NormalizedRecord`` objects from all
+            matching releases (one per track plus one per release).
+
+        Raises
+        ------
+        Exception
+            If the Discogs API returns an error after all retries.
         """
         results = await self._api_call(self._client.search, query, type="release")
         records = []
@@ -152,16 +250,27 @@ class DiscogsConnector:
         return records
 
     def transform_release(self, data: dict) -> list[NormalizedRecord]:
-        """Transform a Discogs release response to NormalizedRecords.
+        """Transform a Discogs release response into NormalizedRecords.
 
-        Creates one NormalizedRecord per track (RECORDING entity type) and
-        one for the release itself (RELEASE entity type).
+        Creates one ``NormalizedRecord`` for the release itself
+        (``EntityTypeEnum.RELEASE``) and one per track
+        (``EntityTypeEnum.RECORDING``).  Release-level credits from
+        ``extraartists`` are attached to the release record, while
+        track-level credits are attached to each track record.
 
-        Args:
-            data: Raw Discogs release dict.
+        The ``source_confidence`` is set to 0.85 for all Discogs
+        records.
 
-        Returns:
-            List of NormalizedRecords.
+        Parameters
+        ----------
+        data : dict
+            Raw Discogs release dictionary as returned by the
+            ``python3-discogs-client``.
+
+        Returns
+        -------
+        list[NormalizedRecord]
+            Release record followed by per-track recording records.
         """
         records: list[NormalizedRecord] = []
         release_id = data.get("id", 0)
@@ -224,13 +333,21 @@ class DiscogsConnector:
         return records
 
     def transform_artist(self, data: dict) -> NormalizedRecord:
-        """Transform a Discogs artist response to NormalizedRecord.
+        """Transform a Discogs artist response into a NormalizedRecord.
 
-        Args:
-            data: Raw Discogs artist dict.
+        Extracts the artist's canonical name and all name variations
+        from the raw Discogs response.
 
-        Returns:
-            NormalizedRecord for the artist.
+        Parameters
+        ----------
+        data : dict
+            Raw Discogs artist dictionary.
+
+        Returns
+        -------
+        NormalizedRecord
+            Normalised artist with ``alternative_names`` populated from
+            Discogs ``namevariations``.
         """
         name_variations = data.get("namevariations", [])
         alternative_names = [n for n in name_variations if n]
@@ -251,7 +368,24 @@ class DiscogsConnector:
         self,
         extraartists: list[dict],
     ) -> list[Relationship]:
-        """Extract relationships from Discogs extraartists list."""
+        """Extract relationships from a Discogs ``extraartists`` list.
+
+        Each credit entry may contain comma-separated roles (e.g.,
+        ``"Producer, Engineer"``).  Each role part is mapped
+        independently via ``_map_role()``.
+
+        Parameters
+        ----------
+        extraartists : list[dict]
+            List of Discogs credit dictionaries, each with ``role``
+            and ``id`` keys.
+
+        Returns
+        -------
+        list[Relationship]
+            Normalised relationships with raw role preserved in
+            ``attributes["role_raw"]``.
+        """
         relationships = []
         for credit in extraartists:
             role_str = credit.get("role", "")
@@ -273,7 +407,28 @@ class DiscogsConnector:
 
     @staticmethod
     def _parse_duration(duration_str: str) -> int | None:
-        """Parse a duration string like '4:19' to milliseconds."""
+        """Parse a duration string to milliseconds.
+
+        Supports ``"M:SS"`` and ``"H:MM:SS"`` formats.
+
+        Parameters
+        ----------
+        duration_str : str
+            Duration string (e.g., ``"4:19"`` or ``"1:02:30"``).
+
+        Returns
+        -------
+        int or None
+            Duration in milliseconds, or ``None`` if the string is
+            empty or unparseable.
+
+        Examples
+        --------
+        >>> DiscogsConnector._parse_duration("4:19")
+        259000
+        >>> DiscogsConnector._parse_duration("") is None
+        True
+        """
         if not duration_str:
             return None
         parts = duration_str.split(":")
@@ -289,18 +444,30 @@ class DiscogsConnector:
         return None
 
     async def _api_call(self, func, *args, **kwargs):
-        """Make a rate-limited API call with retry logic.
+        """Make a rate-limited API call with exponential-backoff retry.
 
-        Args:
-            func: discogs_client method to call.
-            *args: Positional arguments.
-            **kwargs: Keyword arguments.
+        Acquires a token from the rate limiter before each attempt, then
+        delegates the synchronous ``discogs_client`` call to a thread
+        via ``asyncio.to_thread()``.
 
-        Returns:
-            API response.
+        Parameters
+        ----------
+        func : callable
+            A ``discogs_client`` method or callable.
+        *args : Any
+            Positional arguments forwarded to *func*.
+        **kwargs : Any
+            Keyword arguments forwarded to *func*.
 
-        Raises:
-            Exception: After max retries exhausted.
+        Returns
+        -------
+        Any
+            Raw API response object.
+
+        Raises
+        ------
+        Exception
+            If all ``max_retries`` attempts fail.
         """
         for attempt in range(self._max_retries):
             await self._rate_limiter.acquire()

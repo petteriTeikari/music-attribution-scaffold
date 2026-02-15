@@ -1,8 +1,32 @@
 """AG-UI protocol endpoint for CopilotKit integration.
 
-Provides SSE streaming via FastAPI for the attribution agent.
-CopilotKit connects to this endpoint and receives AG-UI events
-(TextMessageStart, TextMessageContent, TextMessageEnd, etc.).
+Implements a simplified AG-UI (Agent-GUI) protocol adapter that streams
+Server-Sent Events (SSE) from the PydanticAI attribution agent to the
+CopilotKit frontend. The AG-UI protocol defines 31 event types; this
+adapter implements the subset needed for text-based conversation:
+
+- ``RunStarted`` / ``RunFinished`` -- lifecycle bookends
+- ``TextMessageStart`` / ``TextMessageContent`` / ``TextMessageEnd`` --
+  streamed assistant response
+- ``StateSnapshot`` -- full agent state for frontend synchronisation
+
+In production, PydanticAI's ``AGUIAdapter`` would replace this
+simplified implementation to support the full event catalogue
+(tool calls, state deltas, action requests, etc.).
+
+The endpoint is mounted at ``/api/v1/copilotkit`` and accepts POST
+requests with the CopilotKit message payload.
+
+Notes
+-----
+The agent instance is a lazy singleton (``_get_agent``) to avoid
+requiring an Anthropic API key at import time. Tests mock this
+function to inject a test agent.
+
+See Also
+--------
+music_attribution.chat.agent : Agent factory and tool definitions.
+music_attribution.chat.state : Shared state model.
 """
 
 from __future__ import annotations
@@ -27,7 +51,17 @@ _agent = None
 
 
 def _get_agent():
-    """Get or create the singleton agent instance."""
+    """Get or create the singleton PydanticAI agent instance.
+
+    Uses a module-level global to ensure only one agent is created
+    per process. The lazy initialisation avoids requiring environment
+    variables (e.g. ``ANTHROPIC_API_KEY``) at import time.
+
+    Returns
+    -------
+    Agent[AgentDeps, str]
+        The singleton attribution agent.
+    """
     global _agent  # noqa: PLW0603
     if _agent is None:
         _agent = create_attribution_agent()
@@ -39,19 +73,34 @@ async def _generate_sse_events(
     state: AttributionAgentState,
     session_factory: Any = None,
 ) -> AsyncGenerator[str]:
-    """Generate SSE events from the agent response.
+    """Generate AG-UI Server-Sent Events from the agent response.
 
-    This is a simplified AG-UI adapter that streams text message events.
-    In production, PydanticAI's AGUIAdapter would be used for full
-    protocol compliance with all 31 event types.
+    Implements a simplified AG-UI event stream for text-based
+    conversation. The response text is chunked into 50-character
+    segments to simulate token-by-token streaming in the frontend.
 
-    Args:
-        messages: Conversation messages from CopilotKit.
-        state: Current agent state.
-        session_factory: Async session factory for database access.
+    Event sequence per request::
 
-    Yields:
-        SSE-formatted event strings.
+        RunStarted -> TextMessageStart -> TextMessageContent* ->
+        TextMessageEnd -> StateSnapshot -> RunFinished
+
+    Parameters
+    ----------
+    messages : list[dict]
+        Conversation messages from the CopilotKit payload. Each dict
+        has ``role`` (``"user"`` / ``"assistant"``) and ``content``
+        (string or list of content parts).
+    state : AttributionAgentState
+        Mutable agent state that is updated by tool calls during the
+        run and serialised as a ``StateSnapshot`` event at the end.
+    session_factory : Any, optional
+        SQLAlchemy ``async_sessionmaker`` for database access. Passed
+        to ``AgentDeps`` for tool calls. ``None`` in tests.
+
+    Yields
+    ------
+    str
+        SSE-formatted event strings (``data: {json}\\n\\n``).
     """
     import uuid
 
@@ -117,14 +166,24 @@ async def _generate_sse_events(
 
 
 def _sse_event(event_type: str, data: dict) -> str:
-    """Format a single SSE event.
+    """Format a single Server-Sent Event in AG-UI protocol format.
 
-    Args:
-        event_type: AG-UI event type name.
-        data: Event payload.
+    The AG-UI protocol encodes the event type in the JSON payload
+    (as ``type``) rather than using the SSE ``event:`` field, so all
+    events use the default ``data:`` field.
 
-    Returns:
-        SSE-formatted string with event type and JSON data.
+    Parameters
+    ----------
+    event_type : str
+        AG-UI event type name (e.g. ``"TextMessageStart"``,
+        ``"StateSnapshot"``, ``"RunFinished"``).
+    data : dict
+        Event-specific payload fields.
+
+    Returns
+    -------
+    str
+        SSE-formatted string: ``data: {"type": ..., ...}\\n\\n``.
     """
     payload = {"type": event_type, **data}
     return f"data: {json.dumps(payload)}\n\n"
@@ -132,16 +191,29 @@ def _sse_event(event_type: str, data: dict) -> str:
 
 @router.post("/copilotkit")
 async def copilotkit_endpoint(request: Request) -> StreamingResponse:
-    """CopilotKit AG-UI endpoint.
+    """CopilotKit AG-UI endpoint for agent conversation.
 
-    Receives conversation messages from CopilotKit and streams
-    AG-UI events back via SSE.
+    Receives a CopilotKit message payload via POST, extracts the
+    conversation history, and returns an SSE stream of AG-UI events
+    generated by the PydanticAI attribution agent.
 
-    Args:
-        request: FastAPI request with CopilotKit payload.
+    The endpoint extracts the ``async_session_factory`` from
+    ``request.app.state`` (set during FastAPI startup) to give agent
+    tools database access.
 
-    Returns:
-        SSE StreamingResponse with AG-UI events.
+    SSE response headers disable caching and buffering to ensure
+    low-latency event delivery to the frontend.
+
+    Parameters
+    ----------
+    request : Request
+        FastAPI request containing a JSON body with ``messages``
+        (list of ``{role, content}`` dicts) from CopilotKit.
+
+    Returns
+    -------
+    StreamingResponse
+        SSE stream (``text/event-stream``) with AG-UI events.
     """
     body = await request.json()
     messages = body.get("messages", [])

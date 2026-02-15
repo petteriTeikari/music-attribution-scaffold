@@ -1,6 +1,11 @@
 # Infrastructure as Code Tooling
 #
 # How infrastructure is provisioned and managed.
+#
+# Updated 2026-02-14: Promoted Pulumi to recommended (Python alignment,
+# official MCP server for Claude, Apache 2.0 license). Terraform BSL
+# concern escalated after IBM's $6.4B HashiCorp acquisition (Feb 2025).
+# See docs/planning/deployement-finops-landscape.md
 
 decision_id: iac_tooling
 title: "Infrastructure as Code Tooling"
@@ -8,11 +13,16 @@ description: >
   Determines whether and how infrastructure is codified. Ranges from
   no IaC (manual setup via platform dashboards) to full declarative
   infrastructure management. IaC becomes important when infrastructure
-  complexity exceeds what one person can remember.
+  complexity exceeds what one person can remember. Pulumi is now
+  recommended over Terraform due to: (1) Python as IaC language (same
+  as backend), (2) official MCP server enabling Claude Code to manage
+  infrastructure, (3) Apache 2.0 license vs Terraform's BSL 1.1,
+  (4) official Hetzner provider (v1.32.0). Note: Pulumi has no providers
+  for Render or Ubicloud — use platform-native config for those.
 
 decision_level: L4_deployment
 status: active
-last_updated: 2026-02-10
+last_updated: 2026-02-14
 
 options:
   - option_id: none_manual
@@ -21,7 +31,7 @@ options:
       Infrastructure managed via platform dashboards and CLI commands.
       No codified infrastructure. Fast for simple setups, becomes
       unmaintainable as complexity grows.
-    prior_probability: 0.30
+    prior_probability: 0.25
     status: viable
 
   - option_id: terraform
@@ -29,12 +39,16 @@ options:
     description: >
       HashiCorp's declarative IaC with HCL. Largest ecosystem,
       broadest provider support. State management required.
-      Industry standard for multi-cloud infrastructure. Note:
-      BSL license since Aug 2023 — consider OpenTofu fork.
-    prior_probability: 0.20
+      Industry standard but under BSL 1.1 since Aug 2023 — IBM
+      acquired HashiCorp for $6.4B (Feb 2025), creating license
+      uncertainty. 39.2K stars but slower growth than Pulumi.
+      Consider OpenTofu fork for BSL-free alternative. HCL is a
+      separate DSL that adds cognitive load vs Python-native Pulumi.
+    prior_probability: 0.15
     status: viable
     constraints:
-      - "HCL learning curve"
+      - "HCL learning curve (separate DSL)"
+      - "BSL 1.1 license — IBM/HashiCorp ownership risk"
       - "State backend management"
       - "Provider version compatibility"
 
@@ -42,12 +56,20 @@ options:
     title: "Pulumi"
     description: >
       IaC using general-purpose programming languages (Python, TypeScript).
-      No DSL learning curve. Better testing story than Terraform.
-      Smaller ecosystem but growing.
-    prior_probability: 0.20
-    status: viable
+      No DSL learning curve — write infrastructure in the same Python as
+      the backend. Better testing story than Terraform. 20K GitHub stars,
+      ~170 merged PRs/month (Feb 2026). Official MCP server enables Claude
+      Code to provision and manage infrastructure. Official Hetzner provider
+      (v1.32.0, Jan 2026). CrossGuard for policy-as-code. Stack separation
+      (dev/staging/prod) with state encryption. Deployment: $0.01/min,
+      500 free minutes/month. Apache 2.0 license. Key gap: no Render or
+      Ubicloud providers yet. Reference implementation: uad-copilot
+      (Pulumi + Azure Container Apps).
+    prior_probability: 0.25
+    status: recommended
     constraints:
       - "Pulumi Cloud or self-managed state"
+      - "No Render/Ubicloud providers (use platform-native for MVP/growth)"
 
   - option_id: opentofu
     title: "OpenTofu"
@@ -79,103 +101,125 @@ conditional_on:
     conditional_table:
       - given_parent_option: custom_build
         then_probabilities:
-          none_manual: 0.10
-          terraform: 0.40
-          pulumi: 0.30
+          none_manual: 0.05
+          terraform: 0.25
+          pulumi: 0.35
+          opentofu: 0.15
           platform_native: 0.20
       - given_parent_option: managed_services
         then_probabilities:
-          none_manual: 0.30
-          terraform: 0.20
-          pulumi: 0.15
+          none_manual: 0.25
+          terraform: 0.15
+          pulumi: 0.20
+          opentofu: 0.05
           platform_native: 0.35
       - given_parent_option: saas_maximalist
         then_probabilities:
-          none_manual: 0.50
-          terraform: 0.10
+          none_manual: 0.45
+          terraform: 0.05
           pulumi: 0.10
-          platform_native: 0.30
+          opentofu: 0.05
+          platform_native: 0.35
 
   - parent_decision_id: compute_platform
     influence_strength: moderate
     conditional_table:
       - given_parent_option: render
         then_probabilities:
-          none_manual: 0.25
-          terraform: 0.20
+          none_manual: 0.20
+          terraform: 0.10
           pulumi: 0.15
-          platform_native: 0.40
+          opentofu: 0.05
+          platform_native: 0.50
       - given_parent_option: vercel_plus_backend
         then_probabilities:
-          none_manual: 0.35
-          terraform: 0.20
+          none_manual: 0.30
+          terraform: 0.10
           pulumi: 0.15
-          platform_native: 0.30
+          opentofu: 0.05
+          platform_native: 0.40
       - given_parent_option: railway
         then_probabilities:
-          none_manual: 0.30
-          terraform: 0.20
+          none_manual: 0.25
+          terraform: 0.10
           pulumi: 0.15
-          platform_native: 0.35
+          opentofu: 0.05
+          platform_native: 0.45
       - given_parent_option: fly_io
         then_probabilities:
-          none_manual: 0.20
-          terraform: 0.25
-          pulumi: 0.15
-          platform_native: 0.40
-      - given_parent_option: hetzner_dedicated
-        then_probabilities:
           none_manual: 0.15
-          terraform: 0.40
-          pulumi: 0.30
-          platform_native: 0.15
+          terraform: 0.15
+          pulumi: 0.20
+          opentofu: 0.10
+          platform_native: 0.40
+      - given_parent_option: hetzner_ubicloud
+        then_probabilities:
+          none_manual: 0.10
+          terraform: 0.15
+          pulumi: 0.40
+          opentofu: 0.15
+          platform_native: 0.20
+      - given_parent_option: hetzner_baremetal
+        then_probabilities:
+          none_manual: 0.05
+          terraform: 0.20
+          pulumi: 0.45
+          opentofu: 0.20
+          platform_native: 0.10
       - given_parent_option: aws_ecs
         then_probabilities:
           none_manual: 0.05
-          terraform: 0.45
-          pulumi: 0.35
+          terraform: 0.25
+          pulumi: 0.40
+          opentofu: 0.15
           platform_native: 0.15
 
 archetype_weights:
   engineer_heavy_startup:
     probability_overrides:
-      none_manual: 0.10
-      terraform: 0.40
-      pulumi: 0.35
+      none_manual: 0.05
+      terraform: 0.20
+      pulumi: 0.45
+      opentofu: 0.15
       platform_native: 0.15
-    rationale: "Engineers adopt IaC early and prefer Terraform or Pulumi."
+    rationale: "Engineers adopt IaC early. Pulumi preferred (Python, MCP server, Apache 2.0)."
 
   musician_first_team:
     probability_overrides:
       none_manual: 0.45
-      terraform: 0.10
+      terraform: 0.05
       pulumi: 0.10
+      opentofu: 0.05
       platform_native: 0.35
     rationale: "Manual or platform-native. IaC is too much overhead."
 
   solo_hacker:
     probability_overrides:
-      none_manual: 0.40
-      terraform: 0.10
-      pulumi: 0.15
+      none_manual: 0.35
+      terraform: 0.05
+      pulumi: 0.20
+      opentofu: 0.05
       platform_native: 0.35
-    rationale: "Platform-native config or manual. IaC when scaling."
+    rationale: "Platform-native or Pulumi (Python familiarity). IaC when scaling."
 
   well_funded_startup:
     probability_overrides:
-      none_manual: 0.10
-      terraform: 0.40
-      pulumi: 0.30
+      none_manual: 0.05
+      terraform: 0.20
+      pulumi: 0.40
+      opentofu: 0.15
       platform_native: 0.20
-    rationale: "IaC from the start for reproducibility and compliance."
+    rationale: "IaC from the start. Pulumi for Python alignment, Terraform for enterprise inertia."
 
 volatility:
-  classification: stable
-  last_assessed: 2026-02-10
-  next_review: 2026-05-10
+  classification: shifting
+  last_assessed: 2026-02-14
+  next_review: 2026-05-14
   change_drivers:
-    - "Terraform licensing changes (OpenTofu fork)"
-    - "Pulumi ecosystem growth"
+    - "IBM/HashiCorp post-acquisition licensing trajectory"
+    - "Pulumi MCP server maturity (agent-driven infrastructure)"
+    - "OpenTofu ecosystem growth (state encryption, ephemeral values)"
+    - "Pulumi Render/Ubicloud provider availability"
     - "Platform-native IaC improvements"
 
 domain_applicability:
@@ -190,3 +234,4 @@ tags:
 
 references:
   - "../infrastructure/toc-infrastructure.md"
+  - "../../planning/deployement-finops-landscape.md"

@@ -1,0 +1,626 @@
+/*
+ * Music Attribution Scaffold — Editorial Design System for MkDocs
+ *
+ * Mirrors the frontend design tokens from frontend/src/app/globals.css.
+ * Design DNA: Bold editorial minimalism. Typography-driven. Data as art.
+ * Heritage: Constructivist data viz + Warp Records aesthetic + Scandinavian editorial
+ */
+
+/* ========================================================================
+   FONT IMPORTS — Google Fonts CDN
+   ======================================================================== */
+@import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Plus+Jakarta+Sans:wght@200..800&family=IBM+Plex+Mono:wght@400;500&display=swap');
+
+/* ========================================================================
+   CUSTOM CSS PROPERTIES (shared across both schemes)
+   ======================================================================== */
+:root {
+  --font-display: "Instrument Serif", Georgia, "Times New Roman", serif;
+  --md-text-font: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --md-code-font: "IBM Plex Mono", "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+}
+
+/* ========================================================================
+   LIGHT SCHEME — Warm editorial palette
+   Matches frontend :root variables
+   ======================================================================== */
+[data-md-color-scheme="music-attribution"] {
+  /* Surface */
+  --md-default-bg-color:              #f6f3e6;
+  --md-default-bg-color--light:       #f6f3e6b3;
+  --md-default-bg-color--lighter:     #f6f3e64d;
+  --md-default-bg-color--lightest:    #f6f3e61f;
+
+  /* Text */
+  --md-default-fg-color:              #4A4A4A;
+  --md-default-fg-color--light:       #666666;
+  --md-default-fg-color--lighter:     #6b6b6b;
+  --md-default-fg-color--lightest:    #E0DDD5;
+
+  /* Primary — Navy */
+  --md-primary-fg-color:              #1E3A5F;
+  --md-primary-fg-color--light:       #2A4F7A;
+  --md-primary-fg-color--dark:        #0F2440;
+  --md-primary-bg-color:              #f6f3e6;
+  --md-primary-bg-color--light:       #f6f3e6b3;
+
+  /* Accent — Coral red */
+  --md-accent-fg-color:               #E84C4F;
+  --md-accent-fg-color--transparent:  rgba(232, 76, 79, 0.1);
+  --md-accent-bg-color:               #f6f3e6;
+
+  /* Footer */
+  --md-footer-bg-color:               #1E3A5F;
+  --md-footer-bg-color--dark:         #0F2440;
+  --md-footer-fg-color:               #f6f3e6;
+  --md-footer-fg-color--light:        #f6f3e6b3;
+  --md-footer-fg-color--lighter:      #f6f3e673;
+
+  /* Code */
+  --md-code-bg-color:                 #eeeadb;
+  --md-code-fg-color:                 #4A4A4A;
+  --md-code-hl-color:                 rgba(232, 76, 79, 0.15);
+  --md-code-hl-number-color:          #C44536;
+  --md-code-hl-string-color:          #4A7C59;
+  --md-code-hl-keyword-color:         #1E3A5F;
+  --md-code-hl-function-color:        #2E7D7B;
+  --md-code-hl-comment-color:         #6b6b6b;
+  --md-code-hl-operator-color:        #8B6914;
+  --md-code-hl-punctuation-color:     #666666;
+  --md-code-hl-constant-color:        #BA478F;
+  --md-code-hl-name-color:            #333333;
+  --md-code-hl-special-color:         #D4A03C;
+
+  /* Typography */
+  --md-typeset-color:                 #4A4A4A;
+  --md-typeset-a-color:               #E84C4F;
+  --md-typeset-mark-color:            rgba(232, 76, 79, 0.2);
+  --md-typeset-table-color:           #E0DDD5;
+
+  /* Admonitions */
+  --md-admonition-bg-color:           #eeeadb;
+  --md-admonition-fg-color:           #4A4A4A;
+
+  /* Shadows — warm tint */
+  --md-shadow-z1: 0 1px 2px rgba(30, 58, 95, 0.04);
+  --md-shadow-z2: 0 2px 8px rgba(30, 58, 95, 0.06);
+  --md-shadow-z3: 0 4px 16px rgba(30, 58, 95, 0.08);
+
+  /* Custom tokens for editorial elements */
+  --color-heading:           #1A1A1A;
+  --color-accent:            #E84C4F;
+  --color-surface-secondary: #eeeadb;
+  --color-border:            #E0DDD5;
+  --color-sidebar-bg:        #F8F6F0;
+}
+
+/* ========================================================================
+   DARK SCHEME — Deep blue-black, warm tones preserved
+   Matches frontend .dark variables
+   ======================================================================== */
+[data-md-color-scheme="music-attribution-dark"] {
+  /* Surface */
+  --md-default-bg-color:              #1A1A2E;
+  --md-default-bg-color--light:       #1A1A2Eb3;
+  --md-default-bg-color--lighter:     #1A1A2E4d;
+  --md-default-bg-color--lightest:    #1A1A2E1f;
+
+  /* Text */
+  --md-default-fg-color:              #B0ACA0;
+  --md-default-fg-color--light:       #8A8680;
+  --md-default-fg-color--lighter:     #918e8b;
+  --md-default-fg-color--lightest:    #2A2A44;
+
+  /* Primary — Light blue */
+  --md-primary-fg-color:              #7BA3D4;
+  --md-primary-fg-color--light:       #94B8E2;
+  --md-primary-fg-color--dark:        #5B8BC0;
+  --md-primary-bg-color:              #1A1A2E;
+  --md-primary-bg-color--light:       #1A1A2Eb3;
+
+  /* Accent — Coral (lighter in dark) */
+  --md-accent-fg-color:               #F06B6E;
+  --md-accent-fg-color--transparent:  rgba(240, 107, 110, 0.1);
+  --md-accent-bg-color:               #1A1A2E;
+
+  /* Footer */
+  --md-footer-bg-color:               #0F1A30;
+  --md-footer-bg-color--dark:         #0A1220;
+  --md-footer-fg-color:               #E8E6E0;
+  --md-footer-fg-color--light:        #CCC8BCb3;
+  --md-footer-fg-color--lighter:      #CCC8BC73;
+
+  /* Code */
+  --md-code-bg-color:                 #16213E;
+  --md-code-fg-color:                 #B0ACA0;
+  --md-code-hl-color:                 rgba(240, 107, 110, 0.15);
+  --md-code-hl-number-color:          #E06050;
+  --md-code-hl-string-color:          #6BAF7E;
+  --md-code-hl-keyword-color:         #7BA3D4;
+  --md-code-hl-function-color:        #4EC4C1;
+  --md-code-hl-comment-color:         #918e8b;
+  --md-code-hl-operator-color:        #F0B04E;
+  --md-code-hl-punctuation-color:     #8A8680;
+  --md-code-hl-constant-color:        #D47AAB;
+  --md-code-hl-name-color:            #CCC8BC;
+  --md-code-hl-special-color:         #E8B94A;
+
+  /* Typography */
+  --md-typeset-color:                 #B0ACA0;
+  --md-typeset-a-color:               #F06B6E;
+  --md-typeset-mark-color:            rgba(240, 107, 110, 0.2);
+  --md-typeset-table-color:           #2A2A44;
+
+  /* Admonitions */
+  --md-admonition-bg-color:           #16213E;
+  --md-admonition-fg-color:           #B0ACA0;
+
+  /* Shadows */
+  --md-shadow-z1: 0 1px 2px rgba(0, 0, 0, 0.2);
+  --md-shadow-z2: 0 2px 8px rgba(0, 0, 0, 0.25);
+  --md-shadow-z3: 0 4px 16px rgba(0, 0, 0, 0.3);
+
+  /* Custom tokens */
+  --color-heading:           #E8E6E0;
+  --color-accent:            #F06B6E;
+  --color-surface-secondary: #16213E;
+  --color-border:            #2A2A44;
+  --color-sidebar-bg:        #16162C;
+}
+
+/* ========================================================================
+   LAYOUT — Wider editorial grid
+   ======================================================================== */
+.md-grid {
+  max-width: 1440px;
+}
+
+/* ========================================================================
+   EDITORIAL TYPOGRAPHY — Instrument Serif headings
+   ======================================================================== */
+
+/* H1: Display serif with accent square */
+.md-typeset h1 {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: clamp(2rem, 4vw, 3rem);
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  color: var(--color-heading);
+  margin-bottom: 1.5rem;
+}
+
+.md-typeset h1::before {
+  content: "";
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  background: var(--color-accent);
+  margin-right: 12px;
+  vertical-align: middle;
+  flex-shrink: 0;
+}
+
+/* H2: Display serif with coral accent line */
+.md-typeset h2 {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: clamp(1.4rem, 2.5vw, 2rem);
+  line-height: 1.15;
+  color: var(--color-heading);
+  margin-top: 2.5rem;
+  padding-bottom: 0.6rem;
+}
+
+.md-typeset h2::after {
+  content: "";
+  display: block;
+  width: 48px;
+  height: 1px;
+  background: var(--color-accent);
+  margin-top: 0.5rem;
+}
+
+/* H3-H4: Plus Jakarta Sans (body font), bolder */
+.md-typeset h3 {
+  font-family: var(--md-text-font);
+  font-weight: 600;
+  font-size: 1.15rem;
+  color: var(--color-heading);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-top: 2rem;
+}
+
+.md-typeset h4 {
+  font-family: var(--md-text-font);
+  font-weight: 600;
+  font-size: 1rem;
+  color: var(--color-heading);
+}
+
+/* Body text — generous line-height */
+.md-typeset {
+  font-size: 0.92rem;
+  line-height: 1.7;
+}
+
+.md-typeset p {
+  margin-bottom: 1.25em;
+}
+
+/* ========================================================================
+   HEADER — Navy background, coral accent bottom border
+   ======================================================================== */
+.md-header {
+  background: var(--md-primary-fg-color);
+  box-shadow: none;
+  border-bottom: 2px solid var(--color-accent);
+}
+
+/* Remove the shadow that appears on scroll */
+.md-header[data-md-state="shadow"] {
+  box-shadow: none;
+  border-bottom: 2px solid var(--color-accent);
+}
+
+/* Header title in display font */
+.md-header__title {
+  font-family: var(--font-display);
+  font-weight: 400;
+  letter-spacing: 0.01em;
+}
+
+/* Ensure header text is readable on navy bg */
+.md-header,
+.md-header .md-header__title,
+.md-header .md-header__topic {
+  color: #f6f3e6;
+}
+
+/* ========================================================================
+   NAVIGATION SIDEBAR — Warm sidebar background
+   ======================================================================== */
+.md-sidebar {
+  background: var(--color-sidebar-bg);
+}
+
+/* Active nav link uses coral accent */
+.md-nav__link--active {
+  color: var(--md-accent-fg-color);
+  font-weight: 600;
+}
+
+/* Navigation section labels — editorial caps */
+.md-nav__item--section > .md-nav__link {
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-size: 0.65rem;
+}
+
+/* Subtle nav link hover */
+.md-nav__link:hover {
+  color: var(--md-accent-fg-color);
+}
+
+/* Tab navigation — editorial caps */
+.md-tabs__link {
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-size: 0.72rem;
+}
+
+/* ========================================================================
+   FOOTER — Navy background, coral top border
+   ======================================================================== */
+.md-footer {
+  border-top: 2px solid var(--color-accent);
+}
+
+/* Footer link styling */
+.md-footer a {
+  color: var(--md-footer-fg-color--light);
+}
+
+.md-footer a:hover {
+  color: var(--md-footer-fg-color);
+}
+
+/* Copyright area */
+.md-copyright {
+  color: var(--md-footer-fg-color--lighter);
+}
+
+.md-copyright a {
+  color: var(--md-footer-fg-color--light);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.md-copyright a:hover {
+  color: var(--md-footer-fg-color);
+}
+
+/* ========================================================================
+   LINKS — Underline with coral accent (not pill buttons)
+   ======================================================================== */
+.md-typeset a {
+  color: var(--md-typeset-a-color);
+  text-decoration: underline;
+  text-decoration-color: var(--md-accent-fg-color);
+  text-underline-offset: 3px;
+  text-decoration-thickness: 1px;
+}
+
+.md-typeset a:hover {
+  color: var(--md-accent-fg-color);
+  text-decoration-thickness: 2px;
+}
+
+/* Navigation links should not have underlines */
+.md-nav a,
+.md-tabs a,
+.md-header a,
+.md-footer-nav a,
+.md-footer__link {
+  text-decoration: none;
+}
+
+/* ========================================================================
+   CODE BLOCKS — IBM Plex Mono, warm background
+   ======================================================================== */
+.md-typeset code,
+.md-typeset pre > code {
+  font-size: 0.82rem;
+  border-radius: 2px;
+}
+
+.md-typeset pre {
+  border-radius: 2px;
+  border: 1px solid var(--color-border);
+}
+
+/* Inline code */
+.md-typeset code:not(pre code) {
+  padding: 0.15em 0.4em;
+  background: var(--md-code-bg-color);
+  border: 1px solid var(--color-border);
+}
+
+/* ========================================================================
+   TABLES — Editorial styling
+   ======================================================================== */
+.md-typeset table:not([class]) {
+  font-size: 0.85rem;
+  border-collapse: collapse;
+}
+
+.md-typeset table:not([class]) th {
+  background-color: var(--color-surface-secondary);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-size: 0.75rem;
+}
+
+.md-typeset table:not([class]) td {
+  border-color: var(--color-border);
+}
+
+/* ========================================================================
+   ADMONITIONS — Flat editorial style, no shadow, top border
+   ======================================================================== */
+.md-typeset .admonition,
+.md-typeset details {
+  border: none;
+  border-radius: 0;
+  border-top: 2px solid;
+  box-shadow: none;
+  background: var(--md-admonition-bg-color);
+}
+
+.md-typeset .admonition > .admonition-title,
+.md-typeset details > summary {
+  background: transparent;
+  border-radius: 0;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-size: 0.8rem;
+}
+
+/* Admonition type colors */
+.md-typeset .admonition.note,
+.md-typeset details.note {
+  border-top-color: var(--md-primary-fg-color);
+}
+
+.md-typeset .admonition.tip,
+.md-typeset details.tip {
+  border-top-color: #4A7C59;
+}
+
+.md-typeset .admonition.warning,
+.md-typeset details.warning {
+  border-top-color: #E09F3E;
+}
+
+.md-typeset .admonition.danger,
+.md-typeset details.danger {
+  border-top-color: #C44536;
+}
+
+.md-typeset .admonition.info,
+.md-typeset details.info {
+  border-top-color: #2E7D7B;
+}
+
+.md-typeset .admonition.example,
+.md-typeset details.example {
+  border-top-color: #BA478F;
+}
+
+/* ========================================================================
+   MERMAID DIAGRAMS — Centered, warm background
+   ======================================================================== */
+.mermaid {
+  text-align: center;
+  margin: 1.5rem 0;
+}
+
+.mermaid svg {
+  max-width: 100%;
+}
+
+/* ========================================================================
+   EDITORIAL UTILITY CLASSES (for use with attr_list in markdown)
+   ======================================================================== */
+
+/* ALL-CAPS tracking — section labels, badges */
+.editorial-caps {
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  font-family: var(--md-text-font);
+  font-weight: 500;
+  font-size: 0.75rem;
+}
+
+/* Display heading — Instrument Serif */
+.editorial-display {
+  font-family: var(--font-display);
+  font-weight: 400;
+  line-height: 1.1;
+}
+
+/* Display heading italic */
+.editorial-display-italic {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: 400;
+  line-height: 1.1;
+}
+
+/* Accent line — thin horizontal rule */
+.accent-line {
+  height: 1px;
+  background-color: var(--color-accent);
+  border: none;
+  margin: 1.5rem 0;
+}
+
+/* Accent square — small decorative block */
+.accent-square {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  background-color: var(--color-accent);
+  flex-shrink: 0;
+}
+
+/* Monospace data display */
+.data-mono {
+  font-family: var(--md-code-font);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ========================================================================
+   NOISE GRAIN OVERLAY — Subtle SVG texture
+   ======================================================================== */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  pointer-events: none;
+  opacity: 0.03;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: 256px 256px;
+}
+
+/* ========================================================================
+   SEARCH MODAL — Warm styling
+   ======================================================================== */
+.md-search__form {
+  background: var(--md-default-bg-color);
+  border: 1px solid var(--color-border);
+  border-radius: 2px;
+}
+
+.md-search-result__link:hover {
+  background: var(--md-accent-fg-color--transparent);
+}
+
+/* ========================================================================
+   ANNOUNCEMENT BAR — Coral accent
+   ======================================================================== */
+.md-banner {
+  background: var(--md-primary-fg-color);
+  color: var(--md-primary-bg-color);
+}
+
+.md-banner a {
+  color: var(--md-primary-bg-color);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.md-banner a:hover {
+  color: var(--color-accent);
+}
+
+/* ========================================================================
+   TABS — Editorial underline style
+   ======================================================================== */
+.md-typeset .tabbed-labels > label {
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-size: 0.8rem;
+}
+
+.md-typeset .tabbed-labels > label--active,
+.md-typeset .tabbed-set > input:checked + label {
+  color: var(--md-accent-fg-color);
+  border-color: var(--md-accent-fg-color);
+}
+
+/* ========================================================================
+   TASK LISTS — Coral checkmarks
+   ======================================================================== */
+.md-typeset [type="checkbox"]:checked + .task-list-indicator::before {
+  background-color: var(--md-accent-fg-color);
+}
+
+/* ========================================================================
+   REDUCED MOTION
+   ======================================================================== */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  body::before {
+    display: none;
+  }
+}
+
+/* ========================================================================
+   PRINT STYLES — Clean output
+   ======================================================================== */
+@media print {
+  body::before {
+    display: none;
+  }
+
+  .md-typeset h1::before,
+  .md-typeset h2::after {
+    display: none;
+  }
+}

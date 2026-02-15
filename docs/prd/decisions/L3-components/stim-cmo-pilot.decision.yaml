@@ -1,0 +1,71 @@
+# STIM CMO Pilot
+#
+# Whether and how the scaffold participates in STIM's collective AI
+# music licence infrastructure.
+
+decision_id: stim_cmo_pilot
+title: "STIM CMO Pilot"
+description: >
+  Determines participation level in STIM's collective AI music licence
+  pilot — the world's first such programme, launched September 2025.
+  Options range from no involvement to observer status to serving as
+  an attribution provider within the pilot infrastructure.
+
+decision_level: L3_components
+status: stub
+last_updated: 2026-02-14
+
+options:
+  - option_id: no_cmo_pilot
+    title: "No CMO Pilot Participation"
+    description: >
+      No involvement with STIM's pilot. Monitor developments externally
+      through public reporting and research publications.
+    prior_probability: 0.50
+    status: selected
+
+  - option_id: observer_status
+    title: "Observer Status"
+    description: >
+      Participate as an observer/research partner in STIM's pilot.
+      Access to anonymized data and infrastructure insights without
+      operational commitments. Suitable for academic research projects.
+    prior_probability: 0.35
+    status: candidate
+
+  - option_id: attribution_provider
+    title: "Attribution Provider"
+    description: >
+      Serve as an attribution data provider within STIM's pilot
+      infrastructure. The scaffold provides confidence-scored
+      attribution data that informs licensing decisions. Requires
+      data quality SLAs and operational reliability.
+    prior_probability: 0.15
+    status: candidate
+
+research_notes: >
+  STIM (Swedish Performing Rights Society) launched the world's first
+  collective licence for AI-generated music in September 2025. Sureel AI
+  is the technology partner. The pilot covers generative music services
+  operating in Sweden with per-output royalty based on attribution
+  confidence. Other CMOs (GEMA, PRS, ASCAP/BMI) are evaluating similar
+  approaches.
+
+influences:
+  - from: cmo_licensing_integration
+    direction: upstream
+    rationale: "CMO licensing integration determines STIM pilot eligibility"
+  - from: partnership_model
+    direction: upstream
+    rationale: "Partnership model must support institutional engagement"
+
+references:
+  - "STIM collective AI music licence (Sep 2025)"
+  - "Sureel AI as STIM technology partner"
+
+tags:
+  - cmo
+  - stim
+  - licensing
+  - named-partner
+  - discussion-expansion

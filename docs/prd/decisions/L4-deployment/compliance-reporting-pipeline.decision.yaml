@@ -1,0 +1,74 @@
+# Compliance Reporting Pipeline
+#
+# Infrastructure for generating regulatory compliance reports.
+
+decision_id: compliance_reporting_pipeline
+title: "Compliance Reporting Pipeline"
+description: >
+  Determines the automation level for regulatory compliance reporting.
+  EU AI Act GPAI obligations, GDPR data processing records, and
+  industry-specific requirements each generate reporting needs.
+
+decision_level: L4_deployment
+status: stub
+last_updated: 2026-02-14
+
+options:
+  - option_id: manual
+    title: "Manual Reporting"
+    description: >
+      Compliance reports generated manually from database queries and
+      log analysis. Sufficient for pre-revenue/research projects but
+      does not scale.
+    prior_probability: 0.35
+    status: candidate
+
+  - option_id: semi_automated
+    title: "Semi-Automated Pipeline"
+    description: >
+      Scheduled report generation from structured data (audit logs,
+      attribution records, permission status). Human review before
+      submission. Templates for EU AI Act Art. 12 logging and GPAI
+      documentation.
+    prior_probability: 0.45
+    status: selected
+
+  - option_id: fully_automated
+    title: "Fully Automated Pipeline"
+    description: >
+      End-to-end automated compliance reporting with continuous data
+      collection, automated validation, and scheduled submission.
+      Requires significant infrastructure investment and regulatory
+      expertise.
+    prior_probability: 0.20
+    status: candidate
+
+research_notes: >
+  EU AI Act GPAI obligations enforceable from August 2025. Art. 12
+  requires audit trails for AI system decisions. GPAI Code of Practice
+  (July 2025) provides voluntary guidance on copyright compliance.
+  Penalties reach EUR 35M or 7% global turnover. Most startups will
+  start semi-automated and invest in full automation as regulatory
+  requirements solidify.
+
+influences:
+  - from: compliance_framework_mapping
+    direction: upstream
+    rationale: "Compliance framework determines reporting requirements"
+  - from: ci_cd_pipeline
+    direction: upstream
+    rationale: "CI/CD infrastructure enables automated report generation"
+  - from: regulatory_posture
+    direction: upstream
+    rationale: "Regulatory posture determines compliance investment level"
+
+references:
+  - "EU AI Act — GPAI obligations (Aug 2025)"
+  - "GPAI Code of Practice (Jul 2025)"
+  - "Art. 12 logging requirements"
+
+tags:
+  - compliance
+  - reporting
+  - eu-ai-act
+  - discussion-expansion

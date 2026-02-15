@@ -1,0 +1,70 @@
+# Regulatory Monitoring
+#
+# How the team monitors regulatory changes relevant to AI music attribution.
+
+decision_id: regulatory_monitoring
+title: "Regulatory Monitoring"
+description: >
+  Determines how the team monitors regulatory developments relevant to
+  AI music attribution. The regulatory landscape is volatile (EU AI Act
+  enforcement, GPAI Code of Practice, Digital Omnibus delays, national
+  implementations) and requires active tracking.
+
+decision_level: L5_operations
+status: stub
+last_updated: 2026-02-14
+
+options:
+  - option_id: manual
+    title: "Manual Research"
+    description: >
+      Manual periodic research via government websites, legal blogs,
+      and industry publications. Lowest cost but highest risk of
+      missing important developments.
+    prior_probability: 0.40
+    status: selected
+
+  - option_id: alert_subscriptions
+    title: "Alert Subscriptions"
+    description: >
+      Subscribe to regulatory monitoring services (EU AI Act Observer,
+      legal newsletters, industry association updates). Curated alerts
+      with human review. Moderate cost, good coverage.
+    prior_probability: 0.40
+    status: candidate
+
+  - option_id: automated_check
+    title: "Automated Compliance Checking"
+    description: >
+      Automated regulatory monitoring with impact assessment. Tools
+      scan regulatory databases and assess relevance to the scaffold's
+      compliance posture. Requires ML classification of regulatory text.
+    prior_probability: 0.20
+    status: candidate
+
+research_notes: >
+  EU AI Act GPAI enforcement from August 2025 is the most immediate
+  regulatory pressure. The GPAI Code of Practice (July 2025) provides
+  voluntary guidance. Digital Omnibus delays push comprehensive reform
+  to late 2026+. National implementations vary across EU member states.
+  For a research project, alert subscriptions provide the best
+  cost/coverage balance.
+
+influences:
+  - from: compliance_framework_mapping
+    direction: upstream
+    rationale: "Compliance framework determines regulatory monitoring scope"
+  - from: regulatory_posture
+    direction: upstream
+    rationale: "Regulatory posture determines monitoring investment"
+
+references:
+  - "EU AI Act — GPAI enforcement (Aug 2025)"
+  - "GPAI Code of Practice (Jul 2025)"
+  - "Digital Omnibus — delayed to late 2026+"
+
+tags:
+  - regulatory
+  - monitoring
+  - compliance
+  - discussion-expansion

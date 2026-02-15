@@ -1,4 +1,21 @@
-"""Permission check endpoints backed by async PostgreSQL repository."""
+"""Permission check endpoints backed by async PostgreSQL repository.
+
+Provides MCP-compatible permission query endpoints:
+
+* ``POST /api/v1/permissions/check`` — check a single permission
+* ``GET /api/v1/permissions/{entity_id}`` — list all permission bundles
+
+These endpoints implement machine-readable permission queries for AI
+training rights, following the *MCP as consent infrastructure* model
+described in the companion paper (Section 6).  Each permission check is
+audit-logged for transparency and compliance.
+
+Notes
+-----
+Permission bundles use the ``PermissionTypeEnum`` to represent
+training, derivative-work, commercial-use, and other permission types.
+The audit trail records who asked, when, and with what context.
+"""
 
 from __future__ import annotations
 
@@ -15,7 +32,23 @@ router = APIRouter()
 
 
 class PermissionCheckRequest(BaseModel):
-    """Request body for permission check."""
+    """Request body for a permission check query.
+
+    Attributes
+    ----------
+    entity_id : uuid.UUID
+        UUID of the entity whose permissions are being queried (e.g., a
+        recording or work entity).
+    permission_type : str
+        Permission type string matching a ``PermissionTypeEnum`` value
+        (e.g., ``"AI_TRAINING"``, ``"DERIVATIVE_WORK"``).
+    scope_entity_id : uuid.UUID or None
+        Optional UUID to scope the permission check to a specific
+        context (e.g., a particular AI model or service).
+    requester_id : str
+        Identifier for the requesting party, by default ``"anonymous"``.
+        Used for audit logging.
+    """
 
     entity_id: uuid.UUID
     permission_type: str
@@ -24,7 +57,18 @@ class PermissionCheckRequest(BaseModel):
 
 
 class PermissionCheckResponse(BaseModel):
-    """Response body for permission check."""
+    """Response body for a permission check query.
+
+    Attributes
+    ----------
+    entity_id : uuid.UUID
+        UUID of the entity whose permission was checked.
+    permission_type : str
+        The permission type that was queried.
+    result : str
+        Permission result value (e.g., ``"ALLOW"``, ``"DENY"``,
+        ``"UNKNOWN"``).
+    """
 
     entity_id: uuid.UUID
     permission_type: str
@@ -32,7 +76,19 @@ class PermissionCheckResponse(BaseModel):
 
 
 async def _get_session(request: Request) -> AsyncSession:
-    """Get an async session from the app's session factory."""
+    """Get an async session from the application's session factory.
+
+    Parameters
+    ----------
+    request : Request
+        FastAPI request object with access to ``app.state``.
+
+    Returns
+    -------
+    AsyncSession
+        A new async database session (caller must use it as a context
+        manager to ensure proper cleanup).
+    """
     factory: async_sessionmaker[AsyncSession] = request.app.state.async_session_factory
     return factory()
 
@@ -44,12 +100,25 @@ async def check_permission(
 ) -> PermissionCheckResponse:
     """Check a specific permission for an entity.
 
-    Args:
-        request: FastAPI request with app state.
-        body: Permission check request body.
+    ``POST /api/v1/permissions/check``
 
-    Returns:
-        Permission check result.
+    Queries the permission repository for the given entity and
+    permission type, then records an audit log entry.  This implements
+    the machine-readable consent query pattern described in the
+    companion paper (Section 6).
+
+    Parameters
+    ----------
+    request : Request
+        FastAPI request with access to ``app.state``.
+    body : PermissionCheckRequest
+        JSON request body containing the entity ID, permission type,
+        optional scope entity, and requester identifier.
+
+    Returns
+    -------
+    PermissionCheckResponse
+        The permission check result with entity ID, type, and outcome.
     """
     repo = AsyncPermissionRepository()
     perm_type = PermissionTypeEnum(body.permission_type)
@@ -91,14 +160,30 @@ async def list_permissions(
     request: Request,
     entity_id: uuid.UUID,
 ) -> list[dict]:
-    """Get all permission bundles for an entity.
+    """List all permission bundles for an entity.
 
-    Args:
-        request: FastAPI request with app state.
-        entity_id: Entity UUID.
+    ``GET /api/v1/permissions/{entity_id}``
 
-    Returns:
-        List of permission bundles.
+    Returns every permission bundle associated with the given entity
+    UUID.  Each bundle contains the full set of permissions (training,
+    derivative work, commercial use, etc.) and their current status.
+
+    Parameters
+    ----------
+    request : Request
+        FastAPI request with access to ``app.state``.
+    entity_id : uuid.UUID
+        UUID of the entity whose permission bundles are requested.
+
+    Returns
+    -------
+    list[dict]
+        JSON-serializable list of permission bundle dictionaries.
+
+    Raises
+    ------
+    HTTPException
+        404 if no permission bundles exist for the given entity.
     """
     repo = AsyncPermissionRepository()
 

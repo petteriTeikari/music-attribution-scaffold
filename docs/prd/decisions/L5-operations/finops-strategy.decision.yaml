@@ -1,19 +1,31 @@
 # FinOps & Cloud Cost Optimization
 #
 # Strategy for managing and optimizing cloud infrastructure costs.
+#
+# Updated 2026-02-14: Major expansion with DevOps tax framework,
+# cloud credit strategy, egress cost analysis (R2 zero-egress),
+# and phased cost projections. See comprehensive analysis:
+# docs/planning/deployement-finops-landscape.md
 
 decision_id: finops_strategy
 title: "FinOps & Cloud Cost Optimization"
 description: >
   Determines the approach to cloud cost visibility, optimization, and
-  governance. Attribution systems have variable cost profiles — LLM API
-  calls dominate during active attribution, while storage and compute
-  dominate at rest. FinOps practices help teams avoid bill shock and
-  right-size infrastructure as usage patterns emerge.
+  governance. Three key FinOps insights from landscape analysis:
+  (1) DEVOPS TAX: Break-even at ~2,000 vCPUs or >EUR 200K/year — for
+  <EUR 50/mo spend, DevOps tax exceeds savings from self-hosting.
+  (2) EGRESS DOMINANCE: For audio workloads at scale, egress costs
+  ($0.09/GB on AWS) exceed compute costs — Cloudflare R2 zero-egress
+  is the single highest-impact FinOps decision.
+  (3) CLOUD CREDITS: EUR 17K-27K realistic total from NVIDIA Inception,
+  Azure Founders Hub, AWS Activate, OVHcloud START, GCP, Scaleway —
+  provides 12-18 months free runway on Big Three.
+  Phased approach: manual review on PaaS (MVP) → cost visibility when
+  spend exceeds EUR 50/mo → active optimization when spend exceeds EUR 200/mo.
 
 decision_level: L5_operations
-status: open
-last_updated: 2026-02-13
+status: active
+last_updated: 2026-02-14
 
 options:
   - option_id: none_manual
@@ -21,8 +33,12 @@ options:
     description: >
       Review cloud bills manually via provider dashboards. Set billing
       alerts but no automated optimization. Sufficient for small teams
-      on fixed-price PaaS (Render, Railway) where costs are predictable
-      and limited. Current scaffold default.
+      on fixed-price PaaS (Render, Railway) where costs are predictable.
+      Current scaffold default. DevOps tax = EUR 0. At <EUR 50/mo spend,
+      this is the correct approach — cost optimization tools cost more
+      than they save. Key actions: (1) set billing alerts at EUR 35/50/100
+      thresholds, (2) review bills monthly, (3) right-size Render
+      instances quarterly.
     prior_probability: 0.45
     status: recommended
 
@@ -74,45 +90,63 @@ conditional_on:
   - parent_decision_id: compute_platform
     influence_strength: strong
     conditional_table:
-      - given_parent_option: hetzner_vps
-        then_probabilities:
-          none_manual: 0.60
-          skypilot: 0.15
-          infracost: 0.15
-          kubecost: 0.10
-      - given_parent_option: render_railway
+      - given_parent_option: render
         then_probabilities:
           none_manual: 0.70
           skypilot: 0.10
           infracost: 0.10
           kubecost: 0.10
+      - given_parent_option: hetzner_ubicloud
+        then_probabilities:
+          none_manual: 0.40
+          skypilot: 0.15
+          infracost: 0.20
+          kubecost: 0.25
+      - given_parent_option: hetzner_baremetal
+        then_probabilities:
+          none_manual: 0.30
+          skypilot: 0.15
+          infracost: 0.20
+          kubecost: 0.35
       - given_parent_option: fly_io
         then_probabilities:
           none_manual: 0.55
           skypilot: 0.15
           infracost: 0.15
           kubecost: 0.15
-      - given_parent_option: aws_gcp_azure
+      - given_parent_option: aws_ecs
         then_probabilities:
-          none_manual: 0.20
+          none_manual: 0.15
           skypilot: 0.30
           infracost: 0.25
-          kubecost: 0.25
+          kubecost: 0.30
 
   - parent_decision_id: iac_tooling
     influence_strength: moderate
     conditional_table:
       - given_parent_option: pulumi
         then_probabilities:
-          none_manual: 0.30
+          none_manual: 0.25
           skypilot: 0.20
           infracost: 0.35
-          kubecost: 0.15
+          kubecost: 0.20
       - given_parent_option: terraform
+        then_probabilities:
+          none_manual: 0.20
+          skypilot: 0.20
+          infracost: 0.40
+          kubecost: 0.20
+      - given_parent_option: opentofu
         then_probabilities:
           none_manual: 0.25
           skypilot: 0.20
-          infracost: 0.40
+          infracost: 0.35
+          kubecost: 0.20
+      - given_parent_option: none_manual
+        then_probabilities:
+          none_manual: 0.65
+          skypilot: 0.15
+          infracost: 0.05
           kubecost: 0.15
       - given_parent_option: platform_native
         then_probabilities:
@@ -156,16 +190,85 @@ archetype_weights:
 
 volatility:
   classification: stable
-  last_assessed: 2026-02-13
-  next_review: 2026-08-13
+  last_assessed: 2026-02-14
+  next_review: 2026-08-14
   change_drivers:
     - "LLM API cost trajectory (decreasing but usage increasing)"
     - "Migration from PaaS to IaaS/Kubernetes"
     - "Batch ML workload volume growth"
     - "SkyServe maturity for spot-based serving (SpotHedge, arXiv:2411.01438)"
+    - "Cloud credit expiration timeline (12-18 months from application)"
+    - "Cloudflare R2 feature parity with S3 (lifecycle policies, event triggers)"
+
+# --- FinOps Landscape Key Metrics ---
+# Source: docs/planning/deployement-finops-landscape.md
+
+devops_tax_framework:
+  description: >
+    The DevOps tax is the hidden cost of self-managing infrastructure.
+    It includes time spent on K8s operations, security patches, monitoring
+    setup, backup verification, and incident response. This cost must be
+    compared against hosting savings to determine break-even.
+  break_even_threshold: "~2,000 vCPUs or >EUR 200K/year infrastructure spend"
+  thresholds:
+    below_50_eur_mo: "Accept PaaS pricing. DevOps tax = EUR 0."
+    50_to_200_eur_mo: "Consider managed Hetzner (Ubicloud). DevOps tax ~EUR 5K/year."
+    above_200_eur_mo: "Self-managed Hetzner justified. DevOps tax ~EUR 35K/year, but 76% savings."
+
+cloud_credit_strategy:
+  description: >
+    Realistic EUR 17K-27K in cloud credits available for bootstrapped
+    startups. Apply in priority order (shortest expiry first). Credits
+    provide 12-18 months free runway on Big Three hyperscalers.
+  priority_order:
+    - program: "NVIDIA Inception"
+      credits: "EUR 3,000-5,000 (GCP/AWS)"
+      expiry: "12 months"
+    - program: "Azure Founders Hub"
+      credits: "EUR 920"
+      expiry: "12 months (shortest)"
+    - program: "AWS Activate"
+      credits: "EUR 920"
+      expiry: "12 months"
+    - program: "OVHcloud START"
+      credits: "EUR 10,000"
+      expiry: "12 months (best value/EUR)"
+    - program: "Scaleway Startup Program"
+      credits: "EUR 2,000-3,000"
+      expiry: "12 months"
+    - program: "GCP for Startups"
+      credits: "EUR 920-3,680"
+      expiry: "24 months"
+
+egress_cost_impact:
+  description: >
+    For music platforms, egress cost is the dominant cost driver at scale.
+    At 10,000 tracks/day = 30-100GB egress/day. Cloudflare R2 zero-egress
+    is the single highest-impact FinOps decision.
+  monthly_at_scale:
+    aws_s3: "$2,700-9,000"
+    gcp_gcs: "$3,600-12,000"
+    cloudflare_r2: "$0"
+
+phased_cost_projections:
+  mvp_0_6_months:
+    stack: "Render + Neon + R2"
+    monthly_cost: "EUR 18-35"
+    devops_fte: 0.0
+    confidence: 0.95
+  growth_6_18_months:
+    stack: "Hetzner Cloud + Kamal/Ubicloud + R2"
+    monthly_cost: "EUR 30-80"
+    devops_fte: 0.05
+    confidence: 0.80
+  scale_18_plus_months:
+    stack: "Hetzner bare-metal + K8s + R2"
+    monthly_cost: "EUR 100-300"
+    devops_fte: 0.25
+    confidence: 0.75
 
 domain_applicability:
-  music_attribution: 0.8
+  music_attribution: 1.0
   dpp_traceability: 0.8
   generic_graph_rag: 0.9
 
@@ -174,3 +277,10 @@ tags:
   - finops
   - cost-optimization
   - cloud
+  - egress
+  - cloud-credits
+  - devops-tax
+
+references:
+  - "../../planning/deployement-finops-landscape.md"
+  - "../../knowledge-base/raw-sources/Digital Society _ Posts _ Migrating to Hetzner.md"
