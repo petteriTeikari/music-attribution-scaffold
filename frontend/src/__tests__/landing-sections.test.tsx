@@ -23,23 +23,30 @@ vi.mock("next/link", () => ({
   ),
 }));
 
-// Mock motion/react
-vi.mock("motion/react", () => ({
-  motion: {
-    div: ({ children, ...props }: { children?: React.ReactNode; [key: string]: unknown }) => {
-      const { initial, animate, whileInView, viewport, variants, ...rest } = props;
-      return <div {...rest}>{children}</div>;
-    },
-    h1: ({ children, ...props }: { children?: React.ReactNode; [key: string]: unknown }) => {
-      const { initial, animate, whileInView, viewport, variants, ...rest } = props;
-      return <h1 {...rest}>{children}</h1>;
-    },
-    p: ({ children, ...props }: { children?: React.ReactNode; [key: string]: unknown }) => {
-      const { initial, animate, whileInView, viewport, variants, ...rest } = props;
-      return <p {...rest}>{children}</p>;
-    },
-  },
-}));
+// Mock motion/react — LazyMotion + m components
+vi.mock("motion/react", () => {
+  function MockDiv({ children, ...props }: { children?: React.ReactNode; [key: string]: unknown }) {
+    const { initial, animate, whileInView, viewport, variants, transition, ...rest } = props;
+    return <div {...rest}>{children}</div>;
+  }
+  function MockH1({ children, ...props }: { children?: React.ReactNode; [key: string]: unknown }) {
+    const { initial, animate, whileInView, viewport, variants, transition, ...rest } = props;
+    return <h1 {...rest}>{children}</h1>;
+  }
+  function MockP({ children, ...props }: { children?: React.ReactNode; [key: string]: unknown }) {
+    const { initial, animate, whileInView, viewport, variants, transition, ...rest } = props;
+    return <p {...rest}>{children}</p>;
+  }
+  function MockLazyMotion({ children }: { children: React.ReactNode }) {
+    return <>{children}</>;
+  }
+  return {
+    motion: { div: MockDiv, h1: MockH1, p: MockP },
+    m: { div: MockDiv, h1: MockH1, p: MockP },
+    LazyMotion: MockLazyMotion,
+    domAnimation: {},
+  };
+});
 
 import HomePage from "@/app/page";
 
