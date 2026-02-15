@@ -6,7 +6,7 @@ Human-readable synthesis of the Bayesian decision network with mermaid visualiza
 
 ## Network Topology
 
-The complete decision network: 78 nodes across 5 levels with conditional probability edges.
+The complete decision network: 79 nodes across 5 levels with conditional probability edges.
 
 ### Core Infrastructure (50 nodes)
 
@@ -66,6 +66,7 @@ flowchart TB
         OBJ[Object<br/>Storage]
         MIV[MCP Input<br/>Validation]
         CDS[CD<br/>Strategy]
+        CAT[Code Attribution<br/>Tracing]
     end
 
     subgraph L5["L5: Operations Decisions"]
@@ -183,6 +184,12 @@ flowchart TB
     CP --> CDS
     CS --> CDS
 
+    %% L2 → L4 (code attribution)
+    ADS --> CAT
+
+    %% L4 → L4
+    CI --> CAT
+
     %% L4 → L5
     CP --> OS
     CP --> SS
@@ -194,6 +201,9 @@ flowchart TB
     DH --> FIN
     IAC --> FIN
     CDS --> OS
+    CAT --> OS
+    CAT --> PAC
+    CAT --> ETH
 
     %% L3 → L5
     DQS --> SG
@@ -267,6 +277,7 @@ flowchart TB
     style ORC fill:#4A7C59,color:#fff
     style OBJ fill:#4A7C59,color:#fff
     style CDS fill:#4A7C59,color:#fff
+    style CAT fill:#4A7C59,color:#fff
     style OS fill:#C75050,color:#fff
     style SS fill:#C75050,color:#fff
     style BDR fill:#C75050,color:#fff
@@ -327,6 +338,7 @@ flowchart TB
         TDPS[Training Data<br/>Provenance]
         GDM[Golden Dataset<br/>Mgmt]
         EDT[Edge Deploy<br/>Target]
+        CAT[Code Attribution<br/>Tracing]
     end
 
     subgraph L5_ECO["L5: Intelligence & Monitoring"]
@@ -363,6 +375,7 @@ flowchart TB
     %% L3_CAT → L4_ECO
     EIS --> EDT
     AEF --> GDM
+    AOT --> CAT
 
     %% L1/L2 → L4_ECO
     RP --> CRP
@@ -401,6 +414,7 @@ flowchart TB
     style TDPS fill:#5A9C69,color:#fff
     style GDM fill:#5A9C69,color:#fff
     style EDT fill:#5A9C69,color:#fff
+    style CAT fill:#5A9C69,color:#fff
     style RGM fill:#D06060,color:#fff
     style MKI fill:#D06060,color:#fff
     style AAM fill:#D06060,color:#fff
@@ -838,12 +852,13 @@ mindmap
       Suno/Udio Licensing
       Regulatory Monitoring
       Partnership Health Metrics
+      Code Attribution Tracing
 ```
 
 **Interpretation**:
 - **Stable** (16 decisions, 21%): Core architectural choices unlikely to change within 6 months. Review quarterly. Includes new infrastructure-layer nodes (attribution eval framework, knowledge graph backend, training data provenance store, golden dataset management) whose technical fundamentals are well-established.
 - **Shifting** (25 decisions, 32%): Actively evolving areas where market or technology changes may shift probabilities. Review monthly. Includes ecosystem category decisions (platform strategy, agent interop, edge inference, content ID) where the capability landscape is maturing but not settled, plus operational nodes (compliance reporting, attribution accuracy monitoring, market intelligence) that depend on regulatory timeline clarity.
-- **Volatile** (11 decisions, 14%): High uncertainty zones. Includes all company-specific partnership nodes (Musical AI, Sureel AI, STIM, SoundExchange, Fairly Trained, Suno/Udio) whose viability depends on external business decisions and negotiation outcomes, plus regulatory monitoring and partnership health metrics that track inherently unpredictable external signals. Also retains original volatile nodes: regulatory posture (EU AI Act timeline), AI framework strategy (ecosystem consolidation), LLM provider (model capability leaps), agentic UI framework (AG-UI protocol evolving), voice agent stack (platform consolidation), and graph RAG engine (new frameworks emerging weekly). Review biweekly.
+- **Volatile** (12 decisions, 15%): High uncertainty zones. Includes all company-specific partnership nodes (Musical AI, Sureel AI, STIM, SoundExchange, Fairly Trained, Suno/Udio) whose viability depends on external business decisions and negotiation outcomes, plus regulatory monitoring and partnership health metrics that track inherently unpredictable external signals. Also retains original volatile nodes: regulatory posture (EU AI Act timeline), AI framework strategy (ecosystem consolidation), LLM provider (model capability leaps), agentic UI framework (AG-UI protocol evolving), voice agent stack (platform consolidation), graph RAG engine (new frameworks emerging weekly), and code attribution tracing (Agent Trace spec is nascent, regulatory scope for code unclear). Review biweekly.
 - **Ecosystem stub nodes** (28 new in v3.0.0): Not yet classified in the traditional stable/shifting/volatile framework — these are expansion stubs representing the full discussion-paper scope. The 26 nodes shown above in shifting + volatile categories are the initial volatility assessments; 2 additional nodes overlap with existing core classifications.
 
 ---
@@ -936,20 +951,20 @@ Given **Neon** hosting (P=0.40):
 
 | Metric | Value |
 |--------|-------|
-| Total nodes | 78 |
+| Total nodes | 79 |
 | L1 Business nodes | 4 |
 | L2 Architecture nodes | 9 |
 | L3 Implementation nodes | 14 |
 | L3 Components nodes | 24 |
-| L4 Deployment nodes | 13 |
+| L4 Deployment nodes | 14 |
 | L5 Operations nodes | 14 |
-| Total edges | 181 |
+| Total edges | 187 |
 | Team archetypes | 4 |
 | Domain overlays | 2 (+ 1 planned) |
 | Scenario compositions | 6 |
 | Stable decisions | 16 (21%) |
 | Shifting decisions | 25 (32%) |
-| Volatile decisions | 11 (14%) |
+| Volatile decisions | 12 (15%) |
 | Ecosystem stub nodes | 28 (new in v3.0.0) |
 
 ---

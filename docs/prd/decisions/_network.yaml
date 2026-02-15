@@ -362,6 +362,11 @@ nodes:
     file: L4-deployment/edge-deployment-target.decision.yaml
     title: "Edge Deployment Target"
 
+  - id: code_attribution_tracing
+    level: L4_deployment
+    file: L4-deployment/code-attribution-tracing.decision.yaml
+    title: "Code Attribution Tracing"
+
   # L5: Operations Decisions
   - id: observability_stack
     level: L5_operations
@@ -1448,3 +1453,41 @@ edges:
     to: partnership_health_metrics
     influence: moderate
     rationale: "Observability stack provides the telemetry substrate for partner health metrics"
+
+  # --- Code Attribution Tracing edges (v3.0.0+) ---
+
+  # L2 → L4 edges (artifact decoupling → code attribution)
+  - from: artifact_decoupling_strategy
+    to: code_attribution_tracing
+    influence: moderate
+    rationale: "Artifact decoupling determines whether code provenance is tracked as a separate artifact type"
+
+  # L4 → L4 edges (CI/CD → code attribution)
+  - from: ci_cd_pipeline
+    to: code_attribution_tracing
+    influence: strong
+    rationale: "CI/CD pipeline provides automation substrate for trace aggregation and SBOM generation"
+
+  # L3 → L4 edges (agent observability → code attribution)
+  - from: agent_observability_otel
+    to: code_attribution_tracing
+    influence: moderate
+    rationale: "Agent OTel instrumentation provides runtime trace data that feeds code attribution records"
+
+  # L4 → L5 edges (code attribution → observability)
+  - from: code_attribution_tracing
+    to: observability_stack
+    influence: weak
+    rationale: "Code attribution traces generate telemetry for authorship analytics dashboards"
+
+  # L4 → L5 edges (code attribution → policy as code)
+  - from: code_attribution_tracing
+    to: policy_as_code
+    influence: moderate
+    rationale: "Code attribution enables policy rules like 'AI-generated code requires human review'"
+
+  # L4 → L5 edges (code attribution → ethics governance)
+  - from: code_attribution_tracing
+    to: ethics_governance
+    influence: moderate
+    rationale: "Code authorship transparency feeds governance-as-code for AI Act compliance"

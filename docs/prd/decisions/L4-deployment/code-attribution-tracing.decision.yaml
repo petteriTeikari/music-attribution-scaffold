@@ -1,0 +1,152 @@
+# Code Attribution Tracing
+#
+# Tracking AI-generated vs human-authored code sections with
+# structured provenance records. Structural isomorphism with
+# music A0-A3 assurance levels.
+
+decision_id: code_attribution_tracing
+title: "Code Attribution Tracing"
+description: >
+  Determines how AI-generated code sections are tracked alongside
+  human authorship. Cursor's Agent Trace (Jan 2026) introduced an
+  open spec for structured trace records mapping coding agent actions
+  to file regions. The structural isomorphism with music attribution's
+  A0-A3 assurance levels is exact: unknown/ai/mixed/human maps to
+  A0/A1/A2/A3. Both domains face the Oracle Problem (cannot fully
+  verify authorship claims), need graduated confidence, face EU AI Act
+  pressure (Art. 50 targets AI-generated content broadly), and benefit
+  from attribution-by-design over post-hoc detection.
+
+decision_level: L4_deployment
+status: stub
+last_updated: 2026-02-15
+
+options:
+  - option_id: none
+    title: "Standard Git Only"
+    description: >
+      No additional code attribution beyond standard git blame and
+      commit metadata. Co-Authored-By trailers provide minimal signal.
+      Sufficient for small teams where all contributors are known, but
+      provides no structured AI provenance for compliance or audit.
+    prior_probability: 0.30
+    status: candidate
+
+  - option_id: cursor_agent_trace
+    title: "Cursor Agent Trace"
+    description: >
+      Adopt Cursor's open Agent Trace spec for structured trace records.
+      Each coding agent session produces a trace mapping actions (edit,
+      insert, delete) to file regions with timestamps, model IDs, and
+      prompt context. Traces stored alongside code in .agent-trace/
+      directory or external store. Enables per-line authorship queries:
+      "which model wrote this function?" Maps directly to A0-A3:
+      unknown→A0, ai→A1, mixed→A2, human→A3.
+    prior_probability: 0.30
+    status: candidate
+
+  - option_id: git_blame_extensions
+    title: "Git Blame Extensions"
+    description: >
+      Extend git metadata with AIDEV-* comment conventions and
+      Co-Authored-By trailers. AIDEV-NOTE, AIDEV-IMMUTABLE, and
+      AIDEV-GENERATED markers provide inline provenance. Lower
+      infrastructure cost than Agent Trace but relies on convention
+      compliance rather than automated capture. Community-driven,
+      not a formal spec.
+    prior_probability: 0.20
+    status: candidate
+
+  - option_id: sbom_code_attestation
+    title: "SBOM Code Attestation"
+    description: >
+      Extend SPDX 3.0 or CycloneDX 1.6 SBOMs with AI provenance
+      fields. SPDX AI profile (draft) supports model cards and
+      training data lineage. Provides release-level attestation
+      rather than line-level tracing. Strongest for supply chain
+      compliance and NTIA minimum elements but weakest for
+      development-time authorship queries.
+    prior_probability: 0.10
+    status: candidate
+
+  - option_id: hybrid_cursor_sbom
+    title: "Hybrid Agent Trace + SBOM"
+    description: >
+      Agent Trace at development time for line-level authorship,
+      SBOM at release time for supply chain attestation. Trace records
+      aggregate into SBOM AI provenance fields during CI/CD. Provides
+      both development-time queries and release-time compliance.
+      Highest implementation cost but most complete coverage.
+    prior_probability: 0.10
+    status: candidate
+
+research_notes: >
+  Structural isomorphism with A0-A3 assurance levels:
+  - unknown (no trace) ↔ A0 (no data)
+  - ai (single LLM generated) ↔ A1 (single source claims)
+  - mixed (human + AI iterative) ↔ A2 (multiple sources agree)
+  - human (developer-attested) ↔ A3 (artist-verified)
+
+  Both domains face the Oracle Problem: digital systems cannot fully
+  verify physical/training reality. A developer can claim "human"
+  authorship for AI-generated code just as an artist can claim original
+  composition for AI-generated music. Design for deterrence, not
+  detection.
+
+  EU AI Act Art. 50 targets "AI-generated content" broadly but does
+  NOT explicitly cover source code yet. However, regulatory scope
+  expansion is likely as AI coding tools become dominant (>50% of
+  new code by 2027 per GitHub estimates).
+
+  AIDEV-* patterns (AIDEV-NOTE, AIDEV-IMMUTABLE, AIDEV-GENERATED)
+  are community conventions emerging from Claude Code and similar
+  tools, not formal standards. Agent Trace from Cursor (Jan 2026)
+  is the first open spec attempt at structured code attribution.
+
+  SPDX 3.0 AI profile (draft) and CycloneDX 1.6 both support
+  AI-related metadata fields but focus on model/dataset provenance
+  rather than per-line code authorship.
+
+volatility: volatile
+
+domain_applicability:
+  music_attribution: 0.8
+  dpp_traceability: 0.7
+  generic_graph_rag: 0.6
+
+influences:
+  - from: artifact_decoupling_strategy
+    direction: upstream
+    rationale: "Artifact decoupling determines whether code provenance is tracked as a separate artifact type"
+  - from: ci_cd_pipeline
+    direction: upstream
+    rationale: "CI/CD pipeline provides automation substrate for trace aggregation and SBOM generation"
+  - from: agent_observability_otel
+    direction: upstream
+    rationale: "Agent OTel instrumentation provides runtime trace data that feeds code attribution records"
+  - to: observability_stack
+    direction: downstream
+    rationale: "Code attribution traces generate telemetry for authorship analytics dashboards"
+  - to: policy_as_code
+    direction: downstream
+    rationale: "Code attribution enables policy rules like 'AI-generated code requires human review'"
+  - to: ethics_governance
+    direction: downstream
+    rationale: "Code authorship transparency feeds governance-as-code for AI Act compliance"
+
+references:
+  - "Cursor Agent Trace — open spec for structured AI code provenance (Jan 2026)"
+  - "SPDX 3.0 AI Profile (draft) — software bill of materials with AI metadata"
+  - "CycloneDX 1.6 — SBOM standard with AI provenance fields"
+  - "EU AI Act Art. 50 — AI-generated content transparency obligations"
+  - "Teikari, P. (2026) Music Attribution with Transparent Confidence. SSRN 6109087"
+  - "AIDEV-* conventions — community patterns for AI code attribution markers"
+
+tags:
+  - code-attribution
+  - agent-trace
+  - provenance
+  - eu-ai-act
+  - oracle-problem
+  - cross-domain-isomorphism
+  - discussion-expansion
