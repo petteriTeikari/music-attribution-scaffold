@@ -29,20 +29,20 @@ The key message is: "In embedding space, semantically equivalent name variants c
 |  2D Projection (t-SNE / UMAP)                                 |
 |  ─────────────────────────────                                 |
 |                                                                |
-|        ●₁ "Imogen Heap"                                       |
-|           ●₂ "I. Heap"              ▲₁ "Brian Eno"            |
-|        ●₃ "HEAP, IMOGEN"               ▲₂ "Eno, Brian"       |
-|     ●₄ "Imogen J. Heap"             ▲₃ "B. Eno"              |
+|        ●₁ "Elena Voss"                                        |
+|           ●₂ "E. Voss"              ▲₁ "Marco Reis"           |
+|        ●₃ "VOSS, ELENA"                ▲₂ "Reis, Marco"       |
+|     ●₄ "Elena K. Voss"              ▲₃ "M. Reis"             |
 |                                                                |
 |     ┌─────────────────┐          ┌─────────────────┐          |
 |     │ Cluster A        │          │ Cluster B        │          |
 |     │ cosine dist < 0.1│          │ cosine dist < 0.1│          |
 |     └─────────────────┘          └─────────────────┘          |
 |                                                                |
-|                                        ◆₁ "Bjork"             |
-|              d = 0.85                     ◆₂ "Bjork           |
-|         ◄──────────────►                   Gudmundsdottir"    |
-|         (between clusters)             ◆₃ "bjork"             |
+|                                        ◆₁ "Solveig"           |
+|              d = 0.85                     ◆₂ "Solveig          |
+|         ◄──────────────►                   Halldórsdóttir"     |
+|         (between clusters)             ◆₃ "solveig"           |
 |                                                                |
 |                                  ┌─────────────────┐          |
 |                                  │ Cluster C        │          |
@@ -71,9 +71,9 @@ The key message is: "In embedding space, semantically equivalent name variants c
 |---------|--------------|-------------|
 | Title block | `heading_display` | "EMBEDDING SPACE" with coral accent square |
 | Subtitle | `label_editorial` | "Entity Clusters in Vector Space" |
-| Cluster A points | `source_artist` | Four dots: "Imogen Heap," "I. Heap," "HEAP, IMOGEN," "Imogen J. Heap" |
-| Cluster B points | `source_artist` | Three dots: "Brian Eno," "Eno, Brian," "B. Eno" |
-| Cluster C points | `source_artist` | Three dots: "Bjork," "Bjork Gudmundsdottir," "bjork" |
+| Cluster A points | `source_artist` | Four dots: "Elena Voss," "E. Voss," "VOSS, ELENA," "Elena K. Voss" |
+| Cluster B points | `source_artist` | Three dots: "Marco Reis," "Reis, Marco," "M. Reis" |
+| Cluster C points | `source_artist` | Three dots: "Solveig," "Solveig Halldórsdóttir," "solveig" |
 | Cluster boundaries | `entity_resolve` | Dashed ellipses around each cluster |
 | Within-cluster distance annotation | `data_mono` | "cosine dist < 0.1" label per cluster |
 | Between-cluster distance | `data_mono` | "d = 0.85" double-headed arrow between clusters |
@@ -85,7 +85,7 @@ The key message is: "In embedding space, semantically equivalent name variants c
 
 1. Distance thresholds (0.1 within, 0.7 between) are ILLUSTRATIVE -- do NOT present as tuned hyperparameters.
 2. The ambiguous zone (0.1-0.7) explicitly escalates to LLM or Splink -- do NOT claim embeddings solve everything.
-3. Artist examples: Imogen Heap, Brian Eno, Bjork -- these are real artists chosen for name variation diversity.
+3. Artist examples: Elena Voss, Marco Reis, Solveig -- these are FICTIONAL artist names chosen to avoid image generation content filters while demonstrating name variation patterns.
 4. The projection is 2D (t-SNE or UMAP) from 384-768 dimensional space -- do NOT claim the 2D view is the actual space.
 5. Do NOT specify a particular embedding model name -- say "sentence-transformers or similar."
 6. Cosine DISTANCE (not similarity) is used -- distance = 1 - similarity. Small distance = more similar.
@@ -94,16 +94,16 @@ The key message is: "In embedding space, semantically equivalent name variants c
 
 ## Alt Text
 
-Theory visualization: 2D t-SNE/UMAP projection of entity embeddings for music attribution showing three tight clusters for Imogen Heap, Brian Eno, and Bjork name variants -- within-cluster cosine distance below 0.1, between-cluster distance above 0.7, and an ambiguous zone that escalates to LLM or Splink -- demonstrating how vector space captures semantic similarity for entity resolution in music metadata beyond string matching.
+Theory visualization: 2D t-SNE/UMAP projection of entity embeddings for music attribution showing three tight clusters for Elena Voss, Marco Reis, and Solveig name variants -- within-cluster cosine distance below 0.1, between-cluster distance above 0.7, and an ambiguous zone that escalates to LLM or Splink -- demonstrating how vector space captures semantic similarity for entity resolution in music metadata beyond string matching.
 
 ## Image Embed
 
 ### For GitHub README / MkDocs (repo-root-relative)
 
-![Theory visualization: 2D t-SNE/UMAP projection of entity embeddings for music attribution showing three tight clusters for Imogen Heap, Brian Eno, and Bjork name variants -- within-cluster cosine distance below 0.1, between-cluster distance above 0.7, and an ambiguous zone that escalates to LLM or Splink -- demonstrating how vector space captures semantic similarity for entity resolution in music metadata beyond string matching.](docs/figures/repo-figures/assets/fig-theory-17-embedding-space.jpg)
+![Theory visualization: 2D t-SNE/UMAP projection of entity embeddings for music attribution showing three tight clusters for Elena Voss, Marco Reis, and Solveig name variants -- within-cluster cosine distance below 0.1, between-cluster distance above 0.7, and an ambiguous zone that escalates to LLM or Splink -- demonstrating how vector space captures semantic similarity for entity resolution in music metadata beyond string matching.](docs/figures/repo-figures/assets/fig-theory-17-embedding-space.jpg)
 
 *Figure 17. Embedding space visualization: name variants for the same artist cluster tightly in vector space (cosine distance < 0.1) even when string forms differ, while distinct entities remain well-separated (distance > 0.7), with an ambiguous zone (0.1-0.7) that escalates to more expensive resolution methods.*
 
 ### From this figure plan (relative)
 
-![Theory visualization: 2D t-SNE/UMAP projection of entity embeddings for music attribution showing three tight clusters for Imogen Heap, Brian Eno, and Bjork name variants -- within-cluster cosine distance below 0.1, between-cluster distance above 0.7, and an ambiguous zone that escalates to LLM or Splink -- demonstrating how vector space captures semantic similarity for entity resolution in music metadata beyond string matching.](../assets/fig-theory-17-embedding-space.jpg)
+![Theory visualization: 2D t-SNE/UMAP projection of entity embeddings for music attribution showing three tight clusters for Elena Voss, Marco Reis, and Solveig name variants -- within-cluster cosine distance below 0.1, between-cluster distance above 0.7, and an ambiguous zone that escalates to LLM or Splink -- demonstrating how vector space captures semantic similarity for entity resolution in music metadata beyond string matching.](../assets/fig-theory-17-embedding-space.jpg)
