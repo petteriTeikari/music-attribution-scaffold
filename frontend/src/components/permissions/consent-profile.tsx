@@ -5,9 +5,11 @@
  *
  * Groups the 14-entry permission model into 3 editorial rows with
  * allow/ask/deny counts, exception callouts, and educational tooltips.
+ * Count dots expand on hover to show which permissions belong to each bucket.
+ * Includes sequenced onboarding tooltips for novice users.
  */
 
-import { useState, useId } from "react";
+import { useState, useEffect, useId, useCallback } from "react";
 import type { PermissionEntry } from "@/lib/types/permissions";
 import {
   buildConsentGroups,
@@ -15,19 +17,66 @@ import {
   type ConsentGroup,
 } from "@/lib/permissions/consent-groups";
 
+const ONBOARDING_STEPS = [
+  {
+    id: "consent-header",
+    content:
+      "This is your consent profile — a summary of how you've configured permissions across your catalog. It shows three groups of permissions at a glance.",
+  },
+  {
+    id: "count-dots",
+    content:
+      "Hover over these count dots to see exactly which permissions are in each category. Click any entry to jump straight to it in the Permission Matrix below.",
+  },
+  {
+    id: "permission-tab",
+    content:
+      "Use the Permission Matrix tab to see and edit individual permission settings. The Consent Graph tab shows how your permissions flow through the ecosystem.",
+  },
+];
+
 interface ConsentProfileProps {
   permissions: PermissionEntry[];
+  onNavigateToEntry?: (permissionType: string) => void;
+  onboardingEnabled?: boolean;
 }
 
-export function ConsentProfile({ permissions }: ConsentProfileProps) {
+export function ConsentProfile({
+  permissions,
+  onNavigateToEntry,
+  onboardingEnabled = false,
+}: ConsentProfileProps) {
   const groups = buildConsentGroups(permissions);
+  const [onboardingStep, setOnboardingStep] = useState<number>(-1);
+
+  useEffect(() => {
+    if (onboardingEnabled) {
+      const timer = setTimeout(() => setOnboardingStep(0), 400);
+      return () => clearTimeout(timer);
+    }
+  }, [onboardingEnabled]);
+
+  const advanceOnboarding = useCallback(() => {
+    setOnboardingStep((prev) => {
+      const next = prev + 1;
+      return next < ONBOARDING_STEPS.length ? next : -1;
+    });
+  }, []);
 
   return (
     <div className="mb-8">
       {/* Header */}
-      <span className="editorial-caps text-xs text-accent block mb-4">
-        Consent Profile
-      </span>
+      <div className="relative">
+        <span className="editorial-caps text-xs text-accent block mb-4">
+          Consent Profile
+        </span>
+        {onboardingStep === 0 && (
+          <OnboardingTooltip
+            step={ONBOARDING_STEPS[0]}
+            onDismiss={advanceOnboarding}
+          />
+        )}
+      </div>
 
       {/* Identity row */}
       <div className="py-4">
@@ -69,14 +118,58 @@ export function ConsentProfile({ permissions }: ConsentProfileProps) {
       <div className="accent-line" style={{ opacity: 0.2 }} />
 
       {/* Group rows */}
-      {groups.map((group) => (
-        <GroupRow key={group.roman} group={group} />
+      {groups.map((group, i) => (
+        <GroupRow
+          key={group.roman}
+          group={group}
+          onNavigateToEntry={onNavigateToEntry}
+          showOnboardingDots={i === 0 && onboardingStep === 1}
+          onDismissOnboarding={advanceOnboarding}
+        />
       ))}
     </div>
   );
 }
 
-function GroupRow({ group }: { group: ConsentGroup }) {
+function OnboardingTooltip({
+  step,
+  onDismiss,
+}: {
+  step: { id: string; content: string };
+  onDismiss: () => void;
+}) {
+  return (
+    <div
+      role="tooltip"
+      className="absolute z-50 left-0 top-full mt-1 px-3 py-2 text-xs max-w-72"
+      style={{
+        backgroundColor: "var(--color-surface-elevated)",
+        border: "1px solid var(--color-accent)",
+        boxShadow: "0 2px 8px rgba(0,0,0,0.12)",
+      }}
+    >
+      <p className="text-body">{step.content}</p>
+      <button
+        onClick={onDismiss}
+        className="mt-1 text-accent underline underline-offset-2 text-xs"
+      >
+        Got it
+      </button>
+    </div>
+  );
+}
+
+function GroupRow({
+  group,
+  onNavigateToEntry,
+  showOnboardingDots,
+  onDismissOnboarding,
+}: {
+  group: ConsentGroup;
+  onNavigateToEntry?: (permissionType: string) => void;
+  showOnboardingDots?: boolean;
+  onDismissOnboarding?: () => void;
+}) {
   return (
     <div className="py-4">
       <div className="flex items-center justify-between gap-4">
@@ -89,11 +182,24 @@ function GroupRow({ group }: { group: ConsentGroup }) {
             {group.label}
           </span>
         </div>
-        <div className="flex items-center gap-3">
-          <CountDots counts={group.counts} />
+        <div className="relative flex items-center gap-3">
+          <CountDots
+            counts={group.counts}
+            entries={group.entries}
+            onNavigateToEntry={onNavigateToEntry}
+          />
           <InfoTooltip text={group.tooltip} />
+          {showOnboardingDots && onDismissOnboarding && (
+            <OnboardingTooltip
+              step={ONBOARDING_STEPS[1]}
+              onDismiss={onDismissOnboarding}
+            />
+          )}
         </div>
       </div>
+      {group.subtitle && (
+        <p className="mt-1 ml-10 text-xs text-muted">{group.subtitle}</p>
+      )}
 
       {/* Exceptions */}
       {group.exceptions.map((ex) => (
@@ -120,34 +226,122 @@ function GroupRow({ group }: { group: ConsentGroup }) {
   );
 }
 
-function CountDots({ counts }: { counts: { allow: number; ask: number; deny: number } }) {
+function isAllowValue(value: string): boolean {
+  return value === "ALLOW" || value === "ALLOW_WITH_ATTRIBUTION" || value === "ALLOW_WITH_ROYALTY";
+}
+
+interface CountDotsProps {
+  counts: { allow: number; ask: number; deny: number };
+  entries: PermissionEntry[];
+  onNavigateToEntry?: (permissionType: string) => void;
+}
+
+function CountDots({ counts, entries, onNavigateToEntry }: CountDotsProps) {
+  const allowEntries = entries.filter((e) => isAllowValue(e.value));
+  const askEntries = entries.filter((e) => e.value === "ASK");
+  const denyEntries = entries.filter((e) => e.value === "DENY");
+
   return (
     <div className="flex items-center gap-3 data-mono text-xs">
-      <span className="flex items-center gap-1">
-        <span
-          className="inline-block h-1.5 w-1.5 rounded-full"
-          style={{ backgroundColor: "var(--color-permission-allow)" }}
-          aria-hidden="true"
-        />
-        <span>{counts.allow} allow</span>
-      </span>
-      <span className="flex items-center gap-1">
-        <span
-          className="inline-block h-1.5 w-1.5 rounded-full"
-          style={{ backgroundColor: "var(--color-permission-ask)" }}
-          aria-hidden="true"
-        />
-        <span>{counts.ask} ask</span>
-      </span>
-      <span className="flex items-center gap-1">
-        <span
-          className="inline-block h-1.5 w-1.5 rounded-full"
-          style={{ backgroundColor: "var(--color-permission-deny)" }}
-          aria-hidden="true"
-        />
-        <span>{counts.deny} deny</span>
-      </span>
+      <CountBucket
+        count={counts.allow}
+        label="allow"
+        colorVar="var(--color-permission-allow)"
+        entries={allowEntries}
+        onNavigateToEntry={onNavigateToEntry}
+      />
+      <CountBucket
+        count={counts.ask}
+        label="ask"
+        colorVar="var(--color-permission-ask)"
+        entries={askEntries}
+        onNavigateToEntry={onNavigateToEntry}
+      />
+      <CountBucket
+        count={counts.deny}
+        label="deny"
+        colorVar="var(--color-permission-deny)"
+        entries={denyEntries}
+        onNavigateToEntry={onNavigateToEntry}
+      />
     </div>
+  );
+}
+
+function CountBucket({
+  count,
+  label,
+  colorVar,
+  entries,
+  onNavigateToEntry,
+}: {
+  count: number;
+  label: string;
+  colorVar: string;
+  entries: PermissionEntry[];
+  onNavigateToEntry?: (permissionType: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+
+  if (count === 0) {
+    return (
+      <span className="flex items-center gap-1">
+        <span
+          className="inline-block h-1.5 w-1.5 rounded-full"
+          style={{ backgroundColor: colorVar }}
+          aria-hidden="true"
+        />
+        <span>{count} {label}</span>
+      </span>
+    );
+  }
+
+  return (
+    <span
+      className="relative flex items-center gap-1 cursor-pointer"
+      data-count-bucket
+      aria-haspopup="listbox"
+      onMouseEnter={() => setOpen(true)}
+      onMouseLeave={() => setOpen(false)}
+      onFocus={() => setOpen(true)}
+      onBlur={() => setOpen(false)}
+      tabIndex={0}
+    >
+      <span
+        className="inline-block h-1.5 w-1.5 rounded-full"
+        style={{ backgroundColor: colorVar }}
+        aria-hidden="true"
+      />
+      <span>{count} {label}</span>
+      {open && (
+        <span
+          role="listbox"
+          className="absolute z-50 top-full right-0 mt-1 py-1 min-w-48 text-xs"
+          style={{
+            backgroundColor: "var(--color-surface-elevated)",
+            border: "1px solid var(--color-border)",
+            boxShadow: "0 2px 8px rgba(0,0,0,0.12)",
+          }}
+        >
+          {entries.map((entry) => (
+            <span
+              key={entry.permission_type}
+              role="option"
+              aria-selected={false}
+              className="flex items-center gap-2 px-3 py-1.5 text-body hover:bg-surface-secondary cursor-pointer transition-colors duration-100"
+              onClick={() => onNavigateToEntry?.(entry.permission_type)}
+            >
+              <span
+                className="inline-block h-1.5 w-1.5 rounded-full shrink-0"
+                style={{ backgroundColor: colorVar }}
+                aria-hidden="true"
+              />
+              {formatPermissionType(entry.permission_type)}
+            </span>
+          ))}
+        </span>
+      )}
+    </span>
   );
 }
 
