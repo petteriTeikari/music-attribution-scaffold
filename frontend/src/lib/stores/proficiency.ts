@@ -66,6 +66,18 @@ export const proficiencyLevelsAtom = atom((get) => {
 });
 
 /**
+ * Novice tooltip queue — ensures only one auto-shown tooltip is visible at a time.
+ * Tooltips register their IDs on mount; only the first in the queue auto-shows.
+ * When dismissed, it's removed and the next one becomes active.
+ */
+export const noviceTooltipQueueAtom = atom<string[]>([]);
+
+export const activeNoviceTooltipAtom = atom<string | null>((get) => {
+  const queue = get(noviceTooltipQueueAtom);
+  return queue.length > 0 ? queue[0] : null;
+});
+
+/**
  * Derived atom: overall proficiency (max of individual skills).
  */
 export const overallProficiencyAtom = atom((get) => {
