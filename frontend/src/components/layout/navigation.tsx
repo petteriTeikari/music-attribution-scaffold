@@ -8,6 +8,7 @@ import { userRoleAtom } from "@/lib/stores/mode";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { RoleToggle } from "@/components/mode/role-toggle";
 import { NotificationBadge } from "@/components/notifications/notification-badge";
+import Image from "next/image";
 import { AuraclesBadge, AuraclesBadgeMobile } from "@/components/layout/auracles-badge";
 import { AdaptiveTooltip } from "@/components/ui/adaptive-tooltip";
 
@@ -58,8 +59,8 @@ export function Navigation() {
         style={{ width: "var(--sidebar-width)" }}
         aria-label="Main navigation"
       >
-        {/* Top: Logo link */}
-        <div className="flex flex-col items-center pt-4">
+        {/* Top: Logo + author branding */}
+        <div className="flex flex-col items-center pt-4 gap-3">
           <Link
             href="/"
             className="flex h-8 w-8 items-center justify-center text-sm font-bold text-heading hover:text-accent transition-colors duration-150"
@@ -67,6 +68,28 @@ export function Navigation() {
           >
             MA
           </Link>
+          <div className="flex flex-col items-center gap-1.5">
+            <Image
+              src="/images/petteri-teikari.png"
+              alt="Petteri Teikari"
+              width={36}
+              height={36}
+              className="rounded-full opacity-80 hover:opacity-100 transition-opacity duration-150"
+            />
+            <span
+              className="text-muted leading-none"
+              style={{
+                writingMode: "vertical-rl",
+                transform: "rotate(180deg)",
+                fontSize: "8px",
+                letterSpacing: "0.08em",
+                fontFamily: "var(--font-sans)",
+                fontWeight: 500,
+              }}
+            >
+              Petteri Teikari, PhD
+            </span>
+          </div>
         </div>
 
         {/* Middle: Rotated nav links */}
