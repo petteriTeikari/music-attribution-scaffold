@@ -4,12 +4,11 @@
  * Enforces single-source-of-truth for design tokens by catching
  * patterns that bypass Tailwind v4's type system.
  *
- * Background: In Tailwind v4, `text-[var(--text-xl)]` generates
- * `color: var(--text-xl)` instead of `font-size: var(--text-xl)`
- * because the `text-` prefix is ambiguous (font-size OR color).
- * This silently breaks all font sizes with no build error.
+ * Background: In Tailwind v4, arbitrary values like text-[var(...)]
+ * generate color instead of font-size because the text- prefix is
+ * ambiguous (font-size OR color). This silently breaks font sizes.
  *
- * The `[var(--*)]` arbitrary value syntax is BANNED in className
+ * The [var(--...)] arbitrary value syntax is BANNED in className
  * strings. All tokens are either registered in @theme (colors,
  * radius, shadows) or map to Tailwind's built-in scale (spacing,
  * transitions).
@@ -50,15 +49,12 @@ describe("CSS Token Lint", () => {
   const tsxFiles = findTsxFiles(SRC_DIR);
 
   describe("[var(--*)] arbitrary values are banned in className strings", () => {
-    // Catch ALL [var(--*)] patterns in className-like contexts.
-    // This covers spacing, colors, radius, transitions, shadows — everything.
+    // Catch ALL [var(--...)] patterns in className-like contexts.
+    // This covers spacing, colors, accent, radius, transitions, shadows.
     //
-    // Correct alternatives:
-    //   Spacing:     px-[var(--space-8)]        → px-8
-    //   Colors:      text-[var(--color-heading)] → text-heading (via @theme)
-    //   Radius:      rounded-[var(--radius-md)]  → rounded-md (via @theme)
-    //   Transitions: duration-[var(--transition-fast)] → duration-150
-    //   Shadows:     shadow-[var(--shadow-md)]   → shadow-md (via @theme)
+    // Correct alternatives (use Tailwind utilities or @theme tokens):
+    //   Spacing → px-8, Colors → text-heading, Accent → accent-primary,
+    //   Radius → rounded-md, Transitions → duration-150, Shadows → shadow-md
     const VAR_ARBITRARY_PATTERN = /\[var\(--/g;
 
     it.each(tsxFiles)("no [var(--*)] arbitrary values in %s", (filePath) => {
@@ -72,14 +68,11 @@ describe("CSS Token Lint", () => {
         // Skip import lines
         if (line.trim().startsWith("import ")) return;
         // Allow inline style objects — var(--*) is fine in style={{ }}
-        // Allow CSS accent-color property — accent-[var(--color-primary)] is valid CSS, not a Tailwind utility
-        // We only ban [var(-- which is the Tailwind arbitrary value syntax
+        // We ban ALL [var(-- which is the Tailwind arbitrary value syntax.
+        // The accent-color CSS property via [var()] is NOT an exception.
+        // Turbopack's parser rejects the generated CSS. Use accent-primary.
         const matches = line.match(VAR_ARBITRARY_PATTERN);
         if (matches) {
-          // Exception: accent-[var(--color-*)] is CSS accent-color, not a Tailwind utility
-          if (line.includes("accent-[var(--color-")) {
-            return;
-          }
           violations.push(
             `  Line ${i + 1}: ${matches.length} instance(s) — ${line.trim().substring(0, 100)}`,
           );
@@ -89,12 +82,15 @@ describe("CSS Token Lint", () => {
       expect(
         violations,
         `Found [var(--*)] arbitrary value patterns (use Tailwind utilities or @theme tokens):\n${violations.join("\n")}\n\n` +
+          // NOTE: Fix guide uses string concat to prevent Tailwind from
+          // scanning these examples as class names and generating broken CSS.
           `Fix guide:\n` +
-          `  Spacing:     px-[var(--space-8)] → px-8\n` +
-          `  Colors:      text-[var(--color-heading)] → text-heading\n` +
-          `  Radius:      rounded-[var(--radius-md)] → rounded-md\n` +
-          `  Transitions: duration-[var(--transition-fast)] → duration-150\n` +
-          `  Shadows:     shadow-[var(--shadow-md)] → shadow-md`,
+          `  Spacing:     px-` + `[var(--space-8)] → px-8\n` +
+          `  Colors:      text-` + `[var(--color-heading)] → text-heading\n` +
+          `  Accent:      accent-` + `[var(--color-primary)] → accent-primary\n` +
+          `  Radius:      rounded-` + `[var(--radius-md)] → rounded-md\n` +
+          `  Transitions: duration-` + `[var(--transition-fast)] → duration-150\n` +
+          `  Shadows:     shadow-` + `[var(--shadow-md)] → shadow-md`,
       ).toHaveLength(0);
     });
   });
@@ -166,6 +162,23 @@ describe("CSS Token Lint", () => {
         violations,
         `Found references to undefined CSS tokens:\n${violations.join("\n")}`,
       ).toHaveLength(0);
+    });
+  });
+
+  describe("globals.css must not contain feTurbulence SVG filter", () => {
+    it("no feTurbulence noise overlay (CPU-rendered, causes jank)", () => {
+      const globalsPath = resolve(SRC_DIR, "app", "globals.css");
+      const content = readFileSync(globalsPath, "utf-8");
+      expect(content).not.toContain("feTurbulence");
+      expect(content).not.toContain("fractalNoise");
+    });
+  });
+
+  describe("globals.css excludes __tests__ from Tailwind class scanning", () => {
+    it("@source not directive excludes test directory", () => {
+      const globalsPath = resolve(SRC_DIR, "app", "globals.css");
+      const content = readFileSync(globalsPath, "utf-8");
+      expect(content).toContain('@source not "../__tests__"');
     });
   });
 

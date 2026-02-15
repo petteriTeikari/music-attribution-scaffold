@@ -1,0 +1,198 @@
+<?xml version="1.0" encoding="utf-8"?>
+<plan version="2.0" project="music-attribution-scaffold" branch="fix/polish-ui-for-preprint-repo">
+  <metadata>
+    <title>Frontend Performance Optimization — Full Execution</title>
+    <date>2026-02-15</date>
+    <predecessor>frontend-performance-optimization-plan.md</predecessor>
+    <predecessor>frontend-performance-optimization-plan-double-check.md</predecessor>
+    <baseline_tests>362</baseline_tests>
+  </metadata>
+
+  <!-- ═══════════════════════════════════════════════════════════════════
+       COMPLETED TASKS (H1-H6) — already done in commit 1972052 + fa5e21d
+       ═══════════════════════════════════════════════════════════════════ -->
+  <task id="H1" status="DONE" commit="1972052">
+    <name>Dynamic import PostHog</name>
+  </task>
+  <task id="H2" status="DONE" commit="1972052">
+    <name>Dynamic import CopilotKit</name>
+  </task>
+  <task id="H3" status="DONE" commit="1972052">
+    <name>Expand optimizePackageImports</name>
+  </task>
+  <task id="H4" status="DONE" commit="1972052">
+    <name>Enable Turbopack</name>
+  </task>
+  <task id="H5" status="DONE" commit="1972052">
+    <name>Add Jotai Provider</name>
+  </task>
+  <task id="H6" status="DONE" commit="1972052">
+    <name>Remove feTurbulence</name>
+  </task>
+
+  <!-- ═══════════════════════════════════════════════════════════════════
+       REMAINING TASKS — to implement now
+       ═══════════════════════════════════════════════════════════════════ -->
+
+  <task id="T7">
+    <name>Install @next/bundle-analyzer</name>
+    <files>
+      <file action="edit">frontend/next.config.ts</file>
+      <file action="edit">frontend/package.json</file>
+    </files>
+    <spec>
+      Add withBundleAnalyzer wrapper to next.config.ts.
+      Add "analyze" script to package.json.
+      ANALYZE=true enables treemap generation.
+    </spec>
+  </task>
+
+  <task id="T8">
+    <name>Enable React Compiler</name>
+    <files>
+      <file action="edit">frontend/next.config.ts</file>
+    </files>
+    <spec>
+      Add reactCompiler: true to nextConfig.
+      babel-plugin-react-compiler already installed.
+      Auto-memoizes all components and hooks at build time.
+    </spec>
+  </task>
+
+  <task id="T9">
+    <name>Implement LazyMotion</name>
+    <files>
+      <file action="edit">frontend/src/app/page.tsx</file>
+    </files>
+    <spec>
+      Replace: import { motion } from "motion/react"
+      With: import { LazyMotion, domAnimation, m } from "motion/react"
+      Wrap page content in LazyMotion features={domAnimation}.
+      Replace all motion.div/h1/p/etc with m.div/h1/p/etc.
+      Reduces motion bundle ~50% (~15kB).
+    </spec>
+  </task>
+
+  <task id="T10">
+    <name>Fix var(--text-*) in confidence-gauge</name>
+    <files>
+      <file action="edit">frontend/src/components/confidence/confidence-gauge.tsx</file>
+    </files>
+    <spec>
+      SIZE_CONFIG uses fontSize: "var(--text-sm)" etc.
+      These conflict with Tailwind v4's internal --text-* scale.
+      Replace with fixed rem values:
+        var(--text-xs) -> 0.75rem
+        var(--text-sm) -> 0.875rem
+        var(--text-base) -> 1rem
+        var(--text-xl) -> 1.25rem
+        var(--text-3xl) -> 1.875rem
+    </spec>
+  </task>
+
+  <task id="T11">
+    <name>Precompute waveform inline styles</name>
+    <files>
+      <file action="edit">frontend/src/app/page.tsx</file>
+    </files>
+    <spec>
+      Move the 64-element waveform style array to a module-level constant.
+      Avoids recreating 64 style objects and computing Math.sin 128 times per render.
+    </spec>
+  </task>
+
+  <task id="T12">
+    <name>Add image sizes attributes</name>
+    <files>
+      <file action="edit">frontend/src/app/page.tsx</file>
+      <file action="edit">frontend/src/components/citations/citation-overlay.tsx</file>
+    </files>
+    <spec>
+      Add sizes prop to all next/image components missing it.
+      Without sizes, Next.js serves intrinsic dimensions regardless of viewport.
+      Process figure: sizes="(max-width: 768px) 100vw, 384px"
+      Group figures: sizes="(max-width: 1024px) 0px, 384px"
+      Assurance figure: sizes="(max-width: 768px) 100vw, 768px"
+      Citation overlay images: sizes="(max-width: 768px) 100vw, 640px"
+    </spec>
+  </task>
+
+  <task id="T13">
+    <name>Fix Set spread anti-pattern</name>
+    <files>
+      <file action="edit">frontend/src/app/review/page.tsx</file>
+    </files>
+    <spec>
+      Line 57: new Set([...prev, id]) spreads entire set.
+      Fix: const next = new Set(prev); next.add(id); return next;
+    </spec>
+  </task>
+
+  <task id="T14">
+    <name>Convert .find() to Map lookups</name>
+    <files>
+      <file action="edit">frontend/src/app/page.tsx</file>
+    </files>
+    <spec>
+      page.tsx:312: TOPIC_CARDS.find() inside nested loops.
+      Create a module-level Map: TOPIC_CARDS_MAP for O(1) lookup.
+    </spec>
+  </task>
+
+  <task id="T15">
+    <name>Tab-level code splitting — permissions page</name>
+    <files>
+      <file action="edit">frontend/src/app/permissions/page.tsx</file>
+    </files>
+    <spec>
+      Dynamic import MCPQueryMockup and AuditLog since only one tab visible at a time.
+      Use next/dynamic with ssr: false, loading: skeleton placeholder.
+    </spec>
+  </task>
+
+  <task id="T16">
+    <name>Tab-level code splitting — review page</name>
+    <files>
+      <file action="edit">frontend/src/app/review/page.tsx</file>
+    </files>
+    <spec>
+      Dynamic import AgentFeedbackFlow — only rendered when feedbackWork is set.
+      Use next/dynamic with ssr: false.
+    </spec>
+  </task>
+
+  <task id="T17">
+    <name>CSS containment for sticky images</name>
+    <files>
+      <file action="edit">frontend/src/app/page.tsx</file>
+    </files>
+    <spec>
+      Add style={{ contain: "layout" }} to sticky image containers.
+      Prevents layout recalculation on every scroll for 600x1200 images.
+    </spec>
+  </task>
+
+  <task id="T18">
+    <name>Verify all tests pass + build succeeds</name>
+    <files/>
+    <spec>
+      Run vitest to confirm all tests still pass.
+      Run next build to confirm React Compiler + all changes compile.
+      Fix any failures.
+    </spec>
+  </task>
+
+  <!-- Deferred tasks — not for this session -->
+  <task id="D1" status="DEFERRED">
+    <name>Lighthouse CI</name>
+  </task>
+  <task id="D2" status="DEFERRED">
+    <name>size-limit</name>
+  </task>
+  <task id="D3" status="DEFERRED">
+    <name>CodSpeed benchmarks</name>
+  </task>
+  <task id="D4" status="DEFERRED">
+    <name>Grafana Faro</name>
+  </task>
+</plan>

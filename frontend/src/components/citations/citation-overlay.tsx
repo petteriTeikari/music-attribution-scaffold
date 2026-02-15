@@ -78,6 +78,7 @@ export function CitationOverlay({
                     alt={imageAlt || figurePlan}
                     width={1200}
                     height={900}
+                    sizes="(max-width: 768px) 100vw, 640px"
                     className="w-full h-auto"
                   />
                 </div>

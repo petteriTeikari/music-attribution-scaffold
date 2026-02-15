@@ -13,6 +13,7 @@ import {
 } from "@/lib/stores/works";
 import { apiClient } from "@/lib/api/api-client";
 import { WorkCard } from "@/components/works/work-card";
+import { AdaptiveTooltip } from "@/components/ui/adaptive-tooltip";
 
 const SORT_OPTIONS: { value: SortField; label: string }[] = [
   { value: "confidence", label: "Confidence" },
@@ -49,9 +50,17 @@ export default function WorksPage() {
         <span className="editorial-caps text-xs text-accent block mb-2">
           Catalog
         </span>
-        <h1 className="editorial-display text-4xl text-heading">
-          Work Catalog
-        </h1>
+        <AdaptiveTooltip
+          id="works-confidence-intro"
+          skill="confidence_reading"
+          content="Each work shows a confidence score (0-100) based on source agreement and conformal prediction. Hover the score to see prediction details."
+          compactContent="Hover scores for conformal prediction details."
+          placement="right"
+        >
+          <h1 className="editorial-display text-4xl text-heading">
+            Work Catalog
+          </h1>
+        </AdaptiveTooltip>
         <p className="mt-2 text-base text-label">
           Attribution records with confidence scoring and provenance lineage.
         </p>

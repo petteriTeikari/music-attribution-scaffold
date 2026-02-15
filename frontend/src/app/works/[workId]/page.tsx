@@ -10,6 +10,11 @@ import { AssuranceBadge } from "@/components/works/assurance-badge";
 import { CreditList } from "@/components/attribution/credit-list";
 import { ProvenanceTimeline } from "@/components/provenance/provenance-timeline";
 import { ProvenancePanel } from "@/components/citations/provenance-panel";
+import { ProvenanceDag } from "@/components/provenance/provenance-dag";
+import { ExternalLinkBadge } from "@/components/works/external-link-badge";
+import { getExternalLinks, MUSICBRAINZ_ARTIST_URL } from "@/lib/data/external-links";
+import { trackEvent, EVENTS } from "@/lib/analytics/events";
+import { AdaptiveTooltip } from "@/components/ui/adaptive-tooltip";
 
 export default function WorkDetailPage() {
   const params = useParams();
@@ -61,6 +66,10 @@ export default function WorkDetailPage() {
     );
   }
 
+  const externalLinks = getExternalLinks(work.attribution_id);
+  const hasExternalLinks =
+    externalLinks.musicbrainz_recording_url || externalLinks.discogs_url;
+
   return (
     <div className="px-8 py-10">
       {/* Breadcrumb */}
@@ -83,7 +92,15 @@ export default function WorkDetailPage() {
       <div className="grid gap-8 lg:grid-cols-[auto_1fr] items-start">
         {/* Large confidence display */}
         <div className="flex flex-col items-center">
-          <ConfidenceGauge score={work.confidence_score} size="lg" />
+          <AdaptiveTooltip
+            id="detail-gauge-intro"
+            skill="confidence_reading"
+            content="This gauge shows overall attribution confidence. Green (85%+) means high agreement across sources. The score updates as new evidence arrives through the provenance pipeline."
+            compactContent="Confidence from multi-source agreement."
+            placement="right"
+          >
+            <ConfidenceGauge score={work.confidence_score} size="lg" />
+          </AdaptiveTooltip>
         </div>
 
         {/* Work info */}
@@ -96,7 +113,14 @@ export default function WorkDetailPage() {
           </p>
 
           <div className="mt-4 flex flex-wrap items-center gap-3">
-            <AssuranceBadge level={work.assurance_level} />
+            <AdaptiveTooltip
+              id="detail-assurance-intro"
+              skill="confidence_reading"
+              content="Assurance levels range from A0 (no data) to A3 (artist-verified). Higher levels require more independent verification sources."
+              compactContent="A0-A3: provenance tiers."
+            >
+              <AssuranceBadge level={work.assurance_level} />
+            </AdaptiveTooltip>
             <ConfidenceBadge score={work.confidence_score} />
             <span className="text-sm text-muted data-mono">
               Source agreement: {Math.round(work.source_agreement * 100)}%
@@ -129,6 +153,61 @@ export default function WorkDetailPage() {
 
       <div className="accent-line my-8" style={{ opacity: 0.3 }} />
 
+      {/* External sources section */}
+      <div>
+        <div className="flex items-center gap-2 mb-2">
+          <span className="accent-square-sm" aria-hidden="true" />
+          <span className="editorial-caps text-xs text-accent">
+            External Sources
+          </span>
+        </div>
+
+        {hasExternalLinks ? (
+          <div className="flex flex-wrap items-center gap-4">
+            {externalLinks.musicbrainz_recording_url && (
+              <ExternalLinkBadge
+                source="musicbrainz"
+                url={externalLinks.musicbrainz_recording_url}
+                onClick={() =>
+                  trackEvent(EVENTS.EXTERNAL_LINK_CLICKED, {
+                    attribution_id: work.attribution_id,
+                    source: "musicbrainz",
+                    url: externalLinks.musicbrainz_recording_url!,
+                  })
+                }
+              />
+            )}
+            {externalLinks.discogs_url && (
+              <ExternalLinkBadge
+                source="discogs"
+                url={externalLinks.discogs_url}
+                onClick={() =>
+                  trackEvent(EVENTS.EXTERNAL_LINK_CLICKED, {
+                    attribution_id: work.attribution_id,
+                    source: "discogs",
+                    url: externalLinks.discogs_url!,
+                  })
+                }
+              />
+            )}
+            <a
+              href={MUSICBRAINZ_ARTIST_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-xs text-muted underline underline-offset-2 hover:text-heading"
+            >
+              MusicBrainz artist profile
+            </a>
+          </div>
+        ) : (
+          <p className="text-sm text-muted">
+            No external sources verified for this work.
+          </p>
+        )}
+      </div>
+
+      <div className="accent-line my-8" style={{ opacity: 0.3 }} />
+
       {/* Credits section */}
       <div>
         <span className="editorial-caps text-xs text-accent block mb-2">
@@ -142,6 +221,28 @@ export default function WorkDetailPage() {
       {/* Provenance sources panel (Perplexity-like) */}
       <div>
         <ProvenancePanel events={work.provenance_chain} />
+      </div>
+
+      <div className="accent-line my-8" style={{ opacity: 0.3 }} />
+
+      {/* Provenance DAG */}
+      <div>
+        <span className="editorial-caps text-xs text-accent block mb-2">
+          Pipeline
+        </span>
+        <h3 className="editorial-display text-xl text-heading mb-4">
+          Provenance DAG
+        </h3>
+        <ProvenanceDag
+          events={work.provenance_chain}
+          attributionId={work.attribution_id}
+          onExpand={() =>
+            trackEvent(EVENTS.PROVENANCE_DAG_EXPANDED, {
+              attribution_id: work.attribution_id,
+              event_count: work.provenance_chain.length,
+            })
+          }
+        />
       </div>
 
       <div className="accent-line my-8" style={{ opacity: 0.3 }} />

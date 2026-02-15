@@ -3,6 +3,7 @@ import { Instrument_Serif, Plus_Jakarta_Sans, IBM_Plex_Mono } from "next/font/go
 import { ThemeProvider } from "@/components/theme/theme-provider";
 import { PostHogProvider } from "@/lib/analytics/posthog-provider";
 import { CopilotProvider } from "@/lib/copilot/copilot-provider";
+import { JotaiProvider } from "@/lib/jotai-provider";
 import { AppShell } from "@/components/layout/app-shell";
 import "./globals.css";
 
@@ -62,13 +63,15 @@ export default function RootLayout({
         />
       </head>
       <body>
-        <PostHogProvider>
-          <CopilotProvider>
-            <ThemeProvider>
-              <AppShell>{children}</AppShell>
-            </ThemeProvider>
-          </CopilotProvider>
-        </PostHogProvider>
+        <JotaiProvider>
+          <PostHogProvider>
+            <CopilotProvider>
+              <ThemeProvider>
+                <AppShell>{children}</AppShell>
+              </ThemeProvider>
+            </CopilotProvider>
+          </PostHogProvider>
+        </JotaiProvider>
       </body>
     </html>
   );

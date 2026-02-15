@@ -2,8 +2,8 @@ import { describe, it, expect } from "vitest";
 import { MOCK_WORKS, getWorkById } from "./mock-works";
 
 describe("MOCK_WORKS", () => {
-  it("has exactly 8 works", () => {
-    expect(MOCK_WORKS).toHaveLength(8);
+  it("has exactly 9 works", () => {
+    expect(MOCK_WORKS).toHaveLength(9);
   });
 
   it("all works have required fields", () => {

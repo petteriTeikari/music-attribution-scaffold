@@ -5,6 +5,9 @@ import type { AttributionRecord } from "@/lib/types/attribution";
 import { getConfidenceTier, getConfidenceCssVar } from "@/lib/theme/confidence";
 import { AssuranceBadge } from "./assurance-badge";
 import { SourceTag } from "./source-tag";
+import { ConfidencePopover } from "./confidence-popover";
+import { getSourceUrl } from "@/lib/data/external-links";
+import { trackEvent, EVENTS } from "@/lib/analytics/events";
 import type { Source } from "@/lib/types/enums";
 
 interface WorkCardProps {
@@ -29,15 +32,26 @@ export function WorkCard({ work }: WorkCardProps) {
       href={`/works/${work.attribution_id}`}
       className="group flex items-center gap-6 py-5 transition-colors duration-150 hover:bg-surface-secondary"
     >
-      {/* Large confidence number — editorial typography */}
-      <div className="flex-shrink-0 w-16 text-right">
-        <span
-          className="editorial-display text-3xl"
-          style={{ color }}
-        >
-          {Math.round(work.confidence_score * 100)}
-        </span>
-      </div>
+      {/* Large confidence number — editorial typography with hover popover */}
+      <ConfidencePopover
+        score={work.confidence_score}
+        conformalSet={work.conformal_set}
+        onView={() =>
+          trackEvent(EVENTS.CONFIDENCE_POPOVER_VIEWED, {
+            attribution_id: work.attribution_id,
+            confidence_score: work.confidence_score,
+          })
+        }
+      >
+        <div className="flex-shrink-0 w-16 text-right">
+          <span
+            className="editorial-display text-3xl"
+            style={{ color }}
+          >
+            {Math.round(work.confidence_score * 100)}
+          </span>
+        </div>
+      </ConfidencePopover>
 
       {/* Work info */}
       <div className="min-w-0 flex-1">
@@ -55,12 +69,29 @@ export function WorkCard({ work }: WorkCardProps) {
         </p>
       </div>
 
-      {/* Badges */}
+      {/* Badges — source tags (clickable when external link exists) */}
       <div className="hidden sm:flex items-center gap-2">
         <AssuranceBadge level={work.assurance_level} />
-        {Array.from(allSources).map((source) => (
-          <SourceTag key={source} source={source} />
-        ))}
+        {Array.from(allSources).map((source) => {
+          const url = getSourceUrl(source, work.attribution_id);
+          return (
+            <SourceTag
+              key={source}
+              source={source}
+              onNavigate={url ?? undefined}
+              onClick={
+                url
+                  ? () =>
+                      trackEvent(EVENTS.EXTERNAL_LINK_CLICKED, {
+                        attribution_id: work.attribution_id,
+                        source: source.toLowerCase(),
+                        url,
+                      })
+                  : undefined
+              }
+            />
+          );
+        })}
       </div>
 
       {/* Review indicator + version */}

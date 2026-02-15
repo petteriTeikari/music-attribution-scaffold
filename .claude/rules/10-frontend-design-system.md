@@ -98,8 +98,7 @@ See `.claude/memory/css-tailwind-v4-pitfalls.md` for details.
 
 1. **Accent squares**: `28x28px` (`.accent-square`) and `16x16px` (`.accent-square-sm`) solid coral blocks
 2. **Accent lines**: 1px horizontal (`.accent-line`) and vertical (`.accent-line-v`) in coral
-3. **Noise grain overlay**: SVG feTurbulence on `body::before` at opacity 0.035
-4. **ALL-CAPS tracking**: `.editorial-caps` utility class
+3. **ALL-CAPS tracking**: `.editorial-caps` utility class
 
 ## Component Patterns
 

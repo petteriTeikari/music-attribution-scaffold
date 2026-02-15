@@ -37,11 +37,13 @@ interface PermissionMatrixProps {
   permissions: PermissionEntry[];
   onToggle?: (permType: string, newValue: string) => void;
   readonly?: boolean;
+  highlightType?: string;
 }
 
 export function PermissionMatrix({
   permissions,
   readonly = false,
+  highlightType,
 }: PermissionMatrixProps) {
   return (
     <div className="overflow-x-auto">
@@ -67,10 +69,15 @@ export function PermissionMatrix({
             };
             const label = PERMISSION_LABELS[perm.permission_type] ?? perm.permission_type;
 
+            const isHighlighted = highlightType === perm.permission_type;
+
             return (
               <tr
                 key={perm.permission_type}
-                className="border-b border-divider"
+                id={`perm-row-${perm.permission_type}`}
+                className={`border-b border-divider transition-colors duration-300 ${
+                  isHighlighted ? "border-l-2 border-accent bg-surface-secondary" : ""
+                }`}
               >
                 <td className="py-3 pr-4 text-body">
                   {label}

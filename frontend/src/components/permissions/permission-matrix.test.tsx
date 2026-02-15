@@ -38,6 +38,27 @@ describe("PermissionMatrix", () => {
     expect(screen.getByText("Stream")).toBeInTheDocument();
   });
 
+  it("adds scroll target IDs to each row", () => {
+    const { container } = render(
+      <PermissionMatrix permissions={MOCK_PERMISSIONS} />,
+    );
+    expect(container.querySelector("#perm-row-AI_TRAINING")).toBeInTheDocument();
+    expect(container.querySelector("#perm-row-VOICE_CLONING")).toBeInTheDocument();
+    expect(container.querySelector("#perm-row-STREAM")).toBeInTheDocument();
+  });
+
+  it("highlights row when highlightType matches", () => {
+    const { container } = render(
+      <PermissionMatrix
+        permissions={MOCK_PERMISSIONS}
+        highlightType="VOICE_CLONING"
+      />,
+    );
+    const row = container.querySelector("#perm-row-VOICE_CLONING");
+    expect(row).toBeInTheDocument();
+    expect(row?.className).toContain("border-accent");
+  });
+
   it("shows correct status badges", () => {
     render(<PermissionMatrix permissions={MOCK_PERMISSIONS} />);
     expect(screen.getByText("Allow + Credit")).toBeInTheDocument();

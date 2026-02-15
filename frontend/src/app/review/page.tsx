@@ -1,15 +1,22 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+import dynamic from "next/dynamic";
 import { useAtomValue } from "jotai";
 import { useRouter } from "next/navigation";
 import { userRoleAtom } from "@/lib/stores/mode";
 import type { AttributionRecord } from "@/lib/types/attribution";
 import { apiClient } from "@/lib/api/api-client";
 import { AgentReviewQueue } from "@/components/review/agent-review-queue";
-import { AgentFeedbackFlow, type FeedbackData } from "@/components/feedback/agent-feedback-flow";
+import { AdaptiveTooltip } from "@/components/ui/adaptive-tooltip";
+import type { FeedbackData } from "@/components/feedback/agent-feedback-flow";
 import { useAttributionContext } from "@/hooks/use-attribution-context";
 import { useAgentActions } from "@/hooks/use-agent-actions";
+
+const AgentFeedbackFlow = dynamic(
+  () => import("@/components/feedback/agent-feedback-flow").then((mod) => ({ default: mod.AgentFeedbackFlow })),
+  { ssr: false },
+);
 
 export default function ReviewPage() {
   const role = useAtomValue(userRoleAtom);
@@ -54,7 +61,7 @@ export default function ReviewPage() {
   const approvedCount = approvedIds.size;
 
   function handleApprove(id: string) {
-    setApprovedIds((prev) => new Set([...prev, id]));
+    setApprovedIds((prev) => { const next = new Set(prev); next.add(id); return next; });
   }
 
   function handleApproveAll() {
@@ -94,9 +101,17 @@ export default function ReviewPage() {
         <span className="editorial-caps text-xs text-accent block mb-2">
           Review
         </span>
-        <h1 className="editorial-display text-4xl text-heading">
-          Review Queue
-        </h1>
+        <AdaptiveTooltip
+          id="review-queue-intro"
+          skill="review"
+          content="The review queue shows attributions needing human verification. The agent generates suggestions you can approve, reject, or expand for detailed reasoning. Items are sorted by review priority."
+          compactContent="Agent suggestions sorted by priority."
+          placement="right"
+        >
+          <h1 className="editorial-display text-4xl text-heading">
+            Review Queue
+          </h1>
+        </AdaptiveTooltip>
         <p className="mt-2 text-label">
           Agent-assisted attribution review with AI-generated suggestions.
         </p>

@@ -1,7 +1,7 @@
 /**
  * Mock attribution data for Imogen Heap works.
  *
- * Eight works spanning the full confidence spectrum from LEVEL_3 (0.95)
+ * Nine works spanning the full confidence spectrum from LEVEL_3 (0.95)
  * down to LEVEL_0 (0.0), demonstrating the attribution scaffold's
  * provenance chain and conformal prediction features.
  */
@@ -969,6 +969,131 @@ export const MOCK_WORKS: AttributionRecord[] = [
     review_priority: 1.0,
     created_at: "2025-02-01T10:00:00Z",
     updated_at: "2025-02-01T10:05:00Z",
+    version: 1,
+  },
+
+  // ── 9. What Have You Done To Me? ─────────────────────────────────
+  // 0.48 LOW, LEVEL_1, two sources but limited cross-verification (I Am ___, 2025)
+  {
+    schema_version: "1.0.0",
+    attribution_id: "work-009",
+    work_entity_id: "work-what-have-you-done-to-me",
+    work_title: "What Have You Done To Me?",
+    artist_name: "Imogen Heap",
+    credits: [
+      {
+        entity_id: "artist-imogen-heap",
+        entity_name: "Imogen Heap",
+        role: CreditRole.PERFORMER,
+        role_detail: "Vocals, electronics",
+        confidence: 0.72,
+        sources: [Source.MUSICBRAINZ, Source.DISCOGS],
+        assurance_level: AssuranceLevel.LEVEL_1,
+      },
+      {
+        entity_id: "artist-imogen-heap",
+        entity_name: "Imogen Heap",
+        role: CreditRole.SONGWRITER,
+        role_detail: null,
+        confidence: 0.58,
+        sources: [Source.MUSICBRAINZ],
+        assurance_level: AssuranceLevel.LEVEL_1,
+      },
+      {
+        entity_id: "artist-imogen-heap",
+        entity_name: "Imogen Heap",
+        role: CreditRole.PRODUCER,
+        role_detail: null,
+        confidence: 0.45,
+        sources: [Source.DISCOGS],
+        assurance_level: AssuranceLevel.LEVEL_1,
+      },
+    ],
+    assurance_level: AssuranceLevel.LEVEL_1,
+    confidence_score: 0.48,
+    conformal_set: {
+      coverage_level: 0.9,
+      prediction_sets: {
+        "artist-imogen-heap": [
+          CreditRole.PERFORMER,
+          CreditRole.SONGWRITER,
+          CreditRole.PRODUCER,
+          CreditRole.ENGINEER,
+        ],
+      },
+      set_sizes: { "artist-imogen-heap": 4 },
+      marginal_coverage: 0.74,
+      calibration_error: 0.095,
+      calibration_method: "histogram_binning",
+      calibration_set_size: 280,
+    },
+    source_agreement: 0.46,
+    provenance_chain: [
+      {
+        event_type: ProvenanceEventType.FETCH,
+        timestamp: "2025-03-10T12:00:00Z",
+        agent: "etl-musicbrainz-v2",
+        details: {
+          type: "fetch",
+          source: Source.MUSICBRAINZ,
+          source_id: "mb-rec-what-have-you-done",
+          records_fetched: 2,
+          rate_limited: false,
+        },
+        feedback_card_id: null,
+        step_uncertainty: null,
+        citation_index: null,
+      },
+      {
+        event_type: ProvenanceEventType.FETCH,
+        timestamp: "2025-03-10T12:02:00Z",
+        agent: "etl-discogs-v1",
+        details: {
+          type: "fetch",
+          source: Source.DISCOGS,
+          source_id: "discogs-rel-what-have-you-done",
+          records_fetched: 1,
+          rate_limited: false,
+        },
+        feedback_card_id: null,
+        step_uncertainty: null,
+        citation_index: null,
+      },
+      {
+        event_type: ProvenanceEventType.RESOLVE,
+        timestamp: "2025-03-10T12:10:00Z",
+        agent: "resolution-orchestrator-v1",
+        details: {
+          type: "resolve",
+          method: "fuzzy_string_match",
+          records_input: 5,
+          entities_output: 3,
+          confidence_range: [0.42, 0.72],
+        },
+        feedback_card_id: null,
+        step_uncertainty: null,
+        citation_index: null,
+      },
+      {
+        event_type: ProvenanceEventType.SCORE,
+        timestamp: "2025-03-10T12:15:00Z",
+        agent: "attribution-aggregator-v1",
+        details: {
+          type: "score",
+          previous_confidence: null,
+          new_confidence: 0.48,
+          scoring_method: "weighted_source_agreement",
+        },
+        feedback_card_id: null,
+        step_uncertainty: null,
+        citation_index: null,
+      },
+    ],
+    uncertainty_summary: null,
+    needs_review: true,
+    review_priority: 0.55,
+    created_at: "2025-03-10T12:00:00Z",
+    updated_at: "2025-03-10T12:15:00Z",
     version: 1,
   },
 ];

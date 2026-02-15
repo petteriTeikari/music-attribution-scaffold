@@ -8,17 +8,38 @@ import { userRoleAtom } from "@/lib/stores/mode";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { RoleToggle } from "@/components/mode/role-toggle";
 import { NotificationBadge } from "@/components/notifications/notification-badge";
+import Image from "next/image";
+import { AuraclesBadge, AuraclesBadgeMobile } from "@/components/layout/auracles-badge";
+import { AdaptiveTooltip } from "@/components/ui/adaptive-tooltip";
 
 interface NavItem {
   href: string;
   label: string;
   artistOnly?: boolean;
+  tooltip: string;
+  compactTooltip: string;
 }
 
 const NAV_ITEMS: NavItem[] = [
-  { href: "/works", label: "Works" },
-  { href: "/review", label: "Review", artistOnly: true },
-  { href: "/permissions", label: "Permissions" },
+  {
+    href: "/works",
+    label: "Works",
+    tooltip: "Browse and manage your catalog of works with attribution confidence scores",
+    compactTooltip: "Your catalog",
+  },
+  {
+    href: "/review",
+    label: "Review",
+    artistOnly: true,
+    tooltip: "Review AI-suggested attribution changes and approve or reject them in bulk",
+    compactTooltip: "Review queue",
+  },
+  {
+    href: "/permissions",
+    label: "Permissions",
+    tooltip: "Control how platforms use your music via MCP consent infrastructure",
+    compactTooltip: "MCP permissions",
+  },
 ];
 
 export function Navigation() {
@@ -38,8 +59,8 @@ export function Navigation() {
         style={{ width: "var(--sidebar-width)" }}
         aria-label="Main navigation"
       >
-        {/* Top: Logo link */}
-        <div className="flex flex-col items-center pt-4">
+        {/* Top: Logo + author branding */}
+        <div className="flex flex-col items-center pt-4 gap-3">
           <Link
             href="/"
             className="flex h-8 w-8 items-center justify-center text-sm font-bold text-heading hover:text-accent transition-colors duration-150"
@@ -47,6 +68,28 @@ export function Navigation() {
           >
             MA
           </Link>
+          <div className="flex flex-col items-center gap-1.5">
+            <Image
+              src="/images/petteri-teikari.png"
+              alt="Petteri Teikari"
+              width={36}
+              height={36}
+              className="rounded-full opacity-80 hover:opacity-100 transition-opacity duration-150"
+            />
+            <span
+              className="text-muted leading-none"
+              style={{
+                writingMode: "vertical-rl",
+                transform: "rotate(180deg)",
+                fontSize: "8px",
+                letterSpacing: "0.08em",
+                fontFamily: "var(--font-sans)",
+                fontWeight: 500,
+              }}
+            >
+              Petteri Teikari, PhD
+            </span>
+          </div>
         </div>
 
         {/* Middle: Rotated nav links */}
@@ -56,22 +99,30 @@ export function Navigation() {
               pathname === item.href ||
               pathname.startsWith(`${item.href}/`);
             return (
-              <Link
+              <AdaptiveTooltip
                 key={item.href}
-                href={item.href}
-                className={`editorial-caps text-xs transition-colors duration-150 ${
-                  isActive
-                    ? "text-accent"
-                    : "text-label hover:text-heading"
-                }`}
-                style={{
-                  writingMode: "vertical-rl",
-                  transform: "rotate(180deg)",
-                }}
-                aria-current={isActive ? "page" : undefined}
+                id={`nav-${item.label.toLowerCase()}`}
+                skill="permissions"
+                content={item.tooltip}
+                compactContent={item.compactTooltip}
+                placement="right"
               >
-                {item.label}
-              </Link>
+                <Link
+                  href={item.href}
+                  className={`editorial-caps text-xs transition-colors duration-150 ${
+                    isActive
+                      ? "text-accent"
+                      : "text-label hover:text-heading"
+                  }`}
+                  style={{
+                    writingMode: "vertical-rl",
+                    transform: "rotate(180deg)",
+                  }}
+                  aria-current={isActive ? "page" : undefined}
+                >
+                  {item.label}
+                </Link>
+              </AdaptiveTooltip>
             );
           })}
         </div>
@@ -80,6 +131,7 @@ export function Navigation() {
         <div className="flex flex-col items-center gap-3 pb-4">
           <RoleToggle />
           <NotificationBadge />
+          <AuraclesBadge />
           <ThemeToggle />
           <div className="accent-square" aria-hidden="true" />
         </div>
@@ -159,6 +211,7 @@ export function Navigation() {
 
             <div className="mt-auto flex flex-col gap-3">
               <RoleToggle />
+              <AuraclesBadgeMobile />
               <ThemeToggle />
             </div>
           </div>

@@ -1,16 +1,35 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import dynamic from "next/dynamic";
+import { useAtomValue } from "jotai";
 import type { PermissionBundle, AuditLogEntry } from "@/lib/types/permissions";
 import { apiClient } from "@/lib/api/api-client";
+import { proficiencyLevelsAtom } from "@/lib/stores/proficiency";
 import { PermissionMatrix } from "@/components/permissions/permission-matrix";
-import { AuditLog } from "@/components/permissions/audit-log";
-import { MCPQueryMockup } from "@/components/mcp/mcp-query-mockup";
+import { ConsentProfile } from "@/components/permissions/consent-profile";
+import { ConsentQueryFlow } from "@/components/permissions/consent-query-flow";
 
-type TabId = "permissions" | "mcp" | "audit";
+const AuditLog = dynamic(
+  () => import("@/components/permissions/audit-log").then((mod) => ({ default: mod.AuditLog })),
+  { ssr: false, loading: () => <div className="h-64 animate-pulse bg-surface-secondary" /> },
+);
+
+const MCPQueryMockup = dynamic(
+  () => import("@/components/mcp/mcp-query-mockup").then((mod) => ({ default: mod.MCPQueryMockup })),
+  { ssr: false, loading: () => <div className="h-64 animate-pulse bg-surface-secondary" /> },
+);
+
+const ConsentGraph = dynamic(
+  () => import("@/components/permissions/consent-graph").then((mod) => ({ default: mod.ConsentGraph })),
+  { ssr: false, loading: () => <div className="h-64 animate-pulse bg-surface-secondary" /> },
+);
+
+type TabId = "permissions" | "graph" | "mcp" | "audit";
 
 const TABS: { id: TabId; label: string }[] = [
   { id: "permissions", label: "Permission Matrix" },
+  { id: "graph", label: "Consent Graph" },
   { id: "mcp", label: "MCP Query Demo" },
   { id: "audit", label: "Audit Log" },
 ];
@@ -21,6 +40,9 @@ export default function PermissionsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<TabId>("permissions");
+  const [highlightType, setHighlightType] = useState<string | undefined>();
+  const proficiency = useAtomValue(proficiencyLevelsAtom);
+  const isNovice = proficiency.permissions === "novice";
 
   useEffect(() => {
     const entityId = "artist-imogen-heap";
@@ -35,6 +57,22 @@ export default function PermissionsPage() {
       setError("Failed to load permissions data. Please try again.");
       setLoading(false);
     });
+  }, []);
+
+  const handleNavigateToEntry = useCallback((permissionType: string) => {
+    setActiveTab("permissions");
+    setHighlightType(permissionType);
+
+    // Scroll to row after React re-render
+    requestAnimationFrame(() => {
+      const row = document.getElementById(`perm-row-${permissionType}`);
+      if (row?.scrollIntoView) {
+        row.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
+    });
+
+    // Clear highlight after 3 seconds
+    setTimeout(() => setHighlightType(undefined), 3000);
   }, []);
 
   return (
@@ -65,29 +103,17 @@ export default function PermissionsPage() {
         </div>
       )}
 
-      {/* Category toggles overview */}
+      {/* Consent profile overview */}
       {permissions && !loading && !error && (
-        <div className="mb-8 grid gap-4 sm:grid-cols-3">
-          <CategoryCard
-            title="Verified AI Partners"
-            description="Trusted platforms with attribution agreements"
-            enabled={true}
-            colorVar="var(--color-permission-allow)"
-          />
-          <CategoryCard
-            title="Unknown Crawlers"
-            description="Unverified AI platforms and scrapers"
-            enabled={false}
-            colorVar="var(--color-permission-deny)"
-          />
-          <CategoryCard
-            title="Rights Organizations"
-            description="PROs and collecting societies"
-            enabled={true}
-            colorVar="var(--color-permission-allow)"
-          />
-        </div>
+        <ConsentProfile
+          permissions={permissions.permissions}
+          onNavigateToEntry={handleNavigateToEntry}
+          onboardingEnabled={isNovice}
+        />
       )}
+
+      {/* Consent query flow animation */}
+      {permissions && !loading && !error && <ConsentQueryFlow />}
 
       {/* Tabs — editorial underline style */}
       <div className="mb-6">
@@ -126,7 +152,19 @@ export default function PermissionsPage() {
                   Default: {permissions.default_permission.replace(/_/g, " ")} | v{permissions.version}
                 </span>
               </div>
-              <PermissionMatrix permissions={permissions.permissions} />
+              <PermissionMatrix
+                permissions={permissions.permissions}
+                highlightType={highlightType}
+              />
+            </div>
+          )}
+
+          {activeTab === "graph" && (
+            <div>
+              <h2 className="mb-4 text-base font-semibold text-heading">
+                Consent Propagation Graph
+              </h2>
+              <ConsentGraph auditLog={auditLog} />
             </div>
           )}
 
@@ -180,37 +218,6 @@ export default function PermissionsPage() {
           </div>
         </div>
       )}
-    </div>
-  );
-}
-
-function CategoryCard({
-  title,
-  description,
-  enabled,
-  colorVar,
-}: {
-  title: string;
-  description: string;
-  enabled: boolean;
-  colorVar: string;
-}) {
-  return (
-    <div className="border-l-2 pl-4 py-2" style={{ borderColor: colorVar }}>
-      <div className="flex items-center justify-between">
-        <h3 className="text-sm font-semibold text-heading">
-          {title}
-        </h3>
-        <span
-          className="editorial-caps text-xs"
-          style={{ color: colorVar }}
-        >
-          {enabled ? "ON" : "OFF"}
-        </span>
-      </div>
-      <p className="mt-1 text-xs text-muted">
-        {description}
-      </p>
     </div>
   );
 }

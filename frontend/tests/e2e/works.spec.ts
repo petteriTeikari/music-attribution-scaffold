@@ -10,13 +10,13 @@ test.describe("Works catalog page", () => {
     await expect(page.getByRole("heading", { name: "Work Catalog" })).toBeVisible();
   });
 
-  test("renders 8 work cards (Imogen Heap mock data)", async ({ page }) => {
+  test("renders 9 work cards (Imogen Heap mock data)", async ({ page }) => {
     // Wait for works to load (skeleton disappears)
-    await page.getByText(/of 8 works/).waitFor({ timeout: 10_000 });
+    await page.getByText(/of 9 works/).waitFor({ timeout: 10_000 });
 
-    // All 8 mock works should be visible
-    const workLinks = page.getByRole("link", { name: /Hide and Seek|Tiny Human|The Moment I Said It|Goodnight and Go|Headlock|Just for Now|2-1|Blanket/ });
-    await expect(workLinks).toHaveCount(8);
+    // All 9 mock works should be visible
+    const workLinks = page.getByRole("link", { name: /Hide and Seek|Tiny Human|The Moment I Said It|Goodnight and Go|Headlock|Just for Now|2-1|Blanket|What Have You Done To Me/ });
+    await expect(workLinks).toHaveCount(9);
   });
 
   test("search filters works", async ({ page }) => {

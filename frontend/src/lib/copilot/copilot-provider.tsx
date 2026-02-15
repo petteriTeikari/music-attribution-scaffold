@@ -1,7 +1,12 @@
 "use client";
 
-import { CopilotKit } from "@copilotkit/react-core";
+import dynamic from "next/dynamic";
 import { COPILOT_RUNTIME_URL } from "@/lib/config";
+
+const CopilotKitLazy = dynamic(
+  () => import("@copilotkit/react-core").then((mod) => ({ default: mod.CopilotKit })),
+  { ssr: false },
+);
 
 export function CopilotProvider({ children }: { children: React.ReactNode }) {
   if (!COPILOT_RUNTIME_URL) {
@@ -10,8 +15,8 @@ export function CopilotProvider({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <CopilotKit runtimeUrl={COPILOT_RUNTIME_URL}>
+    <CopilotKitLazy runtimeUrl={COPILOT_RUNTIME_URL}>
       {children}
-    </CopilotKit>
+    </CopilotKitLazy>
   );
 }
