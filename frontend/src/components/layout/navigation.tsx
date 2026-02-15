@@ -8,6 +8,7 @@ import { userRoleAtom } from "@/lib/stores/mode";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { RoleToggle } from "@/components/mode/role-toggle";
 import { NotificationBadge } from "@/components/notifications/notification-badge";
+import { AuraclesBadge, AuraclesBadgeMobile } from "@/components/layout/auracles-badge";
 
 interface NavItem {
   href: string;
@@ -80,6 +81,7 @@ export function Navigation() {
         <div className="flex flex-col items-center gap-3 pb-4">
           <RoleToggle />
           <NotificationBadge />
+          <AuraclesBadge />
           <ThemeToggle />
           <div className="accent-square" aria-hidden="true" />
         </div>
@@ -159,6 +161,7 @@ export function Navigation() {
 
             <div className="mt-auto flex flex-col gap-3">
               <RoleToggle />
+              <AuraclesBadgeMobile />
               <ThemeToggle />
             </div>
           </div>
