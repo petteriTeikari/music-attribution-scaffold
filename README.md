@@ -368,6 +368,13 @@ The music AI attribution space is undergoing rapid consolidation. This section p
 | [**Vermillio**](https://vermillio.com) | Content monitoring (TraceID) | $16M | Sony Music's first AI investment; TIME100 |
 | [**ProRata.ai**](https://prorata.ai) | Cross-media attribution | $40M | UMG partnership; beyond music |
 | [**Pex**](https://pex.com) | Content identification | Established | Positioning for AI attribution |
+| [**Auracles**](https://auracles.io) | Artist-controlled digital identity & permissions | Undisclosed | Founded by Imogen Heap; artist-verified metadata layer |
+| [**Klay Vision**](https://klay.vision) | Large Music Model with per-use attribution | Licensed by all 3 majors | First to secure UMG + Sony + WMG licensing (Nov 2025) |
+| [**SoundPatrol**](https://soundpatrol.com) | Neural fingerprinting (semantic similarity) | Undisclosed | UMG & Sony collaboration; catches AI derivatives beyond exact matching |
+| [**Orfium (AIXPERT)**](https://orfium.com) | Explainable AI for copyright attribution | EUR 7.5M EU grant | 3-year research consortium; 3 of 135 proposals selected |
+| [**Audible Magic**](https://audiblemagic.com) | Automated content recognition | Established | 25+ years; Udio partnership; "Broad Spectrum" altered-audio detection |
+| [**BMAT**](https://bmat.com) | Audio fingerprinting at scale | Established | 80M IDs/day; 100+ CMOs; 2,000+ labels in 85 countries |
+| [**Muso.AI**](https://muso.ai) | Verified music credits platform | Established | 50M+ verified tracks; identity verification via ID scan |
 | **This scaffold** | A0–A3 assurance + conformal prediction | Open-source | Transparent, auditable, MCP-native |
 
 ### AI Music Generation (with attribution status)
@@ -379,6 +386,9 @@ The music AI attribution space is undergoing rapid consolidation. This section p
 | [**Soundverse**](https://soundverse.ai) | Undisclosed | Published ethical framework; DNA Models for artist-owned AI |
 | [**Boomy**](https://boomy.com) | Established | Fairly Trained certified; copyright-safe models |
 | [**Stability AI**](https://stability.ai) | Established | Licensed data from AudioSparx |
+| [**Jen**](https://jenmusic.ai) | Backed by Futureverse | Fairly Trained certified; outputs vetted against 150M tracks |
+| [**LifeScore**](https://lifescoremusic.com) | Warner Music investment | Provenance-tracked adaptive music; co-founded with Siri co-inventor |
+| [**Rightsify**](https://rightsify.com) | Established | Owns 12M+ songs for training; Fairly Trained certified; Hydra II model |
 
 ### Licensing & Certification
 
@@ -390,6 +400,75 @@ The music AI attribution space is undergoing rapid consolidation. This section p
 | [**SoundExchange AI Registry**](https://soundexchange.com) | ISRC-based opt-in/opt-out for AI training |
 | [**STIM**](https://stim.se) | World-first collective AI music licence (2025) |
 | [**Kits AI**](https://kits.ai) | Ethical voice cloning with dynamic revenue-sharing |
+| [**VEVA Collect**](https://vevacollect.com) | Attribution-by-design — DAW plugin captures credits at recording time; Library of Congress partner |
+| [**Digimarc**](https://digimarc.com) | Audio watermarking (NASDAQ: DMRC); survives compression/remixing; C2PA-aligned |
+
+### AI Music Detection
+
+| Company | Approach | Key Differentiator |
+|---|---|---|
+| [**Ircam Amplify**](https://ircamamplify.io) | AI-generated music detector (98.5% accuracy) | Model-specific: identifies which AI (Suno, Udio, etc.) produced a track |
+| [**MatchTune / CoverNet**](https://covernet.ai) | Cover + AI clone detection across platforms | Catches slowed, pitch-shifted, filtered versions; real-time alerts |
+| [**Deezer**](https://newsroom-deezer.com) | Platform-integrated AI detection; two patents filed | First streamer to label AI music; detected 60K AI tracks/day (Jan 2026); licensing tech to industry |
+| [**Resemble AI**](https://resemble.ai) | Detect-2B model for AI audio (94–98% accuracy) | Combines generation + detection + watermarking; watermark survives model training |
+| [**Sensity AI**](https://sensity.ai) | Multi-modal deepfake detection (audio + video + image) | Forensic approach; serves defense & law enforcement on four continents |
+| [**Kliga**](https://kliga.com) | Consumer-facing AI music detector (99.9% claimed) | Client-side processing; accepts Spotify URLs; Show HN project |
+
+### Music Metadata & Credits
+
+| Company | Approach | Key Differentiator |
+|---|---|---|
+| [**Musixmatch**](https://musixmatch.com) | Lyrics + metadata database (12M+ songs, 250+ languages) | Apple Music, Spotify, Google partnerships; AI licensing deals with all 3 major publishers |
+| [**Cyanite**](https://cyanite.ai) | AI-powered music tagging & similarity search | 100+ music companies; taxonomy translation across different data standards |
+| [**Bridge.audio**](https://bridge.audio) | Collaboration + metadata + sync licensing | $3.28M seed (2024); captures rights splits at creation; Paris-based |
+| [**OpenPlay**](https://openplay.co) | Enterprise catalog management & rights delivery | Spun out of Concord (2013); trusted by major labels; deep API platform |
+| [**rightsHUB**](https://rightshub.net) | Cloud-based rights & metadata management | Rights-neutral (takes no ownership); DataDoktor compliance checker |
+
+### Audio Recognition & Fingerprinting APIs
+
+| Company | Approach | Key Differentiator |
+|---|---|---|
+| [**ACRCloud**](https://acrcloud.com) | Cloud fingerprinting & recognition API | Broadcast monitoring; content protection; API-first integration |
+| [**AudD**](https://audd.io) | Music recognition API (neural fingerprinting) | Enterprise endpoint processes hours-long mixes; Warner, UMG, Sony as customers |
+
+### Voice Identity & Ethical Voice AI
+
+| Company | Approach | Key Differentiator |
+|---|---|---|
+| [**Vocalist.ai**](https://vocalist.ai) | AI vocal transformation with royalty-sharing | Artists share subscription revenue when their voice is used; founded by songwriter Andrew Frampton |
+| [**Respeecher**](https://respeecher.com) | Consent-based voice cloning | Hollywood-proven (Lucasfilm/Mandalorian); explicit consent per project; music-specific tools |
+
+### Audio Processing & Stem Separation
+
+| Company | Approach | Key Differentiator |
+|---|---|---|
+| [**AudioShake**](https://audioshake.ai) | AI stem separation for any recording | $24.1M raised; all 3 majors; preparing audio for AI training; 100M+ minutes processed |
+| [**Music.AI**](https://music.ai) | Orchestrator platform (50+ AI audio modules) | 18-stem separation; trained exclusively on owned/licensed music; batch API |
+
+### Royalty Infrastructure
+
+| Company | Approach | Key Differentiator |
+|---|---|---|
+| [**Beatdapp**](https://beatdapp.com) | Streaming fraud detection | $17M raised; UMG partnership; <0.001% false positive; claims fraud costs $2B/yr |
+| [**Revelator**](https://revelator.com) | Blockchain-based royalty distribution (Base, Polygon) | Smart contract splits; daily USDC settlement cycle; Artist Wallet |
+| [**Utopia Music**](https://utopiamusic.com) | Data-tracking music ecosystem | Acquired Musimap (emotional AI) + Lyric Financial; global consumption data |
+| [**Songtradr**](https://songtradr.com) | B2B music tech platform | $30M+ Series C; acquired Bandcamp + Musicube (50M+ titles); end-to-end supply chain |
+
+### Provenance & Opt-Out Infrastructure
+
+| Company | Approach | Key Differentiator |
+|---|---|---|
+| [**Spawning AI**](https://haveibeentrained.com) | Creator opt-out from AI training datasets | 78M artworks opted out; ArtStation & Shutterstock partnerships; API for compliance |
+| [**Numbers Protocol**](https://numbersprotocol.io) | Blockchain provenance for digital media | Capture → Certify → Check framework; Numbers ID (Nid) for any media file |
+| [**Yakoa**](https://yakoa.io) | Digital rights protection & originality detection | $4.8M raised; AI maps creative evolution across media; NFT forgery detection |
+
+### Standards Bodies & Research
+
+| Entity | Role |
+|---|---|
+| [**DDEX**](https://ddex.net) | Industry standard for music metadata exchange (ERN 4.3.x); AI Ad Hoc Group developing AI-specific standards |
+| [**Fraunhofer IDMT**](https://idmt.fraunhofer.de) | 20+ years audio research; pioneering "creative weight" attribution — quantifying how much a work shapes AI outputs |
+| [**Dataset Providers Alliance**](https://thedpa.ai) | Alliance promoting ethical AI data sourcing; 5 compensation structures; cross-media (music, image, text, video) |
 
 ### Open-Source Tools
 
