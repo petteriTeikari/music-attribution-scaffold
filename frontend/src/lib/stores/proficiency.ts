@@ -16,7 +16,7 @@ import { atomWithStorage } from "jotai/utils";
 
 export type ProficiencyLevel = "novice" | "intermediate" | "expert";
 
-export type Skill = "review" | "feedback" | "confidence_reading";
+export type Skill = "review" | "feedback" | "confidence_reading" | "permissions";
 
 export interface SkillMetrics {
   interactions: number;
@@ -29,6 +29,7 @@ const DEFAULT_STATE: ProficiencyState = {
   review: { interactions: 0, successes: 0 },
   feedback: { interactions: 0, successes: 0 },
   confidence_reading: { interactions: 0, successes: 0 },
+  permissions: { interactions: 0, successes: 0 },
 };
 
 /**
@@ -60,6 +61,7 @@ export const proficiencyLevelsAtom = atom((get) => {
     review: computeLevel(state.review),
     feedback: computeLevel(state.feedback),
     confidence_reading: computeLevel(state.confidence_reading),
+    permissions: computeLevel(state.permissions),
   } satisfies Record<Skill, ProficiencyLevel>;
 });
 
