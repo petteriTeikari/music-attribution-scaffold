@@ -5,6 +5,7 @@ import dynamic from "next/dynamic";
 import type { PermissionBundle, AuditLogEntry } from "@/lib/types/permissions";
 import { apiClient } from "@/lib/api/api-client";
 import { PermissionMatrix } from "@/components/permissions/permission-matrix";
+import { ConsentProfile } from "@/components/permissions/consent-profile";
 
 const AuditLog = dynamic(
   () => import("@/components/permissions/audit-log").then((mod) => ({ default: mod.AuditLog })),
@@ -74,28 +75,9 @@ export default function PermissionsPage() {
         </div>
       )}
 
-      {/* Category toggles overview */}
+      {/* Consent profile overview */}
       {permissions && !loading && !error && (
-        <div className="mb-8 grid gap-4 sm:grid-cols-3">
-          <CategoryCard
-            title="Verified AI Partners"
-            description="Trusted platforms with attribution agreements"
-            enabled={true}
-            colorVar="var(--color-permission-allow)"
-          />
-          <CategoryCard
-            title="Unknown Crawlers"
-            description="Unverified AI platforms and scrapers"
-            enabled={false}
-            colorVar="var(--color-permission-deny)"
-          />
-          <CategoryCard
-            title="Rights Organizations"
-            description="PROs and collecting societies"
-            enabled={true}
-            colorVar="var(--color-permission-allow)"
-          />
-        </div>
+        <ConsentProfile permissions={permissions.permissions} />
       )}
 
       {/* Tabs — editorial underline style */}
@@ -189,37 +171,6 @@ export default function PermissionsPage() {
           </div>
         </div>
       )}
-    </div>
-  );
-}
-
-function CategoryCard({
-  title,
-  description,
-  enabled,
-  colorVar,
-}: {
-  title: string;
-  description: string;
-  enabled: boolean;
-  colorVar: string;
-}) {
-  return (
-    <div className="border-l-2 pl-4 py-2" style={{ borderColor: colorVar }}>
-      <div className="flex items-center justify-between">
-        <h3 className="text-sm font-semibold text-heading">
-          {title}
-        </h3>
-        <span
-          className="editorial-caps text-xs"
-          style={{ color: colorVar }}
-        >
-          {enabled ? "ON" : "OFF"}
-        </span>
-      </div>
-      <p className="mt-1 text-xs text-muted">
-        {description}
-      </p>
     </div>
   );
 }
