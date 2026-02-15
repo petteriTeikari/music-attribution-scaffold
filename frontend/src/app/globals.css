@@ -1,5 +1,10 @@
 @import "tailwindcss";
 
+/* Exclude test files from Tailwind class scanning — they contain
+   example patterns in error messages that Turbopack's CSS parser
+   cannot handle (e.g. var() with invalid tokens). */
+@source not "../__tests__";
+
 /*
  * Music Attribution Scaffold — Design Token System
  *

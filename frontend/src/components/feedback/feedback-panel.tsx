@@ -82,7 +82,7 @@ export function FeedbackPanel({
                 onChange={(e) =>
                   setAssessment(parseInt(e.target.value, 10) / 100)
                 }
-                className="w-full accent-[var(--color-primary)]"
+                className="w-full accent-primary"
               />
               {isCenterBiased && (
                 <p className="mt-1 text-xs text-confidence-medium">
