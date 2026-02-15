@@ -29,7 +29,7 @@ describe("SourceTag", () => {
     expect(screen.getByText("File")).toBeInTheDocument();
   });
 
-  it("renders as span when no href", () => {
+  it("renders as span when no href or onNavigate", () => {
     render(<SourceTag source="MUSICBRAINZ" />);
     const el = screen.getByText("MusicBrainz").closest("span");
     expect(el).toBeInTheDocument();
@@ -50,7 +50,7 @@ describe("SourceTag", () => {
     expect(link).toHaveAttribute("rel", "noopener noreferrer");
   });
 
-  it("calls onClick when link is clicked", async () => {
+  it("calls onClick when href link is clicked", async () => {
     const user = userEvent.setup();
     const handleClick = vi.fn();
     render(
@@ -63,5 +63,40 @@ describe("SourceTag", () => {
     const link = screen.getByRole("link", { name: /Discogs/ });
     await user.click(link);
     expect(handleClick).toHaveBeenCalledOnce();
+  });
+
+  it("renders as span with role=link when onNavigate provided (safe inside <a>)", () => {
+    render(
+      <SourceTag
+        source="MUSICBRAINZ"
+        onNavigate="https://musicbrainz.org/recording/abc"
+      />,
+    );
+    const el = screen.getByRole("link", { name: /MusicBrainz/ });
+    expect(el.tagName).toBe("SPAN");
+    expect(el.className).toContain("underline");
+    expect(el.className).toContain("cursor-pointer");
+  });
+
+  it("opens window and fires onClick on onNavigate click", async () => {
+    const user = userEvent.setup();
+    const handleClick = vi.fn();
+    const openSpy = vi.spyOn(window, "open").mockImplementation(() => null);
+    render(
+      <SourceTag
+        source="DISCOGS"
+        onNavigate="https://www.discogs.com/master/123"
+        onClick={handleClick}
+      />,
+    );
+    const el = screen.getByRole("link", { name: /Discogs/ });
+    await user.click(el);
+    expect(openSpy).toHaveBeenCalledWith(
+      "https://www.discogs.com/master/123",
+      "_blank",
+      "noopener,noreferrer",
+    );
+    expect(handleClick).toHaveBeenCalledOnce();
+    openSpy.mockRestore();
   });
 });

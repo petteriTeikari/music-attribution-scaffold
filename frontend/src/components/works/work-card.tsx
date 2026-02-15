@@ -78,7 +78,7 @@ export function WorkCard({ work }: WorkCardProps) {
             <SourceTag
               key={source}
               source={source}
-              href={url ?? undefined}
+              onNavigate={url ?? undefined}
               onClick={
                 url
                   ? () =>
