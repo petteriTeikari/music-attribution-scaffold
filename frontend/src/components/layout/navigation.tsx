@@ -9,17 +9,36 @@ import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { RoleToggle } from "@/components/mode/role-toggle";
 import { NotificationBadge } from "@/components/notifications/notification-badge";
 import { AuraclesBadge, AuraclesBadgeMobile } from "@/components/layout/auracles-badge";
+import { AdaptiveTooltip } from "@/components/ui/adaptive-tooltip";
 
 interface NavItem {
   href: string;
   label: string;
   artistOnly?: boolean;
+  tooltip: string;
+  compactTooltip: string;
 }
 
 const NAV_ITEMS: NavItem[] = [
-  { href: "/works", label: "Works" },
-  { href: "/review", label: "Review", artistOnly: true },
-  { href: "/permissions", label: "Permissions" },
+  {
+    href: "/works",
+    label: "Works",
+    tooltip: "Browse and manage your catalog of works with attribution confidence scores",
+    compactTooltip: "Your catalog",
+  },
+  {
+    href: "/review",
+    label: "Review",
+    artistOnly: true,
+    tooltip: "Review AI-suggested attribution changes and approve or reject them in bulk",
+    compactTooltip: "Review queue",
+  },
+  {
+    href: "/permissions",
+    label: "Permissions",
+    tooltip: "Control how platforms use your music via MCP consent infrastructure",
+    compactTooltip: "MCP permissions",
+  },
 ];
 
 export function Navigation() {
@@ -57,22 +76,30 @@ export function Navigation() {
               pathname === item.href ||
               pathname.startsWith(`${item.href}/`);
             return (
-              <Link
+              <AdaptiveTooltip
                 key={item.href}
-                href={item.href}
-                className={`editorial-caps text-xs transition-colors duration-150 ${
-                  isActive
-                    ? "text-accent"
-                    : "text-label hover:text-heading"
-                }`}
-                style={{
-                  writingMode: "vertical-rl",
-                  transform: "rotate(180deg)",
-                }}
-                aria-current={isActive ? "page" : undefined}
+                id={`nav-${item.label.toLowerCase()}`}
+                skill="permissions"
+                content={item.tooltip}
+                compactContent={item.compactTooltip}
+                placement="right"
               >
-                {item.label}
-              </Link>
+                <Link
+                  href={item.href}
+                  className={`editorial-caps text-xs transition-colors duration-150 ${
+                    isActive
+                      ? "text-accent"
+                      : "text-label hover:text-heading"
+                  }`}
+                  style={{
+                    writingMode: "vertical-rl",
+                    transform: "rotate(180deg)",
+                  }}
+                  aria-current={isActive ? "page" : undefined}
+                >
+                  {item.label}
+                </Link>
+              </AdaptiveTooltip>
             );
           })}
         </div>

@@ -13,7 +13,7 @@ import { getPlatform } from "@/lib/data/ecosystem-platforms";
 const ROMAN = ["I", "II", "III"] as const;
 
 /** Permission types belonging to each consent group. */
-const AI_GENERATION_TYPES: PermissionType[] = [
+export const AI_GENERATION_TYPES: PermissionType[] = [
   "AI_TRAINING",
   "AI_TRAINING_COMPOSITION",
   "AI_TRAINING_RECORDING",
@@ -24,14 +24,14 @@ const AI_GENERATION_TYPES: PermissionType[] = [
   "DATASET_INCLUSION",
 ];
 
-const DISTRIBUTION_TYPES: PermissionType[] = [
+export const DISTRIBUTION_TYPES: PermissionType[] = [
   "STREAM",
   "DOWNLOAD",
   "SYNC_LICENSE",
   "COVER_VERSIONS",
 ];
 
-const CREATIVE_TYPES: PermissionType[] = [
+export const CREATIVE_TYPES: PermissionType[] = [
   "REMIX",
   "SAMPLE",
   "DERIVATIVE_WORK",
@@ -53,11 +53,18 @@ export interface ConsentGroupCounts {
 export interface ConsentGroup {
   roman: (typeof ROMAN)[number];
   label: string;
+  subtitle: string;
   tooltip: string;
   entries: PermissionEntry[];
   counts: ConsentGroupCounts;
   exceptions: ConsentException[];
 }
+
+const GROUP_SUBTITLES: Record<string, string> = {
+  "AI & GENERATION": "Training, voice, style, and dataset permissions",
+  "DISTRIBUTION & LICENSING": "Streaming, download, sync, and cover licenses",
+  "CREATIVE DERIVATIVES": "Remix, sample, and derivative work approvals",
+};
 
 const GROUP_TOOLTIPS: Record<string, string> = {
   "AI & GENERATION":
@@ -112,6 +119,7 @@ function buildGroup(
   return {
     roman,
     label,
+    subtitle: GROUP_SUBTITLES[label] ?? "",
     tooltip: GROUP_TOOLTIPS[label] ?? "",
     entries,
     counts: countValues(entries),

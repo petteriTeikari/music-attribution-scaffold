@@ -13,6 +13,7 @@ interface AdaptiveTooltipProps {
   skill: Skill;
   content: string;
   compactContent?: string;
+  placement?: "top" | "right";
   children: React.ReactNode;
 }
 
@@ -27,6 +28,7 @@ export function AdaptiveTooltip({
   skill,
   content,
   compactContent,
+  placement = "top",
   children,
 }: AdaptiveTooltipProps) {
   const levels = useAtomValue(proficiencyLevelsAtom);
@@ -69,7 +71,11 @@ export function AdaptiveTooltip({
       {visible && (
         <div
           role="tooltip"
-          className="absolute z-50 bottom-full left-0 mb-2 px-3 py-2 bg-surface-elevated border border-border shadow-md text-xs text-body max-w-64"
+          className={`absolute z-50 px-3 py-2 bg-surface-elevated border border-border shadow-md text-xs text-body max-w-64 ${
+            placement === "right"
+              ? "left-full top-0 ml-2"
+              : "bottom-full left-0 mb-2"
+          }`}
         >
           <p>{displayContent}</p>
           {level === "novice" && (
