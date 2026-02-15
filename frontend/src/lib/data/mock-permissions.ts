@@ -237,30 +237,6 @@ export const MOCK_AUDIT_LOG: AuditLogEntry[] = [
     reason: "Streaming is allowed for all works",
   },
   {
-    id: "audit-005a",
-    timestamp: "2026-02-08T15:30:00Z",
-    requester_name: "SoundCloud",
-    requester_type: PlatformType.STREAMING,
-    permission_type: "STREAM",
-    work_title: null,
-    scope: "CATALOG",
-    result: "ALLOW",
-    reason:
-      "Auracles-connected platform — streaming rights inherited from consent profile",
-  },
-  {
-    id: "audit-005b",
-    timestamp: "2026-02-08T15:31:00Z",
-    requester_name: "SoundCloud",
-    requester_type: PlatformType.STREAMING,
-    permission_type: "AI_TRAINING",
-    work_title: null,
-    scope: "CATALOG",
-    result: "DENY",
-    reason:
-      "SoundCloud 2025 policy: will not use artist content for generative AI training",
-  },
-  {
     id: "audit-006",
     timestamp: "2026-02-07T14:00:00Z",
     requester_name: "OpenAI",

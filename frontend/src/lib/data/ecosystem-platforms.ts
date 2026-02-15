@@ -116,15 +116,6 @@ export const ECOSYSTEM_PLATFORMS: EcosystemPlatform[] = [
     tagline: "Music for everyone",
     fairly_trained_certified: false,
   },
-  {
-    id: "soundcloud",
-    name: "SoundCloud",
-    type: PlatformType.STREAMING,
-    description: "Artist-first streaming and distribution with Auracles integration",
-    url: "https://soundcloud.com",
-    tagline: "Hear the world's sounds",
-    fairly_trained_certified: false,
-  },
 
   // --- Rights Organizations ---
   {
