@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { motion } from "motion/react";
+import { LazyMotion, domAnimation, m } from "motion/react";
 
 import { CitationOverlay } from "@/components/citations/citation-overlay";
 import { CitationRefList } from "@/components/citations/citation-ref";
@@ -43,6 +43,26 @@ const ASSURANCE_LEVELS = [
   { level: "A3", type: "Identity-verified", evidence: "Full provenance chain", identifier: "ISNI" },
 ];
 
+// Precomputed waveform band styles — avoids recreating 64 objects per render.
+// Values are rounded to 2dp to prevent SSR/client hydration mismatch
+// (Node.js and browser can serialize float precision differently).
+const WAVEFORM_STYLES = Array.from({ length: 64 }, (_, i) => {
+  const h = Math.round((8 + Math.abs(Math.sin(i * 0.3)) * 24) * 100) / 100;
+  const o = Math.round((0.4 + Math.abs(Math.sin(i * 0.2)) * 0.6) * 100) / 100;
+  return {
+    width: "2px",
+    height: `${h}px`,
+    backgroundColor:
+      i % 8 === 0
+        ? "var(--color-accent)"
+        : "var(--color-border-strong)",
+    opacity: o,
+  };
+});
+
+// O(1) topic card lookup by ID
+const TOPIC_CARDS_MAP = new Map(TOPIC_CARDS.map((c) => [c.id, c]));
+
 const fadeUp = {
   hidden: { opacity: 0, y: 24 },
   visible: { opacity: 1, y: 0 },
@@ -56,11 +76,12 @@ const stagger = {
 
 export default function HomePage() {
   return (
+    <LazyMotion features={domAnimation}>
     <div>
       {/* ──── HERO ──── */}
       <section className="relative min-h-[85vh] flex items-center overflow-hidden">
         {/* Background hero image — full-width behind text */}
-        <motion.div
+        <m.div
           className="absolute inset-0"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -89,7 +110,7 @@ export default function HomePage() {
               background: "linear-gradient(to top, var(--color-surface), transparent)",
             }}
           />
-        </motion.div>
+        </m.div>
 
         {/* Accent line running through the section */}
         <div
@@ -100,38 +121,38 @@ export default function HomePage() {
 
         {/* Text content — positioned above the background image */}
         <div className="relative w-full px-8 py-20">
-          <motion.div
+          <m.div
             initial="hidden"
             animate="visible"
             variants={stagger}
             className="max-w-2xl"
           >
-            <motion.div
+            <m.div
               variants={fadeUp}
               transition={{ duration: 0.6, ease: "easeOut" }}
             >
               <span className="editorial-caps text-xs text-accent mb-4 block">
                 SSRN No. 6109087
               </span>
-            </motion.div>
+            </m.div>
 
-            <motion.h1
+            <m.h1
               className="editorial-display text-5xl lg:text-6xl text-heading"
               variants={fadeUp}
               transition={{ duration: 0.6, ease: "easeOut" }}
             >
               Governing Generative Music
-            </motion.h1>
+            </m.h1>
 
-            <motion.p
+            <m.p
               className="mt-3 text-xl lg:text-2xl text-heading leading-snug max-w-2xl"
               variants={fadeUp}
               transition={{ duration: 0.6, ease: "easeOut" }}
             >
               Attribution Limits, Platform Incentives, and the Future of Creator Income
-            </motion.p>
+            </m.p>
 
-            <motion.p
+            <m.p
               className="mt-2 text-sm text-muted"
               variants={fadeUp}
               transition={{ duration: 0.6, ease: "easeOut" }}
@@ -144,9 +165,9 @@ export default function HomePage() {
               >
                 Petteri Teikari (2026)
               </a>
-            </motion.p>
+            </m.p>
 
-            <motion.p
+            <m.p
               className="mt-6 max-w-2xl text-base leading-relaxed text-body"
               variants={fadeUp}
               transition={{ duration: 0.6, ease: "easeOut" }}
@@ -155,9 +176,9 @@ export default function HomePage() {
               We propose a two-friction taxonomy, tiered attribution framework (A0&ndash;A3),
               and governance that functions despite imperfect attribution: contractible provenance,
               competitive licensing rails, and clear property rights.
-            </motion.p>
+            </m.p>
 
-            <motion.div
+            <m.div
               className="mt-8 flex items-center gap-8"
               variants={fadeUp}
               transition={{ duration: 0.6, ease: "easeOut" }}
@@ -176,28 +197,20 @@ export default function HomePage() {
               >
                 Read the Paper
               </a>
-            </motion.div>
-          </motion.div>
+            </m.div>
+          </m.div>
         </div>
       </section>
 
       {/* ──── WAVEFORM BAND ──── */}
       <section className="relative py-4">
         <div className="accent-line" />
-        <div className="flex items-center gap-4 py-3 px-8 overflow-hidden">
-          {Array.from({ length: 64 }).map((_, i) => (
+        <div data-testid="waveform-band" className="flex items-center gap-4 py-3 px-8 overflow-hidden">
+          {WAVEFORM_STYLES.map((style, i) => (
             <div
               key={i}
               className="flex-shrink-0"
-              style={{
-                width: 2,
-                height: `${8 + Math.abs(Math.sin(i * 0.3)) * 24}px`,
-                backgroundColor:
-                  i % 8 === 0
-                    ? "var(--color-accent)"
-                    : "var(--color-border-strong)",
-                opacity: 0.4 + Math.abs(Math.sin(i * 0.2)) * 0.6,
-              }}
+              style={style}
               aria-hidden="true"
             />
           ))}
@@ -207,7 +220,7 @@ export default function HomePage() {
 
       {/* ──── HOW IT WORKS ──── */}
       <section className="px-8 py-20">
-        <motion.div
+        <m.div
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true, margin: "-100px" }}
@@ -215,20 +228,20 @@ export default function HomePage() {
           className="grid gap-12 lg:grid-cols-[1fr_auto] items-start"
         >
           <div>
-            <motion.div variants={fadeUp} transition={{ duration: 0.5 }}>
+            <m.div variants={fadeUp} transition={{ duration: 0.5 }}>
               <span className="editorial-caps text-xs text-accent">
                 Process
               </span>
               <h2 className="editorial-display text-4xl lg:text-5xl text-heading mt-3">
                 How It Works
               </h2>
-            </motion.div>
+            </m.div>
 
             <div className="mt-12">
               {/* Steps */}
               <div className="space-y-10">
                 {HOW_IT_WORKS.map((item, index) => (
-                  <motion.div
+                  <m.div
                     key={item.label}
                     className="relative"
                     variants={fadeUp}
@@ -254,14 +267,14 @@ export default function HomePage() {
                         style={{ opacity: 0.2 }}
                       />
                     )}
-                  </motion.div>
+                  </m.div>
                 ))}
               </div>
             </div>
           </div>
 
           {/* Process figure — portrait signal chain diagram */}
-          <motion.div
+          <m.div
             className="max-w-xs mx-auto lg:mx-0 lg:max-w-sm"
             variants={fadeUp}
             transition={{ duration: 0.5 }}
@@ -271,33 +284,34 @@ export default function HomePage() {
               alt="Portrait-mode constructivist diagram showing four stages of a music attribution pipeline as an audio signal chain, with five colored source dots converging through processing bands and a teal feedback arc"
               width={900}
               height={1200}
+              sizes="(max-width: 768px) 100vw, 384px"
               className="w-full h-auto"
             />
-          </motion.div>
-        </motion.div>
+          </m.div>
+        </m.div>
       </section>
 
       {/* ──── KEY CONCEPTS (12 citation topic cards) ──── */}
       <section className="px-8 py-20">
         <div className="accent-line mb-16" style={{ opacity: 0.4 }} aria-hidden="true" />
-        <motion.div
+        <m.div
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true, margin: "-100px" }}
           variants={stagger}
         >
-          <motion.div variants={fadeUp} transition={{ duration: 0.5 }}>
+          <m.div variants={fadeUp} transition={{ duration: 0.5 }}>
             <span className="editorial-caps text-xs text-accent">
               Research Foundations
             </span>
             <h2 className="editorial-display text-4xl lg:text-5xl text-heading mt-3">
               Key Concepts
             </h2>
-          </motion.div>
+          </m.div>
 
           <div className="mt-12 space-y-16">
             {TOPIC_GROUPS.map((group) => (
-              <motion.div
+              <m.div
                 key={group.label}
                 variants={fadeUp}
                 transition={{ duration: 0.5 }}
@@ -309,7 +323,7 @@ export default function HomePage() {
                   {/* Topic cards */}
                   <div className="divide-y divide-border min-w-0">
                     {group.cardIds.map((cardId) => {
-                      const card = TOPIC_CARDS.find((c) => c.id === cardId);
+                      const card = TOPIC_CARDS_MAP.get(cardId);
                       if (!card) return null;
                       return (
                         <CitationOverlay
@@ -330,33 +344,34 @@ export default function HomePage() {
 
                   {/* Group overview figure — narrow portrait beside cards */}
                   {group.image && (
-                    <div className="hidden lg:block w-96 flex-shrink-0">
+                    <div className="hidden lg:block w-96 flex-shrink-0" style={{ contain: "layout" }}>
                       <Image
                         src={group.image}
                         alt={group.imageAlt || ""}
                         width={600}
                         height={1200}
+                        sizes="(max-width: 1024px) 0px, 384px"
                         className="w-full h-auto sticky top-8"
                       />
                     </div>
                   )}
                 </div>
-              </motion.div>
+              </m.div>
             ))}
           </div>
-        </motion.div>
+        </m.div>
       </section>
 
       {/* ──── A0-A3 ASSURANCE LEVELS ──── */}
       <section className="px-8 py-20">
         <div className="accent-line mb-12" style={{ opacity: 0.4 }} />
-        <motion.div
+        <m.div
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true, margin: "-100px" }}
           variants={stagger}
         >
-          <motion.div variants={fadeUp} transition={{ duration: 0.5 }}>
+          <m.div variants={fadeUp} transition={{ duration: 0.5 }}>
             <span className="editorial-caps text-xs text-accent">
               Provenance Framework
             </span>
@@ -368,9 +383,9 @@ export default function HomePage() {
               industry identifiers (ISRC, ISWC, ISNI).{" "}
               <span className="text-xs text-accent data-mono font-medium">[12, 23, 24, 25]</span>
             </p>
-          </motion.div>
+          </m.div>
 
-          <motion.div
+          <m.div
             className="mt-8 overflow-x-auto"
             variants={fadeUp}
             transition={{ duration: 0.5 }}
@@ -395,9 +410,9 @@ export default function HomePage() {
                 ))}
               </tbody>
             </table>
-          </motion.div>
+          </m.div>
 
-          <motion.p
+          <m.p
             className="mt-4 text-xs text-muted max-w-2xl leading-relaxed"
             variants={fadeUp}
             transition={{ duration: 0.5 }}
@@ -406,10 +421,10 @@ export default function HomePage() {
             ISWC (International Standard Musical Work Code) identifies the underlying composition.
             ISNI (International Standard Name Identifier) identifies the creator themselves.
             Critical limitation: audio cannot reliably achieve A3 in adversarial settings due to the analogue hole.
-          </motion.p>
+          </m.p>
 
           {/* Assurance levels landscape figure */}
-          <motion.div
+          <m.div
             className="mt-10 max-w-3xl"
             variants={fadeUp}
             transition={{ duration: 0.5 }}
@@ -419,33 +434,34 @@ export default function HomePage() {
               alt="Wide landscape infographic showing A0-A3 assurance level progression: A0 self-declared (gray), A1 recorded with ISRC (amber), A2 composed with ISWC (blue), A3 identity-verified with ISNI (green). Visual density increases left to right."
               width={1800}
               height={600}
+              sizes="(max-width: 768px) 100vw, 768px"
               className="w-full h-auto"
             />
-          </motion.div>
-        </motion.div>
+          </m.div>
+        </m.div>
       </section>
 
       {/* ──── ABOUT / PAPER ──── */}
       <section className="px-8 py-20">
         <div className="accent-line mb-12" style={{ opacity: 0.4 }} />
 
-        <motion.div
+        <m.div
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true, margin: "-100px" }}
           variants={stagger}
           className="max-w-2xl"
         >
-          <motion.div variants={fadeUp} transition={{ duration: 0.5 }}>
+          <m.div variants={fadeUp} transition={{ duration: 0.5 }}>
             <span className="editorial-caps text-xs text-accent">
               About
             </span>
             <h2 className="editorial-display text-3xl text-heading mt-3">
               Research Scaffold
             </h2>
-          </motion.div>
+          </m.div>
 
-          <motion.div
+          <m.div
             className="mt-6 space-y-4 text-body leading-relaxed"
             variants={fadeUp}
             transition={{ duration: 0.5 }}
@@ -486,24 +502,25 @@ export default function HomePage() {
               </a>
               . Eight works showcase confidence ranging from 0% to 95%.
             </p>
-          </motion.div>
-        </motion.div>
+          </m.div>
+        </m.div>
       </section>
 
       {/* ──── REFERENCES ──── */}
       <section className="px-8 py-20">
         <div className="accent-line mb-12" style={{ opacity: 0.4 }} />
-        <motion.div
+        <m.div
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true, margin: "-100px" }}
           variants={stagger}
         >
-          <motion.div variants={fadeUp} transition={{ duration: 0.5 }}>
+          <m.div variants={fadeUp} transition={{ duration: 0.5 }}>
             <CitationRefList citations={CITATIONS} />
-          </motion.div>
-        </motion.div>
+          </m.div>
+        </m.div>
       </section>
     </div>
+    </LazyMotion>
   );
 }

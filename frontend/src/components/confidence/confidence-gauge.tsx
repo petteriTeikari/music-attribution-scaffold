@@ -22,9 +22,9 @@ const SIZE_CONFIG: Record<
   GaugeSize,
   { width: number; strokeWidth: number; fontSize: string; labelSize: string }
 > = {
-  sm: { width: 48, strokeWidth: 3, fontSize: "var(--text-sm)", labelSize: "var(--text-xs)" },
-  md: { width: 80, strokeWidth: 4, fontSize: "var(--text-xl)", labelSize: "var(--text-sm)" },
-  lg: { width: 140, strokeWidth: 5, fontSize: "var(--text-3xl)", labelSize: "var(--text-base)" },
+  sm: { width: 48, strokeWidth: 3, fontSize: "0.875rem", labelSize: "0.75rem" },
+  md: { width: 80, strokeWidth: 4, fontSize: "1.25rem", labelSize: "0.875rem" },
+  lg: { width: 140, strokeWidth: 5, fontSize: "1.875rem", labelSize: "1rem" },
 };
 
 export function ConfidenceGauge({
