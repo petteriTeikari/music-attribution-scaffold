@@ -5,7 +5,7 @@
 .PHONY: ci-docker docker-build docker-clean clean
 .PHONY: dev-frontend test-frontend lint-frontend build-frontend test-e2e test-e2e-ui
 .PHONY: agent dev-agent
-.PHONY: docs docs-serve
+.PHONY: docs docs-serve test-docs
 
 .DEFAULT_GOAL := help
 
@@ -140,6 +140,9 @@ dev-agent:  ## Start agent backend + frontend dev server
 # =============================================================================
 # DOCUMENTATION
 # =============================================================================
+
+test-docs:  ## Run docs safety tests (math overflow, dollar signs)
+	.venv/bin/python -m pytest tests/unit/test_docs_math_safety.py -v
 
 docs:  ## Build MkDocs site (copies figures first)
 	@mkdir -p docs/site/figures

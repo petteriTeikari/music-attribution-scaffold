@@ -624,3 +624,17 @@ body::before {
     display: none;
   }
 }
+
+/* ========================================================================
+   MATH OVERFLOW CONTAINMENT — Defense-in-depth
+   Prevents MathJax-rendered content from overflowing containers.
+   ======================================================================== */
+.MathJax {
+  overflow-x: auto;
+  max-width: 100%;
+}
+
+.md-content .arithmatex {
+  overflow-x: auto;
+  max-width: 100%;
+}
