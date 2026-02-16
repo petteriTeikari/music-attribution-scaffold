@@ -51,7 +51,7 @@ Systematic addition of Mermaid diagrams across documentation, from domain (L2) t
     'primaryBorderColor': '#1E3A5F',
     'secondaryColor': '#2E7D7B',
     'tertiaryColor': '#D4A03C',
-    'lineColor': '#5C5C5C',
+    'lineColor': '#333333',
     'textColor': '#2C2C2C'
   }
 }}%%

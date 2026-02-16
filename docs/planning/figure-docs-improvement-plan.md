@@ -153,7 +153,7 @@ Research basis: [McKinsey (2025)](https://www.mckinsey.com/capabilities/quantumb
 **Update**: Add security layers annotation
 
 ```mermaid
-%%{init: {'theme': 'base', 'themeVariables': {'background': '#fcfaf5', 'primaryColor': '#1E3A5F', 'lineColor': '#5C5C5C'}}}%%
+%%{init: {'theme': 'base', 'themeVariables': {'background': '#fcfaf5', 'primaryColor': '#1E3A5F', 'lineColor': '#333333'}}}%%
 graph TB
     subgraph security[" Security Layers "]
         L1[OAuth 2.0 + RFC 8707]

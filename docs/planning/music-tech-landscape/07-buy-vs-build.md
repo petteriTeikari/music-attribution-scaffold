@@ -317,7 +317,7 @@ The MVA is the minimum technical architecture that demonstrates enough value to 
 ### MVA Component Diagram
 
 ```mermaid
-%%{init: {'theme': 'base', 'themeVariables': {'background': '#fcfaf5', 'primaryColor': '#1E3A5F', 'lineColor': '#5C5C5C'}}}%%
+%%{init: {'theme': 'base', 'themeVariables': {'background': '#fcfaf5', 'primaryColor': '#1E3A5F', 'lineColor': '#333333'}}}%%
 flowchart TB
     subgraph mvp["MVA (Minimum Viable Architecture)"]
         direction TB

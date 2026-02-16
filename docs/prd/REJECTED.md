@@ -16,7 +16,7 @@
 **High-level technology philosophy**:
 
 ```mermaid
-%%{init: {'theme': 'base', 'themeVariables': {'background': '#fcfaf5', 'primaryColor': '#1E3A5F', 'lineColor': '#5C5C5C'}}}%%
+%%{init: {'theme': 'base', 'themeVariables': {'background': '#fcfaf5', 'primaryColor': '#1E3A5F', 'lineColor': '#333333'}}}%%
 flowchart TB
     subgraph philosophy[" Technology Selection Criteria "]
         P1[Simplicity<br/>over Complexity]
@@ -53,7 +53,7 @@ flowchart TB
 **For Engineers**: Check this document before proposing a technology - it may already be evaluated and rejected.
 
 ```mermaid
-%%{init: {'theme': 'base', 'themeVariables': {'background': '#fcfaf5', 'primaryColor': '#1E3A5F', 'lineColor': '#5C5C5C'}}}%%
+%%{init: {'theme': 'base', 'themeVariables': {'background': '#fcfaf5', 'primaryColor': '#1E3A5F', 'lineColor': '#333333'}}}%%
 mindmap
   root((Rejected<br/>Technologies))
     Database
@@ -247,7 +247,7 @@ Use **Render** (compute) + **Neon** (PostgreSQL) for simpler operations.
 ## Visual: Chosen vs Rejected Technologies
 
 ```mermaid
-%%{init: {'theme': 'base', 'themeVariables': {'background': '#fcfaf5', 'primaryColor': '#1E3A5F', 'lineColor': '#5C5C5C'}}}%%
+%%{init: {'theme': 'base', 'themeVariables': {'background': '#fcfaf5', 'primaryColor': '#1E3A5F', 'lineColor': '#333333'}}}%%
 graph TB
     subgraph chosen[" Chosen Technologies "]
         C1[PostgreSQL<br/>+ pgvector]

@@ -13,7 +13,7 @@ Cross-cutting insights and decisions across all Music Attribution PRDs.
 ### System Overview
 
 ```mermaid
-%%{init: {'theme': 'base', 'themeVariables': {'background': '#fcfaf5', 'primaryColor': '#1E3A5F', 'lineColor': '#5C5C5C'}}}%%
+%%{init: {'theme': 'base', 'themeVariables': {'background': '#fcfaf5', 'primaryColor': '#1E3A5F', 'lineColor': '#333333'}}}%%
 C4Context
     title Music Attribution System Context Diagram
 
@@ -56,7 +56,7 @@ C4Context
 ## Cross-PRD Data Flow
 
 ```mermaid
-%%{init: {'theme': 'base', 'themeVariables': {'background': '#fcfaf5', 'primaryColor': '#1E3A5F', 'lineColor': '#5C5C5C'}}}%%
+%%{init: {'theme': 'base', 'themeVariables': {'background': '#fcfaf5', 'primaryColor': '#1E3A5F', 'lineColor': '#333333'}}}%%
 graph LR
     subgraph sources[" External Sources "]
         DIS[Discogs]
@@ -112,7 +112,7 @@ Confidence flows through the system:
 ### Confidence Flow Diagram
 
 ```mermaid
-%%{init: {'theme': 'base', 'themeVariables': {'background': '#fcfaf5', 'primaryColor': '#1E3A5F', 'lineColor': '#5C5C5C'}}}%%
+%%{init: {'theme': 'base', 'themeVariables': {'background': '#fcfaf5', 'primaryColor': '#1E3A5F', 'lineColor': '#333333'}}}%%
 flowchart LR
     subgraph sources[" Data Sources "]
         S1[Discogs]
@@ -182,7 +182,7 @@ The MCP trust model affects multiple PRDs:
 ### Component Dependency Graph
 
 ```mermaid
-%%{init: {'theme': 'base', 'themeVariables': {'background': '#fcfaf5', 'primaryColor': '#1E3A5F', 'lineColor': '#5C5C5C'}}}%%
+%%{init: {'theme': 'base', 'themeVariables': {'background': '#fcfaf5', 'primaryColor': '#1E3A5F', 'lineColor': '#333333'}}}%%
 flowchart TB
     subgraph phase1[" Phase 1: Sprint MVP "]
         AE[Attribution Engine]
@@ -245,7 +245,7 @@ Phase 3 (Ecosystem)
 ### Build vs Buy Decision Matrix
 
 ```mermaid
-%%{init: {'theme': 'base', 'themeVariables': {'background': '#fcfaf5', 'primaryColor': '#1E3A5F', 'lineColor': '#5C5C5C'}}}%%
+%%{init: {'theme': 'base', 'themeVariables': {'background': '#fcfaf5', 'primaryColor': '#1E3A5F', 'lineColor': '#333333'}}}%%
 quadrantChart
     title Build vs Buy: Component Decisions
     x-axis Off-the-shelf Available --> Custom Required
@@ -274,7 +274,7 @@ quadrantChart
 ### PRD Ecosystem Map
 
 ```mermaid
-%%{init: {'theme': 'base', 'themeVariables': {'background': '#fcfaf5', 'primaryColor': '#1E3A5F', 'lineColor': '#5C5C5C'}}}%%
+%%{init: {'theme': 'base', 'themeVariables': {'background': '#fcfaf5', 'primaryColor': '#1E3A5F', 'lineColor': '#333333'}}}%%
 graph TB
     subgraph level1[" L1: Vision & Synthesis "]
         VISION[vision-v1-v1.md]
@@ -343,7 +343,7 @@ graph TB
 Synthesized from individual PRD unknown unknowns sections:
 
 ```mermaid
-%%{init: {'theme': 'base', 'themeVariables': {'background': '#fcfaf5', 'primaryColor': '#1E3A5F', 'lineColor': '#5C5C5C'}}}%%
+%%{init: {'theme': 'base', 'themeVariables': {'background': '#fcfaf5', 'primaryColor': '#1E3A5F', 'lineColor': '#333333'}}}%%
 mindmap
   root((Cross-PRD<br/>Unknowns))
     User Adoption
@@ -379,7 +379,7 @@ mindmap
 ## Integration Points Matrix
 
 ```mermaid
-%%{init: {'theme': 'base', 'themeVariables': {'background': '#fcfaf5', 'primaryColor': '#1E3A5F', 'lineColor': '#5C5C5C'}}}%%
+%%{init: {'theme': 'base', 'themeVariables': {'background': '#fcfaf5', 'primaryColor': '#1E3A5F', 'lineColor': '#333333'}}}%%
 block-beta
     columns 4
 

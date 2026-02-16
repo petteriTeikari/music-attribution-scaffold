@@ -16,7 +16,7 @@
 **Quick architecture overview**:
 
 ```mermaid
-%%{init: {'theme': 'base', 'themeVariables': {'background': '#fcfaf5', 'primaryColor': '#1E3A5F', 'lineColor': '#5C5C5C'}}}%%
+%%{init: {'theme': 'base', 'themeVariables': {'background': '#fcfaf5', 'primaryColor': '#1E3A5F', 'lineColor': '#333333'}}}%%
 flowchart LR
     subgraph sources[" Data Sources "]
         S1[Discogs]
@@ -101,7 +101,7 @@ Music attribution data exists in silos:
 ### 3.1 Pipeline Overview
 
 ```mermaid
-%%{init: {'theme': 'base', 'themeVariables': {'background': '#fcfaf5', 'primaryColor': '#1E3A5F', 'lineColor': '#5C5C5C'}}}%%
+%%{init: {'theme': 'base', 'themeVariables': {'background': '#fcfaf5', 'primaryColor': '#1E3A5F', 'lineColor': '#333333'}}}%%
 graph TD
     subgraph sources[" Data Sources "]
         DIS[Discogs<br/>Adapter]
@@ -450,7 +450,7 @@ Per [Longpre et al. (2024)](https://proceedings.mlr.press/v235/longpre24b.html) 
 The system positions itself at **L3 (Traceability)** in the data provenance hierarchy:
 
 ```mermaid
-%%{init: {'theme': 'base', 'themeVariables': {'background': '#fcfaf5', 'primaryColor': '#1E3A5F', 'lineColor': '#5C5C5C'}}}%%
+%%{init: {'theme': 'base', 'themeVariables': {'background': '#fcfaf5', 'primaryColor': '#1E3A5F', 'lineColor': '#333333'}}}%%
 graph TD
     subgraph taxonomy[" Data Provenance Levels "]
         L1[L1: Consent<br/>Binary opt-in/out]
@@ -511,7 +511,7 @@ graph TD
 ### Technical Uncertainties We Cannot Yet Quantify
 
 ```mermaid
-%%{init: {'theme': 'base', 'themeVariables': {'background': '#fcfaf5', 'primaryColor': '#1E3A5F', 'lineColor': '#5C5C5C'}}}%%
+%%{init: {'theme': 'base', 'themeVariables': {'background': '#fcfaf5', 'primaryColor': '#1E3A5F', 'lineColor': '#333333'}}}%%
 mindmap
   root((Attribution<br/>Unknowns))
     Entity Resolution
@@ -547,7 +547,7 @@ mindmap
 ### Attribution Engine Ecosystem
 
 ```mermaid
-%%{init: {'theme': 'base', 'themeVariables': {'background': '#fcfaf5', 'primaryColor': '#1E3A5F', 'lineColor': '#5C5C5C'}}}%%
+%%{init: {'theme': 'base', 'themeVariables': {'background': '#fcfaf5', 'primaryColor': '#1E3A5F', 'lineColor': '#333333'}}}%%
 graph TB
     subgraph vision[" L1: Vision "]
         V[vision-v1.md]
