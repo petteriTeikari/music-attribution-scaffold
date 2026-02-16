@@ -6,6 +6,8 @@
 
 ---
 
+![Music Attribution Scaffold: editorial frontend with confidence gauges, assurance badges, review queue, and agentic sidebar for transparent music credit verification.](figures/fig-repo-01-hero-overview.jpg)
+
 ## What is This?
 
 Music Attribution Scaffold is a research framework that demonstrates how to build a **multi-source music attribution system** with:
@@ -19,19 +21,24 @@ Music Attribution Scaffold is a research framework that demonstrates how to buil
 
 ## The Pipeline
 
-```mermaid
-graph LR
-    A[ETL<br/>5 sources] --> B[Entity<br/>Resolution]
-    B --> C[Attribution<br/>Engine]
-    C --> D[API / MCP<br/>Server]
-    D --> E[Chat Agent<br/>+ Frontend]
+![Five-pipeline architecture: ETL ingests from 5 sources, entity resolution reconciles identities, attribution engine scores confidence, API/MCP serves data, chat agent enables verification.](figures/fig-repo-02-five-pipeline-architecture.jpg)
 
-    style A fill:#e1f5fe
-    style B fill:#e1f5fe
-    style C fill:#fff3e0
-    style D fill:#e8f5e9
-    style E fill:#e8f5e9
-```
+*The five-pipeline architecture: data flows from ETL through entity resolution and attribution scoring to API/MCP endpoints and the agentic chat interface.*
+
+??? note "Pipeline diagram (Mermaid)"
+    ```mermaid
+    graph LR
+        A[ETL<br/>5 sources] --> B[Entity<br/>Resolution]
+        B --> C[Attribution<br/>Engine]
+        C --> D[API / MCP<br/>Server]
+        D --> E[Chat Agent<br/>+ Frontend]
+
+        style A fill:#e1f5fe
+        style B fill:#e1f5fe
+        style C fill:#fff3e0
+        style D fill:#e8f5e9
+        style E fill:#e8f5e9
+    ```
 
 ## Quick Start
 
