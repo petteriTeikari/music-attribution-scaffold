@@ -2,6 +2,10 @@
 
 This tutorial maps the claims in the SSRN preprint to running code in this repository, so you can verify every assertion for yourself.
 
+![Tutorial diagram: three-column reproducibility map linking academic paper sections on music attribution to corresponding open-source code modules and test commands, covering confidence scoring, multi-source entity resolution, A0-A3 assurance levels, and MCP consent infrastructure -- every substantive claim is verifiable by running a single make test command.](../figures/fig-howto-02-reproduce-paper-claims.jpg)
+
+*Paper-to-code reproducibility map for SSRN No. 6109087 (Teikari, 2026). Each row connects a manuscript section -- from transparent confidence scoring to the Oracle Problem -- to the specific module and test keyword that validates it, making the music attribution scaffold a fully auditable companion to the research.*
+
 !!! info "Paper Reference"
     Teikari, P. (2026). *Governing Generative Music: Attribution Limits, Platform Incentives, and the Future of Creator Income*. SSRN No. 6109087.
     [https://papers.ssrn.com/sol3/papers.cfm?abstract_id=6109087](https://papers.ssrn.com/sol3/papers.cfm?abstract_id=6109087)

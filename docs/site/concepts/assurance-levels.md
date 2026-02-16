@@ -6,6 +6,10 @@
 
 ## The Simple Version
 
+![Concept diagram: four-step staircase showing music attribution assurance levels A0 through A3 using ID card analogies -- A0 as sticky note with no identification, A1 as business card with a single claim, A2 as passport with multiple sources agreeing, A3 as biometric scan with direct artist verification -- illustrating how transparent confidence scoring grades trust in music credits.](../figures/fig-theory-05-assurance-levels-eli5.jpg)
+
+*Figure 5. Assurance levels A0-A3 explained through everyday ID card analogies: every attribution claim carries a trust level from no data (A0) to artist-verified (A3), enabling music industry professionals to assess how much evidence supports each music credit.*
+
 Think of different forms of identification:
 
 | Level | Real-World Analogy | Trust Level |
@@ -59,6 +63,10 @@ Music attribution works the same way. When someone claims "I wrote this song," h
 
 ### Industry Identifier Mapping
 
+![Mapping diagram: pyramid mapping music attribution assurance levels A0 through A3 to industry standard identifiers -- A0 with no identifier, A1 with ISRC only, A2 adding ISWC for cross-database agreement, A3 adding ISNI and IPI for artist-verified identity -- with analog hole warning showing that even A3 is not tamper-proof, supporting transparent confidence in music metadata.](../figures/fig-theory-06-assurance-standards-mapping.jpg)
+
+*Figure 6. Assurance levels mapped to music industry standard identifiers (ISRC, ISWC, ISNI, IPI): each level requires progressively stronger evidence, from no provenance at A0 to artist-verified identity at A3, while the analog hole warning acknowledges that no level guarantees tamper-proof attribution.*
+
 | Identifier | What It Identifies | Issuing Body | Assurance Contribution |
 |-----------|-------------------|--------------|----------------------|
 | **ISRC** | A specific recording | National ISRC agencies | A1+ (recording exists) |
@@ -75,6 +83,10 @@ Music attribution works the same way. When someone claims "I wrote this song," h
 ## For Engineers
 
 ### Implementation in Schemas
+
+![Decision tree: deterministic classification flowchart for music attribution assurance levels -- starting with an attribution record, checking artist verification for A3, then independent source agreement for A2, then any ISRC or ISWC identifier for A1, defaulting to A0 unknown as fail-safe -- showing how the open-source attribution scaffold assigns transparent confidence levels to music credits.](../figures/fig-theory-07-assurance-decision-tree.jpg)
+
+*Figure 7. The assurance level decision tree evaluates top-down from A3 to A0: artist verification yields A3, cross-database agreement yields A2, any standard identifier yields A1, and absence of all evidence defaults to A0 as a fail-safe classification.*
 
 The assurance level is computed at two points in the pipeline: entity resolution and credit aggregation.
 

@@ -134,6 +134,10 @@ with engine.connect() as conn:
 
 ## Testing Issues
 
+![Tutorial diagram: decision tree for selecting the correct test suite in the open-source music attribution scaffold, branching from code change type -- Python backend, frontend components, or configuration -- to specific make commands for unit tests, integration tests, Vitest, Playwright E2E, and pre-commit hooks, ensuring transparent confidence in every code contribution.](figures/fig-howto-06-run-tests.jpg)
+
+*Test selection decision tree for the Music Attribution Scaffold. Contributors follow branching paths based on what they changed -- Python logic, database models, frontend components, or configuration -- to run the minimal necessary test suite, with pre-commit hooks as a universal quality gate before every commit (Teikari, 2026).*
+
 ### VIRTUAL_ENV Mismatch
 
 **Symptom**: Running `pytest` directly picks up the wrong Python or packages from a different virtual environment, causing import errors.

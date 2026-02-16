@@ -2,6 +2,10 @@
 
 This tutorial walks through adding a new ETL data source to the Music Attribution Scaffold. By the end, you will have a new extractor module, quality gate integration, tests, and registration in the orchestrator.
 
+![How-to guide: five-step workflow for adding a new music metadata data source to the open-source attribution scaffold ETL pipeline, covering extractor creation, BaseExtractor interface implementation, orchestrator registration, quality gate configuration, and test coverage -- each step maps to a specific module path ensuring transparent confidence scoring from ingestion onward.](../figures/fig-howto-01-add-new-data-source.jpg)
+
+*Five-step data source integration path for the Music Attribution Scaffold ETL pipeline. Each step corresponds to a specific module in the `src/music_attribution/etl/` package, enforcing the attribution-by-design principle that every new source must implement extraction, normalization, and validation before registration (Teikari, 2026).*
+
 ---
 
 ## Prerequisites
