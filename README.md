@@ -9,7 +9,7 @@
 <p align="center"><strong>▶ <a href="https://youtu.be/7wuUiH8YmSQ?si=6TwuK7evAKFHoi_i">Watch the 1-minute demo</a></strong> · <strong>📄 <a href="https://dx.doi.org/10.2139/ssrn.6109087">Read the paper</a></strong> (supplementary material includes an annotated screenshot walkthrough)</p>
 
 [![CI](https://github.com/petteriTeikari/music-attribution-scaffold/actions/workflows/ci.yml/badge.svg)](https://github.com/petteriTeikari/music-attribution-scaffold/actions/workflows/ci.yml)
-[![Tests: 758](https://img.shields.io/badge/tests-758_passing-brightgreen)](tests/)
+[![Tests: 1012](https://img.shields.io/badge/tests-1012_passing-brightgreen)](tests/)
 [![Python 3.13](https://img.shields.io/badge/python-3.13-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
 [![Code style: ruff](https://img.shields.io/badge/code%20style-ruff-000000.svg)](https://github.com/astral-sh/ruff)
@@ -17,7 +17,7 @@
 [![uv](https://img.shields.io/badge/package%20manager-uv-blueviolet.svg)](https://docs.astral.sh/uv/)
 [![Docs](https://img.shields.io/badge/docs-GitHub%20Pages-blue)](https://petteriTeikari.github.io/music-attribution-scaffold/)
 
-**Production-grade music attribution infrastructure with calibrated confidence scoring, multi-source entity resolution, and machine-readable consent.**
+**Research-grade music attribution infrastructure with calibrated confidence scoring, multi-source entity resolution, and machine-readable consent.**
 
 > Music metadata is broken — over 40% of records are incorrect or incomplete across databases that don't talk to each other. When generative AI adds millions of new tracks per month, knowing who made what becomes both a legal and economic emergency. This scaffold provides the open-source infrastructure to address it.
 
@@ -143,9 +143,9 @@ Create a `.env` file in the project root, or export directly. See [`src/music_at
 | `make dev` | Start backend API + PostgreSQL |
 | `make dev-frontend` | Start frontend dev server |
 | `make agent` | Start full agentic UI (backend + CopilotKit) |
-| `make test-local` | Run 351 unit tests (no Docker) |
-| `make test` | Run 493 tests in Docker (CI-parity) |
-| `make test-frontend` | Run 265 Vitest tests + WCAG checks |
+| `make test-local` | Run 459 unit + 43 integration tests locally |
+| `make test` | Run 502 tests in Docker (CI-parity) |
+| `make test-frontend` | Run 510 Vitest tests + WCAG checks |
 | `make test-all` | Full CI: lint + typecheck + backend + frontend |
 | `make lint-local` | ruff check + ruff format --check |
 | `make typecheck` | mypy (strict) |
@@ -286,7 +286,7 @@ music-attribution-scaffold/
 │   ├── pipeline/                   # DAG runner for orchestration
 │   ├── observability/              # Prometheus metrics
 │   └── seed/                       # Imogen Heap mock data
-├── tests/                          # 493 tests: 351 unit + 42 integration
+├── tests/                          # 502 tests: 459 unit + 43 integration
 ├── frontend/                       # Next.js 15, TypeScript strict, Tailwind v4
 ├── docker/                         # Dockerfiles: dev, test, prod
 ├── alembic/                        # Database migrations
@@ -316,12 +316,12 @@ Each module has its own README with architecture details:
 
 ## Testing
 
-**758 tests** across backend and frontend:
+**1,012 tests** across backend and frontend:
 
 ```bash
-make test-local          # 351 unit tests (no Docker, ~30s)
-make test                # 493 backend tests in Docker (CI-parity, ~90s)
-make test-frontend       # 265 Vitest tests + WCAG accessibility checks (~15s)
+make test-local          # 502 backend tests locally (~30s)
+make test                # 502 backend tests in Docker (CI-parity, ~90s)
+make test-frontend       # 510 Vitest tests + WCAG accessibility checks (~15s)
 make test-all            # Full CI: lint + typecheck + all tests
 ```
 
@@ -330,9 +330,9 @@ make test-all            # Full CI: lint + typecheck + all tests
 
 | Tier | Count | Speed | Infrastructure | What It Tests |
 |---|---|---|---|---|
-| **Unit** | 351 | ~30s | None (all mocked) | Business logic, schema validation, algorithm correctness |
-| **Integration** | 42 | ~60s | Docker (PostgreSQL + pgvector) | Database round-trips, API endpoints, search |
-| **Frontend** | 265 | ~15s | jsdom (Vitest) | Components, hooks, stores, WCAG accessibility |
+| **Unit** | 459 | ~30s | None (all mocked) | Business logic, schema validation, algorithm correctness |
+| **Integration** | 43 | ~60s | Docker (PostgreSQL + pgvector) | Database round-trips, API endpoints, search |
+| **Frontend** | 510 | ~15s | jsdom (Vitest) | Components, hooks, stores, WCAG accessibility |
 | **Smoke** | — | ~5s | Docker | Container health, migration success |
 
 All tests run in CI via GitHub Actions with path-based filtering — backend changes don't trigger frontend CI and vice versa. See [`tests/README.md`](tests/README.md).
@@ -516,7 +516,7 @@ Full survey: [`docs/planning/music-tech-landscape/04-academic-research.md`](docs
 - **Market size**: Generative AI in music projected $558M (2024) → $7.4B (2035) at 26.5% CAGR
 - **Funding concentration**: Suno ($375M+), Vermillio ($16M), Musical AI ($6M), >$250M equity across the sector in 2025
 - **The uncomfortable truth** (Water & Music): *"Perfect attribution for music AI doesn't currently exist. All attribution approaches studied provide approximations at best."*
-- **This scaffold's position**: The only open-source, auditable, research-backed attribution infrastructure with formal uncertainty quantification
+- **This scaffold's position**: To our knowledge, the only open-source, auditable, research-backed attribution infrastructure with formal uncertainty quantification
 
 Full analysis: [`docs/planning/music-tech-landscape/`](docs/planning/music-tech-landscape/README.md)
 
@@ -536,7 +536,7 @@ Full analysis: [`docs/planning/music-tech-landscape/`](docs/planning/music-tech-
 | **Agent** | [PydanticAI](https://ai.pydantic.dev/) | Type-safe agent framework, FallbackModel for resilience |
 | **Agentic UI** | [CopilotKit](https://copilotkit.ai/) (AG-UI protocol) | SSE streaming, tool-use visualization, state sync |
 | **Entity resolution** | Splink + jellyfish + thefuzz | Fellegi-Sunter model, EM parameter estimation |
-| **MCP server** | [FastMCP](https://github.com/jlowin/fastmcp) | Machine-readable permission queries |
+| **MCP server** | [MCP Python SDK](https://github.com/modelcontextprotocol/python-sdk) (FastMCP) | Machine-readable permission queries |
 | **Frontend** | Next.js 15, React 19, TypeScript strict | App Router, server components |
 | **CSS** | Tailwind v4 + CSS custom properties | Zero hardcoded hex, full design token system |
 | **State** | Jotai | Atomic state for theme, role mode, works |
@@ -649,6 +649,12 @@ Current focus areas tracked as [GitHub Issues](https://github.com/petteriTeikari
 - Bourdieu, P. (1984). *Distinction: A Social Critique of the Judgement of Taste*. Harvard University Press.
 
 </details>
+
+---
+
+## Development
+
+This scaffold was developed with extensive use of Anthropic's Claude Opus 4.5 and Opus 4.6 via [Claude Code](https://docs.anthropic.com/en/docs/claude-code), functioning as a pair-programming agent for multi-file refactors, test generation, and architectural reasoning. All figures were generated using [Nano Banana Pro](https://nanobananapro.com/).
 
 ---
 
