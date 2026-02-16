@@ -1,5 +1,13 @@
 # Music Attribution Scaffold
 
+<p align="center">
+  <a href="https://youtu.be/7wuUiH8YmSQ?si=6TwuK7evAKFHoi_i">
+    <img src="docs/figures/repo-figures/screenshots/youtube_demo.png" width="720" alt="Watch the 1-minute MVP demo on YouTube — confidence scoring, provenance timelines, and MCP permission queries in action." />
+  </a>
+</p>
+
+<p align="center"><strong>▶ <a href="https://youtu.be/7wuUiH8YmSQ?si=6TwuK7evAKFHoi_i">Watch the 1-minute demo</a></strong> · <strong>📄 <a href="https://dx.doi.org/10.2139/ssrn.6109087">Read the paper</a></strong> (supplementary material includes an annotated screenshot walkthrough)</p>
+
 [![CI](https://github.com/petteriTeikari/music-attribution-scaffold/actions/workflows/ci.yml/badge.svg)](https://github.com/petteriTeikari/music-attribution-scaffold/actions/workflows/ci.yml)
 [![Tests: 758](https://img.shields.io/badge/tests-758_passing-brightgreen)](tests/)
 [![Python 3.13](https://img.shields.io/badge/python-3.13-blue.svg)](https://www.python.org/downloads/)
@@ -236,7 +244,7 @@ Responses include: permission status, conditions (attribution required, non-comm
 
 ## Sample Data
 
-The scaffold ships with **8 Imogen Heap works** as seed data, spanning the full confidence spectrum from 0.00 to 0.95:
+The scaffold ships with **9 Imogen Heap works** as seed data, spanning the full confidence spectrum from 0.00 to 0.95:
 
 | Work | Confidence | Assurance | Sources | Status |
 |---|---|---|---|---|
@@ -245,6 +253,7 @@ The scaffold ships with **8 Imogen Heap works** as seed data, spanning the full 
 | The Moment I Said It | 0.82 | A2 | MB, Discogs, File | Stable |
 | Goodnight and Go | 0.72 | A2 | MB, Discogs | Stable |
 | Headlock | 0.58 | A1 | MB, Discogs | Needs review |
+| What Have You Done To Me? | 0.48 | A1 | MB, Discogs | Needs review |
 | Just for Now | 0.35 | A1 | MB only | Needs review |
 | 2-1 | 0.28 | A1 | File metadata only | Needs review |
 | Blanket (unreleased) | 0.00 | A0 | None | Needs review |
