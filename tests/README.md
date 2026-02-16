@@ -128,3 +128,11 @@ Run with `make test-frontend` or `cd frontend && npm run test`.
 ## CI vs Local Discrepancies
 
 The Docker test image (`docker/Dockerfile.test`) only copies `src/`, `tests/`, and `alembic/`. Tests that read files outside those directories (e.g., `Makefile`, `scripts/`) must use `skipif(RUNNING_IN_DOCKER)` to avoid failures in CI.
+
+## Visual Documentation
+
+![Testing pyramid showing unit tests at the base, integration in the middle, and E2E at the top](docs/figures/repo-figures/assets/fig-repo-10-testing-pyramid.jpg)
+*Testing pyramid -- 351 unit, 42 integration (testcontainers), 265 frontend (Vitest), and Playwright E2E.*
+
+![Agent testing strategy showing mock agent injection, endpoint tests, and state sync verification](docs/figures/repo-figures/assets/fig-agent-10-testing-strategy.jpg)
+*Agent testing strategy -- mock agent pattern with AG-UI endpoint tests and state synchronization checks.*

@@ -100,3 +100,20 @@ In-memory graph for storing `ResolvedEntity` objects and their relationships. Su
 ## Full API Documentation
 
 See the [API Reference: Entity Resolution](https://petteriTeikari.github.io/music-attribution-scaffold/api-reference/resolution/) on the documentation site.
+
+## Visual Documentation
+
+![Resolution orchestrator flow showing the 5-strategy cascade from identifier match through LLM disambiguation](../../../docs/figures/repo-figures/assets/fig-backend-06-resolution-orchestrator-flow.jpg)
+*ResolutionOrchestrator cascade -- strategies applied in order of cost and confidence.*
+
+![String similarity methods comparing Jaro-Winkler and token-sort ratio approaches](../../../docs/figures/repo-figures/assets/fig-backend-07-string-similarity-methods.jpg)
+*String similarity matching with music-domain normalizations (prefix handling, abbreviation expansion, accent stripping).*
+
+![pgvector embedding match architecture showing sentence-transformer encoding and cosine similarity search](../../../docs/figures/repo-figures/assets/fig-backend-08-pgvector-embedding-match.jpg)
+*Embedding-based semantic matching via sentence-transformers and pgvector cosine similarity.*
+
+![Splink probabilistic linkage diagram showing Fellegi-Sunter model with DuckDB backend](../../../docs/figures/repo-figures/assets/fig-backend-09-splink-probabilistic-linkage.jpg)
+*Splink probabilistic record linkage -- Fellegi-Sunter model estimating match/unmatch probabilities.*
+
+![ResolvedEntity schema diagram showing fields, confidence breakdown, and assurance level computation](../../../docs/figures/repo-figures/assets/fig-backend-10-resolved-entity-schema.jpg)
+*ResolvedEntity boundary object schema with per-method confidence breakdown and assurance levels.*

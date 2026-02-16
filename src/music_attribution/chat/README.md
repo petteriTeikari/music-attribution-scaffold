@@ -89,3 +89,40 @@ The agent model is configurable via the `ATTRIBUTION_AGENT_MODEL` environment va
 ## Full API Documentation
 
 See the [API Reference: Chat Agent](https://petteriTeikari.github.io/music-attribution-scaffold/api-reference/chat/) on the documentation site.
+
+## Visual Documentation
+
+<details>
+<summary>Click to expand visual documentation</summary>
+
+![Full stack agentic architecture from frontend CopilotKit through AG-UI to PydanticAI backend](../../../docs/figures/repo-figures/assets/fig-agent-01-full-stack.jpg)
+*Full stack agentic architecture -- CopilotKit frontend, AG-UI protocol, PydanticAI backend.*
+
+![PydanticAI agent architecture showing agent definition, tools, dependencies, and model configuration](../../../docs/figures/repo-figures/assets/fig-agent-02-pydantic-ai-architecture.jpg)
+*PydanticAI agent architecture -- agent definition with 4 domain tools and structured dependencies.*
+
+![AG-UI protocol flow showing SSE event sequence from RunStarted through StateSnapshot to RunFinished](../../../docs/figures/repo-figures/assets/fig-agent-03-agui-protocol-flow.jpg)
+*AG-UI protocol flow -- SSE event sequence for streaming agent responses and state synchronization.*
+
+![CopilotKit integration showing useCopilotReadable and useCopilotAction hooks wiring to agent state](../../../docs/figures/repo-figures/assets/fig-agent-04-copilotkit-integration.jpg)
+*CopilotKit integration -- readable/action hooks for bidirectional agent-frontend communication.*
+
+![get_work tool flow showing work ID lookup, database query, and formatted response](../../../docs/figures/repo-figures/assets/fig-agent-05-tool-get-work.jpg)
+*Tool: search_attributions -- hybrid search across works by title, artist, or keyword.*
+
+![explain_confidence tool flow showing confidence breakdown into contributing factors](../../../docs/figures/repo-figures/assets/fig-agent-06-tool-explain-confidence.jpg)
+*Tool: explain_confidence -- breaking down confidence into source agreement, assurance level, and calibration.*
+
+![Model failover diagram showing FallbackModel with primary and secondary provider chain](../../../docs/figures/repo-figures/assets/fig-agent-07-model-failover.jpg)
+*Model failover -- PydanticAI FallbackModel with automatic provider chain switching.*
+
+![Conversation flow showing typical user-agent interaction with tool calls and state updates](../../../docs/figures/repo-figures/assets/fig-agent-08-conversation-flow.jpg)
+*Typical conversation flow -- user query, tool invocation, state update, and streamed response.*
+
+![Voice agent upsell UI showing aspirational mic animation and Pro tier upgrade prompt](../../../docs/figures/repo-figures/assets/fig-agent-09-voice-agent-upsell.jpg)
+*Voice agent upsell -- aspirational Pro tier UI surface (not implemented in MVP).*
+
+![Testing strategy showing mock agent pattern, endpoint tests, and state sync verification](../../../docs/figures/repo-figures/assets/fig-agent-10-testing-strategy.jpg)
+*Testing strategy -- mock agent injection, AG-UI endpoint tests, and state synchronization verification.*
+
+</details>
