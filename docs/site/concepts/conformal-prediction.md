@@ -58,7 +58,7 @@ Prediction set size directly drives the review queue:
 | 4+ roles | System is uncertain | Deep review needed |
 
 !!! info "The Imogen Heap Example"
-    For "Hide and Seek" (confidence 0.95, A3 assurance), the conformal set at 90% coverage is {PERFORMER} -- a single role, high certainty. For "Canvas" (confidence 0.10, A0 assurance), the set might be {PERFORMER, SONGWRITER, COMPOSER, PRODUCER} -- the system genuinely does not know.
+    For "Hide and Seek" (confidence 0.95, A3 assurance), the conformal set at 90% coverage is {PERFORMER, SONGWRITER, PRODUCER} -- three roles, high certainty. For "Blanket" (confidence 0.00, A0 assurance), the set is {PERFORMER, SONGWRITER, PRODUCER, COMPOSER, LYRICIST, ENGINEER} -- the system genuinely does not know.
 
 ---
 

@@ -100,7 +100,7 @@ Permission values use a tri-state model plus conditions: `ALLOW`, `DENY`, `ASK`,
 
 ## Running the Demo
 
-The scaffold ships with 8 Imogen Heap works spanning the full confidence range (0.00 to 0.95). To see them:
+The scaffold ships with 9 Imogen Heap works spanning the full confidence range (0.00 to 0.95). To see them:
 
 ### 1. Start the infrastructure
 
@@ -133,18 +133,19 @@ The Next.js development server starts on [http://localhost:3000](http://localhos
 
 ### 4. Explore the works
 
-Navigate to [http://localhost:3000/works](http://localhost:3000/works). You will see the 8 seeded works:
+Navigate to [http://localhost:3000/works](http://localhost:3000/works). You will see the 9 seeded works:
 
 | Work | Confidence | Assurance | Needs Review |
 |------|-----------|-----------|--------------|
 | Hide and Seek | 0.95 | A3 | No |
-| Headlock | 0.82 | A2 | No |
-| Goodnight and Go | 0.71 | A2 | Yes |
-| Speeding Cars | 0.55 | A1 | Yes |
-| Come Here Boy | 0.38 | A1 | Yes |
-| The Moment I Said It | 0.20 | A0 | Yes |
-| Canvas | 0.10 | A0 | Yes |
-| Lifeline | 0.00 | A0 | Yes |
+| Tiny Human | 0.91 | A3 | No |
+| The Moment I Said It | 0.82 | A2 | No |
+| Goodnight and Go | 0.72 | A2 | No |
+| Headlock | 0.58 | A1 | Yes |
+| What Have You Done To Me? | 0.48 | A1 | Yes |
+| Just for Now | 0.35 | A1 | Yes |
+| 2-1 | 0.28 | A1 | Yes |
+| Blanket | 0.00 | A0 | Yes |
 
 These works demonstrate the full spectrum:
 

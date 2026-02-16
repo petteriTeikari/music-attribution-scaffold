@@ -155,18 +155,19 @@ graph TD
 
 ### Sample Data Distribution
 
-The 8 Imogen Heap works in the scaffold demonstrate the full assurance spectrum:
+The 9 Imogen Heap works in the scaffold demonstrate the full assurance spectrum:
 
 | Work | Confidence | Assurance | Review? | Why |
 |------|-----------|-----------|---------|-----|
-| Hide and Seek | 0.95 | A3 | No | ISNI + MusicBrainz + Discogs agree |
-| Headlock | 0.82 | A2 | No | Two sources + ISRC |
-| Goodnight and Go | 0.71 | A2 | Yes | Sources agree but roles are ambiguous |
-| Speeding Cars | 0.55 | A1 | Yes | One ISRC, single source |
-| Come Here Boy | 0.38 | A1 | Yes | Identifier present, low cross-source match |
-| The Moment I Said It | 0.20 | A0 | Yes | File metadata only |
-| Canvas | 0.10 | A0 | Yes | Sparse metadata, no identifiers |
-| Lifeline | 0.00 | A0 | Yes | No data at all |
+| Hide and Seek | 0.95 | A3 | No | MusicBrainz + Discogs + AcoustID + artist-confirmed |
+| Tiny Human | 0.91 | A3 | No | MusicBrainz + Discogs + artist self-review |
+| The Moment I Said It | 0.82 | A2 | No | MusicBrainz + Discogs + file metadata agree |
+| Goodnight and Go | 0.72 | A2 | No | Two sources agree, partial producer credits |
+| Headlock | 0.58 | A1 | Yes | Conflicting producer credits across sources |
+| What Have You Done To Me? | 0.48 | A1 | Yes | Two sources, limited cross-verification |
+| Just for Now | 0.35 | A1 | Yes | Single source (MusicBrainz only) |
+| 2-1 | 0.28 | A1 | Yes | File metadata only, no external verification |
+| Blanket | 0.00 | A0 | Yes | No data found in any source |
 
 ### Key Source Files
 
