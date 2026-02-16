@@ -100,3 +100,20 @@ Updates automatically:
 ## Full API Documentation
 
 See the [API Reference: Attribution Engine](https://petteriTeikari.github.io/music-attribution-scaffold/api-reference/attribution/) on the documentation site.
+
+## Visual Documentation
+
+![Attribution engine flow from ResolvedEntity inputs through aggregation to AttributionRecord output](../../../docs/figures/repo-figures/assets/fig-backend-11-attribution-engine-flow.jpg)
+*Attribution engine pipeline -- from resolved entities through credit aggregation to calibrated AttributionRecord.*
+
+![Weighted source aggregation showing per-source reliability weights and confidence computation](../../../docs/figures/repo-figures/assets/fig-backend-12-weighted-source-aggregation.jpg)
+*Weighted source aggregation -- MusicBrainz, Discogs, AcoustID, artist input, and file metadata reliability weights.*
+
+![Conformal calibration pipeline showing Adaptive Prediction Sets method and ECE computation](../../../docs/figures/repo-figures/assets/fig-backend-13-conformal-calibration-pipeline.jpg)
+*Conformal prediction calibration -- Adaptive Prediction Sets ensuring "90% confident" means 90% coverage.*
+
+![AttributionRecord schema showing all fields including confidence, provenance chain, and review flags](../../../docs/figures/repo-figures/assets/fig-backend-14-attribution-record-schema.jpg)
+*AttributionRecord boundary object schema with confidence scores, provenance chain, and conformal sets.*
+
+![Review priority queue showing multi-factor priority formula with boundary proximity, source disagreement, and staleness](../../../docs/figures/repo-figures/assets/fig-backend-15-review-priority-queue.jpg)
+*Active learning review priority queue -- multi-factor scoring for human review triage.*

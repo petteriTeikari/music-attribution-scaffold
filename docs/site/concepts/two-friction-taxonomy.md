@@ -6,6 +6,10 @@
 
 ## The Simple Version
 
+![Comparison chart: split panel contrasting administrative friction (airport security line representing licensing forms and royalty calculations to automate) with discovery friction (record store browsing representing curation and collaboration to preserve) -- the two-friction taxonomy for music attribution that guides which processes an open-source scaffold should automate and which it should protect.](../figures/fig-theory-08-two-friction-eli5.jpg)
+
+*Figure 8. The two-friction taxonomy: not all friction in music attribution is bad. Administrative friction (licensing forms, royalty calculations, multi-platform registration) should be automated, while discovery friction (DJ curation, artist collaboration, playlist taste-making) must be preserved because it creates cultural value.*
+
 Think about airport security. There are two kinds of waiting:
 
 1. **The security line** -- standing in queue, taking off your shoes, putting your laptop in a bin. This is *administrative friction*. It does not make you safer; it just costs everyone time. If we could automate it (like TSA PreCheck or biometric gates), we should.
@@ -25,6 +29,10 @@ Music licensing has both kinds:
 
 ### The Diagnostic Test
 
+![Decision tree: three-question diagnostic flowchart for classifying friction in music attribution pipelines -- testing for human agency, artistic identity, and community building -- where any YES identifies discovery friction to preserve and all NO identifies administrative friction to automate, enabling transparent confidence in which processes the open-source scaffold should target.](../figures/fig-theory-09-friction-diagnostic-test.jpg)
+
+*Figure 9. The friction diagnostic test: three questions (Does it involve human agency? Does it build identity? Does it create community?) classify any friction point in the music attribution pipeline, using OR logic where any YES means discovery friction to preserve.*
+
 When evaluating any new music technology, ask one question:
 
 !!! tip "The Friction Diagnostic"
@@ -36,6 +44,10 @@ When evaluating any new music technology, ask one question:
 | **Discovery** | Browsing record shops, reading liner notes, playlist curation, word-of-mouth | Preserve or enhance |
 
 ### Real-World Applications
+
+![Categorization chart: real-world music industry friction examples classified into administrative friction (sync licensing, PRO registration, ISRC assignment, royalty reporting to automate) and discovery friction (DJ curation, artist collaboration, playlist gatekeeping to preserve) -- concrete applications of the two-friction taxonomy for music attribution and transparent confidence in which processes deserve automation.](../figures/fig-theory-10-friction-examples.jpg)
+
+*Figure 10. Real-world friction examples classified using the two-friction taxonomy: administrative friction involves compliance and process (licensing forms, ISRC assignment, royalty calculations), while discovery friction involves taste and relationships (DJ sets, co-writing sessions, editorial curation).*
 
 === "Administrative Friction (Automate)"
 

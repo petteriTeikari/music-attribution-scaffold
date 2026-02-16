@@ -2,6 +2,10 @@
 
 Practical examples for querying the Music Attribution REST API and interacting with the agent SSE endpoint.
 
+![Step-by-step guide: API request lifecycle for querying music attribution data, from a curl command through FastAPI routing and the multi-source attribution engine to a JSON response containing per-field confidence scores, A0-A3 assurance levels, and source provenance -- demonstrating transparent confidence scoring for music credits in a single HTTP call.](../figures/fig-howto-03-query-the-api.jpg)
+
+*API request-response lifecycle for the Music Attribution Scaffold. A single GET request to `/api/v1/attribution/{isrc}` returns confidence-scored music metadata with source provenance, illustrating the attribution-by-design principle where every response carries its own quality evidence (Teikari, 2026).*
+
 All examples use `http://localhost:8000` as the base URL. Start the backend with `make agent` before running any of these.
 
 ---

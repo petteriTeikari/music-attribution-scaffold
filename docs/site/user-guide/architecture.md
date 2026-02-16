@@ -2,6 +2,8 @@
 
 ## Five-Pipeline Design
 
+![Five-pipeline architecture: ETL, entity resolution, attribution engine, API/MCP, and chat agent.](../figures/fig-repo-02-five-pipeline-architecture.jpg)
+
 The scaffold is organized as five sequential pipelines, each with clear input/output boundaries defined by Pydantic schemas.
 
 ### Pipeline 1: ETL (Extract-Transform-Load)
@@ -112,4 +114,37 @@ Migrations managed by Alembic. ORM via SQLAlchemy 2.0 (async).
 
 ## PRD Decision Network
 
-Architecture decisions are captured in a probabilistic PRD with 30+ decision nodes across 5 levels. See [docs/prd/decisions/REPORT.md](https://github.com/petteriTeikari/music-attribution-scaffold/blob/main/docs/prd/decisions/REPORT.md) for the full network visualization.
+![Full probabilistic PRD decision network with 79 nodes across 5 levels.](../figures/fig-prd-02-full-decision-network.jpg)
+
+Architecture decisions are captured in a probabilistic PRD with 79 decision nodes across 5 levels. See [docs/prd/decisions/REPORT.md](https://github.com/petteriTeikari/music-attribution-scaffold/blob/main/docs/prd/decisions/REPORT.md) for the full network visualization.
+
+## Visual Documentation
+
+<details>
+<summary>Additional architecture figures</summary>
+
+![ETL pipeline overview showing data flow from five sources through normalization.](../figures/fig-backend-01-etl-pipeline-overview.jpg)
+
+*ETL pipeline: MusicBrainz, Discogs, AcoustID, file metadata, and artist input flow through source-specific extractors to NormalizedRecord.*
+
+![Entity resolution orchestrator cascading through five matching strategies.](../figures/fig-backend-06-resolution-orchestrator-flow.jpg)
+
+*Resolution cascade: identifier match, string similarity, embedding match, LLM disambiguation, Splink linkage.*
+
+![Attribution engine flow showing weighted aggregation and conformal calibration.](../figures/fig-backend-11-attribution-engine-flow.jpg)
+
+*Attribution engine: weighted source aggregation, conformal calibration, priority queue generation.*
+
+![Full agentic UI stack from PydanticAI through AG-UI to CopilotKit sidebar.](../figures/fig-agent-01-full-stack.jpg)
+
+*Agentic UI stack: PydanticAI agent with 4 tools, AG-UI SSE streaming, CopilotKit sidebar.*
+
+![Frontend architecture with editorial design system and Next.js App Router.](../figures/fig-frontend-01-architecture-overview.jpg)
+
+*Frontend: Next.js 15 App Router, editorial design system, Jotai state, CopilotKit integration.*
+
+![Database schema showing PostgreSQL tables with pgvector columns.](../figures/fig-backend-17-database-erd.jpg)
+
+*Database: PostgreSQL + pgvector with relational tables and vector columns for hybrid search.*
+
+</details>

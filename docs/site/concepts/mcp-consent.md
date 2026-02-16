@@ -6,6 +6,10 @@
 
 ## The Simple Version
 
+![Concept diagram: library card analogy for machine-readable consent in music attribution -- comparing library permissions (borrow yes, photocopy no) with MCP permissions for Imogen Heap's music (streaming yes, AI voice cloning no, remix ask first) -- plus flow showing AI system querying a permission server that returns allow, deny, or ask, enabling transparent confidence in how music credits and rights are managed by the open-source scaffold.](../figures/fig-theory-19-mcp-consent-eli5.jpg)
+
+*Figure 19. Machine-readable consent explained through a library card analogy: just as a library card specifies what you can and cannot do with borrowed books, MCP permissions let artists set specific rules for how AI systems can use their music -- set once, checked automatically every time.*
+
 You know how websites have a `robots.txt` file that tells search engines "you can index this page, but not that one"? It is a simple text file that machines read automatically, without any human needing to send an email or make a phone call.
 
 Music needs the same thing for AI. Right now, if an AI company wants to know "can I use this song to train my model?", there is no machine-readable way to ask. They would have to email a label, wait weeks, and maybe get an answer. Or they just use the music without asking.
@@ -75,6 +79,10 @@ The scaffold implements a **Permission Patchbay** -- a structured way for artist
 
 ### Delegation Chains
 
+![Matrix diagram: permission matrix for music attribution with five Imogen Heap songs as rows and five use types as columns (streaming, sync license, download, AI training, voice cloning) -- cells colored green for allow, red for deny, amber for conditional with fee or attribution requirements -- showing how machine-readable consent enables granular per-work permission profiles with transparent confidence in the open-source music credits scaffold.](../figures/fig-theory-22-permission-matrix.jpg)
+
+*Figure 22. Permission matrix across works and use cases: permissions are not binary -- each musical work has a unique profile where streaming is typically allowed, voice cloning is typically denied, and the interesting policy decisions (AI training, sync licensing) vary per work with conditional terms.*
+
 In the music industry, permission decisions often flow through a chain: artist to manager to label to distributor. The scaffold tracks this with delegation entries:
 
 ```
@@ -114,6 +122,10 @@ class MCPAttributionServer:
 ```
 
 ### Tool Definitions
+
+![Sequence diagram: MCP permission flow for music attribution showing an AI agent sending a structured check_permission query with ISRC work identifier and use type, the MCP server looking up permissions in PostgreSQL, and returning a DENY response with machine-readable reason and alternative allowed uses -- demonstrating how the open-source attribution scaffold enables transparent confidence in AI training consent for music metadata.](../figures/fig-theory-20-mcp-permission-flow.jpg)
+
+*Figure 20. The MCP permission flow: an AI agent sends a structured query specifying work ID and intended use, the MCP server looks up the artist's permissions in PostgreSQL, and returns ALLOW, DENY, or CONDITIONS with machine-readable terms and suggested alternatives when denying.*
 
 The server exposes three tools that AI platforms can call:
 
@@ -237,6 +249,10 @@ class TdmReservationMethodEnum(StrEnum):
     The scaffold positions MCP as the most complete reservation method because it is bidirectional (query and response), structured (typed permissions, not just allow/deny), and auditable (provenance chain on every query).
 
 ### Integration Architecture
+
+![Architecture diagram: consent infrastructure for music attribution with MCP server (machine-readable consent for AI agents) and FastAPI REST API (human management interface) as two interfaces connecting to a shared PostgreSQL permission store with permissions and audit log tables -- enabling transparent confidence in music credits through the open-source attribution scaffold's dual-interface design for both machines and humans.](../figures/fig-theory-21-consent-infrastructure.jpg)
+
+*Figure 21. Consent infrastructure architecture: two interfaces (MCP for machine-to-machine queries, FastAPI REST for human management) share a single PostgreSQL permission store with full audit logging, embodying the principle of "two interfaces, one truth" for durable consent management.*
 
 ```mermaid
 graph TD

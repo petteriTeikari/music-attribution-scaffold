@@ -16,7 +16,7 @@
 **Quick architecture overview**:
 
 ```mermaid
-%%{init: {'theme': 'base', 'themeVariables': {'background': '#fcfaf5', 'primaryColor': '#1E3A5F', 'lineColor': '#5C5C5C'}}}%%
+%%{init: {'theme': 'base', 'themeVariables': {'background': '#fcfaf5', 'primaryColor': '#1E3A5F', 'lineColor': '#333333'}}}%%
 flowchart LR
     subgraph user[" Artist "]
         U1[Chat<br/>Session]
@@ -102,7 +102,7 @@ The chat interface transforms data entry into a dialogue where:
 ### 3.1 Workflow
 
 ```mermaid
-%%{init: {'theme': 'base', 'themeVariables': {'background': '#fcfaf5', 'lineColor': '#5C5C5C'}}}%%
+%%{init: {'theme': 'base', 'themeVariables': {'background': '#fcfaf5', 'lineColor': '#333333'}}}%%
 stateDiagram-v2
     direction TB
 
@@ -141,7 +141,7 @@ stateDiagram-v2
 **Conversation Flow:**
 
 ```mermaid
-%%{init: {'theme': 'base', 'themeVariables': {'background': '#fcfaf5', 'primaryColor': '#1E3A5F', 'lineColor': '#5C5C5C'}}}%%
+%%{init: {'theme': 'base', 'themeVariables': {'background': '#fcfaf5', 'primaryColor': '#1E3A5F', 'lineColor': '#333333'}}}%%
 graph LR
     START([Start]) --> ALBUM[Select<br/>Album]
     ALBUM --> TRACK[Show Track<br/>+ Known Data]
@@ -221,7 +221,7 @@ MEMORY_AIDS = {
 ### 4.1 Components
 
 ```mermaid
-%%{init: {'theme': 'base', 'themeVariables': {'background': '#fcfaf5', 'primaryColor': '#1E3A5F', 'lineColor': '#5C5C5C'}}}%%
+%%{init: {'theme': 'base', 'themeVariables': {'background': '#fcfaf5', 'primaryColor': '#1E3A5F', 'lineColor': '#333333'}}}%%
 graph TB
     subgraph chat[" Chat Interface "]
         UI[Chat UI<br/>React/Vue]
@@ -304,7 +304,7 @@ Per 2026 industry trend toward agentic memory over pure RAG (see [agentic-system
 ### Memory Flow Diagram
 
 ```mermaid
-%%{init: {'theme': 'base', 'themeVariables': {'background': '#fcfaf5', 'primaryColor': '#1E3A5F', 'lineColor': '#5C5C5C'}}}%%
+%%{init: {'theme': 'base', 'themeVariables': {'background': '#fcfaf5', 'primaryColor': '#1E3A5F', 'lineColor': '#333333'}}}%%
 graph TB
     subgraph input[" User Input "]
         MSG[Artist Message]
@@ -492,7 +492,7 @@ Per artist survey research (337 artworks analyzed):
 ### Conversational UX Uncertainties
 
 ```mermaid
-%%{init: {'theme': 'base', 'themeVariables': {'background': '#fcfaf5', 'primaryColor': '#1E3A5F', 'lineColor': '#5C5C5C'}}}%%
+%%{init: {'theme': 'base', 'themeVariables': {'background': '#fcfaf5', 'primaryColor': '#1E3A5F', 'lineColor': '#333333'}}}%%
 mindmap
   root((Chat<br/>Unknowns))
     User Engagement
@@ -535,7 +535,7 @@ See [UNKNOWNS-FOR-DOMAIN-EXPERTS.md](UNKNOWNS-FOR-DOMAIN-EXPERTS.md) for structu
 ### Chat Interface Ecosystem
 
 ```mermaid
-%%{init: {'theme': 'base', 'themeVariables': {'background': '#fcfaf5', 'primaryColor': '#1E3A5F', 'lineColor': '#5C5C5C'}}}%%
+%%{init: {'theme': 'base', 'themeVariables': {'background': '#fcfaf5', 'primaryColor': '#1E3A5F', 'lineColor': '#333333'}}}%%
 graph TB
     subgraph vision[" L1: Vision "]
         V[vision-v1.md]

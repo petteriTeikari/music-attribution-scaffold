@@ -625,7 +625,7 @@ The MVA is the minimum technical architecture that demonstrates enough value to 
 ### MVA Components
 
 ```mermaid
-%%{init: {'theme': 'base', 'themeVariables': {'background': '#fcfaf5', 'primaryColor': '#1E3A5F', 'lineColor': '#5C5C5C'}}}%%
+%%{init: {'theme': 'base', 'themeVariables': {'background': '#fcfaf5', 'primaryColor': '#1E3A5F', 'lineColor': '#333333'}}}%%
 flowchart TB
     subgraph mvp["MVA (Minimum Viable Architecture)"]
         direction TB
@@ -754,7 +754,7 @@ xychart-beta
 ### The Adoption Flywheel
 
 ```mermaid
-%%{init: {'theme': 'base', 'themeVariables': {'background': '#fcfaf5', 'primaryColor': '#1E3A5F', 'lineColor': '#5C5C5C'}}}%%
+%%{init: {'theme': 'base', 'themeVariables': {'background': '#fcfaf5', 'primaryColor': '#1E3A5F', 'lineColor': '#333333'}}}%%
 flowchart TB
     A[Artists register<br/>catalogs] --> B[Entity resolution<br/>improves]
     B --> C[Confidence scores<br/>calibrate]
@@ -894,7 +894,7 @@ feedback_card:
 The feedback system implements an active learning strategy:
 
 ```mermaid
-%%{init: {'theme': 'base', 'themeVariables': {'background': '#fcfaf5', 'primaryColor': '#1E3A5F', 'lineColor': '#5C5C5C'}}}%%
+%%{init: {'theme': 'base', 'themeVariables': {'background': '#fcfaf5', 'primaryColor': '#1E3A5F', 'lineColor': '#333333'}}}%%
 flowchart TB
     subgraph system["System Side"]
         A[Entity Resolution<br/>Engine] --> B[Confidence<br/>Scorer]
@@ -982,7 +982,7 @@ options:
 This scaffold occupies a unique position: **the research-grade, open, neutral infrastructure layer** that complements (rather than competes with) the commercial players.
 
 ```mermaid
-%%{init: {'theme': 'base', 'themeVariables': {'background': '#fcfaf5', 'primaryColor': '#1E3A5F', 'lineColor': '#5C5C5C'}}}%%
+%%{init: {'theme': 'base', 'themeVariables': {'background': '#fcfaf5', 'primaryColor': '#1E3A5F', 'lineColor': '#333333'}}}%%
 quadrantChart
     title Strategic Positioning
     x-axis "Closed/Proprietary" --> "Open/Transparent"
@@ -1067,3 +1067,176 @@ quadrantChart
 - [Music Ally: A to Z of AI Music 2025](https://musically.com/2025/12/17/the-a-to-z-of-ai-music-in-2025-part-4-transparency-to-zero-sum-game/)
 - [MusicWorks: Data, Licensing, and Future of Music AI](https://musicworks.substack.com/p/data-licensing-and-the-future-of)
 - [Appetite for Distraction: Computational Copyright](https://www.appetitefordistraction.xyz/p/not-another-rant-on-ethical-training)
+
+---
+
+## Visual Documentation
+
+Visual companion figures for the landscape report, organized by topic.
+
+### Problem & Market (Figures 01--05)
+
+<details>
+<summary>Expand: Problem & Market figures (5 images)</summary>
+
+![Problem taxonomy of music AI attribution challenges](../../figures/repo-figures/assets/fig-landscape-01-problem-taxonomy.jpg)
+
+*Caption: Taxonomy of core problems in music AI attribution — metadata errors, unclaimed royalties, and missing consent frameworks.*
+
+![Funding by category across the music AI attribution sector](../../figures/repo-figures/assets/fig-landscape-02-funding-by-category.jpg)
+
+*Caption: Funding distribution across attribution infrastructure, generation platforms, licensing, and Web3 categories.*
+
+![Papers to products pipeline in music attribution](../../figures/repo-figures/assets/fig-landscape-03-papers-to-products.jpg)
+
+*Caption: The path from academic research papers to commercial attribution products — transfer gaps and timelines.*
+
+![Disruption points in the music value chain](../../figures/repo-figures/assets/fig-landscape-04-disruption-points.jpg)
+
+*Caption: Key disruption points where AI-generated music challenges existing attribution and royalty distribution.*
+
+![Maturity spectrum of attribution approaches](../../figures/repo-figures/assets/fig-landscape-05-maturity-spectrum.jpg)
+
+*Caption: Maturity spectrum from research prototypes to production-grade attribution systems.*
+
+</details>
+
+### Decision & Strategy (Figures 06--08)
+
+<details>
+<summary>Expand: Decision & Strategy figures (3 images)</summary>
+
+![Founder decision framework for music attribution startups](../../figures/repo-figures/assets/fig-landscape-06-founder-decision-framework.jpg)
+
+*Caption: Decision framework for founders choosing between training-time attribution, inference-time attribution, and licensing-only approaches.*
+
+![Misaligned incentives across the music AI ecosystem](../../figures/repo-figures/assets/fig-landscape-07-misaligned-incentives.jpg)
+
+*Caption: Mapping misaligned incentives between AI platforms, rights holders, artists, and CMOs.*
+
+![Regulatory fragmentation across jurisdictions](../../figures/repo-figures/assets/fig-landscape-08-regulatory-fragmentation.jpg)
+
+*Caption: Regulatory fragmentation — EU AI Act, US copyright cases, and emerging global frameworks create a patchwork compliance landscape.*
+
+</details>
+
+### Technical Methods (Figures 09--16)
+
+<details>
+<summary>Expand: Technical Methods figures (8 images)</summary>
+
+![Seven training data attribution methods compared](../../figures/repo-figures/assets/fig-landscape-09-seven-tda-methods.jpg)
+
+*Caption: Seven TDA methods — influence functions, unlearning, data Shapley, gradient tracking, embedding analysis, watermarking, and replication detection.*
+
+![Two paradigms of attribution: post-hoc vs by-design](../../figures/repo-figures/assets/fig-landscape-10-two-paradigms.jpg)
+
+*Caption: The two fundamental paradigms — post-hoc training data attribution (Sony/Sureel) vs. attribution-by-design (Morreale et al.).*
+
+![Watermarking robustness across audio transformations](../../figures/repo-figures/assets/fig-landscape-11-watermarking-robustness.jpg)
+
+*Caption: Watermarking robustness — how audio watermarks survive compression, time-stretching, pitch-shifting, and re-encoding.*
+
+![Content ID system evolution from fingerprinting to AI](../../figures/repo-figures/assets/fig-landscape-12-content-id-evolution.jpg)
+
+*Caption: Content ID evolution from simple audio fingerprinting to AI-powered content identification and attribution.*
+
+![The metadata mess across music industry databases](../../figures/repo-figures/assets/fig-landscape-13-metadata-mess.jpg)
+
+*Caption: The metadata mess — fragmented, inconsistent, and incomplete records across ISRC, ISWC, MusicBrainz, Discogs, and proprietary databases.*
+
+![On-chain vs off-chain attribution approaches](../../figures/repo-figures/assets/fig-landscape-14-onchain-offchain.jpg)
+
+*Caption: On-chain vs. off-chain attribution — blockchain transparency trade-offs against scalability and adoption barriers.*
+
+![Evidence chain for multi-source attribution](../../figures/repo-figures/assets/fig-landscape-15-evidence-chain.jpg)
+
+*Caption: Evidence chain construction — how multiple data sources combine into confidence-scored attribution records.*
+
+![Uncertainty quantification across attribution domains](../../figures/repo-figures/assets/fig-landscape-16-uq-cross-domain.jpg)
+
+*Caption: Cross-domain uncertainty quantification — conformal prediction, Bayesian updating, and calibration applied to music attribution.*
+
+</details>
+
+### Business Models (Figures 17--24)
+
+<details>
+<summary>Expand: Business Models figures (9 images)</summary>
+
+![Licensing models for AI music training data](../../figures/repo-figures/assets/fig-landscape-17-licensing-models.jpg)
+
+*Caption: Licensing model comparison — upfront licensing, pro-rata revenue share, attribution-based royalties, and cohort-based approaches.*
+
+![CMO transformation from analog to AI-era licensing](../../figures/repo-figures/assets/fig-landscape-18-cmo-transformation.jpg)
+
+*Caption: CMO transformation — how collective management organizations are adapting from analog-era blanket licenses to AI-era attribution-based licensing.*
+
+![Ethical certification landscape for AI music](../../figures/repo-figures/assets/fig-landscape-19-ethical-certification.jpg)
+
+*Caption: Ethical certification landscape — Fairly Trained, LANDR Fair Trade AI, and emerging standards for responsible AI music training.*
+
+![AI code and tool landscape for music attribution](../../figures/repo-figures/assets/fig-landscape-19b-ai-code-landscape.jpg)
+
+*Caption: AI code and tool landscape — open-source libraries, commercial APIs, and emerging frameworks for music attribution engineering.*
+
+![Voice rights stack for AI voice cloning and synthesis](../../figures/repo-figures/assets/fig-landscape-20-voice-rights-stack.jpg)
+
+*Caption: Voice rights stack — consent, cloning, synthesis, and compensation layers for AI voice technology.*
+
+![History of music information retrieval research](../../figures/repo-figures/assets/fig-landscape-21-mir-history.jpg)
+
+*Caption: MIR history — from early audio fingerprinting research through deep learning to modern attribution systems.*
+
+![Platform evolution from streaming to AI-native music](../../figures/repo-figures/assets/fig-landscape-22-platform-evolution.jpg)
+
+*Caption: Platform evolution — how music platforms are transitioning from streaming-only to AI-native generation and attribution.*
+
+![Build vs buy analysis for attribution infrastructure](../../figures/repo-figures/assets/fig-landscape-23-build-vs-buy.jpg)
+
+*Caption: Build vs. buy decision matrix — which attribution components to build in-house vs. purchase or partner for.*
+
+![Revenue distribution models in AI-generated music](../../figures/repo-figures/assets/fig-landscape-24-revenue-distribution.jpg)
+
+*Caption: Revenue distribution models — how AI-generated music revenue flows to training data contributors, platforms, and artists.*
+
+</details>
+
+### Research & Future (Figures 25--32)
+
+<details>
+<summary>Expand: Research & Future figures (8 images)</summary>
+
+![Research priorities for music AI attribution](../../figures/repo-figures/assets/fig-landscape-25-research-priorities.jpg)
+
+*Caption: Research priorities — key open problems ranked by impact and feasibility for the attribution community.*
+
+![Cross-domain transfer of attribution techniques](../../figures/repo-figures/assets/fig-landscape-26-cross-domain-transfer.jpg)
+
+*Caption: Cross-domain transfer — how attribution methods from text, image, and code domains apply to music.*
+
+![Agentic attribution with AI agents managing provenance](../../figures/repo-figures/assets/fig-landscape-27-agentic-attribution.jpg)
+
+*Caption: Agentic attribution — AI agents autonomously querying permissions, verifying provenance, and managing consent via MCP.*
+
+![Emerging categories in music AI attribution](../../figures/repo-figures/assets/fig-landscape-28-emerging-categories.jpg)
+
+*Caption: Emerging categories — new market segments forming around AI music attribution, voice rights, and consent infrastructure.*
+
+![Regulatory cascade from EU AI Act to global frameworks](../../figures/repo-figures/assets/fig-landscape-29-regulatory-cascade.jpg)
+
+*Caption: Regulatory cascade — how EU AI Act enforcement triggers adaptation in US, UK, and Asian markets.*
+
+![Convergence thesis for music attribution approaches](../../figures/repo-figures/assets/fig-landscape-30-convergence-thesis.jpg)
+
+*Caption: Convergence thesis — training-time, inference-time, and licensing-based attribution are converging toward hybrid approaches.*
+
+![Open problems in music AI attribution research](../../figures/repo-figures/assets/fig-landscape-31-open-problems.jpg)
+
+*Caption: Open problems — unsolved challenges including scalable TDA, cross-model attribution, and adversarial robustness.*
+
+![Meta-loop of attribution system improvement](../../figures/repo-figures/assets/fig-landscape-32-meta-loop.jpg)
+
+*Caption: Meta-loop — how attribution systems improve through artist feedback, confidence calibration, and ecosystem adoption.*
+
+</details>

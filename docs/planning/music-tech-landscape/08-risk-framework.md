@@ -81,7 +81,7 @@ xychart-beta
 ### Virtuous Cycle
 
 ```mermaid
-%%{init: {'theme': 'base', 'themeVariables': {'background': '#fcfaf5', 'primaryColor': '#1E3A5F', 'lineColor': '#5C5C5C'}}}%%
+%%{init: {'theme': 'base', 'themeVariables': {'background': '#fcfaf5', 'primaryColor': '#1E3A5F', 'lineColor': '#333333'}}}%%
 flowchart TB
     A[Artists register<br/>catalogs] --> B[Entity resolution<br/>improves]
     B --> C[Confidence scores<br/>calibrate]

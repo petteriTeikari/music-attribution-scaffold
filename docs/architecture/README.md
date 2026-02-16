@@ -5,7 +5,7 @@ This directory contains architectural documentation and decision records for the
 ## System Architecture
 
 ```mermaid
-%%{init: {'theme': 'base', 'themeVariables': {'background': '#fcfaf5', 'primaryColor': '#1E3A5F', 'lineColor': '#5C5C5C'}}}%%
+%%{init: {'theme': 'base', 'themeVariables': {'background': '#fcfaf5', 'primaryColor': '#1E3A5F', 'lineColor': '#333333'}}}%%
 graph TB
     subgraph external[" External Sources "]
         DIS[Discogs API]
@@ -289,7 +289,7 @@ stateDiagram-v2
 ### Confidence Scoring Algorithm
 
 ```mermaid
-%%{init: {'theme': 'base', 'themeVariables': {'background': '#fcfaf5', 'primaryColor': '#1E3A5F', 'lineColor': '#5C5C5C'}}}%%
+%%{init: {'theme': 'base', 'themeVariables': {'background': '#fcfaf5', 'primaryColor': '#1E3A5F', 'lineColor': '#333333'}}}%%
 graph TD
     INPUT[Source Data] --> COUNT[Count agreeing<br/>sources]
     COUNT --> RATIO[Agreement ratio<br/>n_agree / n_total]

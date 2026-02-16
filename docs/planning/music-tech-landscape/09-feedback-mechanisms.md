@@ -153,7 +153,7 @@ feedback_card:
 ### FeedbackCard Processing Pipeline
 
 ```mermaid
-%%{init: {'theme': 'base', 'themeVariables': {'background': '#fcfaf5', 'primaryColor': '#1E3A5F', 'lineColor': '#5C5C5C'}}}%%
+%%{init: {'theme': 'base', 'themeVariables': {'background': '#fcfaf5', 'primaryColor': '#1E3A5F', 'lineColor': '#333333'}}}%%
 flowchart LR
     A[Expert submits<br/>FeedbackCard] --> B[Validation<br/>& Dedup]
     B --> C[Evidence<br/>Classification]
@@ -328,7 +328,7 @@ The expert dashboard presents a combined interface:
 Active learning selects the *most informative* items for expert review, maximizing the value of each expert interaction.
 
 ```mermaid
-%%{init: {'theme': 'base', 'themeVariables': {'background': '#fcfaf5', 'primaryColor': '#1E3A5F', 'lineColor': '#5C5C5C'}}}%%
+%%{init: {'theme': 'base', 'themeVariables': {'background': '#fcfaf5', 'primaryColor': '#1E3A5F', 'lineColor': '#333333'}}}%%
 flowchart TB
     subgraph system["System Side"]
         A[Entity Resolution<br/>Engine] --> B[Confidence<br/>Scorer]

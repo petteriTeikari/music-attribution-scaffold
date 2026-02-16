@@ -88,3 +88,20 @@ Async token bucket shared by all connectors. Ensures compliance with per-API rat
 ## Full API Documentation
 
 See the [API Reference: ETL Pipeline](https://petteriTeikari.github.io/music-attribution-scaffold/api-reference/etl/) on the documentation site.
+
+## Visual Documentation
+
+![ETL pipeline overview showing the five data sources flowing through connectors into NormalizedRecord boundary objects](../../../docs/figures/repo-figures/assets/fig-backend-01-etl-pipeline-overview.jpg)
+*ETL pipeline overview -- five source connectors feeding into NormalizedRecord boundary objects.*
+
+![NormalizedRecord schema diagram showing all fields, validators, and relationships](../../../docs/figures/repo-figures/assets/fig-backend-02-normalized-record-schema.jpg)
+*NormalizedRecord boundary object schema with field types and validation rules.*
+
+![Data quality gate flow showing validation checks before handoff to Entity Resolution](../../../docs/figures/repo-figures/assets/fig-backend-03-data-quality-gate.jpg)
+*DataQualityGate validation flow -- identifier coverage, duplicate detection, and source distribution checks.*
+
+![Source-specific extraction logic for MusicBrainz, Discogs, AcoustID, and file metadata](../../../docs/figures/repo-figures/assets/fig-backend-04-source-specific-extraction.jpg)
+*Source-specific extraction and transformation logic for each connector.*
+
+![Rate limiting strategy diagram showing async token bucket shared across connectors](../../../docs/figures/repo-figures/assets/fig-backend-05-rate-limiting-strategy.jpg)
+*Async token bucket rate limiter shared by all API connectors with per-source capacity configuration.*

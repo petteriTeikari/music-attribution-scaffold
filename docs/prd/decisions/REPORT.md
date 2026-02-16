@@ -11,7 +11,7 @@ The complete decision network: 79 nodes across 5 levels with conditional probabi
 ### Core Infrastructure (50 nodes)
 
 ```mermaid
-%%{init: {'theme': 'base', 'themeVariables': {'background': '#fcfaf5', 'primaryColor': '#1E3A5F', 'lineColor': '#5C5C5C'}}}%%
+%%{init: {'theme': 'base', 'themeVariables': {'background': '#fcfaf5', 'primaryColor': '#1E3A5F', 'lineColor': '#333333'}}}%%
 flowchart TB
     subgraph L1["L1: Business Decisions"]
         BVB[Build vs Buy<br/>Posture]
@@ -295,7 +295,7 @@ The ecosystem integration subgraph extends the core infrastructure with 28 new d
 ### Ecosystem Integration (28 nodes)
 
 ```mermaid
-%%{init: {'theme': 'base', 'themeVariables': {'background': '#fcfaf5', 'primaryColor': '#1E3A5F', 'lineColor': '#5C5C5C'}}}%%
+%%{init: {'theme': 'base', 'themeVariables': {'background': '#fcfaf5', 'primaryColor': '#1E3A5F', 'lineColor': '#333333'}}}%%
 flowchart TB
     subgraph L1_REF["L1: Business (reference)"]
         BVB[Build vs Buy<br/>Posture]
@@ -482,7 +482,7 @@ The foundational split: engineers and well-funded teams lean custom; musicians a
 The "golden path" through the network for the reference implementation:
 
 ```mermaid
-%%{init: {'theme': 'base', 'themeVariables': {'background': '#fcfaf5', 'primaryColor': '#1E3A5F', 'lineColor': '#5C5C5C'}}}%%
+%%{init: {'theme': 'base', 'themeVariables': {'background': '#fcfaf5', 'primaryColor': '#1E3A5F', 'lineColor': '#333333'}}}%%
 flowchart LR
     subgraph L1["L1"]
         BVB["Managed<br/>Services"]
@@ -545,7 +545,7 @@ flowchart LR
 The enterprise path for Digital Product Passport traceability:
 
 ```mermaid
-%%{init: {'theme': 'base', 'themeVariables': {'background': '#fcfaf5', 'primaryColor': '#1E3A5F', 'lineColor': '#5C5C5C'}}}%%
+%%{init: {'theme': 'base', 'themeVariables': {'background': '#fcfaf5', 'primaryColor': '#1E3A5F', 'lineColor': '#333333'}}}%%
 flowchart LR
     subgraph L1["L1"]
         BVB["Custom<br/>Build"]
@@ -638,7 +638,7 @@ CopilotKit dominates across all archetypes due to open-source governance and MCP
 The "golden path" for the frontend mockup with agentic UI, voice agent, and graph RAG:
 
 ```mermaid
-%%{init: {'theme': 'base', 'themeVariables': {'background': '#fcfaf5', 'primaryColor': '#1E3A5F', 'lineColor': '#5C5C5C'}}}%%
+%%{init: {'theme': 'base', 'themeVariables': {'background': '#fcfaf5', 'primaryColor': '#1E3A5F', 'lineColor': '#333333'}}}%%
 flowchart LR
     subgraph L1["L1"]
         BVB["Managed<br/>Services"]
@@ -695,7 +695,7 @@ This scenario extends the Music Attribution MVP path with four new nodes. Copilo
 The ecosystem partnership path through the network — from platform positioning to partner health monitoring:
 
 ```mermaid
-%%{init: {'theme': 'base', 'themeVariables': {'background': '#fcfaf5', 'primaryColor': '#1E3A5F', 'lineColor': '#5C5C5C'}}}%%
+%%{init: {'theme': 'base', 'themeVariables': {'background': '#fcfaf5', 'primaryColor': '#1E3A5F', 'lineColor': '#333333'}}}%%
 flowchart LR
     subgraph L2["L2"]
         PS["Platform Strategy<br/>(integration_platform)"]
@@ -739,7 +739,7 @@ This scenario traces the partnership-first path: begin with platform positioning
 The regulatory compliance path through the network — from compliance posture to automated monitoring:
 
 ```mermaid
-%%{init: {'theme': 'base', 'themeVariables': {'background': '#fcfaf5', 'primaryColor': '#1E3A5F', 'lineColor': '#5C5C5C'}}}%%
+%%{init: {'theme': 'base', 'themeVariables': {'background': '#fcfaf5', 'primaryColor': '#1E3A5F', 'lineColor': '#333333'}}}%%
 flowchart LR
     subgraph L1["L1"]
         RP["Regulatory Posture<br/>(compliance_first)"]
@@ -988,6 +988,81 @@ Academic grounding for UI/UX decision nodes. Full details in [`../research-influ
 | Malleable Browser Spaces | Orca (UCSD) | Research prototype | LOW | `agentic_ui_framework` |
 
 **4 of 9 concepts** have production-ready library support. **3 concepts** are research frontiers tracked on the watchlist. This ratio ensures the PRD is grounded in what's buildable today while keeping aspirational concepts visible for future iterations.
+
+---
+
+## Ecosystem Visual Documentation
+
+Visual companion figures for the ecosystem integration subgraph and partnership decision nodes.
+
+<details>
+<summary>Expand: All 16 ecosystem figures</summary>
+
+![Ecosystem subgraph overview showing 28 new decision nodes](../../figures/repo-figures/assets/fig-ecosystem-01-subgraph-overview.jpg)
+
+*Caption: Overview of the ecosystem integration subgraph — 28 new decision nodes extending the core infrastructure with platform strategy, partnerships, compliance, and operational intelligence.*
+
+![Three integration archetypes for ecosystem partners](../../figures/repo-figures/assets/fig-ecosystem-02-three-integration-archetypes.jpg)
+
+*Caption: Three integration archetypes — standalone tool, integration platform, and protocol layer — each with different partnership and API implications.*
+
+![Partnership model decision tree for attribution providers](../../figures/repo-figures/assets/fig-ecosystem-03-partnership-model-decision-tree.jpg)
+
+*Caption: Partnership model decision tree — choosing between strategic alliance, data exchange, observer status, and full integration based on partner maturity and alignment.*
+
+![TDA provider landscape and integration options](../../figures/repo-figures/assets/fig-ecosystem-04-tda-provider-landscape.jpg)
+
+*Caption: TDA provider landscape — Musical AI, Sureel AI, and Sony research positioned by integration depth and technical approach.*
+
+![CMO licensing architecture for collective AI music licences](../../figures/repo-figures/assets/fig-ecosystem-05-cmo-licensing-architecture.jpg)
+
+*Caption: CMO licensing architecture — how collective management organizations like STIM structure AI music licences with attribution-based royalty flows.*
+
+![Content ID system comparison across providers](../../figures/repo-figures/assets/fig-ecosystem-06-content-id-comparison.jpg)
+
+*Caption: Content ID system comparison — Pex, YouTube Content ID, Audible Magic, and emerging AI-native identification approaches.*
+
+![Platform connector design for AI music services](../../figures/repo-figures/assets/fig-ecosystem-07-platform-connector-design.jpg)
+
+*Caption: Platform connector design — API integration patterns for connecting with Suno, Udio, Soundverse, and other AI music generation platforms.*
+
+![Metadata registry map across industry standards](../../figures/repo-figures/assets/fig-ecosystem-08-metadata-registry-map.jpg)
+
+*Caption: Metadata registry map — ISRC, ISWC, ISNI, MusicBrainz, SoundExchange, and DDEX registries with data flow relationships.*
+
+![Agent interoperability protocol stack](../../figures/repo-figures/assets/fig-ecosystem-09-agent-interop-protocol-stack.jpg)
+
+*Caption: Agent interop protocol stack — MCP, A2A, ACP, and TAP protocols layered for machine-to-machine attribution queries and consent management.*
+
+![Knowledge graph backend options for attribution data](../../figures/repo-figures/assets/fig-ecosystem-10-knowledge-graph-backend-options.jpg)
+
+*Caption: Knowledge graph backend options — Apache AGE, Neo4j, and LightRAG compared for storing and querying attribution entity graphs.*
+
+![Fairly Trained certification flow for AI music companies](../../figures/repo-figures/assets/fig-ecosystem-11-fairly-trained-certification-flow.jpg)
+
+*Caption: Fairly Trained certification flow — the process from application through audit to certification for ethical AI music training.*
+
+![Compliance reporting pipeline for regulatory requirements](../../figures/repo-figures/assets/fig-ecosystem-12-compliance-reporting-pipeline.jpg)
+
+*Caption: Compliance reporting pipeline — automated data collection, aggregation, and report generation for EU AI Act and industry standards.*
+
+![Edge inference strategy for on-device attribution](../../figures/repo-figures/assets/fig-ecosystem-13-edge-inference-strategy.jpg)
+
+*Caption: Edge inference strategy — running lightweight attribution models on-device for real-time fingerprinting and local confidence scoring.*
+
+![Attribution evaluation framework maturity model](../../figures/repo-figures/assets/fig-ecosystem-14-attribution-eval-framework-maturity.jpg)
+
+*Caption: Attribution evaluation framework maturity — from ad-hoc accuracy checks to systematic golden dataset benchmarking and continuous calibration monitoring.*
+
+![Company node activation matrix across archetypes](../../figures/repo-figures/assets/fig-ecosystem-15-company-node-activation-matrix.jpg)
+
+*Caption: Company node activation matrix — which ecosystem partner nodes activate for each team archetype (engineer-heavy, musician-first, solo hacker, well-funded).*
+
+![None-prior heatmap showing unselected options across the network](../../figures/repo-figures/assets/fig-ecosystem-16-none-prior-heatmap.jpg)
+
+*Caption: None-prior heatmap — visualizing the "do nothing" probability across all ecosystem decision nodes, highlighting where inaction is the likely default.*
+
+</details>
 
 ---
 

@@ -5,7 +5,7 @@ This directory contains synthesized knowledge for RAG-optimized retrieval by Cla
 ## Knowledge Structure
 
 ```mermaid
-%%{init: {'theme': 'base', 'themeVariables': {'background': '#fcfaf5', 'primaryColor': '#1E3A5F', 'lineColor': '#5C5C5C'}}}%%
+%%{init: {'theme': 'base', 'themeVariables': {'background': '#fcfaf5', 'primaryColor': '#1E3A5F', 'lineColor': '#333333'}}}%%
 graph TD
     KB[Knowledge Base<br/>SYNTHESIS.md] --> D[domain/]
     KB --> T[technical/]

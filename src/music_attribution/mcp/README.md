@@ -82,3 +82,8 @@ The server can be run as a standalone MCP server or integrated into the FastAPI 
 ## Full API Documentation
 
 See the [API Reference: MCP Server](https://petteriTeikari.github.io/music-attribution-scaffold/api-reference/mcp/) on the documentation site.
+
+## Visual Documentation
+
+![MCP permission patchbay showing machine-readable permission queries for AI training rights](../../../docs/figures/repo-figures/assets/fig-choice-11-mcp-permissions.jpg)
+*MCP Permission Patchbay -- machine-readable consent queries for AI training, voice cloning, and derivative works.*

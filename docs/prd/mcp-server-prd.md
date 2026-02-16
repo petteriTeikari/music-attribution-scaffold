@@ -16,7 +16,7 @@
 **Quick architecture overview**:
 
 ```mermaid
-%%{init: {'theme': 'base', 'themeVariables': {'background': '#fcfaf5', 'primaryColor': '#1E3A5F', 'lineColor': '#5C5C5C'}}}%%
+%%{init: {'theme': 'base', 'themeVariables': {'background': '#fcfaf5', 'primaryColor': '#1E3A5F', 'lineColor': '#333333'}}}%%
 flowchart LR
     subgraph clients[" AI Clients "]
         C1[Tier 1<br/>Internal]
@@ -87,7 +87,7 @@ From her Medium article:
 ## 2. Three-Tier Trust Model
 
 ```mermaid
-%%{init: {'theme': 'base', 'themeVariables': {'background': '#fcfaf5', 'lineColor': '#5C5C5C'}}}%%
+%%{init: {'theme': 'base', 'themeVariables': {'background': '#fcfaf5', 'lineColor': '#333333'}}}%%
 graph TB
     subgraph tier1[" Tier 1: Internal "]
         T1[System Chat<br/>Admin Dashboard]
@@ -175,7 +175,7 @@ def determine_tier(oauth_token: str) -> ClientInfo:
 ## 3. MCP Tool Definitions
 
 ```mermaid
-%%{init: {'theme': 'base', 'themeVariables': {'background': '#fcfaf5', 'lineColor': '#5C5C5C'}}}%%
+%%{init: {'theme': 'base', 'themeVariables': {'background': '#fcfaf5', 'lineColor': '#333333'}}}%%
 graph LR
     subgraph tools[" MCP Tools "]
         T1[get_artist_attribution]
@@ -477,7 +477,7 @@ Industry benchmarks (MCPSecBench 2025):
 ### Security Architecture (Four-Layer Defense)
 
 ```mermaid
-%%{init: {'theme': 'base', 'themeVariables': {'background': '#fcfaf5', 'primaryColor': '#1E3A5F', 'lineColor': '#5C5C5C'}}}%%
+%%{init: {'theme': 'base', 'themeVariables': {'background': '#fcfaf5', 'primaryColor': '#1E3A5F', 'lineColor': '#333333'}}}%%
 graph TB
     subgraph layer1[" Layer 1: Authentication "]
         AUTH[OAuth 2.0<br/>Resource Server]
@@ -585,7 +585,7 @@ graph TB
 Per Morreale et al. (2025), the attribution MCP implements **inference-time attribution** (ITA):
 
 ```mermaid
-%%{init: {'theme': 'base', 'themeVariables': {'background': '#fcfaf5', 'lineColor': '#5C5C5C'}}}%%
+%%{init: {'theme': 'base', 'themeVariables': {'background': '#fcfaf5', 'lineColor': '#333333'}}}%%
 sequenceDiagram
     participant U as User/AI Platform
     participant MCP as the attribution MCP
@@ -620,7 +620,7 @@ Compliance when: p × d × F ≥ g
 ### Deterrence Economics Model
 
 ```mermaid
-%%{init: {'theme': 'base', 'themeVariables': {'background': '#fcfaf5', 'primaryColor': '#1E3A5F', 'lineColor': '#5C5C5C'}}}%%
+%%{init: {'theme': 'base', 'themeVariables': {'background': '#fcfaf5', 'primaryColor': '#1E3A5F', 'lineColor': '#333333'}}}%%
 graph LR
     subgraph formula[" Becker Formula: p × d × F ≥ g "]
         P[p<br/>Detection<br/>probability]
@@ -711,7 +711,7 @@ async def get_usage_audit(
 ### MCP and Platform Integration Uncertainties
 
 ```mermaid
-%%{init: {'theme': 'base', 'themeVariables': {'background': '#fcfaf5', 'primaryColor': '#1E3A5F', 'lineColor': '#5C5C5C'}}}%%
+%%{init: {'theme': 'base', 'themeVariables': {'background': '#fcfaf5', 'primaryColor': '#1E3A5F', 'lineColor': '#333333'}}}%%
 mindmap
   root((MCP<br/>Unknowns))
     Protocol Evolution
@@ -745,7 +745,7 @@ mindmap
 The MCPSecBench research identified attack categories, but unknown attack vectors likely exist:
 
 ```mermaid
-%%{init: {'theme': 'base', 'themeVariables': {'background': '#fcfaf5', 'primaryColor': '#1E3A5F', 'lineColor': '#5C5C5C'}}}%%
+%%{init: {'theme': 'base', 'themeVariables': {'background': '#fcfaf5', 'primaryColor': '#1E3A5F', 'lineColor': '#333333'}}}%%
 graph TB
     subgraph known[" Known Attack Surfaces "]
         K1[Tool Manifest<br/>Manipulation]
@@ -785,7 +785,7 @@ graph TB
 ### MCP Server Ecosystem
 
 ```mermaid
-%%{init: {'theme': 'base', 'themeVariables': {'background': '#fcfaf5', 'primaryColor': '#1E3A5F', 'lineColor': '#5C5C5C'}}}%%
+%%{init: {'theme': 'base', 'themeVariables': {'background': '#fcfaf5', 'primaryColor': '#1E3A5F', 'lineColor': '#333333'}}}%%
 graph TB
     subgraph vision[" L1: Vision "]
         V[vision-v1.md]

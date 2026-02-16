@@ -108,7 +108,7 @@ Our assurance levels are formally defined, mapped to evidence types, and backed 
 ## Strategic Positioning Map
 
 ```mermaid
-%%{init: {'theme': 'base', 'themeVariables': {'background': '#fcfaf5', 'primaryColor': '#1E3A5F', 'lineColor': '#5C5C5C'}}}%%
+%%{init: {'theme': 'base', 'themeVariables': {'background': '#fcfaf5', 'primaryColor': '#1E3A5F', 'lineColor': '#333333'}}}%%
 quadrantChart
     title Strategic Positioning
     x-axis "Closed/Proprietary" --> "Open/Transparent"

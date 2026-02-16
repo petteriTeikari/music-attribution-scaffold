@@ -27,6 +27,18 @@
 
 <p align="center"><em>The scaffold unifies fragmented music metadata into confidence-scored attribution records with transparent provenance.</em></p>
 
+<p align="center">
+  <img src="docs/figures/generated/fig-rm-02-sound-sources-unite.png" width="480" alt="Sound Sources Unite: multiple metadata sources (Discogs, MusicBrainz, artist input) flow into the attribution scaffold producing a single unified record with verified confidence score of 0.94 for Hide and Seek by Imogen Heap." />
+</p>
+
+<p align="center"><em>Multiple sources in. One verified truth out.</em></p>
+
+<p align="center">
+  <img src="docs/figures/generated/fig-rm-03-from-unknown-to-verified.png" width="720" alt="From Unknown to Verified: the A0-A3 trust progression showing four assurance levels -- A0 Unknown (data exists somewhere), A1 Claimed (artist says this is me, 25%), A2 Corroborated (one external source agrees, 75%), A3 Verified (multiple sources agree, 100%)." />
+</p>
+
+<p align="center"><em>Your word matters. When you claim a credit, that is the start of verification -- not the end.</em></p>
+
 ---
 
 ## What It Does

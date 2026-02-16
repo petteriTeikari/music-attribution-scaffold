@@ -58,7 +58,7 @@ From the research:
 ## Architecture Diagram
 
 ```mermaid
-%%{init: {'theme': 'base', 'themeVariables': {'background': '#fcfaf5', 'primaryColor': '#1E3A5F', 'lineColor': '#5C5C5C'}}}%%
+%%{init: {'theme': 'base', 'themeVariables': {'background': '#fcfaf5', 'primaryColor': '#1E3A5F', 'lineColor': '#333333'}}}%%
 graph TD
     subgraph agent[" Single Attribution Agent "]
         ORCH[Orchestrator<br/>Tool Selection]

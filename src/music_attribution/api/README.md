@@ -111,3 +111,20 @@ Swagger UI is available at `http://localhost:8000/docs`.
 ## Full API Documentation
 
 See the [API Reference: REST API](https://petteriTeikari.github.io/music-attribution-scaffold/api-reference/api/) on the documentation site.
+
+## Visual Documentation
+
+![FastAPI route map showing all endpoints grouped by prefix with HTTP methods](../../../docs/figures/repo-figures/assets/fig-backend-16-fastapi-route-map.jpg)
+*FastAPI route map -- attribution, permission, health, metrics, and CopilotKit endpoints.*
+
+![Database entity-relationship diagram showing tables, relationships, and key constraints](../../../docs/figures/repo-figures/assets/fig-backend-17-database-erd.jpg)
+*Database ERD -- PostgreSQL schema with attribution records, permission bundles, and audit logs.*
+
+![Hybrid search architecture showing text, vector, and graph search with RRF fusion](../../../docs/figures/repo-figures/assets/fig-backend-18-hybrid-search-architecture.jpg)
+*Hybrid search architecture -- text + vector + graph search fused via Reciprocal Rank Fusion (RRF).*
+
+![Alembic migration chain showing sequential migration versions and schema evolution](../../../docs/figures/repo-figures/assets/fig-backend-19-alembic-migration-chain.jpg)
+*Alembic migration chain -- sequential schema evolution with version tracking.*
+
+![Dependency injection diagram showing FastAPI dependencies, session factory, and repository pattern](../../../docs/figures/repo-figures/assets/fig-backend-20-dependency-injection.jpg)
+*FastAPI dependency injection -- async session factory, repository pattern, and request lifecycle.*

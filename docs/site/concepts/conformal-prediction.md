@@ -6,6 +6,10 @@
 
 ## The Simple Version
 
+![Comparison chart: point estimate (80 percent rain, 0.85 music attribution confidence) versus interval estimate (70-90 percent rain, 0.78-0.92 confidence range) using weather forecast analogy -- showing why transparent confidence scoring with intervals is more honest than single numbers for music credits, where narrow ranges signal certainty and wide ranges signal need for more evidence.](../figures/fig-theory-11-confidence-vs-uncertainty-eli5.jpg)
+
+*Figure 11. Confidence versus uncertainty: a single number (0.85) hides how much the system actually knows, while an interval (0.78-0.92) communicates both the estimate and its uncertainty -- this scaffold uses interval estimates because they are more honest and actionable for music attribution decisions.*
+
 Think about weather forecasts. A good forecaster does not just say "it will rain tomorrow." They say "there is a 70% chance of rain, and we are calibrated -- when we say 70%, it actually rains about 70% of the time."
 
 A bad forecaster says "90% chance of sun!" every day, even when it rains half the time. They are **overconfident** -- their stated confidence does not match reality.
@@ -22,6 +26,10 @@ Music attribution has the same problem. A system might say "we are 85% confident
 ## For Music Industry Professionals
 
 ### Why Intervals Beat Point Estimates
+
+![Scoring diagram: Venn-style overlap of five music metadata sources (MusicBrainz, Discogs, AcoustID, file metadata, artist input) with center labeled high confidence, plus bar chart showing transparent confidence scoring rising from 0.35 with one source to 0.94 with four sources plus artist verification -- demonstrating how source agreement drives Bayesian confidence in the music attribution scaffold.](../figures/fig-theory-14-source-agreement-scoring.jpg)
+
+*Figure 14. Source agreement scoring: confidence increases with independent corroboration across weighted data sources. A single file tag yields 0.35, while four sources plus artist verification reaches 0.94, with artist input carrying the highest authority weight in the attribution scaffold.*
 
 When a rights manager sees "confidence: 0.72" on an attribution record, they need to know:
 
@@ -65,6 +73,10 @@ Prediction set size directly drives the review queue:
 ## For Engineers
 
 ### Nonconformity Scores and APS
+
+![Technical pipeline diagram: four-step conformal prediction methodology for music attribution -- calibration set to nonconformity scores to quantile threshold to prediction sets with coverage guarantee P(Y in C(X)) >= 1-alpha -- providing distribution-free, finite-sample valid confidence scoring that requires no model assumptions, enabling transparent confidence intervals for music credits in the open-source attribution scaffold.](../figures/fig-theory-12-conformal-prediction.jpg)
+
+*Figure 12. Conformal prediction pipeline: held-out calibration data produces nonconformity scores, which yield a quantile threshold that generates prediction sets with formal coverage guarantees -- applied to music attribution where X represents source evidence features and C(X_new) is the set of plausible creators for a query.*
 
 The scaffold implements the **Adaptive Prediction Sets (APS)** method in `src/music_attribution/attribution/conformal.py`. The core algorithm:
 
@@ -115,6 +127,10 @@ class ConformalSet(BaseModel):
 ```
 
 ### Calibration Pipeline
+
+![Theory visualization: reliability diagram for evaluating music attribution confidence scoring calibration -- predicted confidence on x-axis versus observed frequency on y-axis with perfect calibration diagonal, overconfident curve below the diagonal, and underconfident region above -- plus panels defining calibration (ECE metric) and sharpness for transparent confidence in music metadata systems.](../figures/fig-theory-13-reliability-diagram.jpg)
+
+*Figure 13. Reliability diagram for confidence calibration: when the attribution system says "85% confident," it should be correct 85% of the time. Deviations below the diagonal indicate overconfidence, while deviations above indicate underconfidence -- both calibration and sharpness must be evaluated for trustworthy music attribution.*
 
 ```mermaid
 graph LR

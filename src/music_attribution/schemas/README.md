@@ -59,3 +59,14 @@ Regulatory enums: `RegulatoryFrameworkEnum`, `ComplianceActorEnum`, `TdmReservat
 ## Full API Documentation
 
 See the [API Reference: Schemas](https://petteriTeikari.github.io/music-attribution-scaffold/api-reference/schemas/) on the documentation site.
+
+## Visual Documentation
+
+![NormalizedRecord schema diagram showing all fields, validators, and relationships](../../../docs/figures/repo-figures/assets/fig-backend-02-normalized-record-schema.jpg)
+*NormalizedRecord -- ETL boundary object with source-specific fields and validation rules.*
+
+![ResolvedEntity schema diagram showing fields, confidence breakdown, and assurance level computation](../../../docs/figures/repo-figures/assets/fig-backend-10-resolved-entity-schema.jpg)
+*ResolvedEntity -- Entity Resolution boundary object with per-method confidence and assurance levels.*
+
+![AttributionRecord schema showing all fields including confidence, provenance chain, and review flags](../../../docs/figures/repo-figures/assets/fig-backend-14-attribution-record-schema.jpg)
+*AttributionRecord -- Attribution Engine boundary object with calibrated confidence and provenance chain.*

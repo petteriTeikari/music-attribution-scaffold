@@ -5,6 +5,7 @@
 .PHONY: ci-docker docker-build docker-clean clean
 .PHONY: dev-frontend test-frontend lint-frontend build-frontend test-e2e test-e2e-ui
 .PHONY: agent dev-agent
+.PHONY: docs docs-serve
 
 .DEFAULT_GOAL := help
 
@@ -135,6 +136,22 @@ dev-agent:  ## Start agent backend + frontend dev server
 	@echo "Set NEXT_PUBLIC_API_URL=http://localhost:8000 in frontend/.env.local"
 	$(MAKE) agent &
 	NEXT_PUBLIC_API_URL=http://localhost:8000 $(MAKE) dev-frontend
+
+# =============================================================================
+# DOCUMENTATION
+# =============================================================================
+
+docs:  ## Build MkDocs site (copies figures first)
+	@mkdir -p docs/site/figures
+	@cp docs/figures/repo-figures/assets/*.jpg docs/site/figures/
+	@cp docs/figures/generated/fig-rm-*.png docs/site/figures/ 2>/dev/null || true
+	uv run mkdocs build --strict
+
+docs-serve:  ## Serve MkDocs locally with live reload
+	@mkdir -p docs/site/figures
+	@cp docs/figures/repo-figures/assets/*.jpg docs/site/figures/
+	@cp docs/figures/generated/fig-rm-*.png docs/site/figures/ 2>/dev/null || true
+	uv run mkdocs serve
 
 # =============================================================================
 # CLEANUP

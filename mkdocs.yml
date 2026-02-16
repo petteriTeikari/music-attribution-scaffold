@@ -162,6 +162,8 @@ nav:
     - MCP Consent Infrastructure: concepts/mcp-consent.md
     - Entity Resolution: concepts/entity-resolution.md
 
+  - Design Decisions: design-decisions.md
+
   - User Guide:
     - user-guide/index.md
     - Architecture Overview: user-guide/architecture.md
@@ -186,6 +188,8 @@ nav:
     - API Examples: tutorials/api-examples.md
 
   - Troubleshooting: troubleshooting.md
+
+  - Visual Gallery: gallery.md
 
 # Footer
 copyright: >

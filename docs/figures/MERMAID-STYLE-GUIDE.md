@@ -16,7 +16,7 @@ Use this init block at the start of every Mermaid diagram:
     'primaryBorderColor': '#1E3A5F',
     'secondaryColor': '#2E7D7B',
     'tertiaryColor': '#D4A03C',
-    'lineColor': '#5C5C5C',
+    'lineColor': '#333333',
     'textColor': '#2C2C2C',
     'fontFamily': 'Poppins, Manrope, system-ui, sans-serif'
   }

@@ -6,6 +6,10 @@
 
 ## The Simple Version
 
+![Concept diagram: three paint tubes labeled Artist A, B, and C flow into a blender representing AI model training, producing uniform purple output that cannot be unmixed -- illustrating the oracle problem in music attribution, where transparent confidence scoring is impossible after creative works are blended during generative AI training, a fundamental limitation for open-source attribution scaffolds.](../figures/fig-theory-01-oracle-problem-eli5.jpg)
+
+*Figure 1. The Oracle Problem explained through a paint-mixing analogy: once creative works are blended inside an AI model through gradient descent and weight averaging, separating individual contributions is fundamentally impossible -- motivating the attribution-by-design approach used in this scaffold.*
+
 Imagine mixing red and blue paint together to get purple. Once the colors are blended, no amount of analysis can tell you the exact red and blue paints that went in, or their exact proportions. You can make educated guesses ("this looks like more blue than red"), but you can never be certain.
 
 Generative AI models do something similar with music. During training, thousands of songs are blended into the model's parameters. After training, the original songs are not stored anywhere -- they have been dissolved into statistical weights. Asking "which songs influenced this output?" is like asking "which paints made this purple?"
@@ -21,6 +25,10 @@ Generative AI models do something similar with music. During training, thousands
 
 ### Why Post-Hoc Detection Fails
 
+![Technical pipeline diagram: creator audio, MIDI, and music metadata enter a training black box where tokenization, gradient descent, and weight averaging destroy attribution identity at each stage -- showing the oracle problem's analog hole bypass that breaks digital provenance chains, a core challenge for transparent confidence in music attribution systems.](../figures/fig-theory-02-oracle-problem-technical.jpg)
+
+*Figure 2. The Oracle Problem at the technical level: attribution information is irreversibly destroyed through tokenization, gradient descent, and weight averaging during model training, while the analog hole further undermines provenance by allowing physical re-encoding to break digital identity chains.*
+
 The music industry's current approach to AI attribution relies on **post-hoc detection**: analyze an AI-generated track and try to figure out what training data influenced it. This approach has three fundamental weaknesses:
 
 1. **Style is not copyrightable.** If an AI produces something that "sounds like" an artist, that is not infringement under current law. Detection tools that find stylistic similarity are measuring something that is legally irrelevant.
@@ -31,12 +39,20 @@ The music industry's current approach to AI attribution relies on **post-hoc det
 
 ### The Industry Implication
 
+![Comparison chart: post-hoc detection with broken arrows leading to no answer versus attribution-by-design with embedded provenance at ISRC and ISWC assurance levels A0-A3 leading to queryable music credits -- demonstrating why open-source music attribution scaffolds must embed provenance before AI training rather than attempting reverse engineering afterward.](../figures/fig-theory-03-attribution-by-design-vs-posthoc.jpg)
+
+*Figure 3. Attribution-by-design versus post-hoc detection: the left panel shows how the oracle problem blocks reverse engineering of AI-generated output, while the right panel shows how embedding provenance with industry identifiers (ISRC, ISWC, ISNI) before training preserves queryable attribution.*
+
 Instead of investing in better detection, the paper argues for **attribution-by-design**: embedding machine-readable provenance at the moment of creation, not trying to reconstruct it afterward. This is analogous to how the food industry moved from "test for contamination" to "HACCP preventive controls."
 
 !!! warning "The 70% Gap"
     Industry research estimates that up to 70% of music credits already have errors or omissions in *existing* (non-AI) distribution chains. The Oracle Problem is not a future concern about AI -- it is a present reality in traditional music metadata.
 
 ### Deterrence, Not Detection
+
+![Theory visualization: deterrence economics formula p times d times F greater than or equal to g with tax audit analogy showing that even a 3 percent audit rate deters infringement when penalties are large -- applied to music attribution where imperfect detection still protects music credits through transparent confidence scoring and economic incentives rather than perfect surveillance.](../figures/fig-theory-04-deterrence-economics.jpg)
+
+*Figure 4. Deterrence economics applied to music attribution: the system does not need perfect detection to be effective, just as tax audits deter fraud at a 3% audit rate -- the expected penalty (p x d x F) need only exceed the expected gain (g) from infringement.*
 
 The paper's position is that the correct framing is **deterrence economics**, not detection technology:
 

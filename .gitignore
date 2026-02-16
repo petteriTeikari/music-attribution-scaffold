@@ -115,8 +115,12 @@ docs/_build/
 .claude/sessions/archive/*
 *.tar
 docs/knowledge-base/ai/raw-sources/
-docs/figures/generated/
+docs/figures/generated/*
+!docs/figures/generated/.gitkeep
+!docs/figures/generated/fig-rm-02-sound-sources-unite.png
+!docs/figures/generated/fig-rm-03-from-unknown-to-verified.png
 docs/figures/visual-references/
+docs/site/figures/
 docs/knowledge-base/sources/
 docs/tmp/*
 docs/figures/frontend-figures/

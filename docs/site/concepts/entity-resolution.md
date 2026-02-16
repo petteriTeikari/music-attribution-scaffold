@@ -6,6 +6,10 @@
 
 ## The Simple Version
 
+![Concept diagram: three conference name tags showing name variants E. Voss, Elena Voss, and VOSS ELENA from different music metadata sources converging to a single unified person record with ISNI identifier -- illustrating entity resolution for music attribution where the same artist appears differently across MusicBrainz, Discogs, and file tags, ensuring correct music credits and payment.](../figures/fig-theory-15-entity-resolution-eli5.jpg)
+
+*Figure 15. Entity resolution explained through a conference name tag analogy: the same artist appears as "E. Voss," "Elena Voss," and "VOSS, ELENA" across different databases, and entity resolution connects these variants so the right person gets credited and paid.*
+
 Imagine you have five different address books, and you need to figure out which entries refer to the same person:
 
 - Address book 1: "Imogen Heap"
@@ -71,6 +75,10 @@ The scaffold assigns default reliability weights to each source:
 ## For Engineers
 
 ### The Resolution Cascade
+
+![Waterfall diagram: five-step entity resolution cascade for music attribution -- identifier match at near zero cost, string similarity via Jaro-Winkler, embedding match via cosine similarity, LLM judgment with structured output, and Splink probabilistic linking via Fellegi-Sunter model -- each step fires only when the previous is inconclusive, optimizing transparent confidence scoring by trying the cheapest method first.](../figures/fig-theory-16-resolution-cascade.jpg)
+
+*Figure 16. The resolution cascade: entity resolution proceeds from cheapest to most expensive -- exact identifier match (ISRC/ISWC), string similarity, embedding cosine distance, LLM contextual reasoning, and Splink probabilistic linking -- with early exit on match to minimize cost while maintaining confidence.*
 
 Entity resolution follows a cascade strategy, starting with the highest-confidence method and falling back as needed:
 
@@ -157,6 +165,28 @@ def _group_by_identifiers(self, records: list[NormalizedRecord]) -> list[list[in
 ```
 
 If record A has ISRC X and record B has ISRC X, they are grouped together with confidence 1.0 regardless of name differences.
+
+### Embedding Space Visualization
+
+<details>
+<summary>How embeddings capture semantic similarity beyond string matching (click to expand)</summary>
+
+![Theory visualization: 2D t-SNE/UMAP projection of entity embeddings for music attribution showing three tight clusters for Elena Voss, Marco Reis, and Solveig name variants -- within-cluster cosine distance below 0.1, between-cluster distance above 0.7, and an ambiguous zone that escalates to LLM or Splink -- demonstrating how vector space captures semantic similarity for entity resolution in music metadata beyond string matching.](../figures/fig-theory-17-embedding-space.jpg)
+
+*Figure 17. Embedding space visualization: name variants for the same artist cluster tightly in vector space (cosine distance < 0.1) even when string forms differ, while distinct entities remain well-separated (distance > 0.7), with an ambiguous zone (0.1-0.7) that escalates to more expensive resolution methods.*
+
+</details>
+
+### Graph-Based Resolution
+
+<details>
+<summary>How community detection identifies entity clusters at scale (click to expand)</summary>
+
+![Theory visualization: graph-based entity resolution for music attribution showing mention nodes for Elena Voss and Marco Reis name variants connected by weighted edges from cascade scoring -- community detection identifies two clusters each resolving to a single ISNI identifier, with strong within-cluster edges above 0.85 and weak cross-community edges at 0.08 confirming distinct entities in the music metadata graph.](../figures/fig-theory-18-graph-resolution.jpg)
+
+*Figure 18. Graph-based entity resolution: entity mentions form a weighted graph where edge weights come from the resolution cascade (string similarity, embeddings, LLM judgment), and community detection algorithms identify clusters of mentions that resolve to the same real-world artist with an ISNI identifier.*
+
+</details>
 
 ### Splink Probabilistic Linkage
 
