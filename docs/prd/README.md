@@ -58,7 +58,7 @@ flowchart LR
 ### How the Attribution System Creates Value
 
 ```mermaid
-%%{init: {'theme': 'base', 'themeVariables': {'background': '#fcfaf5', 'primaryColor': '#1E3A5F', 'lineColor': '#5C5C5C'}}}%%
+%%{init: {'theme': 'base', 'themeVariables': {'background': '#fcfaf5', 'primaryColor': '#1E3A5F', 'lineColor': '#333333'}}}%%
 flowchart TB
     subgraph problem[" Current State: Fragmented Data "]
         P1[40% wrong<br/>metadata]
@@ -101,6 +101,15 @@ flowchart TB
 
 **For Engineers**: Each value proposition maps to specific technical components. Multi-source aggregation is the Attribution Engine; artist verification is the Chat Interface; permissions are the MCP Server.
 
+<details>
+<summary>Visual: Five-Pipeline Architecture</summary>
+
+![Five-pipeline architecture showing ETL, entity resolution, attribution engine, API/MCP, and chat agent pipelines flowing from data sources through processing to clients.](../figures/repo-figures/assets/fig-repo-02-five-pipeline-architecture.jpg)
+
+*The five-pipeline architecture: ETL ingests from MusicBrainz, Discogs, AcoustID, and file metadata; entity resolution cascades through 5 strategies; the attribution engine aggregates confidence; API/MCP exposes data; the chat agent enables artist verification.*
+
+</details>
+
 ---
 
 ## Quick Navigation (For Both Audiences)
@@ -114,7 +123,7 @@ flowchart TB
 ## PRD Ecosystem
 
 ```mermaid
-%%{init: {'theme': 'base', 'themeVariables': {'background': '#fcfaf5', 'primaryColor': '#1E3A5F', 'lineColor': '#5C5C5C'}}}%%
+%%{init: {'theme': 'base', 'themeVariables': {'background': '#fcfaf5', 'primaryColor': '#1E3A5F', 'lineColor': '#333333'}}}%%
 graph TB
     subgraph level1[" L1: Vision & Context "]
         V[decisions/<br/>PRD NETWORK]
@@ -174,6 +183,19 @@ graph TB
     style SEC fill:#C75050,color:#fff
 ```
 
+<details>
+<summary>Visual: Full PRD Decision Network (79 nodes)</summary>
+
+![Probabilistic PRD decision network showing 79 nodes across 5 levels from L1 Business through L5 Operations, with Bayesian conditional probability edges encoding how upstream architectural choices influence downstream implementation options.](../figures/repo-figures/assets/fig-prd-02-full-decision-network.jpg)
+
+*The full Bayesian decision network (v3.0.0): 79 decision nodes across 5 levels with ~131 conditional probability edges. Each node has options with prior probabilities, conditional tables, archetype weights, and volatility classifications.*
+
+![PRD node anatomy showing the structure of a single decision YAML file with options, prior probabilities, conditional tables, archetype weights, and volatility classification.](../figures/repo-figures/assets/fig-prd-06-decision-node-anatomy.jpg)
+
+*Anatomy of a single decision node: options with prior probabilities, conditional probability tables linking to parent decisions, archetype-specific overrides, and volatility scheduling.*
+
+</details>
+
 ---
 
 ## PRD Index
@@ -228,7 +250,7 @@ graph TB
 ## Document Reading Order by Role
 
 ```mermaid
-%%{init: {'theme': 'base', 'themeVariables': {'background': '#fcfaf5', 'primaryColor': '#1E3A5F', 'lineColor': '#5C5C5C'}}}%%
+%%{init: {'theme': 'base', 'themeVariables': {'background': '#fcfaf5', 'primaryColor': '#1E3A5F', 'lineColor': '#333333'}}}%%
 flowchart LR
     subgraph stakeholder[" Stakeholder Path "]
         S1[README.md<br/>YOU ARE HERE] --> S3[UNKNOWNS-FOR-DOMAIN-EXPERTS.md]
@@ -258,7 +280,7 @@ flowchart LR
 ## Cross-PRD Dependencies
 
 ```mermaid
-%%{init: {'theme': 'base', 'themeVariables': {'background': '#fcfaf5', 'primaryColor': '#1E3A5F', 'lineColor': '#5C5C5C'}}}%%
+%%{init: {'theme': 'base', 'themeVariables': {'background': '#fcfaf5', 'primaryColor': '#1E3A5F', 'lineColor': '#333333'}}}%%
 graph LR
     subgraph core[" Core Dependencies "]
         AE[attribution-engine]
@@ -282,7 +304,7 @@ graph LR
 ## Implementation Roadmap
 
 ```mermaid
-%%{init: {'theme': 'base', 'themeVariables': {'background': '#fcfaf5', 'primaryColor': '#1E3A5F', 'lineColor': '#5C5C5C'}}}%%
+%%{init: {'theme': 'base', 'themeVariables': {'background': '#fcfaf5', 'primaryColor': '#1E3A5F', 'lineColor': '#333333'}}}%%
 gantt
     title Music Attribution Roadmap
     dateFormat  YYYY-MM-DD
@@ -307,7 +329,7 @@ gantt
 ## Stakeholder Journey Map
 
 ```mermaid
-%%{init: {'theme': 'base', 'themeVariables': {'background': '#fcfaf5', 'primaryColor': '#1E3A5F', 'lineColor': '#5C5C5C'}}}%%
+%%{init: {'theme': 'base', 'themeVariables': {'background': '#fcfaf5', 'primaryColor': '#1E3A5F', 'lineColor': '#333333'}}}%%
 journey
     title Artist Journey with the Attribution System
     section Discovery
@@ -339,7 +361,7 @@ journey
 This section captures fundamental uncertainties that could invalidate our assumptions.
 
 ```mermaid
-%%{init: {'theme': 'base', 'themeVariables': {'background': '#fcfaf5', 'primaryColor': '#1E3A5F', 'lineColor': '#5C5C5C'}}}%%
+%%{init: {'theme': 'base', 'themeVariables': {'background': '#fcfaf5', 'primaryColor': '#1E3A5F', 'lineColor': '#333333'}}}%%
 mindmap
   root((PRD-Level<br/>Unknowns))
     Market Assumptions
@@ -388,13 +410,63 @@ The PRD system extends beyond traditional linear documents into a **Bayesian dec
 
 | Directory | Contents |
 |-----------|----------|
-| [decisions/](decisions/) | 23 decision nodes across 5 levels (L1 Business → L5 Operations) with conditional probability tables |
+| [decisions/](decisions/) | 79 decision nodes across 5 levels (L1 Business → L5 Operations) with conditional probability tables |
 | [decisions/REPORT.md](decisions/REPORT.md) | Visual report with mermaid diagrams showing network topology, archetype comparisons, and scenario paths |
 | [archetypes/](archetypes/) | 4 team profiles (engineer-heavy, musician-first, solo hacker, well-funded) that modulate decision probabilities |
 | [scenarios/](scenarios/) | 3 composed paths through the network (music MVP, solo musician, DPP enterprise) |
 | [domains/](domains/) | Domain overlay system — music attribution and DPP traceability share the same architecture |
 
 Start with [decisions/README.md](decisions/README.md) for the conceptual model, or [decisions/REPORT.md](decisions/REPORT.md) for visual summaries.
+
+<details>
+<summary>Visual: Scenario Analysis Figures (8 images)</summary>
+
+![MVP scenario activation showing which decision nodes fire for the minimum viable path](../figures/repo-figures/assets/fig-scenario-01-mvp-scenario-activation.jpg)
+
+*Caption: MVP scenario activation — which decision nodes activate for the minimum viable music attribution path through the network.*
+
+![Four archetype comparison across key decision dimensions](../figures/repo-figures/assets/fig-scenario-02-four-archetype-comparison.jpg)
+
+*Caption: Four-archetype comparison — engineer-heavy, musician-first, solo hacker, and well-funded teams produce different probability distributions over the same decisions.*
+
+![Decision cascade for build vs buy choices](../figures/repo-figures/assets/fig-scenario-03-decision-cascade-build-vs-buy.jpg)
+
+*Caption: Decision cascade — how the L1 build-vs-buy posture ripples through L2 architecture, L3 implementation, and L4 deployment decisions.*
+
+![Volatility heatmap across all decision nodes](../figures/repo-figures/assets/fig-scenario-04-volatility-heatmap.jpg)
+
+*Caption: Volatility heatmap — stable (green), shifting (amber), and volatile (red) decisions across the full 79-node network.*
+
+![Network growth over time from v1.0 to v3.0](../figures/repo-figures/assets/fig-scenario-05-network-growth-over-time.jpg)
+
+*Caption: Network growth over time — the decision network expanded from 23 nodes (v1.0) to 79 nodes (v3.0) across three major iterations.*
+
+![Ecosystem dependency graph showing external partner relationships](../figures/repo-figures/assets/fig-scenario-06-ecosystem-dependency-graph.jpg)
+
+*Caption: Ecosystem dependency graph — how external partners (Musical AI, Sureel, STIM, SoundExchange, Fairly Trained) connect to internal decision nodes.*
+
+![L3 component clustering by functional domain](../figures/repo-figures/assets/fig-scenario-07-l3-component-clustering.jpg)
+
+*Caption: L3 component clustering — implementation decisions grouped by functional domain (data, AI/ML, platform, compliance, partnerships).*
+
+![Strategic ambiguity encoding in the probabilistic PRD](../figures/repo-figures/assets/fig-scenario-08-strategic-ambiguity-encoding.jpg)
+
+*Caption: Strategic ambiguity encoding — how the probabilistic PRD captures genuine uncertainty rather than forcing premature commitment.*
+
+</details>
+
+<details>
+<summary>Visual: Team Archetypes & Domain Overlays</summary>
+
+![Four team archetypes — engineer-heavy startup, musician-first collective, solo hacker, and well-funded enterprise — each producing different probability distributions over the same decision space.](../figures/repo-figures/assets/fig-prd-07-team-archetypes.jpg)
+
+*Four team archetypes modulate decision probabilities: an engineer-heavy startup favors PostgreSQL + custom code; a musician-first collective favors Supabase + low-code; a solo hacker favors SQLite + minimal ops; a well-funded enterprise favors CockroachDB + multi-region.*
+
+![Domain overlay system showing how the same decision network applies to both music attribution and DPP traceability domains with domain-specific probability adjustments.](../figures/repo-figures/assets/fig-prd-08-domain-overlay-system.jpg)
+
+*Domain overlay system: the same network structure applies to music attribution (ISRC/ISWC identifiers, CMO workflows) and DPP traceability (GTIN identifiers, supply chain events) with domain-specific probability adjustments.*
+
+</details>
 
 ---
 

@@ -275,6 +275,63 @@ The scaffold's position as an open-source research tool with academic grounding 
 
 ---
 
+## Visual Documentation
+
+<details>
+<summary><strong>Technology Trends Figures (8 figures)</strong></summary>
+
+### Agent Framework Consolidation 2025-2026
+
+![Agent framework consolidation: PydanticAI, LangGraph, and CrewAI/AG2 in three tiers](../figures/repo-figures/assets/fig-trends-01-agent-framework-consolidation.jpg)
+
+*Agent framework consolidation into three tiers: PydanticAI for type-safe production (scaffold's choice), LangGraph for stateful orchestration, and CrewAI/AG2 for multi-agent coordination.*
+
+### pgvector Performance Evolution
+
+![pgvector evolution: 471 QPS at 99% recall validates PostgreSQL Unified architecture](../figures/repo-figures/assets/fig-trends-02-pgvector-performance-evolution.jpg)
+
+*pgvector reached 471 QPS at 99% recall, validating the PostgreSQL Unified architecture where vector search, graph queries, and relational data share a single database process.*
+
+### Agent Observability: OTel GenAI Stack
+
+![OTel GenAI stack: PydanticAI to Logfire to any OpenTelemetry-compatible backend](../figures/repo-figures/assets/fig-trends-03-otel-genai-stack.jpg)
+
+*PydanticAI agents emit OpenTelemetry spans via Logfire, flowing through standard OTLP pipelines to any compatible backend -- Grafana, Datadog, Honeycomb, or self-hosted Jaeger.*
+
+### Evaluation Framework Maturity Spectrum
+
+![Eval maturity spectrum: PydanticAI mocks to Promptfoo CI to Braintrust dataset eval](../figures/repo-figures/assets/fig-trends-04-eval-framework-maturity-spectrum.jpg)
+
+*Three-tier evaluation pyramid for agent quality: PydanticAI mocks (unit), Promptfoo (CI regression), Braintrust (dataset-driven). The scaffold currently operates at the base tier.*
+
+### Edge AI Platforms for Attribution
+
+![Edge AI platforms: Cloudflare Workers AI, Deno Deploy, and Supabase Edge compared](../figures/repo-figures/assets/fig-trends-05-edge-ai-platforms.jpg)
+
+*Three edge AI platforms compared for attribution workloads: Cloudflare Workers AI (inference), Deno Deploy (caching), Supabase Edge (database queries). All are future options -- current PRD prior favors server-only.*
+
+### Graph Knowledge Base Options
+
+![Graph knowledge bases: Neo4j Aura Agent vs Apache AGE with LightRAG on PostgreSQL](../figures/repo-figures/assets/fig-trends-06-graph-knowledge-base-options.jpg)
+
+*Two graph knowledge base approaches: Neo4j Aura Agent (managed, separate service) vs Apache AGE + LightRAG (PostgreSQL co-located, zero network hop). PRD favors AGE co-located (P=0.45).*
+
+### Music Rights Revenue Flow: STIM Model
+
+![STIM revenue flow: AI output to confidence scoring to per-output royalty to rights holders](../figures/repo-figures/assets/fig-trends-07-stim-revenue-flow.jpg)
+
+*STIM revenue flow: when AI generates music, the attribution scaffold scores training influence, STIM calculates per-output royalties, and rights holders receive payment under the world's first collective AI music licence.*
+
+### Scaffold-to-Trend Implication Matrix
+
+![Trend-to-scaffold matrix: 10 tech trends mapped to PRD node impacts and reclassifications](../figures/repo-figures/assets/fig-trends-08-scaffold-to-trend-implication-matrix.jpg)
+
+*Scaffold-to-trend implication matrix: 10 technology trends mapped to PRD node impacts with 5 volatility reclassifications -- 2 stabilizing, 3 remaining volatile or shifting.*
+
+</details>
+
+---
+
 ## References
 
 [1] STIM. "STIM launches world's first collective licence for AI-generated music." September 2025. https://www.stim.se/en/news/
