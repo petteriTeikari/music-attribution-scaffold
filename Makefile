@@ -144,13 +144,11 @@ dev-agent:  ## Start agent backend + frontend dev server
 docs:  ## Build MkDocs site (copies figures first)
 	@mkdir -p docs/site/figures
 	@cp docs/figures/repo-figures/assets/*.jpg docs/site/figures/
-	@cp docs/figures/generated/fig-rm-*.png docs/site/figures/ 2>/dev/null || true
 	uv run mkdocs build --strict
 
 docs-serve:  ## Serve MkDocs locally with live reload
 	@mkdir -p docs/site/figures
 	@cp docs/figures/repo-figures/assets/*.jpg docs/site/figures/
-	@cp docs/figures/generated/fig-rm-*.png docs/site/figures/ 2>/dev/null || true
 	uv run mkdocs serve
 
 # =============================================================================

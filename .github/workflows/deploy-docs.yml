@@ -38,7 +38,6 @@ jobs:
         run: |
           mkdir -p docs/site/figures
           cp docs/figures/repo-figures/assets/*.jpg docs/site/figures/
-          cp docs/figures/generated/fig-rm-*.png docs/site/figures/ 2>/dev/null || true
 
       - name: Build docs
         run: uv run python -m mkdocs build --strict

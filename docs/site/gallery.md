@@ -1291,24 +1291,3 @@ Trend figures track the fast-moving technology landscape that influences PRD nod
 ![Trend-to-scaffold matrix: 10 tech trends mapped to PRD node impacts and reclassifications](figures/fig-trends-08-scaffold-to-trend-implication-matrix.jpg)
 
 *Trend-to-scaffold matrix: ten technology trends mapped to specific PRD node impacts and option reclassifications.*
-
----
-
-## README Illustrations
-
-Narrative illustrations created for the project README, explaining the core value proposition and trust progression in an accessible visual style.
-
-<details>
-<summary><strong>2 figures</strong> -- click to expand</summary>
-
-![Sound Sources Unite: multiple metadata sources (Discogs, MusicBrainz, artist input) flow into the attribution scaffold producing a single unified record with verified confidence score of 0.94 for Hide and Seek by Imogen Heap.](figures/fig-rm-02-sound-sources-unite.png)
-
-*Sound Sources Unite: how the scaffold merges fragmented metadata from Discogs, MusicBrainz, and artist input into a single unified record with transparent confidence scoring.*
-
----
-
-![From Unknown to Verified: the A0-A3 trust progression showing four assurance levels -- A0 Unknown (data exists somewhere), A1 Claimed (artist says this is me), A2 Corroborated (one external source agrees), A3 Verified (multiple sources agree).](figures/fig-rm-03-from-unknown-to-verified.png)
-
-*From Unknown to Verified: the A0-A3 assurance level progression -- each level requires stronger evidence, from no data through artist claims to multi-source corroboration.*
-
-</details>
