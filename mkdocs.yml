@@ -189,6 +189,10 @@ nav:
 
   - Troubleshooting: troubleshooting.md
 
+  - Pitch Deck:
+    - Core Deck (12 slides): pitch-deck.md
+    - Advanced Due Diligence (18 slides): pitch-deck-advanced.md
+
   - Visual Gallery: gallery.md
 
 # Footer

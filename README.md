@@ -354,6 +354,8 @@ All tests run in CI via GitHub Actions with path-based filtering — backend cha
 | [**FinOps Landscape**](docs/planning/deployement-finops-landscape.md) | Deployment cost analysis: 5 paths, DevOps tax, cloud credits, egress optimization |
 | [**Geopolitical Risk Assessment**](docs/planning/deployement-finops-landscape-geopolitical-risk-assessment.md) | Cloud sovereignty: CLOUD Act, EU providers, Schrems III, Section 301 |
 | [**Knowledge Base**](docs/knowledge-base/README.md) | RAG-optimized markdown: attribution papers, agentic systems research |
+| [**Pitch Deck**](https://petteriTeikari.github.io/music-attribution-scaffold/pitch-deck/) | 12 investor slides: market, architecture, moat, revenue, roadmap |
+| [**Advanced Due Diligence**](https://petteriTeikari.github.io/music-attribution-scaffold/pitch-deck-advanced/) | 18 deep-dive slides: technical, competitive, financial, team |
 
 Preview docs locally:
 
