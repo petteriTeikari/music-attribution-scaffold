@@ -8,7 +8,7 @@
 strict: true
 
 site_name: Music Attribution Scaffold
-site_description: Open-source research scaffold for music attribution with transparent confidence scoring
+site_description: Open-source research scaffold for AI music attribution with transparent confidence scoring, conformal prediction, and A0-A3 assurance levels — companion code to SSRN No. 6109087
 site_author: Petteri Teikari
 site_url: https://petteriTeikari.github.io/music-attribution-scaffold/
 
@@ -189,9 +189,9 @@ nav:
 
   - Troubleshooting: troubleshooting.md
 
-  - Pitch Deck:
-    - Core Deck (12 slides): pitch-deck.md
-    - Advanced Due Diligence (18 slides): pitch-deck-advanced.md
+  - Investor Pitch Deck:
+    - Core Deck — 12 Slides: pitch-deck.md
+    - Advanced Due Diligence — 18 Slides: pitch-deck-advanced.md
 
   - Visual Gallery: gallery.md
 
