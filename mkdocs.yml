@@ -73,6 +73,9 @@ markdown_extensions:
   # PyMdown Extensions
   - pymdownx.arithmatex:
       generic: true
+      smart_dollar: false
+      inline_syntax: ['round']
+      block_syntax: ['square']
   - pymdownx.betterem
   - pymdownx.caret
   - pymdownx.details
