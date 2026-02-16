@@ -29,7 +29,7 @@ This starts the Next.js 15 development server on [http://localhost:3000](http://
 
 ### Works List (`/works`)
 
-The works page shows all 8 Imogen Heap attribution records:
+The works page shows all 9 Imogen Heap attribution records:
 
 - **Confidence gauges** — green (≥0.85), amber (0.50-0.84), red (<0.50)
 - **Assurance badges** — A0 through A3, indicating provenance tier

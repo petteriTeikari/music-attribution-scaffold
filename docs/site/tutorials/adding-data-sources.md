@@ -336,7 +336,7 @@ Run the tests:
 
 ## Step 6: Update Seed Data (Optional)
 
-If you want your new source to appear in the demo dataset, update the seed data script to include records from your source. The seed data is what populates the 8 Imogen Heap works visible in the frontend.
+If you want your new source to appear in the demo dataset, update the seed data script to include records from your source. The seed data is what populates the 9 Imogen Heap works visible in the frontend.
 
 ---
 

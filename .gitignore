@@ -122,3 +122,5 @@ docs/tmp/*
 docs/figures/frontend-figures/
 docs/figures/repo-figures/generated/
 docs/figures/repo-figures/figure-plans-todo/
+docs/figures/repo-figures/screenshots/*
+!docs/figures/repo-figures/screenshots/youtube_demo.png

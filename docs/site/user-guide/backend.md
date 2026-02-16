@@ -70,7 +70,7 @@ src/music_attribution/
 │   └── vector_search.py     # pgvector cosine
 │
 ├── seed/                    # Sample data
-│   └── imogen_heap.py       # 8 works, 0.0-0.95 confidence
+│   └── imogen_heap.py       # 9 works, 0.0-0.95 confidence
 │
 ├── pipeline/                # Orchestration
 │   ├── dag.py               # Pipeline DAG definition
