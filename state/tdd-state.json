@@ -13,7 +13,6 @@
       "commit_hashes": ["c1cecb0"],
       "test_files": [],
       "source_files": ["pyproject.toml"],
-      "deps_added": ["pipecat-ai[silero,whisper]", "pipecat-ai[smallwebrtc]", "deepeval"],
       "test_count": 0
     },
     "0.2": {
@@ -88,6 +87,15 @@
       "source_files": [],
       "test_count": 8
     },
+    "1.5": {
+      "status": "DONE",
+      "name": "Create local demo script",
+      "inner_iterations": 1,
+      "commit_hashes": ["bc5d7e5"],
+      "test_files": ["tests/unit/voice/test_demo_script.py"],
+      "source_files": ["scripts/voice_demo.py"],
+      "test_count": 8
+    },
     "2.1": {
       "status": "DONE",
       "name": "Register domain tools as Pipecat function handlers",
@@ -124,6 +132,24 @@
       "source_files": ["src/music_attribution/voice/persona.py"],
       "test_count": 26
     },
+    "3.2": {
+      "status": "DONE",
+      "name": "Add Letta integration for persistent persona memory",
+      "inner_iterations": 1,
+      "commit_hashes": ["bc5d7e5"],
+      "test_files": ["tests/unit/voice/test_letta_integration.py"],
+      "source_files": ["src/music_attribution/voice/letta_integration.py"],
+      "test_count": 8
+    },
+    "3.3": {
+      "status": "DONE",
+      "name": "Add Mem0 integration for user preference memory",
+      "inner_iterations": 1,
+      "commit_hashes": ["bc5d7e5"],
+      "test_files": ["tests/unit/voice/test_mem0_integration.py"],
+      "source_files": ["src/music_attribution/voice/mem0_integration.py"],
+      "test_count": 10
+    },
     "3.4": {
       "status": "DONE",
       "name": "Expand drift detector tests — states, transitions, thresholds",
@@ -142,6 +168,32 @@
       "source_files": ["src/music_attribution/voice/drift.py"],
       "test_count": 11
     },
+    "4.2": {
+      "status": "DONE",
+      "name": "Add NeMo Guardrails persona boundary rails",
+      "inner_iterations": 1,
+      "commit_hashes": ["bc5d7e5"],
+      "test_files": ["tests/unit/voice/test_guardrails.py"],
+      "source_files": [
+        "src/music_attribution/voice/guardrails_integration.py",
+        "src/music_attribution/voice/guardrails/config.yml",
+        "src/music_attribution/voice/guardrails/rails.co"
+      ],
+      "test_count": 14
+    },
+    "4.3": {
+      "status": "DONE",
+      "name": "Create DeepEval persona fidelity test suite",
+      "inner_iterations": 1,
+      "commit_hashes": ["c84265f"],
+      "test_files": [
+        "tests/eval/voice/test_persona_fidelity.py",
+        "tests/eval/voice/conversation_traces.py",
+        "tests/eval/voice/conftest.py"
+      ],
+      "source_files": [],
+      "test_count": 8
+    },
     "4.4": {
       "status": "DONE",
       "name": "DriftMonitorProcessor (Pipecat FrameProcessor) for voice pipeline",
@@ -152,15 +204,15 @@
       "test_count": 18
     }
   },
-  "deferred_tasks": ["1.5", "3.2", "3.3", "4.2", "4.3", "5.1", "5.2", "5.3", "5.4", "6.1", "6.2", "6.3"],
+  "deferred_tasks": ["5.1", "5.2", "5.3", "5.4", "6.1", "6.2", "6.3"],
   "convergence": {
     "reached": false,
-    "tasks_done": 15,
+    "tasks_done": 20,
     "tasks_total": 24,
     "tasks_stuck": 0,
-    "tasks_deferred": 12
+    "tasks_deferred": 7
   },
-  "session_task_count": 15,
-  "session_inner_iterations": 15,
+  "session_task_count": 20,
+  "session_inner_iterations": 20,
   "session_start": "2026-02-20T19:00:00Z"
 }
