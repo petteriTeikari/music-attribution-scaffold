@@ -5,6 +5,7 @@
 .PHONY: ci-docker docker-build docker-clean clean
 .PHONY: dev-frontend test-frontend lint-frontend build-frontend test-e2e test-e2e-ui
 .PHONY: agent dev-agent
+.PHONY: install-voice test-voice dev-voice voice-local
 .PHONY: docs docs-serve test-docs
 
 .DEFAULT_GOAL := help
@@ -136,6 +137,24 @@ dev-agent:  ## Start agent backend + frontend dev server
 	@echo "Set NEXT_PUBLIC_API_URL=http://localhost:8000 in frontend/.env.local"
 	$(MAKE) agent &
 	NEXT_PUBLIC_API_URL=http://localhost:8000 $(MAKE) dev-frontend
+
+# =============================================================================
+# VOICE AGENT (Pipecat + open-source STT/TTS)
+# =============================================================================
+
+install-voice:  ## Install voice dependencies (open-source stack)
+	uv sync --frozen --group voice
+
+test-voice:  ## Run voice agent tests
+	.venv/bin/python -m pytest tests/unit/voice/ -v --timeout=60
+
+dev-voice:  ## Start voice agent dev server (localhost:8001)
+	VOICE_TRANSPORT=websocket uv run uvicorn music_attribution.voice.server:create_voice_router --factory --host 0.0.0.0 --port 8001 --reload
+
+voice-local:  ## Run fully local voice agent (Whisper + Piper + Ollama, $0/min)
+	@echo "Starting fully local voice agent (no API keys needed)"
+	@echo "Requires: Ollama running locally with a model pulled"
+	VOICE_STT_PROVIDER=whisper VOICE_TTS_PROVIDER=piper uv run python scripts/voice_demo.py
 
 # =============================================================================
 # DOCUMENTATION
