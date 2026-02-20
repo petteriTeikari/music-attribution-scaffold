@@ -2,8 +2,15 @@
 
 from __future__ import annotations
 
-from music_attribution.voice.config import VoiceConfig
-from music_attribution.voice.pipeline import create_voice_pipeline
+import pytest
+
+from music_attribution.voice.config import STTProvider, TransportType, TTSProvider, VoiceConfig
+from music_attribution.voice.pipeline import (
+    PIPECAT_AVAILABLE,
+    create_stt_service,
+    create_tts_service,
+    create_voice_pipeline,
+)
 
 
 class TestCreateVoicePipeline:
@@ -71,3 +78,57 @@ class TestCreateVoicePipeline:
         config = VoiceConfig(whisper_model="large")
         result = create_voice_pipeline(config)
         assert result["whisper_model"] == "large"
+
+
+class TestPipecatAvailability:
+    """Tests for conditional Pipecat import handling."""
+
+    def test_pipecat_available_is_bool(self) -> None:
+        """PIPECAT_AVAILABLE is a boolean flag."""
+        assert isinstance(PIPECAT_AVAILABLE, bool)
+
+    @pytest.mark.skipif(PIPECAT_AVAILABLE, reason="Only test when pipecat NOT installed")
+    def test_create_stt_raises_without_pipecat(self) -> None:
+        """create_stt_service raises ImportError without pipecat."""
+        config = VoiceConfig()
+        with pytest.raises(ImportError, match="pipecat-ai is not installed"):
+            create_stt_service(config)
+
+    @pytest.mark.skipif(PIPECAT_AVAILABLE, reason="Only test when pipecat NOT installed")
+    def test_create_tts_raises_without_pipecat(self) -> None:
+        """create_tts_service raises ImportError without pipecat."""
+        config = VoiceConfig()
+        with pytest.raises(ImportError, match="pipecat-ai is not installed"):
+            create_tts_service(config)
+
+
+class TestProviderServiceFactory:
+    """Tests for provider-specific service creation logic."""
+
+    def test_stt_provider_enum_values(self) -> None:
+        """All STT providers have expected string values."""
+        assert STTProvider.WHISPER.value == "whisper"
+        assert STTProvider.DEEPGRAM.value == "deepgram"
+        assert STTProvider.ASSEMBLYAI.value == "assemblyai"
+
+    def test_tts_provider_enum_values(self) -> None:
+        """All TTS providers have expected string values."""
+        assert TTSProvider.PIPER.value == "piper"
+        assert TTSProvider.KOKORO.value == "kokoro"
+        assert TTSProvider.ELEVENLABS.value == "elevenlabs"
+        assert TTSProvider.CARTESIA.value == "cartesia"
+
+    def test_transport_enum_values(self) -> None:
+        """All transport types have expected string values."""
+        assert TransportType.WEBSOCKET.value == "websocket"
+        assert TransportType.SMALLWEBRTC.value == "smallwebrtc"
+        assert TransportType.DAILY.value == "daily"
+
+    def test_pipeline_config_all_providers(self) -> None:
+        """Pipeline config works with all provider combinations."""
+        for stt in STTProvider:
+            for tts in TTSProvider:
+                config = VoiceConfig(stt_provider=stt, tts_provider=tts)
+                result = create_voice_pipeline(config)
+                assert result["stt"] == stt.value
+                assert result["tts"] == tts.value

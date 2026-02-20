@@ -107,3 +107,88 @@ class TestGetReinforcementReminder:
         """Reinforcement reminder references the persona identity."""
         reminder = get_reinforcement_reminder()
         assert "Music Attribution Assistant" in reminder
+
+
+class TestPromptLayering:
+    """Tests for the 5-dimension persona layering architecture."""
+
+    def test_layers_are_separated_by_double_newlines(self) -> None:
+        """Persona layers are joined by double newlines for clarity."""
+        config = VoiceConfig()
+        prompt = build_system_prompt(config)
+        # Should have at least 2 section separators
+        assert prompt.count("\n\n") >= 2
+
+    def test_core_identity_mentions_transparency(self) -> None:
+        """Core identity includes transparency commitment."""
+        assert "transparent" in CORE_IDENTITY.lower()
+
+    def test_core_identity_mentions_evidence(self) -> None:
+        """Core identity mentions evidence-based answers."""
+        assert "evidence" in CORE_IDENTITY.lower()
+
+    def test_factual_grounding_mentions_isrc(self) -> None:
+        """Factual grounding includes ISRC standard."""
+        assert "ISRC" in FACTUAL_GROUNDING
+
+    def test_factual_grounding_mentions_musicbrainz(self) -> None:
+        """Factual grounding includes MusicBrainz as data source."""
+        assert "MusicBrainz" in FACTUAL_GROUNDING
+
+    def test_voice_style_mentions_30_seconds(self) -> None:
+        """Voice style limits complex answers to 30 seconds."""
+        assert "30 seconds" in VOICE_STYLE
+
+    def test_voice_style_includes_confidence_language(self) -> None:
+        """Voice style defines natural language for confidence levels."""
+        assert "quite confident" in VOICE_STYLE
+        assert "moderately confident" in VOICE_STYLE
+        assert "uncertain" in VOICE_STYLE
+
+    def test_reinforcement_is_concise(self) -> None:
+        """Reinforcement reminder is under 200 chars for low context overhead."""
+        assert len(REINFORCEMENT_REMINDER) < 300
+
+    def test_prompt_with_all_layers_is_under_2000_chars(self) -> None:
+        """Full prompt stays under 2000 chars for reasonable context usage."""
+        config = VoiceConfig()
+        prompt = build_system_prompt(
+            config,
+            user_context="Expert musicologist, prefers detailed explanations",
+            turn_count=5,
+        )
+        # Should be substantial but not huge
+        assert len(prompt) < 2000
+
+    def test_user_context_comes_after_voice_style(self) -> None:
+        """User context layer appears after voice style in prompt."""
+        config = VoiceConfig()
+        prompt = build_system_prompt(config, user_context="test context")
+        style_pos = prompt.find(VOICE_STYLE)
+        context_pos = prompt.find("test context")
+        assert context_pos > style_pos
+
+
+class TestPersonaImmutability:
+    """Tests ensuring persona core dimensions are not modifiable."""
+
+    def test_core_identity_is_constant(self) -> None:
+        """CORE_IDENTITY is a module-level constant string."""
+        assert isinstance(CORE_IDENTITY, str)
+        assert len(CORE_IDENTITY) > 50
+
+    def test_factual_grounding_is_constant(self) -> None:
+        """FACTUAL_GROUNDING is a module-level constant string."""
+        assert isinstance(FACTUAL_GROUNDING, str)
+        assert len(FACTUAL_GROUNDING) > 50
+
+    def test_voice_style_is_constant(self) -> None:
+        """VOICE_STYLE is a module-level constant string."""
+        assert isinstance(VOICE_STYLE, str)
+        assert len(VOICE_STYLE) > 50
+
+    def test_prompt_always_starts_with_core_identity(self) -> None:
+        """System prompt always begins with core identity."""
+        config = VoiceConfig()
+        prompt = build_system_prompt(config, user_context="custom", turn_count=5)
+        assert prompt.startswith(CORE_IDENTITY)

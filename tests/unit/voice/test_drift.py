@@ -5,7 +5,7 @@ from __future__ import annotations
 import pytest
 
 from music_attribution.voice.config import VoiceConfig
-from music_attribution.voice.drift import DriftDetector
+from music_attribution.voice.drift import PIPECAT_AVAILABLE, DriftDetector
 
 PERSONA_TEXT = (
     "You are the Music Attribution Assistant, an expert in music credit "
@@ -80,6 +80,12 @@ class TestDriftScoring:
         detector.score("test three")
         assert len(detector.raw_scores) == 3
 
+    def test_raw_scores_are_between_0_and_1(self, detector: DriftDetector) -> None:
+        """Raw scores are clamped to [0, 1] range."""
+        detector.score("some random text for testing")
+        for score in detector.raw_scores:
+            assert 0.0 <= score <= 1.0
+
 
 class TestDriftStates:
     """Tests for drift state transitions."""
@@ -126,6 +132,38 @@ class TestDriftStates:
         # Fast alpha should deviate from initial 1.0 more than slow
         assert detector_fast.ewma_score < detector_slow.ewma_score
 
+    def test_drift_state_between_thresholds(self) -> None:
+        """State is 'drift' when EWMA is between sync and desync thresholds."""
+        config = VoiceConfig(
+            drift_monitoring=True,
+            drift_sync_threshold=0.85,
+            drift_desync_threshold=0.70,
+        )
+        detector = DriftDetector(config, PERSONA_TEXT)
+        # Manually set EWMA to middle range
+        detector._ewma_score = 0.78
+        assert detector.state() == "drift"
+
+    def test_state_transitions_sync_to_drift(self) -> None:
+        """Scoring off-topic text transitions from sync through drift."""
+        config = VoiceConfig(
+            drift_monitoring=True,
+            drift_sync_threshold=0.85,
+            drift_desync_threshold=0.70,
+            drift_ewma_alpha=0.5,
+        )
+        detector = DriftDetector(config, PERSONA_TEXT)
+        assert detector.state() == "sync"
+
+        # Score progressively off-topic until drift
+        for _ in range(50):
+            detector.score("random xyz noise unrelated text")
+            if detector.state() != "sync":
+                break
+
+        # Should have left sync state
+        assert detector.state() in ("drift", "desync")
+
 
 class TestDriftConfigIntegration:
     """Tests for drift detector config integration."""
@@ -141,3 +179,48 @@ class TestDriftConfigIntegration:
         detector = DriftDetector(config, PERSONA_TEXT)
         # Initial EWMA is 1.0, threshold is 0.90 → sync
         assert detector.state() == "sync"
+
+    def test_custom_alpha_affects_score_update(self) -> None:
+        """Different alpha values produce different score trajectories."""
+        config_a = VoiceConfig(drift_monitoring=True, drift_ewma_alpha=0.1)
+        config_b = VoiceConfig(drift_monitoring=True, drift_ewma_alpha=0.9)
+        det_a = DriftDetector(config_a, PERSONA_TEXT)
+        det_b = DriftDetector(config_b, PERSONA_TEXT)
+
+        text = "random off topic text about cooking"
+        score_a = det_a.score(text)
+        score_b = det_b.score(text)
+
+        # Higher alpha → score closer to raw (which is low for off-topic)
+        # Lower alpha → score closer to initial 1.0
+        assert score_a > score_b
+
+
+class TestDriftMonitorProcessor:
+    """Tests for the Pipecat FrameProcessor drift monitor."""
+
+    def test_pipecat_available_flag(self) -> None:
+        """PIPECAT_AVAILABLE flag is a boolean."""
+        assert isinstance(PIPECAT_AVAILABLE, bool)
+
+    @pytest.mark.skipif(not PIPECAT_AVAILABLE, reason="Requires pipecat-ai")
+    def test_processor_class_exists(self) -> None:
+        """DriftMonitorProcessor is importable when pipecat is available."""
+        from music_attribution.voice.drift import DriftMonitorProcessor
+
+        assert DriftMonitorProcessor is not None
+
+    @pytest.mark.skipif(PIPECAT_AVAILABLE, reason="Test for non-pipecat env")
+    def test_processor_not_importable_without_pipecat(self) -> None:
+        """DriftMonitorProcessor is not defined without pipecat."""
+        import music_attribution.voice.drift as drift_mod
+
+        assert not hasattr(drift_mod, "DriftMonitorProcessor")
+
+    def test_embedding_fallback_to_jaccard(self) -> None:
+        """Drift detector falls back to Jaccard when sentence-transformers unavailable."""
+        config = VoiceConfig(drift_monitoring=True)
+        detector = DriftDetector(config, "music attribution expert confidence scoring")
+        # This should work even without sentence-transformers
+        score = detector.score("music attribution confidence")
+        assert 0.0 <= score <= 1.0

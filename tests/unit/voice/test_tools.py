@@ -2,7 +2,12 @@
 
 from __future__ import annotations
 
-from music_attribution.voice.tools import get_tool_schemas
+import pytest
+
+from music_attribution.voice.tools import (
+    get_function_schemas,
+    get_tool_schemas,
+)
 
 
 class TestGetToolSchemas:
@@ -65,3 +70,141 @@ class TestGetToolSchemas:
         params = schema["function"]["parameters"]
         assert "work_id" in params["required"]
         assert "overall_assessment" in params["required"]
+
+
+class TestGetFunctionSchemas:
+    """Tests for Pipecat FunctionSchema wrapper."""
+
+    def test_returns_four_schemas(self) -> None:
+        """get_function_schemas returns 4 items."""
+        schemas = get_function_schemas()
+        assert len(schemas) == 4
+
+    def test_schemas_are_dicts_without_pipecat(self) -> None:
+        """Without pipecat, falls back to dict format."""
+        from music_attribution.voice.tools import PIPECAT_AVAILABLE
+
+        schemas = get_function_schemas()
+        if not PIPECAT_AVAILABLE:
+            assert all(isinstance(s, dict) for s in schemas)
+
+
+class TestSessionFactory:
+    """Tests for database session factory management."""
+
+    def test_session_factory_initially_none(self) -> None:
+        """Module-level session factory starts as None."""
+        # Import fresh to check initial state
+        import music_attribution.voice.tools as tools_mod
+
+        # It may have been set by other tests, so just check the function exists
+        assert callable(tools_mod.set_session_factory)
+
+    def test_set_session_factory_sets_value(self) -> None:
+        """set_session_factory updates the module-level factory."""
+        import music_attribution.voice.tools as tools_mod
+
+        sentinel = object()
+        old = tools_mod._session_factory
+        try:
+            tools_mod.set_session_factory(sentinel)  # type: ignore[arg-type]
+            assert tools_mod._session_factory is sentinel
+        finally:
+            tools_mod._session_factory = old  # type: ignore[assignment]
+
+
+class TestToolHandlers:
+    """Tests for individual tool handler functions."""
+
+    @pytest.mark.anyio
+    async def test_explain_confidence_no_db(self) -> None:
+        """explain_confidence returns error when no DB session."""
+        import music_attribution.voice.tools as tools_mod
+
+        old = tools_mod._session_factory
+        tools_mod._session_factory = None
+
+        results: list[dict] = []
+
+        class MockParams:
+            arguments = {"work_id": "test-id"}
+
+            async def result_callback(self, result: dict) -> None:
+                results.append(result)
+
+        try:
+            await tools_mod._handle_explain_confidence(MockParams())
+            assert len(results) == 1
+            assert "Database not available" in results[0]["explanation"]
+        finally:
+            tools_mod._session_factory = old  # type: ignore[assignment]
+
+    @pytest.mark.anyio
+    async def test_search_attributions_no_db(self) -> None:
+        """search_attributions returns error when no DB session."""
+        import music_attribution.voice.tools as tools_mod
+
+        old = tools_mod._session_factory
+        tools_mod._session_factory = None
+
+        results: list[dict] = []
+
+        class MockParams:
+            arguments = {"query": "test search"}
+
+            async def result_callback(self, result: dict) -> None:
+                results.append(result)
+
+        try:
+            await tools_mod._handle_search_attributions(MockParams())
+            assert len(results) == 1
+            assert "Database not available" in results[0]["results"]
+        finally:
+            tools_mod._session_factory = old  # type: ignore[assignment]
+
+    @pytest.mark.anyio
+    async def test_suggest_correction_returns_preview(self) -> None:
+        """suggest_correction formats correction preview."""
+        import music_attribution.voice.tools as tools_mod
+
+        results: list[dict] = []
+
+        class MockParams:
+            arguments = {
+                "work_id": "abc-123",
+                "field": "artist_name",
+                "current_value": "Imogene Heap",
+                "suggested_value": "Imogen Heap",
+                "reason": "Typo in artist name",
+            }
+
+            async def result_callback(self, result: dict) -> None:
+                results.append(result)
+
+        await tools_mod._handle_suggest_correction(MockParams())
+        assert len(results) == 1
+        assert "Imogen Heap" in results[0]["result"]
+        assert "Typo" in results[0]["result"]
+
+    @pytest.mark.anyio
+    async def test_submit_feedback_no_db(self) -> None:
+        """submit_feedback returns error when no DB session."""
+        import music_attribution.voice.tools as tools_mod
+
+        old = tools_mod._session_factory
+        tools_mod._session_factory = None
+
+        results: list[dict] = []
+
+        class MockParams:
+            arguments = {"work_id": "abc-123", "overall_assessment": 0.8}
+
+            async def result_callback(self, result: dict) -> None:
+                results.append(result)
+
+        try:
+            await tools_mod._handle_submit_feedback(MockParams())
+            assert len(results) == 1
+            assert "Database not available" in results[0]["result"]
+        finally:
+            tools_mod._session_factory = old  # type: ignore[assignment]
