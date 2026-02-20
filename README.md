@@ -38,6 +38,7 @@
 | **Calibrated confidence** | Per-field scores via conformal prediction — "90% confident" actually means ≥90% coverage | [`src/music_attribution/attribution/`](src/music_attribution/attribution/) · [Docs](https://petteriTeikari.github.io/music-attribution-scaffold/api-reference/attribution/) |
 | **Permission patchbay** | MCP server for machine-readable AI training consent (ALLOW / DENY / ASK) | [`src/music_attribution/mcp/`](src/music_attribution/mcp/) · [Docs](https://petteriTeikari.github.io/music-attribution-scaffold/api-reference/mcp/) |
 | **Agentic UI** | PydanticAI agent + CopilotKit sidebar for natural-language attribution queries | [`src/music_attribution/chat/`](src/music_attribution/chat/) · [Docs](https://petteriTeikari.github.io/music-attribution-scaffold/user-guide/agent/) |
+| **Voice agent** | Pipecat voice pipeline with 5-dimension persona, drift detection, and domain tools | [`src/music_attribution/voice/`](src/music_attribution/voice/) · [Guide](docs/tutorials/voice-agent-implementation.md) |
 | **Editorial frontend** | Next.js 15 with confidence gauges, assurance badges, review queue | [`frontend/`](frontend/) · [Docs](https://petteriTeikari.github.io/music-attribution-scaffold/user-guide/frontend/) |
 
 <details>
@@ -242,6 +243,35 @@ Responses include: permission status, conditions (attribution required, non-comm
 
 ---
 
+## Voice Agent (Experimental)
+
+The scaffold includes an open-source voice agent built on [Pipecat](https://github.com/pipecat-ai/pipecat) (BSD-2-Clause, 10.4k stars). The same 4 domain tools available in the text agent are exposed as voice-callable functions — ask about confidence scores, search attributions, suggest corrections, and submit feedback by speaking.
+
+```bash
+# Quick start — try the voice agent in 30 seconds
+uv run python scripts/voice_demo.py
+
+# With custom providers
+uv run python scripts/voice_demo.py --stt deepgram --tts elevenlabs
+```
+
+**This is a scaffold, not a production voice product.** Every component is swappable with a one-line config change:
+
+| Component | Open-Source Default | Commercial Alternative |
+|---|---|---|
+| STT | faster-whisper (MIT) | Deepgram Nova-3, AssemblyAI |
+| TTS | Piper (GPL) | ElevenLabs, Cartesia, Kokoro |
+| Transport | WebSocket / SmallWebRTC | Daily WebRTC (Pipecat Cloud) |
+| LLM | Ollama + Qwen3 | Claude Haiku 4.5, GPT-4o-mini |
+| Persona | Prompt-layered | Letta (MemGPT), Mem0 |
+| Guardrails | Regex fallback | NeMo Guardrails (Colang 2.0) |
+
+The voice agent features a **5-dimension persona architecture** (Core Identity, Factual Grounding, Communication Style, User Context, Conversation Flow) with EWMA-smoothed drift detection to prevent the 8-turn persona drift cliff documented in the literature.
+
+**Full guide**: [Voice Agent Implementation](docs/tutorials/voice-agent-implementation.md) · **Alternatives table**: [Component Alternatives](docs/knowledge-base/voice-agent-component-alternatives.md) · **Implementation**: [`src/music_attribution/voice/`](src/music_attribution/voice/)
+
+---
+
 ## Sample Data
 
 The scaffold ships with **9 Imogen Heap works** as seed data, spanning the full confidence spectrum from 0.00 to 0.95:
@@ -281,6 +311,7 @@ music-attribution-scaffold/
 │   ├── api/                        # FastAPI routes: attribution, health, permissions
 │   ├── chat/                       # PydanticAI agent + AG-UI endpoint
 │   ├── mcp/                        # MCP permission patchbay server
+│   ├── voice/                      # Pipecat voice agent pipeline + persona
 │   ├── db/                         # SQLAlchemy models, 8-table schema
 │   ├── search/                     # Hybrid search (text + vector + graph)
 │   ├── pipeline/                   # DAG runner for orchestration
