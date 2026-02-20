@@ -61,6 +61,15 @@
       "source_files": ["src/music_attribution/voice/pipeline.py"],
       "test_count": 8
     },
+    "1.2": {
+      "status": "DONE",
+      "name": "Implement real Pipecat pipeline with STT/TTS/LLM service factories",
+      "inner_iterations": 2,
+      "commit_hashes": ["18f27e5"],
+      "test_files": ["tests/unit/voice/test_pipeline.py"],
+      "source_files": ["src/music_attribution/voice/pipeline.py"],
+      "test_count": 15
+    },
     "1.3": {
       "status": "DONE",
       "name": "Create music attribution system prompt for voice",
@@ -88,6 +97,42 @@
       "source_files": ["src/music_attribution/voice/tools.py"],
       "test_count": 7
     },
+    "2.2": {
+      "status": "DONE",
+      "name": "Bridge PydanticAI tools to Pipecat FunctionSchema/handlers",
+      "inner_iterations": 2,
+      "commit_hashes": ["18f27e5"],
+      "test_files": ["tests/unit/voice/test_tools.py"],
+      "source_files": ["src/music_attribution/voice/tools.py"],
+      "test_count": 15
+    },
+    "2.3": {
+      "status": "DONE",
+      "name": "Implement WebSocket server with per-connection pipeline lifecycle",
+      "inner_iterations": 2,
+      "commit_hashes": ["18f27e5"],
+      "test_files": ["tests/unit/voice/test_server.py"],
+      "source_files": ["src/music_attribution/voice/server.py"],
+      "test_count": 8
+    },
+    "3.1": {
+      "status": "DONE",
+      "name": "Expand persona prompt tests — 5-dimension layering and immutability",
+      "inner_iterations": 2,
+      "commit_hashes": ["18f27e5"],
+      "test_files": ["tests/unit/voice/test_persona.py"],
+      "source_files": ["src/music_attribution/voice/persona.py"],
+      "test_count": 26
+    },
+    "3.4": {
+      "status": "DONE",
+      "name": "Expand drift detector tests — states, transitions, thresholds",
+      "inner_iterations": 2,
+      "commit_hashes": ["18f27e5"],
+      "test_files": ["tests/unit/voice/test_drift.py"],
+      "source_files": ["src/music_attribution/voice/drift.py"],
+      "test_count": 18
+    },
     "4.1": {
       "status": "DONE",
       "name": "Implement embedding-based drift detector",
@@ -96,17 +141,26 @@
       "test_files": ["tests/unit/voice/test_drift.py"],
       "source_files": ["src/music_attribution/voice/drift.py"],
       "test_count": 11
+    },
+    "4.4": {
+      "status": "DONE",
+      "name": "DriftMonitorProcessor (Pipecat FrameProcessor) for voice pipeline",
+      "inner_iterations": 2,
+      "commit_hashes": ["18f27e5"],
+      "test_files": ["tests/unit/voice/test_drift.py"],
+      "source_files": ["src/music_attribution/voice/drift.py"],
+      "test_count": 18
     }
   },
-  "deferred_tasks": ["1.2", "1.5", "2.2", "2.3", "3.1", "3.2", "3.3", "3.4", "4.2", "4.3", "4.4", "5.1", "5.2", "5.3", "5.4", "6.1", "6.2", "6.3"],
+  "deferred_tasks": ["1.5", "3.2", "3.3", "4.2", "4.3", "5.1", "5.2", "5.3", "5.4", "6.1", "6.2", "6.3"],
   "convergence": {
     "reached": false,
-    "tasks_done": 9,
+    "tasks_done": 15,
     "tasks_total": 24,
     "tasks_stuck": 0,
-    "tasks_deferred": 15
+    "tasks_deferred": 12
   },
-  "session_task_count": 9,
-  "session_inner_iterations": 9,
+  "session_task_count": 15,
+  "session_inner_iterations": 15,
   "session_start": "2026-02-20T19:00:00Z"
 }
