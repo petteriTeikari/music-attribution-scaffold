@@ -202,17 +202,44 @@
       "test_files": ["tests/unit/voice/test_drift.py"],
       "source_files": ["src/music_attribution/voice/drift.py"],
       "test_count": 18
+    },
+    "6.1": {
+      "status": "DONE",
+      "name": "Write voice agent implementation guide",
+      "inner_iterations": 1,
+      "commit_hashes": ["ebebe8c"],
+      "test_files": [],
+      "source_files": ["docs/tutorials/voice-agent-implementation.md"],
+      "test_count": 0
+    },
+    "6.2": {
+      "status": "DONE",
+      "name": "Write component alternatives comparison table",
+      "inner_iterations": 1,
+      "commit_hashes": ["ebebe8c"],
+      "test_files": [],
+      "source_files": ["docs/knowledge-base/voice-agent-component-alternatives.md"],
+      "test_count": 0
+    },
+    "6.3": {
+      "status": "DONE",
+      "name": "Update README with voice agent section",
+      "inner_iterations": 1,
+      "commit_hashes": ["ebebe8c"],
+      "test_files": [],
+      "source_files": ["README.md"],
+      "test_count": 0
     }
   },
-  "deferred_tasks": ["5.1", "5.2", "5.3", "5.4", "6.1", "6.2", "6.3"],
+  "deferred_tasks": ["5.1", "5.2", "5.3", "5.4"],
   "convergence": {
     "reached": false,
-    "tasks_done": 20,
-    "tasks_total": 24,
+    "tasks_done": 23,
+    "tasks_total": 27,
     "tasks_stuck": 0,
-    "tasks_deferred": 7
+    "tasks_deferred": 4
   },
-  "session_task_count": 20,
-  "session_inner_iterations": 20,
+  "session_task_count": 23,
+  "session_inner_iterations": 23,
   "session_start": "2026-02-20T19:00:00Z"
 }
