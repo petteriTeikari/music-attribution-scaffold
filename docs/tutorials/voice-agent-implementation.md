@@ -1,6 +1,6 @@
 # Voice Agent Implementation Guide
 
-**A comprehensive tutorial for building the premium voice agent feature on top of the Music Attribution Scaffold's existing text-based conversational agent.**
+**A hands-on guide to building and deploying the voice agent for music attribution, from a 30-second demo to production deployment.**
 
 **Companion to:** Teikari, P. (2026). *Music Attribution with Transparent Confidence*. SSRN No. 6109087.
 
@@ -10,547 +10,1036 @@
 
 ## Table of Contents
 
-1. [Introduction](#1-introduction)
-2. [Voice AI Landscape and Architecture](#2-voice-ai-landscape-and-architecture)
-3. [Speech-to-Text Deep Dive](#3-speech-to-text-deep-dive)
-4. [Text-to-Speech Deep Dive](#4-text-to-speech-deep-dive)
-5. [LLM and End-to-End Speech Models](#5-llm-and-end-to-end-speech-models)
-6. [Production and Deployment](#6-production-and-deployment)
-7. [Evaluation and Benchmarks](#7-evaluation-and-benchmarks)
-8. [FinOps and Economics](#8-finops-and-economics)
-9. [Ethics, Safety, and Consent](#9-ethics-safety-and-consent)
-10. [Recommended Stack and Roadmap](#10-recommended-stack-and-roadmap)
+1. [Quick Start](#1-quick-start)
+2. [Architecture Overview](#2-architecture-overview)
+3. [Component Selection Guide](#3-component-selection-guide)
+4. [STT Deep Dive](#4-stt-deep-dive)
+5. [TTS Deep Dive](#5-tts-deep-dive)
+6. [Transport Deep Dive](#6-transport-deep-dive)
+7. [LLM Integration](#7-llm-integration)
+8. [Persona Management](#8-persona-management)
+9. [Drift Detection](#9-drift-detection)
+10. [Evaluation](#10-evaluation)
+11. [Cost Analysis](#11-cost-analysis)
+12. [Production Deployment](#12-production-deployment)
 
 ---
 
-## 1. Introduction
+## 1. Quick Start
 
-### Why Voice for Music Attribution?
+Run the voice agent demo in 30 seconds. This uses the fully open-source default stack (Whisper STT + Piper TTS + WebSocket transport) -- zero API keys required.
 
-The Music Attribution Scaffold already ships a text-based conversational agent — PydanticAI with 4 attribution tools, streamed via AG-UI protocol through CopilotKit. The agent answers questions about music credits, queries confidence scores, and suggests corrections.
+### 1.1 Install Dependencies
 
-Adding voice serves two business purposes:
+```bash
+# Install base + voice extras
+uv sync --group voice
 
-1. **Attribution Gathering** — Many session musicians find typing tedious. Voice input removes friction, especially for complex stories (*"We recorded that in three sessions across two studios..."*). Voice responses are typically 3-4x longer than typed responses, capturing more attribution context.
+# If you want Piper TTS (GPL-licensed, separate group):
+uv sync --group voice-gpl
+```
 
-2. **Digital Twin** — An artist's voice AI that can authentically discuss their work. "Ask Imogen about her new album" is a headline-worthy feature. This is the premium/Pro tier upsell.
+The voice extras install `pipecat-ai[silero,whisper]>=0.0.100` and `pipecat-ai[smallwebrtc]>=0.0.100`. Piper TTS is in a separate `voice-gpl` group because its license is GPL, not BSD/Apache.
 
-Both use cases share the same underlying voice pipeline. The difference is which persona responds: the system voice (attribution agent) or the artist's cloned voice (digital twin).
+> **Source:** [`pyproject.toml`](../../pyproject.toml) -- `[project.optional-dependencies]` section.
 
-### What This Tutorial Covers
+### 1.2 Run the Demo
 
-This tutorial goes far beyond the existing PRD ([docs/prd/voice-agent/toc-voice-agent.md](../prd/voice-agent/toc-voice-agent.md)) with:
+```bash
+# Fully local, zero API cost
+uv run python scripts/voice_demo.py
 
-- Comprehensive assessment of 20+ voice AI providers (Jan 2025 - Feb 2026)
-- 40+ academic papers on voice agent architecture, evaluation, and ethics
-- Detailed FinOps analysis with per-minute cost breakdowns
-- Voice agent leaderboard analysis and evaluation gap assessment
-- Concrete implementation roadmap building on the existing MVP
+# With specific providers
+uv run python scripts/voice_demo.py --stt whisper --tts piper --whisper-model small
 
-Each section includes infographic figure references (32 figures total) designed for [Nano Banana Pro](../figures/repo-figures/PROMPTING-INSTRUCTIONS-REPO.md) generation.
+# With commercial providers (requires API keys in .env)
+uv run python scripts/voice_demo.py --stt deepgram --tts elevenlabs
 
----
+# With drift monitoring enabled
+uv run python scripts/voice_demo.py --drift-monitoring --verbose
+```
 
-## 2. Voice AI Landscape and Architecture
+The demo script starts a FastAPI server with a WebSocket voice endpoint:
 
-### 2.1 The Full Stack
+```
+Voice agent ready. Connect via WebSocket at ws://0.0.0.0:8001/api/v1/voice/ws
+```
 
-A production voice agent is not a single model — it is a five-layer pipeline with orchestration:
+Connect with any WebSocket audio client that sends 16kHz 16-bit PCM frames. The health endpoint at `GET /api/v1/voice/health` reports Pipecat availability and active connection count.
 
-**Transport → STT → LLM → TTS → Transport**
+> **Source:** [`scripts/voice_demo.py`](../../scripts/voice_demo.py)
 
-Each layer has its own latency budget, and the total must stay under 500ms for natural conversation (800ms acceptable threshold). Voice Activity Detection (VAD) and turn detection form the critical orchestration layer that ties everything together.
+### 1.3 CLI Options
 
-![Voice Agent Full Stack Architecture](../figures/repo-figures/assets/fig-voice-01-full-stack-architecture.jpg)
-*Figure: The five-layer voice agent pipeline with turn detection as the orchestration layer. See [figure plan](../figures/repo-figures/figure-plans/fig-voice-01-full-stack-architecture.md).*
+```
+usage: voice_demo.py [-h] [--stt {whisper,deepgram,assemblyai}]
+                     [--tts {piper,kokoro,elevenlabs,cartesia}]
+                     [--transport {websocket,smallwebrtc,daily}]
+                     [--whisper-model {tiny,base,small,medium,large}]
+                     [--host HOST] [--port PORT]
+                     [--drift-monitoring] [--verbose]
+```
 
-### 2.2 The Latency Budget
+| Flag | Default | Description |
+|------|---------|-------------|
+| `--stt` | `whisper` | Speech-to-text provider |
+| `--tts` | `piper` | Text-to-speech provider |
+| `--transport` | `websocket` | Audio transport type |
+| `--whisper-model` | `small` | Whisper model size (when `--stt whisper`) |
+| `--host` | `0.0.0.0` | Server bind host |
+| `--port` | `8001` | Server port |
+| `--drift-monitoring` | off | Enable persona drift detection |
+| `--verbose` / `-v` | off | Enable debug logging |
 
-Every millisecond matters. The human neurological response window is 200-300ms — anything beyond 800ms feels sluggish. The voice pipeline budget breaks down as:
+### 1.4 Environment Variables
 
-| Stage | Target | Best Available (Feb 2026) |
-|-------|--------|--------------------------|
-| VAD | <100ms | Silero: 4ms RTF |
-| STT | <250ms | Deepgram Flux: 260ms end-of-turn |
-| LLM TTFT | <200ms | Haiku 4.5: ~150ms |
-| TTS TTFA | <100ms | Cartesia Sonic Turbo: 40ms |
-| Transport | <50ms | WebRTC: ~30ms |
-| **Total** | **<500ms** | **~484ms achievable** |
+All voice configuration uses the `VOICE_` prefix. The `VoiceConfig` Pydantic Settings model is the single source of truth for voice pipeline configuration -- it reads from environment variables and `.env` files.
 
-![Voice Agent Latency Budget](../figures/repo-figures/assets/fig-voice-02-pipeline-latency-budget.jpg)
-*Figure: Production latency budget showing each pipeline stage's contribution. See [figure plan](../figures/repo-figures/figure-plans/fig-voice-02-pipeline-latency-budget.md).*
+```bash
+# Provider selection
+VOICE_STT_PROVIDER=whisper          # whisper | deepgram | assemblyai
+VOICE_TTS_PROVIDER=piper            # piper | kokoro | elevenlabs | cartesia
+VOICE_TRANSPORT=websocket           # websocket | smallwebrtc | daily
 
-### 2.3 Cascaded vs Speech-to-Speech
+# STT settings
+VOICE_WHISPER_MODEL=small           # tiny | base | small | medium | large
 
-The traditional approach is a **cascaded pipeline**: separate STT, LLM, and TTS components stitched together. This is modular (swap any component independently) but accumulates latency at each boundary.
+# Server settings
+VOICE_SERVER_HOST=0.0.0.0
+VOICE_SERVER_PORT=8001
 
-The emerging alternative is **speech-to-speech (S2S)**: a single model that takes audio in and produces audio out, eliminating text intermediaries. Ultravox v0.7 achieved 97.7% pass rate on the aiewf-eval benchmark — surpassing GPT Realtime (86.7%) and Gemini Live (86.0%).
+# VAD tuning
+VOICE_VAD_THRESHOLD=0.5             # Silero speech probability threshold
+VOICE_VAD_MIN_SPEECH_MS=250         # Minimum speech duration to trigger STT
+VOICE_VAD_MIN_SILENCE_MS=300        # Minimum silence to end utterance
 
-The **tandem pattern** (proposed in the KAME paper, arXiv:2510.02327) combines both: a fast S2S front-end handles conversational flow while a cloud LLM concurrently queries databases, injecting results into the speech stream. This is ideal for attribution queries where the agent needs to look up MusicBrainz/Discogs data mid-conversation.
+# Persona management
+VOICE_PERSONA_ENABLED=false         # Enable Letta/Mem0 persona management
+VOICE_PERSONA_REINFORCEMENT_INTERVAL=5  # Inject reminder every N turns
+VOICE_LETTA_BASE_URL=               # Letta server URL (optional)
+VOICE_MEM0_API_KEY=                 # Mem0 API key (optional)
 
-![Cascaded vs Speech-to-Speech](../figures/repo-figures/assets/fig-voice-03-cascaded-vs-speech-to-speech.jpg)
-*Figure: Architecture comparison showing tradeoffs between modularity and latency. See [figure plan](../figures/repo-figures/figure-plans/fig-voice-03-cascaded-vs-speech-to-speech.md).*
+# Drift detection
+VOICE_DRIFT_MONITORING=false        # Enable embedding-based drift detection
+VOICE_DRIFT_SYNC_THRESHOLD=0.85     # Above this = "sync" state
+VOICE_DRIFT_DESYNC_THRESHOLD=0.70   # Below this = "desync" state
+VOICE_DRIFT_EWMA_ALPHA=0.3          # EWMA smoothing factor
 
-### 2.4 Framework Selection
+# Guardrails
+VOICE_GUARDRAILS_ENABLED=false      # Enable NeMo Guardrails
 
-Two open-source frameworks dominate: **Pipecat** (Daily.co) and **LiveKit Agents**.
+# Commercial API keys (only needed when using commercial providers)
+VOICE_DEEPGRAM_API_KEY=
+VOICE_ELEVENLABS_API_KEY=
+VOICE_CARTESIA_API_KEY=
+VOICE_DAILY_API_KEY=
+VOICE_ASSEMBLYAI_API_KEY=
+```
 
-- **Pipecat**: Python-first, 40+ service plugins, BSD license, modular FrameProcessor pipeline, Pipecat Flows for state management, Smart Turn for semantic endpointing
-- **LiveKit Agents**: WebRTC-native, agent-as-participant model, semantic turn detection (<25ms), Telephony 1.0 (SIP/DTMF), Cloud Agents managed deployment
-
-Managed platforms (Retell at $0.07/min, Vapi at $0.14/min) trade flexibility for simplicity — useful for prototyping but too opaque for a scaffold.
-
-**Our recommendation: Pipecat** — Python-native matches the existing PydanticAI backend, and the plugin architecture allows swapping STT/TTS providers without code changes.
-
-![Framework Landscape](../figures/repo-figures/assets/fig-voice-04-framework-landscape.jpg)
-*Figure: Decision tree for voice agent framework selection. See [figure plan](../figures/repo-figures/figure-plans/fig-voice-04-framework-landscape.md).*
-
-### 2.5 The Dual Persona System
-
-The same voice pipeline serves two personas, gated by consent levels:
-
-- **Attribution Agent** (Consent Level 1): System voice, gap-filling, review queue. "Who mixed this track?" → queries attribution engine.
-- **Digital Twin** (Consent Levels 2-3): Artist's cloned voice, fan interactions, promotional experiences. "What inspired River Song?" → responds in Imogen's voice.
-
-![Dual Persona System](../figures/repo-figures/assets/fig-voice-05-dual-persona-system.jpg)
-*Figure: Shared pipeline branching into attribution agent and digital twin personas. See [figure plan](../figures/repo-figures/figure-plans/fig-voice-05-dual-persona-system.md).*
-
-### 2.6 Transport Layer
-
-WebRTC delivers sub-30ms transport with built-in echo cancellation and noise suppression. WebSocket is simpler to implement but adds 50-100ms and requires client-side audio processing. Both Pipecat and LiveKit support WebRTC natively. The OpenAI Realtime API supports both protocols.
-
-![Transport Comparison](../figures/repo-figures/assets/fig-voice-06-webrtc-transport-layer.jpg)
-*Figure: WebRTC vs WebSocket voice transport comparison. See [figure plan](../figures/repo-figures/figure-plans/fig-voice-06-webrtc-transport-layer.md).*
-
----
-
-## 3. Speech-to-Text Deep Dive
-
-### 3.1 The STT Landscape
-
-The STT landscape as of February 2026 spans commercial leaders, open-source alternatives, and edge-optimized models:
-
-| Category | Champion | WER | Speed | Cost |
-|----------|----------|-----|-------|------|
-| **Benchmark accuracy** | NVIDIA Canary-Qwen-2.5B | 5.63% | 418x RT | Open-source |
-| **Production accuracy** | Deepgram Nova-3 | 5.26% (batch) | Real-time | $0.0077/min |
-| **Self-hosted** | faster-whisper | ~8-10% | 4x Whisper | Free |
-| **Edge** | Moonshine | ~Whisper-level | 5-15x faster | Free |
-| **Multilingual** | Whisper Large V3 | ~10% | 1x | $0.006/min |
-| **Open-source realtime** | Mistral Voxtral Mini 4B | <Whisper V3 | 480ms delay | Free (Apache 2.0) |
-
-![STT Model Landscape](../figures/repo-figures/assets/fig-voice-07-stt-model-landscape.jpg)
-*Figure: STT model landscape mapped by accuracy and cost. See [figure plan](../figures/repo-figures/figure-plans/fig-voice-07-stt-model-landscape.md).*
-
-### 3.2 Accuracy vs Latency
-
-The Pareto frontier has shifted dramatically. In 2024, you chose accuracy OR speed. In 2026, models like Canary-Qwen deliver both (5.63% WER at 418x real-time). Edge models like Moonshine sacrifice minimal accuracy for 5-15x speed gains.
-
-![STT Accuracy vs Latency](../figures/repo-figures/assets/fig-voice-08-stt-accuracy-vs-latency.jpg)
-*Figure: Scatter plot of STT models showing the shifted Pareto frontier. See [figure plan](../figures/repo-figures/figure-plans/fig-voice-08-stt-accuracy-vs-latency.md).*
-
-### 3.3 VAD and Turn Detection Evolution
-
-Turn detection is the single most impactful recent advance in voice AI. It evolved through three generations:
-
-1. **Silence thresholds** (2020-2023): WebRTC VAD, simple GMM, 50% TPR. Triggers on any pause, causing constant false interruptions.
-2. **Deep learning VAD** (2023-2025): Silero VAD, neural network, 87.7% TPR at RTF 0.004. Better but still pause-based.
-3. **Semantic endpointing** (2025-2026): Deepgram Flux fuses acoustic cues (prosody, pauses) with semantic understanding (grammar, intent). 260ms end-of-turn, 30% fewer false interruptions. LiveKit's transformer model runs <25ms on CPU across 13 languages. Pipecat Smart Turn is fully open-source.
-
-A voice attribution agent that cuts off an artist mid-sentence about credits destroys trust. Semantic turn detection is not optional.
-
-![VAD and Turn Detection Evolution](../figures/repo-figures/assets/fig-voice-09-vad-turn-detection-evolution.jpg)
-*Figure: Three-generation evolution of turn detection. See [figure plan](../figures/repo-figures/figure-plans/fig-voice-09-vad-turn-detection-evolution.md).*
-
-### 3.4 Conversational Speech Recognition
-
-Deepgram Flux represents a paradigm shift: instead of stitching separate VAD + ASR + endpointing components, it fuses acoustic and semantic streams into a single Conversational Speech Recognition (CSR) model. This eliminates the fragile multi-component pipeline and achieves 260ms end-of-turn detection with 30% fewer false interruptions.
-
-![Conversational Speech Recognition](../figures/repo-figures/assets/fig-voice-10-conversational-speech-recognition.jpg)
-*Figure: The paradigm shift from fragmented ASR pipeline to unified CSR. See [figure plan](../figures/repo-figures/figure-plans/fig-voice-10-conversational-speech-recognition.md).*
+> **Source:** [`src/music_attribution/voice/config.py`](../../src/music_attribution/voice/config.py) -- `VoiceConfig` class.
 
 ---
 
-## 4. Text-to-Speech Deep Dive
+## 2. Architecture Overview
 
-### 4.1 The TTS Landscape
+### 2.1 Pipeline Diagram
 
-The TTS landscape bifurcated in 2025. Commercial leaders compete on latency and expressiveness while open-source models crossed the quality threshold:
+The voice agent wraps the existing PydanticAI text agent in a Pipecat audio pipeline. No business logic duplication -- the same 4 domain tools serve both text and voice:
 
-**Commercial:**
-- **ElevenLabs**: Eleven v3 (most expressive, 70+ languages), Flash v2.5 (~75ms)
-- **Cartesia Sonic**: 40ms TTFA (industry-leading), SSM architecture, consistent P50-P99
-- **Inworld AI**: 200ms, gaming-focused, $5/1M chars
-- **Rime AI**: Sub-200ms, no concurrency limits
+```
+                         Pipecat Pipeline
+                 ┌──────────────────────────────────┐
+                 │                                    │
+  Microphone     │  Transport  →  Silero  →  STT      │
+  ───────────►   │     In         VAD                  │
+                 │                           ↓         │
+                 │                    Context           │
+                 │                   Aggregator         │
+                 │                           ↓         │
+                 │                     LLM Service      │  ← PydanticAI Agent
+                 │                    (4 domain tools)  │     (same as text chat)
+                 │                           ↓         │
+                 │               [DriftMonitor]         │  ← Optional
+                 │                           ↓         │
+                 │                    TTS  →  Transport │
+  ◄───────────   │                              Out    │
+  Speaker        │                                    │
+                 └──────────────────────────────────┘
+```
 
-**Open-Source (the 2025 revolution):**
-- **Chatterbox** (Resemble AI): MIT license, 350M params, outperforms ElevenLabs in blind evals
-- **Orpheus TTS**: Apache 2.0, 3B params, emotional tags (<laugh>, <sigh>), ~200ms streaming
-- **Kokoro-82M**: Apache 2.0, <0.3s, <1GB VRAM, ~$0.06/hr
+When Pipecat is installed (`uv sync --group voice`), the `build_pipecat_pipeline()` function assembles the real pipeline. When Pipecat is not installed, `create_voice_pipeline()` returns a configuration dict for testing.
 
-![TTS Model Landscape](../figures/repo-figures/assets/fig-voice-11-tts-model-landscape.jpg)
-*Figure: TTS landscape showing commercial and open-source tiers. See [figure plan](../figures/repo-figures/figure-plans/fig-voice-11-tts-model-landscape.md).*
+> **Source:** [`src/music_attribution/voice/pipeline.py`](../../src/music_attribution/voice/pipeline.py)
 
-### 4.2 TTS Arena Leaderboard
+### 2.2 Component Roles
 
-The TTS Arena V2 (HuggingFace, Elo-based blind human preference) reveals that specialized models now top ElevenLabs:
+| Component | Module | Role |
+|-----------|--------|------|
+| **VoiceConfig** | `voice/config.py` | Single source of truth -- Pydantic Settings with `VOICE_` prefix |
+| **Pipeline Factory** | `voice/pipeline.py` | Assembles STT, TTS, LLM, VAD, transport from config |
+| **Persona Builder** | `voice/persona.py` | 5-dimension prompt layering with periodic reinforcement |
+| **Domain Tools** | `voice/tools.py` | Bridges PydanticAI tools to Pipecat function calling |
+| **Drift Detector** | `voice/drift.py` | EWMA-smoothed cosine similarity monitoring |
+| **Server** | `voice/server.py` | FastAPI router with WebSocket endpoint |
+| **Protocols** | `voice/protocols.py` | Structural typing for swappable STT/TTS/transport |
+| **Letta Integration** | `voice/letta_integration.py` | Optional memory-anchored persona via Letta (MemGPT) |
+| **Mem0 Integration** | `voice/mem0_integration.py` | Optional cross-session user preferences with safety gate |
+| **Guardrails** | `voice/guardrails_integration.py` | NeMo Guardrails with regex fallback for persona boundaries |
 
-| Rank | Model | Elo |
-|------|-------|-----|
-| 1 | Vocu V3.0 | 1613 |
-| 2 | Inworld TTS | 1578 |
-| 3 | CastleFlow v1.0 | 1575 |
-| 6 | Hume Octave | 1559 |
-| 7 | ElevenLabs Flash v2.5 | 1547 |
+### 2.3 The 4 Domain Tools
 
-Sesame CSM-1B (open-source, Llama backbone) achieved a remarkable result: evaluators showed no preference between CSM-1B output and real human speech without context.
+The voice agent exposes the same 4 tools as the text agent. Tool handlers in `voice/tools.py` delegate to the existing PydanticAI tool logic -- no business logic duplication:
 
-![TTS Arena Leaderboard](../figures/repo-figures/assets/fig-voice-12-tts-arena-leaderboard.jpg)
-*Figure: TTS Arena V2 Elo rankings as of February 2026. See [figure plan](../figures/repo-figures/figure-plans/fig-voice-12-tts-arena-leaderboard.md).*
+| Tool | Parameters | Description |
+|------|-----------|-------------|
+| `explain_confidence` | `work_id: str` | Decompose a confidence score into source agreement, data sources, and assurance level |
+| `search_attributions` | `query: str` | Search attribution records by title, artist, or keyword via hybrid search |
+| `suggest_correction` | `work_id, field, current_value, suggested_value, reason` | Propose a correction to a specific attribution field |
+| `submit_feedback` | `work_id, overall_assessment, free_text?` | Submit a structured FeedbackCard with center-bias detection |
 
-### 4.3 The Open-Source TTS Revolution
+The tool bridge uses Pipecat's `FunctionSchema` for declaration and `register_function()` for handler registration. A module-level session factory (set by `server.py` on startup) shares the same database connection pool as the REST API.
 
-Three open-source models make production-quality voice synthesis essentially free to self-host. This changes the economics of voice AI fundamentally — TTS is no longer the cost bottleneck.
+> **Source:** [`src/music_attribution/voice/tools.py`](../../src/music_attribution/voice/tools.py)
+>
+> **See also:** [`src/music_attribution/chat/agent.py`](../../src/music_attribution/chat/agent.py) -- the original PydanticAI agent with the same 4 tools.
 
-![Open-Source TTS Revolution](../figures/repo-figures/assets/fig-voice-13-open-source-tts-revolution.jpg)
-*Figure: The three models driving the open-source TTS revolution. See [figure plan](../figures/repo-figures/figure-plans/fig-voice-13-open-source-tts-revolution.md).*
+### 2.4 How Voice and Text Share the Agent
 
-### 4.4 Voice Cloning and Consent
+The text agent (CopilotKit AG-UI) and voice agent (Pipecat) share the same domain logic:
 
-Voice cloning for the digital twin feature requires careful consent management. The PRAC3 framework (Privacy, Reputation, Accountability, Consent, Credit, Compensation) from voice actor research maps directly to our A0-A3 assurance levels:
+```
+Text path:   Browser → AG-UI SSE → PydanticAI Agent → tools → DB
+Voice path:  Mic → Pipecat STT → OpenAI-compat LLM → tools → DB → Pipecat TTS → Speaker
+```
 
-| PRAC3 Dimension | A0-A3 Mapping | Implementation |
-|-----------------|---------------|----------------|
-| **Privacy** | All levels | Voice data encryption, retention limits |
-| **Reputation** | A2+ | Deepfake detection, brand protection |
-| **Accountability** | A1+ | C2PA provenance, audit trail |
-| **Consent** | A1+ | MCP permission queries, revocation rights |
-| **Credit** | A1+ | ISRC/ISWC metadata, attribution chain |
-| **Compensation** | A2+ | Royalty tracking infrastructure |
+The voice pipeline uses the OpenAI-compatible API endpoint rather than the PydanticAI agent directly, to avoid an SDK version conflict between `pipecat-ai` (which pins `anthropic<0.50`) and `pydantic-ai-slim` (which requires `anthropic>=0.70`). The LLM service is created via `pipecat.services.openai.llm.OpenAILLMService`, which works with Anthropic's compatibility API, Ollama, vLLM, or any OpenAI-compatible endpoint.
 
-![Voice Cloning Consent Framework](../figures/repo-figures/assets/fig-voice-14-voice-cloning-consent-framework.jpg)
-*Figure: PRAC3 consent dimensions mapped to A0-A3 assurance levels. See [figure plan](../figures/repo-figures/figure-plans/fig-voice-14-voice-cloning-consent-framework.md).*
-
----
-
-## 5. LLM and End-to-End Speech Models
-
-### 5.1 Speech LLM Taxonomy
-
-The ACL 2025 SpeechLM survey (arXiv:2410.03751) establishes the first comprehensive taxonomy of Speech Language Models. Three architectural families:
-
-1. **Encoder-Decoder**: Separate understanding and generation (e.g., Whisper-based pipelines)
-2. **Decoder-Only**: Autoregressive, single model (e.g., Moshi, GLM-4-Voice)
-3. **Hierarchical Codebook**: Multi-scale audio tokens (e.g., SpeechTokenizer, Encodec-based)
-
-![Speech LLM Taxonomy](../figures/repo-figures/assets/fig-voice-15-speech-llm-taxonomy.jpg)
-*Figure: Taxonomy of speech LLM architectures from ACL 2025 survey. See [figure plan](../figures/repo-figures/figure-plans/fig-voice-15-speech-llm-taxonomy.md).*
-
-### 5.2 The Ultravox Breakthrough
-
-Ultravox v0.7 is a milestone: the first speech-to-speech model to surpass text-mode frontier LLMs on a production-realistic benchmark. It processes audio directly (no separate ASR stage), achieving 97.7% pass rate on aiewf-eval with 864ms voice-to-voice latency.
-
-For comparison:
-- **GPT-5.1** (text mode): 100% but too slow for voice
-- **Claude Sonnet 4.5** (text mode): 100% but too slow for voice
-- **Ultravox v0.7** (S2S): 97.7% at production-viable latency
-- **GPT Realtime** (S2S): 86.7%
-- **Gemini Live** (S2S): 86.0% at 2,624ms latency
-
-![Ultravox Breakthrough](../figures/repo-figures/assets/fig-voice-16-ultravox-breakthrough.jpg)
-*Figure: Ultravox v0.7 surpassing GPT Realtime and Gemini Live. See [figure plan](../figures/repo-figures/figure-plans/fig-voice-16-ultravox-breakthrough.md).*
-
-### 5.3 Full-Duplex Architecture
-
-Full-duplex voice AI — where the system can listen while speaking — is the frontier. Traditional turn-based conversation feels rigid. Full-duplex enables natural backchanneling ("mm-hmm", "right"), graceful interruption handling, and collaborative speech overlap.
-
-Key models: Moshi (200ms round-trip, Kyutai Labs), SALMONN-omni (codec-free), PersonaPlex (NVIDIA, ICASSP 2026).
-
-![Full-Duplex Architecture](../figures/repo-figures/assets/fig-voice-17-full-duplex-architecture.jpg)
-*Figure: Half-duplex vs full-duplex voice architecture comparison. See [figure plan](../figures/repo-figures/figure-plans/fig-voice-17-full-duplex-architecture.md).*
+> **Source:** `create_llm_service()` in [`src/music_attribution/voice/pipeline.py`](../../src/music_attribution/voice/pipeline.py)
 
 ---
 
-## 6. Production and Deployment
+## 3. Component Selection Guide
 
-### 6.1 Pipecat Pipeline Anatomy
+Every component in the voice pipeline is swappable via a single environment variable. The `VoiceConfig` enum types map directly to Pipecat service classes.
 
-Pipecat organizes voice processing as a chain of `FrameProcessor` objects. Audio frames flow through the pipeline: Transport → VAD → STT → LLM → TTS → Transport. Each processor can be a built-in component or a service plugin (40+ available). `ParallelPipeline` runs context processing alongside the main voice loop. `Pipecat Flows` manages complex conversational state.
+### 3.1 Complete Alternatives Table
 
-![Pipecat Pipeline Anatomy](../figures/repo-figures/assets/fig-voice-18-pipecat-pipeline-anatomy.jpg)
-*Figure: Detailed Pipecat pipeline architecture. See [figure plan](../figures/repo-figures/figure-plans/fig-voice-18-pipecat-pipeline-anatomy.md).*
+| Layer | Option | License | Latency | Cost/Min | Self-Hosted? | Config Value |
+|-------|--------|---------|---------|----------|-------------|--------------|
+| **STT** | Whisper (local) | MIT | ~300ms | $0.000 | Yes | `VOICE_STT_PROVIDER=whisper` |
+| | Deepgram Nova-3 | Commercial | ~150ms | $0.008 | No | `VOICE_STT_PROVIDER=deepgram` |
+| | AssemblyAI Universal | Commercial | ~200ms | $0.003 | No | `VOICE_STT_PROVIDER=assemblyai` |
+| **TTS** | Piper | GPL | ~200ms | $0.000 | Yes | `VOICE_TTS_PROVIDER=piper` |
+| | Kokoro-82M | Apache 2.0 | ~300ms | $0.000 | Yes | `VOICE_TTS_PROVIDER=kokoro` |
+| | ElevenLabs Flash v2.5 | Commercial | ~75ms | $0.080 | No | `VOICE_TTS_PROVIDER=elevenlabs` |
+| | Cartesia Sonic | Commercial | ~40ms | $0.025 | No | `VOICE_TTS_PROVIDER=cartesia` |
+| **Transport** | WebSocket | N/A | ~80ms | $0.000 | Yes | `VOICE_TRANSPORT=websocket` |
+| | SmallWebRTC | Non-commercial | ~30ms | $0.000 | Yes | `VOICE_TRANSPORT=smallwebrtc` |
+| | Daily WebRTC | Commercial | ~30ms | $0.004 | No | `VOICE_TRANSPORT=daily` |
+| **LLM** | Anthropic (Haiku 4.5) | Commercial | ~150ms TTFT | $0.003 | No | `ATTRIBUTION_AGENT_MODEL` env |
+| | Ollama (local) | Various | ~200ms | $0.000 | Yes | `OPENAI_API_KEY` + base URL |
+| | OpenAI (GPT-4o mini) | Commercial | ~100ms TTFT | $0.006 | No | `VOICE_LLM_MODEL` env |
+| **VAD** | Silero VAD | MIT | 4ms RTF | $0.000 | Yes | Built-in (always used) |
+| **Persona** | Prompt-layered | N/A | 0ms | $0.000 | Yes | Default |
+| | Letta (MemGPT) | Apache 2.0 | ~50ms | $0.000 | Yes | `VOICE_PERSONA_ENABLED=true` |
+| | Mem0 | Commercial | ~50ms | Variable | No | `VOICE_MEM0_API_KEY=...` |
+| **Drift** | Embedding + EWMA | N/A | ~10ms | $0.000 | Yes | `VOICE_DRIFT_MONITORING=true` |
+| **Guardrails** | NeMo Guardrails | Apache 2.0 | ~50ms | $0.000 | Yes | `VOICE_GUARDRAILS_ENABLED=true` |
+| | Regex fallback | N/A | <1ms | $0.000 | Yes | Automatic when NeMo absent |
 
-### 6.2 LiveKit Agents Architecture
+### 3.2 Choosing Your Stack
 
-LiveKit's model is "agent-as-participant" — the voice agent joins the WebRTC session like any other user. This is elegant for multi-party scenarios and provides native telephony (SIP, DTMF). Cloud Agents offers managed deployment with global edge network.
+**Zero-cost local development:**
+```bash
+VOICE_STT_PROVIDER=whisper
+VOICE_TTS_PROVIDER=piper
+VOICE_TRANSPORT=websocket
+```
+Cost: $0.000/min. Requires a machine with a GPU (or patience for CPU Whisper inference).
 
-![LiveKit Agents Architecture](../figures/repo-figures/assets/fig-voice-19-livekit-agents-architecture.jpg)
-*Figure: LiveKit's agent-as-participant WebRTC model. See [figure plan](../figures/repo-figures/figure-plans/fig-voice-19-livekit-agents-architecture.md).*
+**Balanced production (recommended for MVP):**
+```bash
+VOICE_STT_PROVIDER=deepgram
+VOICE_TTS_PROVIDER=cartesia
+VOICE_TRANSPORT=daily
+VOICE_DEEPGRAM_API_KEY=your-key
+VOICE_CARTESIA_API_KEY=your-key
+VOICE_DAILY_API_KEY=your-key
+```
+Cost: ~$0.04/min. Best accuracy and latency for the price.
 
-### 6.3 Deployment Options
+**Premium (digital twin, fan-facing):**
+```bash
+VOICE_STT_PROVIDER=deepgram
+VOICE_TTS_PROVIDER=elevenlabs
+VOICE_TRANSPORT=daily
+VOICE_DEEPGRAM_API_KEY=your-key
+VOICE_ELEVENLABS_API_KEY=your-key
+VOICE_DAILY_API_KEY=your-key
+```
+Cost: ~$0.10-0.15/min. ElevenLabs for artist voice cloning.
 
-Four deployment paths, each with different cost/complexity tradeoffs:
-
-| Path | Cost/Min | Time to Market | DevOps Burden |
-|------|----------|---------------|---------------|
-| **Managed** (Retell/Vapi) | $0.07-0.14 | Days | None |
-| **Framework + APIs** (Pipecat + Deepgram + Cartesia) | $0.04-0.08 | Weeks | Low |
-| **Self-Hosted** (Pipecat + faster-whisper + Orpheus) | $0.01-0.02 | Months | High |
-| **Hybrid** (Cloud LLM + on-device STT/TTS) | $0.005-0.01 | Months | High |
-
-**Recommendation:** Start with Framework + APIs (Path B), migrate to self-hosted as volume grows.
-
-![Deployment Options](../figures/repo-figures/assets/fig-voice-20-production-deployment-options.jpg)
-*Figure: Decision tree for voice agent deployment. See [figure plan](../figures/repo-figures/figure-plans/fig-voice-20-production-deployment-options.md).*
-
-### 6.4 Build vs Buy Decision
-
-![Build vs Buy Decision](../figures/repo-figures/assets/fig-voice-21-managed-vs-self-hosted-decision.jpg)
-*Figure: Comparison matrix across managed, framework, self-hosted, and hybrid approaches. See [figure plan](../figures/repo-figures/figure-plans/fig-voice-21-managed-vs-self-hosted-decision.md).*
-
----
-
-## 7. Evaluation and Benchmarks
-
-### 7.1 The Evolution of Voice Agent Evaluation
-
-Voice agent evaluation has undergone a paradigm shift from 2024 to 2026:
-
-- **2024**: Component metrics only (WER for STT, MOS for TTS), single utterance, English only
-- **Early 2025**: Multi-dimensional (Full-Duplex-Bench, VocalBench), audio-native evaluation
-- **Mid 2025**: Agentic, production-oriented (VoiceAgentBench, aiewf-eval with 30-turn conversations)
-- **Late 2025**: LLM-as-Judge revolution (SpeechLLM-as-Judges, TRACE framework)
-- **Early 2026**: Safety + emotion (LALM-as-Judge, ICASSP HumDial Challenge, Audio MultiChallenge)
-
-![Evaluation Evolution](../figures/repo-figures/assets/fig-voice-22-evaluation-evolution-timeline.jpg)
-*Figure: Timeline of voice agent evaluation paradigm shifts. See [figure plan](../figures/repo-figures/figure-plans/fig-voice-22-evaluation-evolution-timeline.md).*
-
-### 7.2 The Fragmented Leaderboard Landscape
-
-As of February 2026, there is **no unified voice agent leaderboard**. The ecosystem is fragmented:
-
-- **STT**: HuggingFace Open ASR Leaderboard (60+ models, WER metric)
-- **TTS**: TTS Arena V2 (Elo-based blind preference), Artificial Analysis Speech Arena
-- **End-to-End**: aiewf-eval (30-turn, tool calling, Claude-as-judge)
-- **Voice Cloning**: ClonEval (cosine similarity)
-
-No single leaderboard captures the full voice agent experience.
-
-![Leaderboard Landscape](../figures/repo-figures/assets/fig-voice-23-leaderboard-landscape-fragmentation.jpg)
-*Figure: The fragmented voice AI leaderboard ecosystem. See [figure plan](../figures/repo-figures/figure-plans/fig-voice-23-leaderboard-landscape-fragmentation.md).*
-
-### 7.3 The aiewf-eval Benchmark
-
-The aiewf-eval benchmark (Daily/Pipecat) tests production-realistic 30-turn voice conversations with tool calling, instruction following, and knowledge grounding. Claude serves as judge across three dimensions.
-
-The defining finding: **the intelligence-latency tradeoff**. Three text-mode models achieve 100% pass rate but are too slow for production voice. Most deployed systems still run 18-month-old models because "switching is expensive and evaluation is hard."
-
-![aiewf-eval Results](../figures/repo-figures/assets/fig-voice-24-aiewf-eval-benchmark-results.jpg)
-*Figure: aiewf-eval benchmark results comparing text-mode and speech-to-speech models. See [figure plan](../figures/repo-figures/figure-plans/fig-voice-24-aiewf-eval-benchmark-results.md).*
-
-### 7.4 What Leaderboards Miss
-
-Current leaderboards fail to capture 8 of 10 critical dimensions for production voice agents:
-
-1. **Accent/dialect bias** — ASR consistently worse for non-native speakers, no per-accent breakdowns
-2. **Cross-session consistency** — no benchmark tests multi-session state
-3. **Cost-quality tradeoffs** — no leaderboard incorporates pricing
-4. **Emotional appropriateness** — only MULTI-Bench and ICASSP HumDial address this
-5. **Safety under adversarial audio** — all models degrade to 35-40% refusal rates
-6. **Background noise robustness** — most benchmarks use clean studio audio
-7. **Multi-party scenarios** — no benchmark tests handoffs or conferencing
-8. **Graceful error recovery** — only Audio MultiChallenge's Voice Editing axis begins this
-
-For music attribution specifically, leaderboards also miss: music-domain vocabulary accuracy (artist names, ISRCs), confidence communication quality (does the voice convey certainty appropriately?), and digital twin persona fidelity.
-
-![Evaluation Gaps](../figures/repo-figures/assets/fig-voice-25-evaluation-gaps-radar.jpg)
-*Figure: Radar chart showing what current voice agent leaderboards miss. See [figure plan](../figures/repo-figures/figure-plans/fig-voice-25-evaluation-gaps-radar.md).*
-
-### 7.5 Key Academic Papers (Post-October 2025)
-
-Recent papers pushing the evaluation frontier:
-
-| Paper | Date | Key Finding |
-|-------|------|-------------|
-| **MULTI-Bench** (arXiv:2511.00850) | Nov 2025 | First emotional intelligence benchmark for spoken dialogue |
-| **Testing the Testers** (arXiv:2511.04133) | Nov 2025 | Meta-evaluation: top platform 0.92 F1, simulation quality only 0.61 |
-| **Audio MultiChallenge** (arXiv:2512.14865) | Dec 2025 | Best model (Gemini 3 Pro) achieves only 54.65% on realistic multi-turn |
-| **ICASSP HumDial** (arXiv:2601.05564) | Jan 2026 | Emotion analysis advancing faster than empathetic generation |
-| **TRACE** (arXiv:2601.13742) | Jan 2026 | LLM judges with audio cues outperform audio-native judges |
-| **LALM-as-a-Judge** (arXiv:2602.04796) | Feb 2026 | First safety evaluation for multi-turn spoken dialogues |
+> **PRD node:** [`docs/prd/decisions/L3-implementation/voice-agent-stack.decision.yaml`](../prd/decisions/L3-implementation/voice-agent-stack.decision.yaml)
 
 ---
 
-## 8. FinOps and Economics
+## 4. STT Deep Dive
 
-### 8.1 Anatomy of a Minute
+### 4.1 Whisper (Local Default)
 
-The cost of one minute of voice agent conversation breaks down into five components. The total ranges from $0.01/min (budget self-hosted) to $0.20+/min (premium commercial):
+Whisper is the default STT provider because it requires zero API keys and runs entirely on the local machine. The `VOICE_WHISPER_MODEL` setting controls the accuracy-speed tradeoff:
 
-| Tier | STT | LLM | TTS | Transport | Total |
-|------|-----|-----|-----|-----------|-------|
-| **Budget** | Whisper self-hosted ($0.001) | Gemini Flash ($0.001) | Kokoro self-hosted ($0.001) | WebSocket ($0) | **~$0.01** |
-| **Standard** | Deepgram Nova-3 ($0.008) | GPT-4o mini ($0.006) | Cartesia Sonic ($0.025) | WebRTC ($0.004) | **~$0.04** |
-| **Premium** | Deepgram Flux ($0.010) | Claude Sonnet ($0.060) | ElevenLabs Flash ($0.080) | WebRTC ($0.004) | **~$0.15** |
+| Model | Parameters | English WER | Relative Speed | VRAM |
+|-------|-----------|-------------|----------------|------|
+| `tiny` | 39M | ~8% | 32x | ~1GB |
+| `base` | 74M | ~6% | 16x | ~1GB |
+| `small` | 244M | ~5% | 6x | ~2GB |
+| `medium` | 769M | ~4% | 2x | ~5GB |
+| `large` | 1.55B | ~3% | 1x | ~10GB |
 
-![Cost Per Minute Breakdown](../figures/repo-figures/assets/fig-voice-26-cost-per-minute-breakdown.jpg)
-*Figure: Stacked cost breakdown across three tiers. See [figure plan](../figures/repo-figures/figure-plans/fig-voice-26-cost-per-minute-breakdown.md).*
+The pipeline factory in `create_stt_service()` instantiates `WhisperSTTService(model=config.whisper_model)` from `pipecat.services.whisper.stt`.
 
-### 8.2 Six Cost Optimization Levers
+For faster self-hosted inference, consider running `faster-whisper` (4x speedup over standard Whisper with identical quality) outside the Pipecat pipeline and connecting via the OpenAI-compatible STT API format.
 
-Combined optimization can achieve up to 16x cost reduction:
+### 4.2 Deepgram Nova-3 (Production)
 
-1. **Model Selection** — Right-size LLM per query complexity (Haiku for simple, Sonnet for complex)
-2. **Semantic Caching** — Cache common response audio, 15-30% reduction
-3. **On-Device STT/TTS** — Eliminate per-minute API costs entirely
-4. **Context Management** — Aggressive truncation reduces token spend
-5. **Tiered Quality** — Free tier uses self-hosted, premium uses commercial APIs
-6. **Volume Commitments** — Growth/Enterprise tiers offer 30-50% discount
+Deepgram Nova-3 achieves 5.26% WER on batch benchmarks -- 36% lower than Whisper Large V3. For the music attribution domain, this accuracy gap matters: artist names (especially non-English like Bjork, Sigur Ros, Iannis Xenakis), ISRC codes ("USRC17607839"), and track titles with special characters all benefit from Deepgram's superior language model.
 
-![FinOps Optimization Strategies](../figures/repo-figures/assets/fig-voice-27-finops-optimization-strategies.jpg)
-*Figure: Six cost levers for voice AI optimization. See [figure plan](../figures/repo-figures/figure-plans/fig-voice-27-finops-optimization-strategies.md).*
+**Deepgram Flux** is the upgrade path: a unified Conversational Speech Recognition model that fuses acoustic and semantic streams, achieving 260ms end-of-turn detection with 30% fewer false interruptions. This eliminates the need for a separate VAD + endpointing pipeline.
 
-### 8.3 The AI Companion Cost Trap
+Configuration:
+```bash
+VOICE_STT_PROVIDER=deepgram
+VOICE_DEEPGRAM_API_KEY=your-key-here
+```
 
-The cautionary tale: flat-rate subscriptions + power users = structural loss.
+Cost: $0.0077/min (Pay-As-You-Go), $0.0065/min (Growth tier).
 
-- **Character.AI**: 100M DAU averaging 93 min/day. At $0.01/hr serving cost, that's $365M/year. 2024 revenue: $32.2M.
-- **Dolores**: $25/day API costs from 1,000 beta users. 70% of revenue came from ElevenLabs realistic voice purchases. One user chatted for 12 hours straight.
-- **Replika**: NSFW content restriction caused 70% usage drop — the engagement was parasocial, not utility.
+### 4.3 AssemblyAI Universal
 
-The lesson for music attribution: **tier pricing from day one**. The digital twin feature could attract parasocial engagement patterns if not carefully bounded. Implement per-user daily caps, token budgets, and tiered access.
+AssemblyAI Universal is the budget commercial option at $0.0025/min -- roughly 3x cheaper than Deepgram. Accuracy is slightly lower, but sufficient for common attribution queries.
 
-Character.AI achieved 3.8x cost improvement by migrating from NVIDIA GPUs to Google TPU v6e. Midjourney saved $16.8M/year via similar migration. Infrastructure optimization is the largest single cost lever.
+```bash
+VOICE_STT_PROVIDER=assemblyai
+VOICE_ASSEMBLYAI_API_KEY=your-key-here
+```
 
-![AI Companion Cost Trap](../figures/repo-figures/assets/fig-voice-28-ai-companion-cost-trap.jpg)
-*Figure: The structural economics of flat-rate AI companions. See [figure plan](../figures/repo-figures/figure-plans/fig-voice-28-ai-companion-cost-trap.md).*
+### 4.4 Swapping Providers
 
----
+Provider swapping is a one-line environment change. The `create_stt_service()` function in `pipeline.py` handles the conditional imports:
 
-## 9. Ethics, Safety, and Consent
+```python
+# From pipeline.py -- STT provider selection
+if config.stt_provider == STTProvider.WHISPER:
+    from pipecat.services.whisper.stt import WhisperSTTService
+    return WhisperSTTService(model=config.whisper_model)
 
-### 9.1 The Voice Rights Stack
+if config.stt_provider == STTProvider.DEEPGRAM:
+    from pipecat.services.deepgram.stt import DeepgramSTTService
+    return DeepgramSTTService(api_key=config.deepgram_api_key)
 
-The PRAC3 framework (Privacy, Reputation, Accountability, Consent, Credit, Compensation) from professional voice actor research (arXiv:2507.16247) maps directly to music attribution:
+if config.stt_provider == STTProvider.ASSEMBLYAI:
+    from pipecat.services.assemblyai.stt import AssemblyAISTTService
+    return AssemblyAISTTService(api_key=config.assemblyai_api_key)
+```
 
-- **Privacy** → Voice data encryption, retention limits, right to deletion
-- **Reputation** → Deepfake detection (ASVspoof 5), brand protection controls
-- **Accountability** → C2PA content credentials for audio provenance
-- **Consent** → MCP permission queries, explicit consent with revocation rights
-- **Credit** → ISRC/ISWC metadata chain, attribution-by-design
-- **Compensation** → Royalty tracking, transparent payment infrastructure
+All providers implement the same Pipecat service interface. The `STTServiceProtocol` in `protocols.py` defines the structural typing contract: `transcribe(audio: bytes) -> str` and `close() -> None`.
 
-This extends the paper's A0-A3 assurance framework to voice: A0 (no voice consent) → A1 (basic ToS) → A2 (multi-factor verification) → A3 (artist-verified voice print with C2PA binding).
-
-![PRAC3 Assurance Mapping](../figures/repo-figures/assets/fig-voice-29-prac3-assurance-mapping.jpg)
-*Figure: Voice rights stack mapping PRAC3 to music attribution. See [figure plan](../figures/repo-figures/figure-plans/fig-voice-29-prac3-assurance-mapping.md).*
-
-### 9.2 EU AI Act Compliance
-
-The EU AI Act (Article 50, enforcement through August 2026) mandates:
-
-1. **Disclosure**: Voice agents must identify themselves as AI-powered
-2. **Synthetic audio labeling**: All TTS output must be marked as AI-generated
-3. **Deepfake provisions**: Voice cloning requires explicit, informed consent
-4. **Transparency**: Document training data and model capabilities
-5. **Risk classification**: Interactive voice agents likely fall under "limited risk" tier
-
-These requirements are not optional — they're legal obligations for any voice agent deployed in or serving EU users.
-
-![EU AI Act Compliance](../figures/repo-figures/assets/fig-voice-30-eu-ai-act-voice-compliance.jpg)
-*Figure: EU AI Act voice agent compliance checklist. See [figure plan](../figures/repo-figures/figure-plans/fig-voice-30-eu-ai-act-voice-compliance.md).*
+> **Source:** [`src/music_attribution/voice/protocols.py`](../../src/music_attribution/voice/protocols.py)
 
 ---
 
-## 10. Recommended Stack and Roadmap
+## 5. TTS Deep Dive
 
-### 10.1 The Recommended MVP Stack
+### 5.1 Piper (Local Default, GPL)
 
-Building on the existing text agent (PydanticAI + Haiku 4.5 + CopilotKit), the recommended voice stack:
+Piper is the zero-cost default. It runs entirely locally, producing intelligible but robotic speech. Acceptable for development and testing; not recommended for user-facing production.
 
-| Layer | Choice | Why |
-|-------|--------|-----|
-| **Framework** | Pipecat | Python-native, matches PydanticAI backend |
-| **STT** | Deepgram Nova-3 / Flux | Best accuracy, CSR eliminates separate VAD |
-| **LLM** | Existing PydanticAI agent | No change — voice pipeline wraps text agent |
-| **TTS** | Cartesia Sonic (primary) + Orpheus (self-hosted fallback) | Lowest latency commercial + free self-hosted option |
-| **Transport** | WebRTC via Daily.co | Pipecat native, sub-30ms |
-| **Turn Detection** | Pipecat Smart Turn | Open-source semantic endpointing |
-| **VAD** | Silero VAD | Enterprise-grade, open-source |
+Piper's GPL license means the `piper` TTS extra is isolated in the `voice-gpl` dependency group. If your project cannot accept GPL dependencies, use Kokoro (Apache 2.0) instead.
 
-**Estimated cost:** ~$0.04/min standard tier, ~$0.005/min self-hosted tier.
+```bash
+uv sync --group voice-gpl
+VOICE_TTS_PROVIDER=piper
+```
 
-![Recommended MVP Stack](../figures/repo-figures/assets/fig-voice-31-recommended-mvp-stack.jpg)
-*Figure: Recommended production stack for music attribution voice agent. See [figure plan](../figures/repo-figures/figure-plans/fig-voice-31-recommended-mvp-stack.md).*
+### 5.2 Kokoro-82M (Local, Apache 2.0)
 
-### 10.2 Implementation Roadmap
+Kokoro-82M is the recommended local TTS for teams that need a permissive license. At 82M parameters, it runs on less than 1GB VRAM and achieves ~210x real-time on RTX 4090, or 3-11x real-time on modern CPUs. Quality has reached the point where HuggingFace TTS Arena rankings place it competitively against some commercial offerings.
 
-Five phases, building incrementally on the existing MVP:
+```bash
+VOICE_TTS_PROVIDER=kokoro
+```
+
+Note: As of Pipecat v0.0.102, Kokoro is not yet a native Pipecat extra. The `create_tts_service()` function falls back to Piper with a warning when Kokoro is selected. To use Kokoro, wrap it as a custom `FrameProcessor` implementing the `TTSServiceProtocol`.
+
+> **Source:** `create_tts_service()` in [`src/music_attribution/voice/pipeline.py`](../../src/music_attribution/voice/pipeline.py)
+
+### 5.3 ElevenLabs (Commercial, Premium)
+
+ElevenLabs is the quality leader for expressiveness and voice cloning. Two use cases:
+
+1. **Flash v2.5**: Low-latency system voice (~75ms TTFA). For the attribution agent persona.
+2. **Professional Voice Clone**: Artist voice cloning for digital twin features. Requires ~30 min of clean audio and explicit artist consent (NO FAKES Act compliance required).
+
+```bash
+VOICE_TTS_PROVIDER=elevenlabs
+VOICE_ELEVENLABS_API_KEY=your-key-here
+```
+
+Cost: ~$0.07-0.10/min (Conversational AI tier). Voice cloning is included in the Pro plan.
+
+### 5.4 Cartesia Sonic (Commercial, Lowest Latency)
+
+Cartesia Sonic achieves 40ms Time-to-First-Audio (TTFA) -- the lowest latency of any commercial TTS. Its SSM architecture provides consistent latency across geographies (SF to Tokyo). This makes it the recommended choice for the system voice when latency is the priority.
+
+```bash
+VOICE_TTS_PROVIDER=cartesia
+VOICE_CARTESIA_API_KEY=your-key-here
+```
+
+Cost: ~$0.02-0.03/min (roughly 3x cheaper than ElevenLabs).
+
+**Caveat:** Cartesia has a 500-character limit per request. Long agent responses require chunking. The Pipecat service handles this automatically.
+
+### 5.5 Comparison Matrix
+
+| Provider | TTFA | Quality | Voice Cloning | License | Cost/Min |
+|----------|------|---------|--------------|---------|----------|
+| Piper | ~200ms | Low | No | GPL | $0.000 |
+| Kokoro-82M | ~300ms | Medium | No | Apache 2.0 | $0.000 |
+| Cartesia Sonic | 40ms | High | No | Commercial | $0.025 |
+| ElevenLabs Flash | ~75ms | Highest | Yes (Pro) | Commercial | $0.080 |
+
+> **PRD node:** [`docs/prd/decisions/L3-implementation/voice-persona-management.decision.yaml`](../prd/decisions/L3-implementation/voice-persona-management.decision.yaml)
+
+---
+
+## 6. Transport Deep Dive
+
+### 6.1 WebSocket (Development Default)
+
+The simplest transport. The FastAPI server in `voice/server.py` serves a WebSocket endpoint at `/api/v1/voice/ws`. Clients connect and stream 16kHz 16-bit PCM audio frames bidirectionally.
+
+```python
+# From server.py
+transport = FastAPIWebsocketTransport(
+    websocket=websocket,
+    params=FastAPIWebsocketParams(
+        audio_in_enabled=True,
+        audio_out_enabled=True,
+    ),
+)
+```
+
+**Pros:** Simplest to set up. No third-party accounts needed. Works with any WebSocket client.
+
+**Cons:** Adds 50-100ms latency compared to WebRTC. No built-in echo cancellation or noise suppression -- the client must handle these.
+
+> **Source:** [`src/music_attribution/voice/server.py`](../../src/music_attribution/voice/server.py)
+
+### 6.2 SmallWebRTC (Peer-to-Peer)
+
+SmallWebRTC provides WebRTC peer-to-peer audio with sub-30ms transport latency. Built-in echo cancellation and noise suppression. However, it uses a non-commercial license -- suitable for research and personal projects but not commercial deployment.
+
+```bash
+VOICE_TRANSPORT=smallwebrtc
+```
+
+### 6.3 Daily WebRTC (Production)
+
+Daily is the production WebRTC transport. It is Pipecat-native (Daily.co created Pipecat) and provides:
+
+- Sub-30ms transport latency
+- Built-in echo cancellation and noise suppression
+- Browser-native WebRTC (no plugins)
+- Global edge network for consistent latency
+- Session recording and analytics
+
+```bash
+VOICE_TRANSPORT=daily
+VOICE_DAILY_API_KEY=your-key-here
+```
+
+Cost: ~$0.004/min.
+
+For production deployment, Pipecat Cloud (see Section 12) provides managed Daily transport with auto-scaling.
+
+### 6.4 Choosing a Transport
+
+| Context | Recommended Transport | Reason |
+|---------|----------------------|--------|
+| Local development | WebSocket | Zero setup, no accounts |
+| Research/personal | SmallWebRTC | Free, low latency |
+| Production MVP | Daily WebRTC | Battle-tested, Pipecat-native |
+| Enterprise | Daily WebRTC | Global edge, compliance features |
+
+---
+
+## 7. LLM Integration
+
+### 7.1 How the Voice Pipeline Uses the LLM
+
+The voice agent does NOT duplicate the PydanticAI agent. Instead, `create_llm_service()` creates a Pipecat `OpenAILLMService` that connects to any OpenAI-compatible endpoint. The 4 domain tools are registered as Pipecat function handlers via `register_domain_tools(llm)`.
+
+```python
+# From pipeline.py
+llm = OpenAILLMService(
+    api_key=os.environ.get("OPENAI_API_KEY", "not-set"),
+    model=os.environ.get("VOICE_LLM_MODEL", "gpt-4o-mini"),
+)
+register_domain_tools(llm)
+```
+
+The system prompt is built by `build_system_prompt()` from `persona.py`, assembling the 5 persona dimensions (see Section 8).
+
+### 7.2 Anthropic via OpenAI Compatibility
+
+To use Anthropic models (the default for the text agent), point the OpenAI-compatible client at Anthropic's compatibility endpoint:
+
+```bash
+OPENAI_API_KEY=your-anthropic-key
+OPENAI_BASE_URL=https://api.anthropic.com/v1/
+VOICE_LLM_MODEL=claude-haiku-4-5
+```
+
+This avoids the SDK version conflict between `pipecat-ai` (pins `anthropic<0.50`) and `pydantic-ai-slim` (requires `anthropic>=0.70`).
+
+### 7.3 Ollama (Fully Local)
+
+For zero-cost LLM inference, run Ollama locally:
+
+```bash
+# Start Ollama with a suitable model
+ollama pull llama3.2
+
+# Point voice agent at local Ollama
+OPENAI_API_KEY=not-needed
+OPENAI_BASE_URL=http://localhost:11434/v1/
+VOICE_LLM_MODEL=llama3.2
+```
+
+Local LLMs sacrifice tool-calling reliability (smaller models struggle with structured function calls) but eliminate per-minute LLM costs entirely.
+
+### 7.4 OpenAI
+
+The most straightforward configuration -- the default `OpenAILLMService` expects an OpenAI key:
+
+```bash
+OPENAI_API_KEY=your-openai-key
+VOICE_LLM_MODEL=gpt-4o-mini  # Default
+```
+
+### 7.5 Model Routing for Cost Optimization
+
+The existing text agent uses PydanticAI's `FallbackModel` for multi-model routing (Haiku for simple queries, Sonnet for complex ones). The voice pipeline can achieve similar routing by setting `VOICE_LLM_MODEL` to a model with built-in cost-quality tradeoffs, or by implementing a custom `FrameProcessor` that routes based on query complexity.
+
+For production, a two-tier strategy is recommended:
+- **Simple queries** (95% of traffic): Haiku 4.5 at ~$0.003/min
+- **Complex queries** (5% of traffic): Sonnet 4.5 at ~$0.06/min
+- **Blended cost**: ~$0.006/min
+
+> **PRD node:** `llm_routing_strategy` in the decision network (see [REPORT.md](../prd/decisions/REPORT.md))
+
+---
+
+## 8. Persona Management
+
+### 8.1 The 5-Dimension Persona Architecture
+
+The voice agent's personality is defined by 5 dimensions with different mutability levels. This architecture prevents persona drift while allowing adaptation to individual users:
+
+| Dimension | Mutability | Content | Source Constant |
+|-----------|-----------|---------|-----------------|
+| **Core Identity** | IMMUTABLE | "You are the Music Attribution Assistant..." | `CORE_IDENTITY` |
+| **Factual Grounding** | STABLE | A0-A3 levels, Oracle Problem, conformal prediction | `FACTUAL_GROUNDING` |
+| **Communication Style** | BOUNDED | Concise, voice-optimized, natural confidence language | `VOICE_STYLE` |
+| **User Context** | FREE | User expertise level, preferences | Built from Letta/Mem0 |
+| **Conversation Flow** | FREE | Turn-taking, topic management | Dynamic per session |
+
+The system prompt is assembled by `build_system_prompt()`:
+
+```python
+# From persona.py
+def build_system_prompt(
+    config: VoiceConfig,
+    *,
+    user_context: str = "",
+    turn_count: int = 0,
+) -> str:
+    sections = [CORE_IDENTITY, FACTUAL_GROUNDING, VOICE_STYLE]
+
+    if user_context:
+        sections.append(f"User context: {user_context}")
+
+    # Periodic reinforcement to prevent drift cliff
+    if turn_count > 0 and turn_count % config.persona_reinforcement_interval == 0:
+        sections.append(REINFORCEMENT_REMINDER)
+
+    return "\n\n".join(sections)
+```
+
+> **Source:** [`src/music_attribution/voice/persona.py`](../../src/music_attribution/voice/persona.py)
+
+### 8.2 Periodic Reinforcement
+
+Research shows that LLM persona adherence degrades significantly within 8 conversation rounds (Li et al., 2024, arXiv:2402.10962). The mechanism is attention decay: as dialog history grows, the softmax normalization distributes probability mass across more tokens, diluting the weight assigned to system prompt tokens.
+
+To counter this, the persona builder injects a `REINFORCEMENT_REMINDER` every N turns (default: 5, configurable via `VOICE_PERSONA_REINFORCEMENT_INTERVAL`):
+
+```python
+REINFORCEMENT_REMINDER = """\
+[Remember: You are the Music Attribution Assistant. Stay grounded in \
+data sources. Be concise for voice. Express confidence in natural \
+language, not percentages.]"""
+```
+
+This is a training-free mitigation that adds negligible token cost but significantly improves persona stability in conversations beyond 8 turns.
+
+### 8.3 Letta (MemGPT) Integration
+
+For memory-anchored persona management, the optional Letta integration stores the persona as a read-only memory block while allowing the user context (human memory block) to be mutable across sessions:
+
+```bash
+VOICE_PERSONA_ENABLED=true
+VOICE_LETTA_BASE_URL=http://localhost:8283
+```
+
+The persona block is ALWAYS read-only -- core identity cannot be modified at runtime. Only user preferences and expertise level are stored in the mutable human memory block.
+
+`get_user_context()` retrieves user-specific context from Letta memory, falling back to an empty string if Letta is unavailable.
+
+> **Source:** [`src/music_attribution/voice/letta_integration.py`](../../src/music_attribution/voice/letta_integration.py)
+
+### 8.4 Mem0 Integration
+
+Mem0 provides cross-session user preference memory at the category level (e.g., "prefers detailed explanations", "focuses on songwriter credits"). It deliberately does NOT store fine-grained facts -- the PS-Bench findings show a 244% attack surface increase for fact storage in personalization systems.
+
+A safety gate ensures factual grounding overrides user preferences:
+
+```python
+# From mem0_integration.py
+_UNSAFE_PATTERNS = [
+    re.compile(r"claims?\s+to\s+have\s+(written|composed|created|produced)", re.IGNORECASE),
+    re.compile(r"(i|user)\s+(wrote|composed|created|own)", re.IGNORECASE),
+    re.compile(r"says?\s+(they|he|she)\s+(wrote|own|created)", re.IGNORECASE),
+]
+```
+
+If a user says "I wrote that song" but the database says otherwise, the database wins. `apply_safety_gate()` filters preferences that contradict factual grounding before they reach the system prompt.
+
+```bash
+VOICE_MEM0_API_KEY=your-mem0-key
+```
+
+> **Source:** [`src/music_attribution/voice/mem0_integration.py`](../../src/music_attribution/voice/mem0_integration.py)
+
+### 8.5 NeMo Guardrails
+
+When `VOICE_GUARDRAILS_ENABLED=true` and `nemoguardrails` is installed, the system uses Colang 2.0 rails for persona boundary enforcement. When NeMo is not installed, a lightweight regex-based fallback provides basic protection.
+
+**Input rails** detect:
+- Persona manipulation attempts ("ignore instructions", "pretend to be")
+- Off-topic requests outside the music attribution domain
+
+**Output rails** detect:
+- Persona violations (claiming a different identity)
+- Domain boundary violations (offering legal, medical, or financial advice)
+
+```python
+# Regex fallback example (from guardrails_integration.py)
+_INPUT_MANIPULATION_PATTERNS = [
+    re.compile(r"ignore\s+(your|all|previous)\s+instructions", re.IGNORECASE),
+    re.compile(r"pretend\s+to\s+be", re.IGNORECASE),
+    re.compile(r"you\s+are\s+now\s+(a|an)", re.IGNORECASE),
+]
+```
+
+> **Source:** [`src/music_attribution/voice/guardrails_integration.py`](../../src/music_attribution/voice/guardrails_integration.py)
+
+### 8.6 Choosing a Persona Strategy
+
+| Strategy | When to Use | Complexity | Cross-Session Memory |
+|----------|------------|-----------|---------------------|
+| Prompt-layered only | MVP, demos, testing | Low | No |
+| Prompt-layered + Letta | Production, long-running users | Medium | Yes (persona anchored) |
+| Prompt-layered + Mem0 | Production, preference learning | Medium | Yes (preferences only) |
+| Full stack (all three) | Premium tier, digital twin | High | Yes (full) |
+
+> **PRD node:** [`docs/prd/decisions/L3-implementation/voice-persona-management.decision.yaml`](../prd/decisions/L3-implementation/voice-persona-management.decision.yaml)
+
+---
+
+## 9. Drift Detection
+
+### 9.1 The Problem: Persona Drift
+
+LLM agents gradually diverge from their assigned persona over multi-turn conversations. For a music attribution agent, this manifests as:
+
+- **Epistemic drift**: Shifts from precise confidence reporting ("85% confident based on 3 corroborating sources") to vague accommodation ("I think that sounds right")
+- **Tone drift**: Mirrors a frustrated user's tone instead of maintaining neutral, data-grounded responses
+- **Role drift**: Starts offering legal or financial advice outside the attribution domain
+
+The 8-turn drift cliff (Li et al., 2024) means that by turn 8, system prompt adherence has degraded significantly. Voice conversations are faster-paced than text (2-4x turn cadence), so the cliff can be reached in under 3 minutes.
+
+### 9.2 The DriftDetector
+
+The `DriftDetector` class monitors agent responses by comparing them against a reference persona embedding using cosine similarity, smoothed with an Exponential Weighted Moving Average (EWMA).
+
+Three states:
+
+| State | EWMA Score | Action |
+|-------|-----------|--------|
+| **Sync** | >= 0.85 | Agent is on-persona. No action needed. |
+| **Drift** | 0.70 - 0.85 | Warning. Inject persona reinforcement prompt. |
+| **Desync** | < 0.70 | Alert. Full context recalibration required. |
+
+The EWMA formula:
+
+```
+score_t = alpha * raw_score_t + (1 - alpha) * score_{t-1}
+```
+
+Where `alpha = 0.3` by default (`VOICE_DRIFT_EWMA_ALPHA`). Higher alpha responds faster to changes; lower alpha provides more smoothing.
+
+```python
+# From drift.py
+class DriftDetector:
+    def score(self, response_text: str) -> float:
+        raw_score = self._compute_similarity(response_text)
+        self._raw_scores.append(raw_score)
+        self._ewma_score = self._alpha * raw_score + (1 - self._alpha) * self._ewma_score
+        return self._ewma_score
+
+    def state(self) -> str:
+        if self._ewma_score >= self._sync_threshold:
+            return "sync"
+        if self._ewma_score >= self._desync_threshold:
+            return "drift"
+        return "desync"
+```
+
+> **Source:** [`src/music_attribution/voice/drift.py`](../../src/music_attribution/voice/drift.py)
+
+### 9.3 Similarity Computation
+
+The detector supports two similarity backends:
+
+1. **sentence-transformers (production)**: Computes cosine similarity between `all-MiniLM-L6-v2` embeddings of the persona reference and each agent response. Model and reference embedding are cached on the instance.
+
+2. **Jaccard token overlap (fallback)**: When `sentence-transformers` is not installed (test/dev without ML dependencies), falls back to set intersection over union of lowercase tokens.
+
+```bash
+# To use the production embedding backend:
+uv add sentence-transformers
+```
+
+### 9.4 Bounded Equilibrium Theory
+
+The EWMA + three-state model implements a form of bounded equilibrium: the system oscillates between sync and drift states, with the reinforcement mechanism providing a restoring force. This is preferable to binary "pass/fail" detection because:
+
+1. **EWMA smoothing** prevents false alarms from a single off-topic response
+2. **The drift zone** (0.70-0.85) provides a graduated warning before desync
+3. **The restoring force** (periodic reinforcement) prevents the system from entering a runaway drift trajectory
+4. **Raw score history** (`detector.raw_scores`) enables post-session analysis of drift patterns
+
+The thresholds (0.85 sync, 0.70 desync) were chosen based on the persona coherence literature review. They can be tuned per deployment via environment variables.
+
+### 9.5 Pipeline Integration
+
+The `DriftMonitorProcessor` is a Pipecat `FrameProcessor` that sits in the pipeline after the LLM and before the TTS. It is monitoring-only -- all frames pass through without modification:
+
+```python
+# From pipeline.py -- build_pipecat_pipeline()
+if config.drift_monitoring:
+    from music_attribution.voice.drift import DriftMonitorProcessor
+    drift_monitor = DriftMonitorProcessor(config, system_prompt)
+    llm_idx = processors.index(llm)
+    processors.insert(llm_idx + 1, drift_monitor)
+```
+
+The processor accumulates `LLMTextFrame` tokens and scores each complete response (on `LLMFullResponseEndFrame`). Drift state is logged at WARNING level; desync at ERROR level.
+
+```bash
+# Enable drift monitoring
+VOICE_DRIFT_MONITORING=true
+VOICE_DRIFT_SYNC_THRESHOLD=0.85
+VOICE_DRIFT_DESYNC_THRESHOLD=0.70
+VOICE_DRIFT_EWMA_ALPHA=0.3
+```
+
+> **Research:** [docs/planning/voice-agent-research/persona-coherence/drift-detection-methods.md](../planning/voice-agent-research/persona-coherence/drift-detection-methods.md)
+
+---
+
+## 10. Evaluation
+
+### 10.1 DeepEval G-Eval Integration
+
+The voice extras include `deepeval>=3.8` for LLM-based evaluation. DeepEval's G-Eval framework uses an LLM judge (Claude as judge) to score agent responses across multiple dimensions.
+
+For the voice agent, four evaluation dimensions are recommended:
+
+| Dimension | Target | What It Measures |
+|-----------|--------|-----------------|
+| **Task Completion** | > 90% | Did the agent correctly answer the attribution query? |
+| **Confidence Communication** | > 85% | Did the agent accurately convey uncertainty (A0-A3)? |
+| **Persona Consistency** | > 90% | Did the agent maintain its Music Attribution Assistant identity? |
+| **Voice-Appropriateness** | > 80% | Were responses concise enough for voice (2-3 sentences)? |
+
+### 10.2 PersonaGym for Persona Evaluation
+
+PersonaGym (arXiv:2407.18416) provides a standardized framework for evaluating persona adherence in conversational AI. It tests whether the agent maintains its assigned role across extended multi-turn conversations, with specific metrics for:
+
+- **Role consistency**: Does the agent identify as the Music Attribution Assistant throughout?
+- **Knowledge boundaries**: Does the agent refuse to give legal/medical/financial advice?
+- **Confidence calibration**: Does the agent's expressed certainty match the underlying data?
+- **Emotional stability**: Does the agent maintain neutral tone under adversarial pressure?
+
+### 10.3 CI Integration
+
+Voice agent evaluation can be integrated into the CI pipeline alongside the existing 351 unit tests and 42 integration tests:
+
+```bash
+# Run voice-specific tests (when pipecat is installed)
+.venv/bin/python -m pytest tests/ -k "voice" -x -q
+
+# Run drift detector unit tests (no pipecat needed)
+.venv/bin/python -m pytest tests/ -k "drift" -x -q
+```
+
+For evaluation suites that require LLM inference (G-Eval, PersonaGym), run them as a separate CI job with API key access, not on every push. The recommended cadence:
+
+| Suite | Frequency | Requires API Key |
+|-------|----------|-----------------|
+| Unit tests (config, persona, drift) | Every push | No |
+| Integration tests (pipeline assembly) | Every push | No (mocked) |
+| G-Eval persona evaluation | Weekly / before release | Yes |
+| PersonaGym multi-turn | Monthly / before release | Yes |
+
+### 10.4 Music-Domain Evaluation Gaps
+
+Current voice agent benchmarks (aiewf-eval, VoiceAgentBench, Audio MultiChallenge) do not test several dimensions critical for music attribution:
+
+1. **Music vocabulary accuracy**: Artist names, ISRC codes, track titles with special characters
+2. **Confidence communication quality**: Does the voice convey certainty/uncertainty appropriately?
+3. **Cross-session consistency**: Same query produces same answer across sessions
+4. **Digital twin persona fidelity**: Behavioral consistency of cloned voice personas
+5. **Multi-accent robustness**: The global music industry spans every language community
+
+Building a custom evaluation corpus for these dimensions is a recommended Phase 2 activity.
+
+> **Research:** [docs/planning/voice-agent-research/leaderboards-evaluation.md](../planning/voice-agent-research/leaderboards-evaluation.md)
+
+---
+
+## 11. Cost Analysis
+
+### 11.1 Three Cost Scenarios
+
+| Scenario | STT | LLM | TTS | Transport | Total/Min |
+|----------|-----|-----|-----|-----------|-----------|
+| **Fully local** | Whisper ($0.000) | Ollama ($0.000) | Piper/Kokoro ($0.000) | WebSocket ($0.000) | **$0.000/min** |
+| **Local + Anthropic** | Whisper ($0.000) | Haiku 4.5 ($0.003) | Kokoro ($0.000) | WebSocket ($0.000) | **~$0.01-0.03/min** |
+| **Full commercial** | Deepgram ($0.008) | Haiku ($0.003) | Cartesia ($0.025) | Daily ($0.004) | **~$0.04/min** |
+| **Premium** | Deepgram ($0.008) | Sonnet ($0.060) | ElevenLabs ($0.080) | Daily ($0.004) | **~$0.15/min** |
+
+### 11.2 Monthly Projections
+
+| Usage Level | Sessions/Day | Avg Duration | Local + API | Full Commercial | Premium |
+|-------------|-------------|-------------|-------------|-----------------|---------|
+| Early MVP | 50 | 5 min | $15-45/mo | $300/mo | $1,125/mo |
+| Growing | 200 | 5 min | $60-180/mo | $1,200/mo | $4,500/mo |
+| Scale | 1,000 | 5 min | $300-900/mo | $6,000/mo | $22,500/mo |
+
+### 11.3 The AI Companion Cost Trap
+
+Voice agents can trigger parasocial engagement patterns. Character.AI users average 75-93 min/day; some power users engage 12+ hours daily. A flat-rate subscription ($9.99/mo) becomes structurally unprofitable for heavy users: at $0.04/min, 12 hours/day costs $28.80/day to serve.
+
+**Mitigations implemented in the scaffold:**
+
+1. **Voice is a Pro feature**: The frontend shows aspirational UI for voice but gates actual voice processing behind a premium tier (see [UX philosophy](../../.claude/rules/11-ux-first-philosophy.md))
+2. **VoiceConfig with hard limits**: `VOICE_VAD_MIN_SPEECH_MS` and `VOICE_VAD_MIN_SILENCE_MS` bound the processing cadence
+3. **Tiered provider selection**: Free tier uses self-hosted (Whisper + Kokoro), premium uses commercial APIs
+4. **Session length limits**: Implement per-user daily caps at the application layer
+
+### 11.4 Cost Optimization Levers
+
+| Lever | Expected Savings | Implementation |
+|-------|-----------------|----------------|
+| **Model routing** (Haiku for 95% of queries) | 60-80% vs all-Sonnet | `VOICE_LLM_MODEL` selection |
+| **Semantic caching** (Redis/pgvector) | 20-40% on repeated queries | Application-layer cache |
+| **Self-hosted STT** (faster-whisper) | 100% STT savings | GPU instance required |
+| **Self-hosted TTS** (Kokoro/Orpheus) | 100% TTS savings | GPU instance required |
+| **Volume commitments** (Deepgram Growth tier) | 15-30% discount | Contract commitment |
+| **Batch processing** (uploaded audio files) | 17-500% cheaper than streaming | Route non-interactive work to batch |
+
+> **Research:** [docs/planning/voice-agent-research/finops-economics.md](../planning/voice-agent-research/finops-economics.md)
+
+---
+
+## 12. Production Deployment
+
+### 12.1 Mounting the Voice Router
+
+The voice WebSocket endpoint is a standard FastAPI router. Mount it on the existing application:
+
+```python
+from music_attribution.voice.server import create_voice_router
+
+# In your FastAPI app factory:
+app.include_router(create_voice_router())
+```
+
+This adds two endpoints:
+- `GET /api/v1/voice/health` -- Health check (Pipecat availability, active connections)
+- `WS /api/v1/voice/ws` -- WebSocket voice endpoint
+
+Each WebSocket connection creates a fresh Pipecat pipeline (via `build_pipecat_pipeline()`) and runs it until disconnect. A `PipelineRunner` manages the async lifecycle.
+
+> **Source:** [`src/music_attribution/voice/server.py`](../../src/music_attribution/voice/server.py)
+
+### 12.2 Database Integration
+
+Voice tool handlers need database access for attribution queries. The session factory is shared between the REST API and voice tools:
+
+```python
+from music_attribution.voice.tools import set_session_factory
+
+# On FastAPI startup:
+set_session_factory(async_session_factory)
+```
+
+This ensures voice tools (`explain_confidence`, `search_attributions`, `suggest_correction`, `submit_feedback`) use the same connection pool as the REST API.
+
+### 12.3 Pipecat Cloud
+
+For production deployment, [Pipecat Cloud](https://docs.pipecat.ai/pipecat-cloud) provides managed infrastructure:
+
+- **Auto-scaling**: Pipeline instances scale based on concurrent connections
+- **Daily WebRTC transport**: Built-in, globally distributed
+- **Metrics and logging**: Pipeline performance, per-connection latency
+- **Session management**: Automatic cleanup on disconnect
+
+Deploy configuration:
+```bash
+# Pipecat Cloud deployment
+pipecat deploy --config pipecat.yaml
+```
+
+### 12.4 Self-Hosted Production
+
+For self-hosted deployment, run the voice server as a separate container alongside the main API:
+
+```dockerfile
+# docker/Dockerfile.voice
+FROM python:3.13-slim
+COPY pyproject.toml uv.lock ./
+RUN pip install uv && uv sync --group voice
+COPY src/ src/
+CMD ["uv", "run", "python", "scripts/voice_demo.py", "--host", "0.0.0.0"]
+```
+
+Key scaling considerations:
+
+| Component | Scaling Strategy | Resource |
+|-----------|-----------------|----------|
+| Voice server | Horizontal (one pipeline per connection) | CPU/RAM |
+| Whisper STT | GPU instance per N concurrent sessions | GPU VRAM |
+| Kokoro/Orpheus TTS | GPU instance per N concurrent sessions | GPU VRAM |
+| LLM (API) | Connection pooling | API rate limits |
+| Database | Shared pool with REST API | Connection limit |
+
+### 12.5 Monitoring
+
+Production voice agents should track:
+
+| Metric | Target | Why |
+|--------|--------|-----|
+| **Voice-to-voice latency (P95)** | < 1,500ms | Natural conversation threshold |
+| **TTFW (Time to First Word)** | < 500ms | User perception of responsiveness |
+| **Active connections** | Monitor | Capacity planning |
+| **Drift state distribution** | > 90% sync | Persona stability |
+| **Tool call success rate** | > 95% | Attribution query reliability |
+| **STT WER (sampled)** | < 5% | Transcription quality |
+| **Cost per session** | Track | FinOps governance |
+
+The health endpoint (`GET /api/v1/voice/health`) reports basic metrics:
+
+```json
+{
+  "status": "ok",
+  "service": "voice-agent",
+  "pipecat_available": true,
+  "active_connections": 3
+}
+```
+
+For deeper observability, integrate with the project's observability stack (PostHog for analytics, structured logging for pipeline traces).
+
+> **PRD node:** `observability_stack` in the decision network (see [REPORT.md](../prd/decisions/REPORT.md))
+
+### 12.6 Implementation Phases
 
 | Phase | Timeline | Deliverable | Cost Impact |
 |-------|----------|-------------|-------------|
-| **I: Voice Input** | Month 1-2 | STT to existing text agent, responses as text | +$0.008/min |
-| **II: System Voice** | Month 2-3 | Add TTS, basic voice output | +$0.035/min |
-| **III: Natural Conversation** | Month 3-4 | Smart Turn, interruption handling, <500ms | Same |
-| **IV: Digital Twin** | Month 4-6 | Artist voice clone, consent framework | +$0.10-0.15/min |
-| **V: Premium Features** | Month 6+ | Emotional TTS, multi-language, on-device | Variable |
+| **I: Voice Input Only** | Month 1-2 | STT routes to existing text agent; responses displayed as text | +$0.008/min |
+| **II: System Voice** | Month 2-3 | Add TTS, basic voice output, Silero VAD | +$0.035/min total |
+| **III: Natural Conversation** | Month 3-4 | Smart Turn, interruption handling, <500ms target | Same |
+| **IV: Digital Twin** | Month 4-6 | Artist voice clone, consent framework, NO FAKES Act compliance | +$0.10-0.15/min |
+| **V: Premium Features** | Month 6+ | Emotional TTS, multi-language, on-device STT/TTS | Variable |
 
-**Phase I ships in 2 months** — voice input to the existing agent requires zero TTS work. This is the fastest path to user feedback on voice attribution gathering.
-
-![Implementation Roadmap](../figures/repo-figures/assets/fig-voice-32-implementation-roadmap.jpg)
-*Figure: Five-phase implementation roadmap. See [figure plan](../figures/repo-figures/figure-plans/fig-voice-32-implementation-roadmap.md).*
+Phase I is the fastest path to user feedback: voice input to the existing text agent requires zero TTS work.
 
 ---
 
-## References
+## Appendix A: File Reference
 
-### Academic Papers
+All voice agent source files:
 
-- Défossez et al. (2024). Moshi: Full-Duplex Speech-Text Foundation Model. arXiv:2410.00037.
-- KAME (2025). Tandem Architecture for Real-Time Conversational AI. arXiv:2510.02327.
-- Sharma et al. (2025). PRAC3: Long-Tailed Risks of Voice Actors. arXiv:2507.16247.
-- VoiceAgentBench (2025). arXiv:2510.07978.
-- Testing the Testers (2025). arXiv:2511.04133.
-- MULTI-Bench (2025). arXiv:2511.00850.
-- Audio MultiChallenge (2025). arXiv:2512.14865.
-- ICASSP 2026 HumDial Challenge. arXiv:2601.05564.
-- TRACE: Hearing Between the Lines (2026). arXiv:2601.13742.
-- LALM-as-a-Judge (2026). arXiv:2602.04796.
-- WhisperKit (2025). arXiv:2507.10860.
-- SpeechLM Survey (ACL 2025). arXiv:2410.03751.
-- Conformal Prediction for Speech (2025). arXiv:2503.22712.
-- ASVspoof 5 (2025). ScienceDirect.
-- C2PA Specifications 2.1-2.3 (2025).
-- From Generation to Attribution (NeurIPS 2025 Workshop).
-- DDEX AI Ad Hoc Group metadata standards (2025).
-- Pex Voice Identification (2025).
+| File | Purpose |
+|------|---------|
+| [`src/music_attribution/voice/__init__.py`](../../src/music_attribution/voice/__init__.py) | Module docstring and exports |
+| [`src/music_attribution/voice/config.py`](../../src/music_attribution/voice/config.py) | `VoiceConfig` settings model (single source of truth) |
+| [`src/music_attribution/voice/pipeline.py`](../../src/music_attribution/voice/pipeline.py) | Pipecat pipeline factory |
+| [`src/music_attribution/voice/persona.py`](../../src/music_attribution/voice/persona.py) | 5-dimension persona prompt builder |
+| [`src/music_attribution/voice/tools.py`](../../src/music_attribution/voice/tools.py) | PydanticAI-to-Pipecat tool bridge |
+| [`src/music_attribution/voice/drift.py`](../../src/music_attribution/voice/drift.py) | DriftDetector + DriftMonitorProcessor |
+| [`src/music_attribution/voice/server.py`](../../src/music_attribution/voice/server.py) | FastAPI WebSocket router |
+| [`src/music_attribution/voice/protocols.py`](../../src/music_attribution/voice/protocols.py) | Structural typing protocols |
+| [`src/music_attribution/voice/letta_integration.py`](../../src/music_attribution/voice/letta_integration.py) | Letta (MemGPT) persona memory |
+| [`src/music_attribution/voice/mem0_integration.py`](../../src/music_attribution/voice/mem0_integration.py) | Mem0 user preferences with safety gate |
+| [`src/music_attribution/voice/guardrails_integration.py`](../../src/music_attribution/voice/guardrails_integration.py) | NeMo Guardrails + regex fallback |
+| [`src/music_attribution/voice/guardrails/__init__.py`](../../src/music_attribution/voice/guardrails/__init__.py) | NeMo Guardrails config directory |
+| [`scripts/voice_demo.py`](../../scripts/voice_demo.py) | Quick Start demo script |
+| [`src/music_attribution/chat/agent.py`](../../src/music_attribution/chat/agent.py) | PydanticAI text agent (shared tools) |
 
-### Industry Sources
+## Appendix B: PRD Decision Nodes
 
-- [Pipecat Documentation](https://docs.pipecat.ai/)
-- [LiveKit Agents Documentation](https://docs.livekit.io/agents/)
-- [Deepgram Nova-3 / Flux](https://deepgram.com/)
-- [Cartesia Sonic](https://cartesia.ai/)
-- [ElevenLabs](https://elevenlabs.io/)
-- [Orpheus TTS](https://github.com/canopyai/Orpheus-TTS)
-- [Kokoro-82M](https://huggingface.co/hexgrad/Kokoro-82M)
-- [Chatterbox](https://github.com/resemble-ai/chatterbox)
-- [TTS Arena V2](https://huggingface.co/spaces/TTS-AGI/TTS-Arena-V2)
-- [HuggingFace Open ASR Leaderboard](https://huggingface.co/spaces/hf-audio/open_asr_leaderboard)
-- [aiewf-eval Benchmark](https://github.com/kwindla/aiewf-eval)
-- [Hamming AI Quality Framework](https://hamming.ai/)
-- [Coval 2026 Voice AI Report](https://www.coval.dev/2026-voice-ai-report)
-- [Voice AI Meetup, Feb 26 2026, SF](https://luma.com/) — Pipecat + Speechmatics + Tavus + Daily
+Voice-related decision nodes in the probabilistic PRD:
 
-### Research Documents
+| Node | Level | File |
+|------|-------|------|
+| `voice_agent_stack` | L3 | [`voice-agent-stack.decision.yaml`](../prd/decisions/L3-implementation/voice-agent-stack.decision.yaml) |
+| `voice_persona_management` | L3 | [`voice-persona-management.decision.yaml`](../prd/decisions/L3-implementation/voice-persona-management.decision.yaml) |
+| `agentic_ui_framework` | L3 | Parent node -- voice depends on CopilotKit AG-UI |
+| `llm_routing_strategy` | L3 | LLM selection feeds into voice LLM choice |
+| `observability_stack` | L5 | Voice metrics feed into observability |
 
-- [Voice AI Infrastructure Report](../planning/voice-agent-research/voice-ai-infrastructure.md)
-- [Academic Papers Survey](../planning/voice-agent-research/academic-papers.md)
-- [FinOps Economics Report](../planning/voice-agent-research/finops-economics.md)
-- [Leaderboards and Evaluation Report](../planning/voice-agent-research/leaderboards-evaluation.md)
-- [Recommended Stack](../planning/voice-agent-research/recommended-stack.md)
+## Appendix C: Research Documents
+
+| Document | Focus |
+|----------|-------|
+| [voice-ai-infrastructure.md](../planning/voice-agent-research/voice-ai-infrastructure.md) | Provider landscape, framework comparison |
+| [recommended-stack.md](../planning/voice-agent-research/recommended-stack.md) | ADRs, phase plan, risk matrix |
+| [finops-economics.md](../planning/voice-agent-research/finops-economics.md) | Per-minute costs, companion cost trap, GPU pricing |
+| [leaderboards-evaluation.md](../planning/voice-agent-research/leaderboards-evaluation.md) | STT/TTS leaderboards, aiewf-eval, evaluation gaps |
+| [academic-papers.md](../planning/voice-agent-research/academic-papers.md) | 40+ academic papers survey |
+| [persona-coherence-literature-review.md](../planning/voice-agent-research/persona-coherence/persona-coherence-literature-review.md) | Drift theory, Big Five persona, parasocial dynamics |
+| [drift-detection-methods.md](../planning/voice-agent-research/persona-coherence/drift-detection-methods.md) | 5 detection paradigms, 4 mitigation families |
+| [commercial-tools-landscape.md](../planning/voice-agent-research/persona-coherence/commercial-tools-landscape.md) | Letta, Mem0, NeMo Guardrails comparison |
+| [hyperpersonalization-frameworks.md](../planning/voice-agent-research/persona-coherence/hyperpersonalization-frameworks.md) | PS-Bench, safety gates, preference vs fact |
 
 ---
 
-*Music Attribution Scaffold — Voice Agent Implementation Guide v1.0.0*
+*Music Attribution Scaffold -- Voice Agent Implementation Guide v2.0.0*
 *Last updated: 2026-02-20*
