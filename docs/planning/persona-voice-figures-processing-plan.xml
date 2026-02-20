@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<plan version="1.0" created="2026-02-20" context="persona-voice-figure-processing">
+  <metadata>
+    <title>Persona + Voice Figure Processing &amp; Integration Plan</title>
+    <description>
+      Process 62 generated PNG figures (30 persona + 32 voice) through the figure-processor
+      skill pipeline, then complete remaining research tasks.
+    </description>
+    <resume-context>
+      Previous session created 30 fig-persona figure plans + PNGs and 4 literature review docs.
+      All 30 persona PNGs and 32 voice PNGs exist in generated/ but have NOT been converted
+      to optimized JPEGs in assets/. 230 other figures are already processed.
+    </resume-context>
+  </metadata>
+
+  <task id="1" status="DONE" priority="high">
+    <name>Batch convert 62 PNGs to optimized JPEGs</name>
+    <description>
+      Run resize_and_convert.py to convert all pending PNGs in generated/ to optimized JPEGs
+      in assets/. This handles: 1600px width, 85% JPEG quality, 24px rounded corners, LANCZOS.
+    </description>
+    <command>
+      uv run python docs/figures/scripts/resize_and_convert.py \
+        --input-dir docs/figures/repo-figures/generated \
+        --output-dir docs/figures/repo-figures/assets \
+        --force
+    </command>
+    <expected-output>62 new JPEGs in docs/figures/repo-figures/assets/</expected-output>
+    <depends-on/>
+  </task>
+
+  <task id="2" status="DONE" priority="high">
+    <name>Generate SEO/GEO alt text for 30 persona figures</name>
+    <description>
+      Use figure-processor skill to generate optimized alt text for fig-persona-01 through
+      fig-persona-30. Update each figure plan .md with image_link and alt_text fields.
+      Alt text must be descriptive, keyword-rich for search engines, and match the actual
+      visual content of the generated figure.
+    </description>
+    <figures>fig-persona-01 through fig-persona-30</figures>
+    <depends-on>1</depends-on>
+  </task>
+
+  <task id="3" status="DONE" priority="high">
+    <name>Generate SEO/GEO alt text for 32 voice figures</name>
+    <description>
+      Same as task 2 but for fig-voice-01 through fig-voice-32.
+      Update each figure plan .md with image_link and alt_text fields.
+    </description>
+    <figures>fig-voice-01 through fig-voice-32</figures>
+    <depends-on>1</depends-on>
+  </task>
+
+  <task id="4" status="DONE" priority="high">
+    <name>Verify figure captions match generated content</name>
+    <description>
+      For each of the 62 figures, visually inspect the PNG and confirm the figure plan's
+      caption and body text accurately describes what the figure shows. Fix any mismatches.
+      Key areas to check:
+      - Title in figure plan matches title rendered in figure
+      - Caption describes the actual visual layout (not a different concept)
+      - Body text references specific elements visible in the figure
+      - Data values/labels in figure match those cited in the plan
+    </description>
+    <depends-on>2,3</depends-on>
+  </task>
+
+  <task id="5" status="DONE" priority="medium">
+    <name>Update figure-alt-text-catalog.md with new entries</name>
+    <description>
+      Add all 62 new figure entries to docs/figures/repo-figures/figure-alt-text-catalog.md
+      with their optimized alt text, file paths, and categories.
+    </description>
+    <depends-on>2,3</depends-on>
+  </task>
+
+  <task id="6" status="DONE" priority="medium">
+    <name>Plan PRD updates for persona/hyperpersonalization nodes</name>
+    <description>
+      Using the 4 literature review docs and 30 persona figure plans, identify 3-5 new
+      PRD decision nodes to add to the probabilistic decision network:
+      - persona_coherence_framework (Inworld vs. Letta/MemGPT vs. custom)
+      - drift_detection_strategy (EchoMode vs. PersonaGym vs. custom)
+      - hyperpersonalization_tier (basic prompt layering vs. full user modeling)
+      - memory_architecture (Letta vs. Zep vs. custom RAG)
+      - voice_persona_integration (Pipecat persona vs. Inworld Character Engine)
+
+      Reference: docs/prd/decisions/ for existing node format.
+      Reference: docs/planning/voice-agent-research/persona-coherence/ for research inputs.
+    </description>
+    <depends-on>4</depends-on>
+  </task>
+
+  <task id="7" status="DONE" priority="low">
+    <name>Update voice-agent-research README with persona section</name>
+    <description>
+      Update docs/planning/voice-agent-research/README.md to include the persona-coherence
+      subdirectory and its 4 docs. Add the recommended hybrid architecture
+      (MVP → Advanced Persona → Digital Twin) from the previous session's analysis.
+    </description>
+    <depends-on>6</depends-on>
+  </task>
+
+  <architectural-context>
+    <hybrid-stack-recommendation>
+      <tier name="MVP (Phase I-II)">
+        <stack>PydanticAI + Pipecat + Deepgram + Cartesia</stack>
+        <rationale>Voice input/output, basic persona via system prompt layering</rationale>
+      </tier>
+      <tier name="Advanced Persona (Phase III)">
+        <stack>Add Inworld Character Engine OR Letta/MemGPT</stack>
+        <rationale>Persistent memory, emotion-aware persona, drift prevention</rationale>
+      </tier>
+      <tier name="Digital Twin (Phase IV)">
+        <stack>Add ElevenLabs voice cloning</stack>
+        <rationale>Artist voice replication (Inworld cant do this)</rationale>
+      </tier>
+    </hybrid-stack-recommendation>
+  </architectural-context>
+
+  <file-inventory>
+    <source-pngs count="62">
+      <dir>docs/figures/repo-figures/generated/</dir>
+      <pattern>fig-persona-{01..30}-*.png, fig-voice-{01..32}-*.png</pattern>
+    </source-pngs>
+    <figure-plans count="62">
+      <dir>docs/figures/repo-figures/figure-plans/</dir>
+      <pattern>fig-persona-{01..30}-*.md, fig-voice-{01..32}-*.md</pattern>
+    </figure-plans>
+    <target-jpegs>
+      <dir>docs/figures/repo-figures/assets/</dir>
+    </target-jpegs>
+    <literature-docs count="4">
+      <dir>docs/planning/voice-agent-research/persona-coherence/</dir>
+      <file>persona-coherence-literature-review.md</file>
+      <file>commercial-tools-landscape.md</file>
+      <file>drift-detection-methods.md</file>
+      <file>hyperpersonalization-frameworks.md</file>
+    </literature-docs>
+  </file-inventory>
+</plan>

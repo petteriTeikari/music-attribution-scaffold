@@ -1,0 +1,240 @@
+# Voice Persona Management
+#
+# Determines how the voice agent's audible persona is created,
+# managed, and deployed — from generic TTS to artist voice cloning.
+
+decision_id: voice_persona_management
+title: "Voice Persona Management"
+description: >
+  Selects the approach for managing the voice agent's audible identity.
+  Ranges from using a stock TTS voice to cloning a specific artist's
+  voice for digital twin scenarios. Artist voice cloning requires
+  consent infrastructure aligned with NO FAKES Act (2025) and GEMA
+  AI Charter requirements. Voice adds a 10-50x cost multiplier over
+  text ($0.028-0.164/minute vs $0.001-0.01/turn), making the choice
+  a significant FinOps decision. Phase strategy recommended: system
+  voice (Phase I-III), ElevenLabs clone (Phase IV), on-device Sesame
+  as costs scale.
+
+decision_level: L3_implementation
+status: active
+last_updated: 2026-02-20
+
+options:
+  - option_id: system_voice_only
+    title: "System TTS Voice"
+    description: >
+      Generic, high-quality TTS from Cartesia or Deepgram. No cloning,
+      no consent complexity, lowest cost (~$0.04/minute). Professional
+      and accessible. Acceptable for Phase I-III where voice is an
+      interface modality, not a brand identity. Select voice by
+      warmth, clarity, and cultural neutrality.
+    prior_probability: 0.35
+    status: recommended
+    complements:
+      - "voice_agent_stack.vapi_managed"
+      - "voice_agent_stack.livekit_agents"
+
+  - option_id: artist_clone_managed
+    title: "Artist Voice Clone (ElevenLabs Professional)"
+    description: >
+      ElevenLabs Professional Voice Cloning for artist-specific digital
+      twins. ~$0.08-0.12/minute TTS cost. Requires artist consent
+      (NILV infrastructure aligned with NO FAKES Act). High-fidelity
+      voice replication. Revenue share model possible if third-party
+      usage enabled. Best for Premium/Pro tier differentiation.
+    prior_probability: 0.25
+    status: viable
+    constraints:
+      - "Requires explicit artist consent (NO FAKES Act compliance)"
+      - "Higher per-minute TTS cost ($0.08-0.12/min)"
+      - "Consent revocation must be technically enforceable"
+    complements:
+      - "revenue_model.subscription_tiered"
+
+  - option_id: artist_clone_open_source
+    title: "Artist Voice Clone (Sesame CSM / Open Source)"
+    description: >
+      Self-hosted voice cloning using Sesame CSM or Orpheus TTS.
+      Apache 2.0 licensed, no per-minute API cost after infrastructure
+      investment. Requires GPU hosting. Lower fidelity than ElevenLabs
+      but improving rapidly. Best for cost optimization at scale
+      (30+ min/day power users where managed API costs are prohibitive).
+    prior_probability: 0.10
+    status: experimental
+    constraints:
+      - "Requires GPU infrastructure for inference"
+      - "Lower voice fidelity than managed alternatives (as of Feb 2026)"
+      - "Same consent requirements as managed cloning"
+    complements:
+      - "build_vs_buy_posture.custom_build"
+      - "compute_platform.hetzner_bare_metal"
+
+  - option_id: none_text_only
+    title: "No Voice (Text-Only Fallback)"
+    description: >
+      Voice as premium feature; text-only default. Voice UI surfaces
+      exist but show "Upgrade to Pro" upsell. Zero voice infrastructure
+      cost. Appropriate for teams that cannot yet invest in voice
+      pipeline or where target users are primarily text-oriented
+      (API consumers, enterprise batch operations).
+    prior_probability: 0.30
+    status: viable
+    complements:
+      - "voice_agent_stack.no_voice"
+
+conditional_on:
+  - parent_decision_id: voice_agent_stack
+    influence_strength: strong
+    conditional_table:
+      - given_parent_option: vapi_managed
+        then_probabilities:
+          system_voice_only: 0.40
+          artist_clone_managed: 0.35
+          artist_clone_open_source: 0.05
+          none_text_only: 0.20
+      - given_parent_option: livekit_agents
+        then_probabilities:
+          system_voice_only: 0.35
+          artist_clone_managed: 0.25
+          artist_clone_open_source: 0.20
+          none_text_only: 0.20
+      - given_parent_option: custom_websocket
+        then_probabilities:
+          system_voice_only: 0.25
+          artist_clone_managed: 0.20
+          artist_clone_open_source: 0.30
+          none_text_only: 0.25
+      - given_parent_option: no_voice
+        then_probabilities:
+          system_voice_only: 0.00
+          artist_clone_managed: 0.00
+          artist_clone_open_source: 0.00
+          none_text_only: 1.00
+
+  - parent_decision_id: persona_coherence_strategy
+    influence_strength: moderate
+    conditional_table:
+      - given_parent_option: prompt_layered
+        then_probabilities:
+          system_voice_only: 0.45
+          artist_clone_managed: 0.15
+          artist_clone_open_source: 0.05
+          none_text_only: 0.35
+      - given_parent_option: memory_anchored
+        then_probabilities:
+          system_voice_only: 0.35
+          artist_clone_managed: 0.30
+          artist_clone_open_source: 0.10
+          none_text_only: 0.25
+      - given_parent_option: activation_space
+        then_probabilities:
+          system_voice_only: 0.20
+          artist_clone_managed: 0.25
+          artist_clone_open_source: 0.30
+          none_text_only: 0.25
+      - given_parent_option: training_based
+        then_probabilities:
+          system_voice_only: 0.15
+          artist_clone_managed: 0.35
+          artist_clone_open_source: 0.25
+          none_text_only: 0.25
+      - given_parent_option: hybrid_layered
+        then_probabilities:
+          system_voice_only: 0.30
+          artist_clone_managed: 0.30
+          artist_clone_open_source: 0.15
+          none_text_only: 0.25
+
+archetype_weights:
+  engineer_heavy_startup:
+    probability_overrides:
+      system_voice_only: 0.35
+      artist_clone_managed: 0.25
+      artist_clone_open_source: 0.20
+      none_text_only: 0.20
+    rationale: >
+      Engineers explore open-source cloning for cost optimization.
+      System voice sufficient for MVP, artist clone for differentiation.
+
+  musician_first_team:
+    probability_overrides:
+      system_voice_only: 0.25
+      artist_clone_managed: 0.35
+      artist_clone_open_source: 0.05
+      none_text_only: 0.35
+    rationale: >
+      Musicians value voice identity but need managed solution.
+      ElevenLabs for artist digital twins is compelling. May defer
+      voice entirely if budget-constrained.
+
+  solo_hacker:
+    probability_overrides:
+      system_voice_only: 0.25
+      artist_clone_managed: 0.10
+      artist_clone_open_source: 0.05
+      none_text_only: 0.60
+    rationale: >
+      Voice infrastructure too complex for solo. Text-only or
+      basic system voice for demo purposes.
+
+  well_funded_startup:
+    probability_overrides:
+      system_voice_only: 0.25
+      artist_clone_managed: 0.40
+      artist_clone_open_source: 0.15
+      none_text_only: 0.20
+    rationale: >
+      Can invest in artist voice cloning as premium differentiator.
+      ElevenLabs Professional for launch, explore open-source for
+      cost optimization at scale.
+
+research_influences:
+  - paper: "NO FAKES Act"
+    venue: "US Federal Legislation, 2025"
+    authors: "US Congress"
+    concept: voice_digital_replica_rights
+    library_status: regulation
+    prd_implication: >
+      Federal right of publicity for voice/visual digital replicas.
+      70-year post-mortem protection, statutory damages, DMCA-style
+      takedown. Any artist voice cloning requires explicit consent
+      infrastructure with revocation capability.
+
+  - paper: "GEMA AI Charter"
+    venue: "2025"
+    authors: "GEMA (German CMO)"
+    concept: mandatory_voice_licensing
+    library_status: industry_standard
+    prd_implication: >
+      Mandatory licensing, transparency, fair compensation, human
+      creativity preservation. Voice cloning of represented artists
+      requires GEMA consent pathway.
+
+volatility:
+  classification: volatile
+  last_assessed: 2026-02-20
+  next_review: 2026-04-20
+  change_drivers:
+    - "ElevenLabs pricing evolution and competitor entry"
+    - "Sesame CSM and open-source TTS quality improvements"
+    - "NO FAKES Act enforcement and consent infrastructure standards"
+    - "On-device voice synthesis capabilities (Apple, Google)"
+    - "Artist willingness to license voice (market adoption curve)"
+
+domain_applicability:
+  music_attribution: 1.0
+  dpp_traceability: 0.3
+  generic_graph_rag: 0.2
+
+tags:
+  - implementation
+  - voice
+  - persona
+  - tts
+  - consent
+  - digital-twin
+
+references:
+  - "docs/planning/voice-agent-research/persona-coherence/commercial-tools-landscape.md"
+  - "docs/planning/voice-agent-research/persona-coherence/hyperpersonalization-frameworks.md"

@@ -1,0 +1,266 @@
+# Persona Drift Monitoring
+#
+# Determines how persona consistency is monitored in production
+# and what mitigation strategies are deployed when drift is detected.
+
+decision_id: persona_drift_monitoring
+title: "Persona Drift Monitoring"
+description: >
+  Selects the production monitoring approach for detecting and
+  mitigating persona drift. Research shows drift is a controllable
+  equilibrium (Guo et al., 2025) — not unbounded degradation — so
+  the key design parameter is choosing an acceptable drift threshold
+  and selecting mitigation strength to achieve it. Voice conversations
+  amplify drift through faster turn cadence, emotional tone leakage,
+  and interruption-induced context breaks. Monitoring approaches
+  range from simple embedding cosine similarity to multi-dimensional
+  trait tracking with automated repair.
+
+decision_level: L5_operations
+status: active
+last_updated: 2026-02-20
+
+options:
+  - option_id: embedding_cosine
+    title: "Embedding Cosine Similarity"
+    description: >
+      Encode persona specification and each response as embeddings,
+      track cosine similarity over time. Simplest approach: no model
+      access required, works with any LLM. Coarse signal — detects
+      major drift but misses subtle trait-level changes. Alert when
+      similarity drops below threshold. Near-zero computational
+      overhead using existing embedding infrastructure (pgvector).
+    prior_probability: 0.25
+    status: viable
+    complements:
+      - "vector_strategy.pgvector_integrated"
+
+  - option_id: echomode_syncscore
+    title: "EchoMode SyncScore + EWMA"
+    description: >
+      EchoMode's SyncScore metric with Exponentially Weighted Moving
+      Average for continuous drift detection. Quantitative signal
+      without model internals access. Apache 2.0 licensed, production-
+      ready. Three states: Sync (persona-consistent), Drift (minor
+      deviation, auto-correct), Desync (major break, context
+      recalibration). Pairs with periodic reinforcement mitigation.
+    prior_probability: 0.30
+    status: recommended
+    complements:
+      - "persona_coherence_strategy.memory_anchored"
+      - "persona_coherence_strategy.hybrid_layered"
+
+  - option_id: multi_dimensional
+    title: "Multi-Dimensional Trait Monitoring"
+    description: >
+      Four independent monitoring scores: identity consistency,
+      factual accuracy, style consistency, and boundary adherence.
+      Rich diagnostics enable targeted mitigation (e.g., style
+      drifting but identity stable → adjust tone, not persona).
+      Requires tuning per persona domain. Higher implementation
+      cost but provides actionable signals for each persona dimension.
+    prior_probability: 0.20
+    status: viable
+    constraints:
+      - "Requires per-persona calibration"
+      - "Higher LLM evaluation cost (4 checks per response)"
+    complements:
+      - "persona_coherence_strategy.hybrid_layered"
+
+  - option_id: activation_probes
+    title: "Activation Space Probes"
+    description: >
+      Monitor persona trait vectors in model activation space.
+      Detects drift at the mechanistic level before it manifests
+      in output text. Fine-grained control with 91% win rate on
+      independent trait monitoring. Self-hosted models only.
+      Most precise but most infrastructure-intensive.
+    prior_probability: 0.10
+    status: experimental
+    constraints:
+      - "Requires self-hosted models with activation access"
+      - "Incompatible with API-hosted LLMs (Anthropic, OpenAI)"
+      - "Requires mechanistic interpretability expertise"
+    complements:
+      - "persona_coherence_strategy.activation_space"
+      - "llm_provider.open_source_local"
+
+  - option_id: none
+    title: "No Explicit Monitoring"
+    description: >
+      No dedicated drift monitoring. Rely on user feedback and
+      manual review for quality assurance. Acceptable if persona
+      coherence strategy provides sufficient structural prevention
+      (e.g., memory-anchored with read-only blocks) and drift
+      stays within bounded equilibrium. Lowest operational cost.
+    prior_probability: 0.15
+    status: viable
+
+conditional_on:
+  - parent_decision_id: persona_coherence_strategy
+    influence_strength: strong
+    conditional_table:
+      - given_parent_option: prompt_layered
+        then_probabilities:
+          embedding_cosine: 0.30
+          echomode_syncscore: 0.35
+          multi_dimensional: 0.15
+          activation_probes: 0.00
+          none: 0.20
+      - given_parent_option: memory_anchored
+        then_probabilities:
+          embedding_cosine: 0.20
+          echomode_syncscore: 0.30
+          multi_dimensional: 0.20
+          activation_probes: 0.00
+          none: 0.30
+      - given_parent_option: activation_space
+        then_probabilities:
+          embedding_cosine: 0.10
+          echomode_syncscore: 0.15
+          multi_dimensional: 0.20
+          activation_probes: 0.45
+          none: 0.10
+      - given_parent_option: training_based
+        then_probabilities:
+          embedding_cosine: 0.25
+          echomode_syncscore: 0.25
+          multi_dimensional: 0.25
+          activation_probes: 0.10
+          none: 0.15
+      - given_parent_option: hybrid_layered
+        then_probabilities:
+          embedding_cosine: 0.15
+          echomode_syncscore: 0.35
+          multi_dimensional: 0.30
+          activation_probes: 0.05
+          none: 0.15
+
+  - parent_decision_id: observability_stack
+    influence_strength: moderate
+    conditional_table:
+      - given_parent_option: posthog_sentry
+        then_probabilities:
+          embedding_cosine: 0.30
+          echomode_syncscore: 0.30
+          multi_dimensional: 0.20
+          activation_probes: 0.05
+          none: 0.15
+      - given_parent_option: grafana_stack
+        then_probabilities:
+          embedding_cosine: 0.25
+          echomode_syncscore: 0.30
+          multi_dimensional: 0.25
+          activation_probes: 0.10
+          none: 0.10
+      - given_parent_option: highlight_io
+        then_probabilities:
+          embedding_cosine: 0.30
+          echomode_syncscore: 0.25
+          multi_dimensional: 0.20
+          activation_probes: 0.05
+          none: 0.20
+      - given_parent_option: minimal
+        then_probabilities:
+          embedding_cosine: 0.20
+          echomode_syncscore: 0.15
+          multi_dimensional: 0.05
+          activation_probes: 0.00
+          none: 0.60
+
+archetype_weights:
+  engineer_heavy_startup:
+    probability_overrides:
+      embedding_cosine: 0.20
+      echomode_syncscore: 0.30
+      multi_dimensional: 0.25
+      activation_probes: 0.15
+      none: 0.10
+    rationale: >
+      Engineers invest in monitoring. EchoMode for pragmatic default,
+      multi-dimensional for rich diagnostics, activation probes if
+      self-hosting models.
+
+  musician_first_team:
+    probability_overrides:
+      embedding_cosine: 0.25
+      echomode_syncscore: 0.25
+      multi_dimensional: 0.10
+      activation_probes: 0.00
+      none: 0.40
+    rationale: >
+      Musicians rely on structural prevention (memory-anchored).
+      Monitoring is secondary. Simple embedding check or no
+      explicit monitoring if drift equilibrium is acceptable.
+
+  solo_hacker:
+    probability_overrides:
+      embedding_cosine: 0.20
+      echomode_syncscore: 0.15
+      multi_dimensional: 0.05
+      activation_probes: 0.00
+      none: 0.60
+    rationale: >
+      Solo developers skip monitoring infrastructure. Rely on
+      user feedback and structural prevention.
+
+  well_funded_startup:
+    probability_overrides:
+      embedding_cosine: 0.15
+      echomode_syncscore: 0.30
+      multi_dimensional: 0.30
+      activation_probes: 0.10
+      none: 0.15
+    rationale: >
+      Can invest in multi-dimensional monitoring for premium
+      quality. EchoMode + multi-dimensional as defense-in-depth.
+
+research_influences:
+  - paper: "Bounded Equilibrium in Persona Drift"
+    venue: "2025"
+    authors: "Guo et al."
+    concept: drift_as_equilibrium
+    library_status: finding
+    prd_implication: >
+      Drift stabilizes at finite levels, not unbounded degradation.
+      Key design insight: choose acceptable drift threshold, then
+      select mitigation strength to achieve it. Monitoring is about
+      ensuring equilibrium stays within bounds, not preventing all drift.
+
+  - paper: "DeepContext: Multi-Turn Jailbreak Detection"
+    venue: "2025"
+    authors: "DeepContext authors"
+    concept: stateful_safety_monitoring
+    library_status: research_tool
+    prd_implication: >
+      3-layer GRU stateful monitor, 0.84 F1 vs 0.51 (Llama-Guard).
+      Detects adversarial intent accumulation in 4.24 turns (before
+      drift cliff). Applicable to persona drift: monitor for
+      drift-enhanced jailbreak vulnerability.
+
+volatility:
+  classification: volatile
+  last_assessed: 2026-02-20
+  next_review: 2026-04-20
+  change_drivers:
+    - "EchoMode and PersonaGym reaching production maturity"
+    - "LLM providers adding native persona monitoring features"
+    - "DeepContext and multi-turn safety monitoring evolution"
+    - "Industry standardization of persona evaluation metrics"
+
+domain_applicability:
+  music_attribution: 0.9
+  dpp_traceability: 0.4
+  generic_graph_rag: 0.5
+
+tags:
+  - operations
+  - persona
+  - monitoring
+  - drift
+  - safety
+  - observability
+
+references:
+  - "docs/planning/voice-agent-research/persona-coherence/drift-detection-methods.md"
+  - "docs/planning/voice-agent-research/persona-coherence/persona-coherence-literature-review.md"

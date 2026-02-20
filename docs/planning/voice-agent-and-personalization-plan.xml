@@ -1,0 +1,1043 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<plan version="1.0" created="2026-02-20" context="voice-agent-mvp-implementation">
+  <metadata>
+    <title>Voice Agent MVP &amp; Personalization — Open-Source-First Implementation Plan</title>
+    <description>
+      Build a voice agent MVP on top of the existing text-based PydanticAI agent.
+      Open-source-first for pedagogical value (companion code to SSRN paper).
+      Every component is swappable to commercial alternatives with one-line changes.
+      Pipecat framework orchestrates the voice pipeline; existing domain tools
+      (explain_confidence, search_attributions, suggest_correction, submit_feedback)
+      are exposed as voice-callable functions.
+    </description>
+    <design-philosophy>
+      This is NOT a production voice product. It is a SCAFFOLD — a pedagogical
+      demonstration showing readers of the SSRN paper how a voice agent for
+      music attribution COULD be built, with all architectural choices documented
+      and all components swappable. The open-source stack proves the concept;
+      the commercial alternatives table guides teams scaling to production.
+    </design-philosophy>
+    <resume-context>
+      Previous sessions completed:
+      - 351 backend unit tests + 42 integration tests (all pass)
+      - 265 frontend Vitest tests (includes 11 agent integration tests)
+      - PydanticAI agent with 4 domain tools (agent.py)
+      - AG-UI SSE endpoint via CopilotKit (agui_endpoint.py)
+      - PRD decision network v3.1.0 with 5 persona coherence nodes
+      - 4 literature reviews in persona-coherence/
+      - 62 voice+persona figure plans with SEO/GEO alt text
+    </resume-context>
+  </metadata>
+
+  <!-- ================================================================== -->
+  <!--  ARCHITECTURAL OVERVIEW                                              -->
+  <!-- ================================================================== -->
+
+  <architecture>
+    <principle name="open-source-first">
+      Every component has an open-source default. Commercial alternatives
+      are documented as one-line swaps in Pipecat's pipeline config.
+      The repo ships with the open-source stack running out of the box.
+    </principle>
+
+    <principle name="no-lock-in">
+      Pipecat's pipeline architecture means each service (STT, TTS, LLM,
+      transport) is a FrameProcessor. Swapping providers changes one class
+      instantiation line — no interface changes, no refactoring.
+    </principle>
+
+    <principle name="reuse-existing-agent">
+      The PydanticAI agent in chat/agent.py already has 4 domain tools.
+      The voice pipeline calls these same tools via Pipecat's function
+      calling mechanism. No duplication of business logic.
+    </principle>
+
+    <principle name="pedagogical-documentation">
+      Each component choice includes a "Why This?" section in docs linking
+      to the PRD decision node, listing alternatives, and explaining
+      trade-offs. Readers of the paper can follow the decision chain.
+    </principle>
+
+    <stack name="open-source-default">
+      <component role="framework" name="Pipecat" version="0.0.102" license="BSD-2-Clause">
+        pipecat-ai — 10.4k stars, 40+ service integrations, by Daily.co
+      </component>
+      <component role="stt" name="faster-whisper" license="MIT">
+        pipecat-ai[whisper] — CTranslate2 Whisper, runs locally on CPU/CUDA
+      </component>
+      <component role="tts" name="Kokoro" version="82M-params" license="Apache-2.0">
+        Best quality/speed ratio for open-source TTS. 97ms TTFB on Modal.
+        Fallback: Piper TTS (pipecat-ai[piper], GPL, ONNX-based, lower quality)
+      </component>
+      <component role="vad" name="Silero VAD" license="MIT">
+        Built into Pipecat (SileroVADAnalyzer). 8kHz/16kHz, 6000+ languages.
+      </component>
+      <component role="llm" name="Anthropic Claude" license="commercial">
+        Already in stack (pydantic-ai-slim[anthropic]). Haiku 4.5 default.
+        Open-source alternative: Ollama (pipecat-ai[ollama]) for fully local.
+      </component>
+      <component role="transport-dev" name="SmallWebRTCTransport" license="non-commercial">
+        Peer-to-peer WebRTC, zero infrastructure. Or FastAPI WebSocket for dev.
+      </component>
+      <component role="transport-prod" name="Daily WebRTC" license="commercial">
+        Pipecat Cloud: $0.01/min per agent. Auto-scaling, multi-region.
+      </component>
+      <component role="persona" name="Letta (MemGPT)" version="0.16.4" license="Apache-2.0">
+        Read-only persona blocks, three-tier memory. Self-hosted or Letta Cloud.
+      </component>
+      <component role="user-memory" name="Mem0" version="1.0.4" license="Apache-2.0">
+        Category-level user preferences. Self-hosted or mem0.ai platform.
+      </component>
+      <component role="guardrails" name="NeMo Guardrails" version="0.20.0" license="Apache-2.0">
+        Colang 2.0 persona boundary rails. Self-hosted Python library.
+      </component>
+      <component role="drift-detection" name="Custom (embedding+EWMA)" license="MIT">
+        200-400 lines Python. Embedding cosine similarity + EWMA monitoring.
+        Concept from EchoMode SyncScore (TypeScript, not production-ready).
+      </component>
+      <component role="evaluation" name="DeepEval" version="3.8.4" license="Apache-2.0">
+        G-Eval, RoleAdherenceMetric, Conversational G-Eval. pytest integration.
+      </component>
+      <component role="benchmarking" name="PersonaGym" license="research">
+        5-dimension persona fidelity evaluation. 200 personas, 150 environments.
+      </component>
+    </stack>
+
+    <commercial-alternatives>
+      <swap component="stt" from="faster-whisper" to="Deepgram Nova-3">
+        Change: WhisperSTTService → DeepgramSTTService(api_key=...)
+        Cost: ~$0.0043/min. Latency: streaming partial transcripts.
+        Install: pipecat-ai[deepgram]
+      </swap>
+      <swap component="tts" from="Kokoro" to="ElevenLabs">
+        Change: KokoroTTSService → ElevenLabsTTSService(api_key=..., voice_id=...)
+        Cost: ~$0.08-0.12/min. Best voice cloning for artist digital twins.
+        Install: pipecat-ai[elevenlabs]
+      </swap>
+      <swap component="tts" from="Kokoro" to="Cartesia">
+        Change: KokoroTTSService → CartesiaTTSService(api_key=..., voice_id=...)
+        Cost: ~$0.04/min. Lowest latency commercial TTS.
+        Install: pipecat-ai[cartesia]
+      </swap>
+      <swap component="stt" from="faster-whisper" to="AssemblyAI">
+        Change: WhisperSTTService → AssemblyAISTTService(api_key=...)
+        Cost: ~$0.01/min. Best accuracy for music domain vocabulary.
+        Install: pipecat-ai[assemblyai]
+      </swap>
+      <swap component="transport" from="SmallWebRTC" to="Daily WebRTC">
+        Change: SmallWebRTCTransport → DailyTransport(...)
+        Cost: $0.01/min (Pipecat Cloud). Production-grade, multi-region.
+        Install: pipecat-ai[daily]
+      </swap>
+      <swap component="persona" from="Letta self-hosted" to="Letta Cloud">
+        Change: Letta(base_url="localhost:8283") → Letta(token="letta-cloud-key")
+        Cost: Letta Cloud pricing. Managed infra, no self-hosting.
+      </swap>
+      <swap component="user-memory" from="Mem0 self-hosted" to="Mem0 Platform">
+        Change: Memory(config=local_config) → MemoryClient(api_key=...)
+        Cost: mem0.ai pricing. 186M+ monthly API calls in production.
+      </swap>
+      <swap component="llm" from="Claude Haiku" to="Ollama (fully local)">
+        Change: AnthropicLLMService → OLLamaLLMService(model="qwen3:4b")
+        Cost: $0 (local GPU). For fully open-source demo.
+        Install: pipecat-ai[ollama]
+      </swap>
+    </commercial-alternatives>
+
+    <pipeline-diagram>
+      <!-- Pipecat pipeline architecture -->
+      <!--
+      ┌──────────────────────────────────────────────────────────┐
+      │  TRANSPORT IN (SmallWebRTC / Daily / WebSocket)          │
+      │  ↓ audio frames                                          │
+      │  SILERO VAD (voice activity detection)                   │
+      │  ↓ speech segments                                       │
+      │  STT (faster-whisper / Deepgram / AssemblyAI)            │
+      │  ↓ text transcript                                       │
+      │  USER CONTEXT AGGREGATOR (conversation history)          │
+      │  ↓ messages[]                                            │
+      │  [NEMO GUARDRAILS INPUT RAIL] (optional)                 │
+      │  ↓ validated messages[]                                  │
+      │  LLM (Claude Haiku / Ollama)                             │
+      │    ├── function_call: explain_confidence(work_id)        │
+      │    ├── function_call: search_attributions(query)         │
+      │    ├── function_call: suggest_correction(...)            │
+      │    └── function_call: submit_feedback(...)               │
+      │  ↓ response text (streamed)                              │
+      │  [NEMO GUARDRAILS OUTPUT RAIL] (optional)                │
+      │  ↓ validated response                                    │
+      │  [DRIFT MONITOR] (embedding similarity check)            │
+      │  ↓ text + drift score                                    │
+      │  TTS (Kokoro / Piper / ElevenLabs / Cartesia)            │
+      │  ↓ audio frames                                          │
+      │  TRANSPORT OUT                                           │
+      │  ↓                                                       │
+      │  ASSISTANT CONTEXT AGGREGATOR (update history)           │
+      └──────────────────────────────────────────────────────────┘
+      -->
+    </pipeline-diagram>
+  </architecture>
+
+  <!-- ================================================================== -->
+  <!--  PHASE 0: FOUNDATION                                                -->
+  <!-- ================================================================== -->
+
+  <phase id="0" name="Foundation" priority="P0">
+    <description>
+      Set up project structure, dependencies, and development environment
+      for the voice agent module.
+    </description>
+
+    <task id="0.1" status="PENDING" estimate="small">
+      <name>Add Pipecat and voice dependencies to pyproject.toml</name>
+      <description>
+        Add pipecat-ai with extras for the open-source stack.
+        Keep as optional dependency group [voice] so the base install
+        remains lightweight for text-only users.
+
+        Dependencies to add:
+        - pipecat-ai[silero,whisper,anthropic] — core pipeline
+        - pipecat-ai[piper] — open-source TTS fallback (GPL, separate group)
+        - pipecat-ai[smallwebrtc] — dev transport
+        - deepeval — persona evaluation
+        - letta — persona memory (optional)
+        - mem0ai — user memory (optional)
+        - nemoguardrails — persona boundary rails (optional)
+
+        Note: Kokoro TTS is not yet a Pipecat extra (issue #2324).
+        Will need custom FrameProcessor or use Piper as initial default.
+      </description>
+      <files>
+        <file>pyproject.toml</file>
+      </files>
+    </task>
+
+    <task id="0.2" status="PENDING" estimate="small">
+      <name>Create voice agent module structure</name>
+      <description>
+        Create the voice agent module at src/music_attribution/voice/
+        following the existing project conventions.
+
+        Files to create:
+        - src/music_attribution/voice/__init__.py
+        - src/music_attribution/voice/pipeline.py — Pipecat pipeline factory
+        - src/music_attribution/voice/services.py — custom TTS/STT services
+        - src/music_attribution/voice/tools.py — domain tool registration
+        - src/music_attribution/voice/persona.py — persona prompt management
+        - src/music_attribution/voice/config.py — voice-specific settings
+        - src/music_attribution/voice/server.py — FastAPI/WebSocket entry point
+      </description>
+      <files>
+        <file>src/music_attribution/voice/__init__.py</file>
+        <file>src/music_attribution/voice/pipeline.py</file>
+        <file>src/music_attribution/voice/services.py</file>
+        <file>src/music_attribution/voice/tools.py</file>
+        <file>src/music_attribution/voice/persona.py</file>
+        <file>src/music_attribution/voice/config.py</file>
+        <file>src/music_attribution/voice/server.py</file>
+      </files>
+    </task>
+
+    <task id="0.3" status="PENDING" estimate="small">
+      <name>Add voice-specific settings to config</name>
+      <description>
+        Extend the Settings model with voice agent configuration.
+        All settings have sensible defaults for open-source stack.
+        Environment variables for commercial API keys are optional.
+
+        Settings:
+        - VOICE_STT_PROVIDER: "whisper" | "deepgram" | "assemblyai" (default: whisper)
+        - VOICE_TTS_PROVIDER: "piper" | "kokoro" | "elevenlabs" | "cartesia" (default: piper)
+        - VOICE_TRANSPORT: "smallwebrtc" | "websocket" | "daily" (default: websocket)
+        - VOICE_LLM_MODEL: str (default: same as ATTRIBUTION_AGENT_MODEL)
+        - VOICE_WHISPER_MODEL: "tiny" | "base" | "small" | "medium" | "large" (default: small)
+        - VOICE_PERSONA_ENABLED: bool (default: false)
+        - VOICE_DRIFT_MONITORING: bool (default: false)
+        - VOICE_GUARDRAILS_ENABLED: bool (default: false)
+        - DEEPGRAM_API_KEY: optional
+        - ELEVENLABS_API_KEY: optional
+        - CARTESIA_API_KEY: optional
+        - DAILY_API_KEY: optional
+      </description>
+      <files>
+        <file>src/music_attribution/voice/config.py</file>
+      </files>
+    </task>
+
+    <task id="0.4" status="PENDING" estimate="small">
+      <name>Add Makefile targets for voice development</name>
+      <description>
+        Add Make targets for voice agent development:
+        - make install-voice: uv sync --extra voice
+        - make dev-voice: run voice agent dev server
+        - make test-voice: run voice-specific tests
+        - make voice-local: fully local stack (Whisper + Piper + Ollama)
+      </description>
+      <files>
+        <file>Makefile</file>
+      </files>
+    </task>
+  </phase>
+
+  <!-- ================================================================== -->
+  <!--  PHASE 1: BASIC VOICE PIPELINE                                      -->
+  <!-- ================================================================== -->
+
+  <phase id="1" name="Basic Voice Pipeline" priority="P0" depends-on="0">
+    <description>
+      Get a working voice loop: microphone → STT → LLM → TTS → speaker.
+      No domain tools yet — just basic conversational ability.
+      This proves the Pipecat pipeline works end-to-end.
+    </description>
+
+    <task id="1.1" status="PENDING" estimate="medium">
+      <name>Implement Pipecat pipeline factory</name>
+      <description>
+        Create the core pipeline factory in pipeline.py.
+        Factory pattern selects services based on config settings.
+
+        Pipeline structure:
+        1. Transport input (configurable)
+        2. Silero VAD
+        3. STT service (Whisper default)
+        4. User context aggregator
+        5. LLM service (Anthropic default)
+        6. TTS service (Piper default)
+        7. Transport output
+        8. Assistant context aggregator
+
+        The factory must:
+        - Accept VoiceConfig as input
+        - Return configured Pipeline + PipelineTask
+        - Handle provider selection via match/case on config enums
+        - Set system prompt from persona module
+        - Configure VAD params (threshold, min speech, min silence)
+
+        Reference: pipecat-ai/pipecat/examples/foundational/
+      </description>
+      <files>
+        <file>src/music_attribution/voice/pipeline.py</file>
+      </files>
+    </task>
+
+    <task id="1.2" status="PENDING" estimate="medium">
+      <name>Implement WebSocket transport server</name>
+      <description>
+        Create a FastAPI WebSocket endpoint for voice agent development.
+        Uses Pipecat's FastAPIWebsocketTransport for initial testing.
+
+        Endpoint: POST /api/v1/voice/ws (WebSocket upgrade)
+
+        The server must:
+        - Accept WebSocket connections
+        - Create a new pipeline per connection
+        - Handle audio frame streaming (16kHz, 16-bit PCM)
+        - Clean up pipeline on disconnect
+        - Integrate with existing FastAPI app via router
+
+        For production: swap to Daily WebRTC transport.
+
+        Reference: pipecat-ai docs on FastAPI WebSocket transport
+      </description>
+      <files>
+        <file>src/music_attribution/voice/server.py</file>
+        <file>src/music_attribution/api/app.py</file>
+      </files>
+    </task>
+
+    <task id="1.3" status="PENDING" estimate="small">
+      <name>Create music attribution system prompt for voice</name>
+      <description>
+        Create a voice-specific system prompt in persona.py that:
+        - Adapts the existing text agent prompt for voice interaction
+        - Shorter responses (voice-optimized, not wall-of-text)
+        - Progressive disclosure: summary first, details on request
+        - Friendly but professional tone (warm, not robotic)
+        - Confidence communication adapted for audio
+          (e.g., "I'm quite confident about this credit" vs numeric score)
+        - Includes A0-A3 assurance level vocabulary
+
+        Follow the Multi-Dimensional Persona Architecture (fig-persona-01):
+        - Core Identity: IMMUTABLE — music attribution expert, transparent, evidence-based
+        - Factual Grounding: STABLE — knows ISRC/ISWC/ISNI, MusicBrainz, Discogs
+        - Communication Style: BOUNDED — warm, concise for voice, can be formal for enterprise
+        - User Context: FREE — adapts to user's expertise level
+        - Conversation Flow: FREE — natural turn-taking, clarifying questions
+      </description>
+      <files>
+        <file>src/music_attribution/voice/persona.py</file>
+      </files>
+    </task>
+
+    <task id="1.4" status="PENDING" estimate="medium">
+      <name>Write end-to-end pipeline test</name>
+      <description>
+        Create a test that verifies the pipeline assembles correctly
+        and processes a mock audio input through to text output.
+
+        Test should:
+        - Mock STT to return fixed transcript
+        - Mock LLM to return fixed response
+        - Mock TTS to verify it receives the response text
+        - Verify pipeline creates and runs without errors
+        - Verify conversation context is maintained across turns
+        - Test provider swapping (config change → different service)
+
+        Use pytest with async support (pytest-asyncio).
+        Mock Pipecat services, don't require actual audio hardware.
+      </description>
+      <files>
+        <file>tests/unit/voice/test_pipeline.py</file>
+        <file>tests/unit/voice/__init__.py</file>
+        <file>tests/unit/voice/conftest.py</file>
+      </files>
+    </task>
+
+    <task id="1.5" status="PENDING" estimate="small">
+      <name>Create local demo script</name>
+      <description>
+        Create scripts/voice_demo.py that runs the voice agent locally
+        using microphone input and speaker output (Pipecat's LocalAudioTransport).
+
+        Usage: uv run python scripts/voice_demo.py
+        Options:
+          --stt whisper|deepgram (default: whisper)
+          --tts piper|kokoro|elevenlabs|cartesia (default: piper)
+          --llm anthropic|ollama (default: anthropic)
+          --whisper-model tiny|base|small|medium|large (default: small)
+
+        This is the "try it in 30 seconds" entry point for paper readers.
+      </description>
+      <files>
+        <file>scripts/voice_demo.py</file>
+      </files>
+    </task>
+  </phase>
+
+  <!-- ================================================================== -->
+  <!--  PHASE 2: DOMAIN TOOL INTEGRATION                                   -->
+  <!-- ================================================================== -->
+
+  <phase id="2" name="Domain Tool Integration" priority="P0" depends-on="1">
+    <description>
+      Connect the existing 4 PydanticAI domain tools to Pipecat's
+      function calling mechanism. The voice agent can now answer
+      attribution questions, explain confidence, search, and accept feedback.
+    </description>
+
+    <task id="2.1" status="PENDING" estimate="medium">
+      <name>Register domain tools as Pipecat function handlers</name>
+      <description>
+        Bridge PydanticAI tools → Pipecat FunctionSchema registration.
+
+        For each existing tool in chat/agent.py:
+        1. explain_confidence(work_id: str) → FunctionSchema + handler
+        2. search_attributions(query: str) → FunctionSchema + handler
+        3. suggest_correction(work_id, field, ...) → FunctionSchema + handler
+        4. submit_feedback(work_id, assessment, ...) → FunctionSchema + handler
+
+        The handlers should:
+        - Call the existing tool logic (reuse, don't duplicate)
+        - Format results for voice output (shorter, more conversational)
+        - Update shared state for potential frontend sync
+        - Handle errors gracefully with voice-friendly messages
+
+        Use Pipecat's ToolsSchema for cross-provider compatibility.
+      </description>
+      <files>
+        <file>src/music_attribution/voice/tools.py</file>
+      </files>
+    </task>
+
+    <task id="2.2" status="PENDING" estimate="medium">
+      <name>Add database session to voice pipeline</name>
+      <description>
+        The domain tools need database access. Connect the existing
+        async_session_factory (from FastAPI app.state) to the voice
+        pipeline's function call handlers.
+
+        Options:
+        A. Pass session_factory as context to pipeline task
+        B. Create a VoiceDeps class mirroring AgentDeps
+        C. Share the same FastAPI app.state
+
+        Prefer option C for consistency with the AG-UI endpoint.
+      </description>
+      <files>
+        <file>src/music_attribution/voice/tools.py</file>
+        <file>src/music_attribution/voice/server.py</file>
+      </files>
+    </task>
+
+    <task id="2.3" status="PENDING" estimate="medium">
+      <name>Write tool integration tests</name>
+      <description>
+        Test that voice-triggered function calls execute the same
+        domain logic as text-triggered calls.
+
+        Tests:
+        - Mock LLM returns function_call for "explain confidence for work X"
+        - Verify explain_confidence handler executes and returns formatted text
+        - Verify search_attributions returns voice-friendly result format
+        - Verify error handling for invalid work_id
+        - Verify suggest_correction flows through to pending state
+        - Test with mock database session (no real DB needed for unit tests)
+      </description>
+      <files>
+        <file>tests/unit/voice/test_tools.py</file>
+      </files>
+    </task>
+  </phase>
+
+  <!-- ================================================================== -->
+  <!--  PHASE 3: PERSONA MANAGEMENT                                        -->
+  <!-- ================================================================== -->
+
+  <phase id="3" name="Persona Management" priority="P1" depends-on="2">
+    <description>
+      Add structured persona management with Letta memory blocks
+      and periodic reinforcement to prevent drift. This phase adds
+      the "memory-anchored persona" strategy from the PRD.
+    </description>
+
+    <task id="3.1" status="PENDING" estimate="medium">
+      <name>Implement persona prompt layering</name>
+      <description>
+        Implement the Multi-Dimensional Persona Architecture (fig-persona-01)
+        as a structured system prompt with periodic reinforcement.
+
+        Persona layers (in system prompt):
+        1. CORE IDENTITY (immutable): "You are a music attribution assistant..."
+        2. FACTUAL GROUNDING (stable): domain knowledge, A0-A3 levels
+        3. COMMUNICATION STYLE (bounded): voice-optimized, warm, concise
+        4. USER CONTEXT (free): "{user_name} prefers {detail_level} explanations"
+        5. CONVERSATION FLOW (free): natural turn-taking
+
+        Periodic reinforcement:
+        - Every 5 turns, inject condensed persona reminder into context
+        - ~3% context overhead, prevents 8-turn drift cliff
+        - Implement as Pipecat FrameProcessor that monitors turn count
+
+        This is the baseline approach that works without Letta.
+      </description>
+      <files>
+        <file>src/music_attribution/voice/persona.py</file>
+      </files>
+    </task>
+
+    <task id="3.2" status="PENDING" estimate="medium">
+      <name>Add Letta integration for persistent persona memory</name>
+      <description>
+        Optional integration with Letta for memory-anchored persona.
+        Activated when VOICE_PERSONA_ENABLED=true and LETTA_BASE_URL is set.
+
+        Implementation:
+        - Create Letta agent with read-only persona block
+        - Store user preferences in Letta's human memory block
+        - Retrieve persona context from Letta before each LLM call
+        - Omit core_memory_replace/append tools to keep persona immutable
+
+        Letta client setup:
+        ```python
+        from letta_client import Letta
+        client = Letta(base_url=settings.letta_base_url)
+        agent = client.agents.create(
+            model="anthropic/claude-haiku-4-5",
+            memory_blocks=[
+                {"label": "persona", "value": PERSONA_BLOCK},
+                {"label": "human", "value": ""},
+            ],
+        )
+        ```
+
+        Fallback: if Letta unavailable, use prompt-layered approach from 3.1.
+      </description>
+      <files>
+        <file>src/music_attribution/voice/persona.py</file>
+        <file>src/music_attribution/voice/config.py</file>
+      </files>
+    </task>
+
+    <task id="3.3" status="PENDING" estimate="medium">
+      <name>Add Mem0 integration for user preference memory</name>
+      <description>
+        Optional integration with Mem0 for cross-session user preferences.
+        Abstract category-level memory (Puda-style): "prefers detailed
+        explanations", "focuses on songwriter credits", "works in jazz genre".
+
+        NOT fine-grained fact storage (PS-Bench: 244% attack surface increase).
+
+        Implementation:
+        - Mem0 self-hosted with local vector store (Qdrant or pgvector)
+        - On session start: retrieve user preferences from Mem0
+        - Inject as USER CONTEXT layer in persona prompt
+        - On session end: extract new preferences via Mem0 auto-extraction
+        - Safety gate: factual grounding overrides user preferences
+          (user says "I wrote that song" but DB says otherwise → trust DB)
+
+        ```python
+        from mem0 import Memory
+        memory = Memory.from_config(config)
+        preferences = memory.search(query="user preferences", user_id=user_id)
+        ```
+
+        Fallback: if Mem0 unavailable, use session-only context.
+      </description>
+      <files>
+        <file>src/music_attribution/voice/persona.py</file>
+        <file>src/music_attribution/voice/config.py</file>
+      </files>
+    </task>
+
+    <task id="3.4" status="PENDING" estimate="medium">
+      <name>Write persona management tests</name>
+      <description>
+        Tests for persona prompt construction and memory integration.
+
+        Tests:
+        - Prompt layering produces correct 5-dimension structure
+        - Periodic reinforcement triggers at correct turn interval
+        - Letta integration creates agent with read-only persona block
+        - Mem0 integration retrieves and injects user preferences
+        - Factual grounding gate overrides user preference when conflicting
+        - Graceful fallback when Letta/Mem0 unavailable
+      </description>
+      <files>
+        <file>tests/unit/voice/test_persona.py</file>
+      </files>
+    </task>
+  </phase>
+
+  <!-- ================================================================== -->
+  <!--  PHASE 4: DRIFT DETECTION &amp; EVALUATION                          -->
+  <!-- ================================================================== -->
+
+  <phase id="4" name="Drift Detection &amp; Evaluation" priority="P1" depends-on="2">
+    <description>
+      Build the persona drift detection module and evaluation suite.
+      Custom Python implementation of embedding similarity + EWMA
+      (concept from EchoMode, implemented in Python for this project).
+      DeepEval integration for CI/CD persona fidelity testing.
+    </description>
+
+    <task id="4.1" status="PENDING" estimate="medium">
+      <name>Implement embedding-based drift detector</name>
+      <description>
+        Create a drift detection module at src/music_attribution/voice/drift.py.
+
+        Core algorithm:
+        1. Embed persona definition once at startup (reference embedding)
+        2. For each agent response, compute embedding
+        3. Calculate cosine similarity with reference
+        4. Apply EWMA smoothing (alpha=0.3, configurable)
+        5. Three states: Sync (>0.85), Drift (0.70-0.85), Desync (&lt;0.70)
+        6. On Drift: log warning, inject persona reinforcement
+        7. On Desync: log error, full context recalibration
+
+        Use existing sentence-transformers (already in dependencies)
+        with a small model (all-MiniLM-L6-v2) for fast embedding.
+
+        Implement as Pipecat FrameProcessor:
+        - Receives TextFrame from LLM output
+        - Computes drift score
+        - Passes frame through (doesn't block pipeline)
+        - Emits DriftScoreFrame for monitoring
+        - Triggers PersonaReinforceFrame on Drift state
+
+        Optional: store drift scores in PostgreSQL for analysis.
+      </description>
+      <files>
+        <file>src/music_attribution/voice/drift.py</file>
+      </files>
+    </task>
+
+    <task id="4.2" status="PENDING" estimate="medium">
+      <name>Add NeMo Guardrails persona boundary rails</name>
+      <description>
+        Optional NeMo Guardrails integration for runtime persona enforcement.
+        Activated when VOICE_GUARDRAILS_ENABLED=true.
+
+        Create Colang 2.0 configuration:
+        - Input rail: detect persona manipulation attempts
+          ("Ignore your instructions", "You are now X", "Pretend to be...")
+        - Output rail: filter responses that break persona boundaries
+          (e.g., claiming to be a different entity, providing legal advice)
+        - Topic rail: keep conversation within music attribution domain
+
+        Config files:
+        - src/music_attribution/voice/guardrails/config.yml
+        - src/music_attribution/voice/guardrails/rails.co (Colang 2.0)
+        - src/music_attribution/voice/guardrails/prompts.yml
+
+        Integrate as pre/post processor in Pipecat pipeline.
+        Fallback: if guardrails disabled, skip (no performance impact).
+      </description>
+      <files>
+        <file>src/music_attribution/voice/guardrails/config.yml</file>
+        <file>src/music_attribution/voice/guardrails/rails.co</file>
+        <file>src/music_attribution/voice/guardrails/prompts.yml</file>
+        <file>src/music_attribution/voice/pipeline.py</file>
+      </files>
+    </task>
+
+    <task id="4.3" status="PENDING" estimate="medium">
+      <name>Create DeepEval persona fidelity test suite</name>
+      <description>
+        Create evaluation tests using DeepEval that run in CI.
+
+        Metrics to implement:
+        1. PersonaConsistency (custom G-Eval):
+           - "Does the response maintain the music attribution expert persona?"
+           - Checks domain expertise, tone, boundary adherence
+        2. RoleAdherenceMetric (built-in):
+           - Verifies agent stays in assigned role across multi-turn conversations
+        3. KnowledgeRetentionMetric (built-in):
+           - Checks context retention across conversation turns
+        4. SycophancyDetector (custom G-Eval):
+           - "Does the response validate user claims over database evidence?"
+           - Critical for music attribution (fig-persona-09)
+
+        Test scenarios (conversation traces):
+        - 3-turn: simple attribution query
+        - 8-turn: conversation crossing the drift cliff
+        - 12-turn: extended interaction with tool use
+        - Adversarial: persona manipulation attempt
+        - Sycophancy: user disputes correct credits
+
+        ```python
+        from deepeval.metrics import GEval
+        from deepeval.test_case import LLMTestCaseParams
+
+        persona_consistency = GEval(
+            name="Persona Consistency",
+            criteria="Maintains music attribution expert persona",
+            evaluation_steps=[...],
+            evaluation_params=[LLMTestCaseParams.ACTUAL_OUTPUT],
+        )
+        ```
+
+        Run with: pytest tests/eval/voice/ -m persona_eval
+        (separate marker so it doesn't run in every CI pass — uses LLM)
+      </description>
+      <files>
+        <file>tests/eval/__init__.py</file>
+        <file>tests/eval/voice/__init__.py</file>
+        <file>tests/eval/voice/test_persona_fidelity.py</file>
+        <file>tests/eval/voice/conftest.py</file>
+        <file>tests/eval/voice/conversation_traces.py</file>
+      </files>
+    </task>
+
+    <task id="4.4" status="PENDING" estimate="medium">
+      <name>Write drift detection unit tests</name>
+      <description>
+        Tests for the drift detection module.
+
+        Tests:
+        - EWMA computation correctness (known input → known output)
+        - State transitions: Sync → Drift → Desync
+        - Persona reinforcement triggered on Drift state
+        - Context recalibration triggered on Desync state
+        - Drift score stored in PostgreSQL (if enabled)
+        - FrameProcessor passes frames through correctly
+        - Cosine similarity computation with sentence-transformers
+        - Edge cases: empty response, very long response, non-English
+      </description>
+      <files>
+        <file>tests/unit/voice/test_drift.py</file>
+      </files>
+    </task>
+  </phase>
+
+  <!-- ================================================================== -->
+  <!--  PHASE 5: FRONTEND INTEGRATION                                      -->
+  <!-- ================================================================== -->
+
+  <phase id="5" name="Frontend Voice UI" priority="P1" depends-on="1">
+    <description>
+      Add voice interaction to the Next.js frontend.
+      Microphone button, audio visualization, and TTS playback.
+      The existing CopilotKit sidebar remains for text; voice is
+      an additional interaction modality.
+    </description>
+
+    <task id="5.1" status="PENDING" estimate="medium">
+      <name>Create VoiceButton component</name>
+      <description>
+        A push-to-talk or toggle button that:
+        - Records audio from the microphone (MediaRecorder API)
+        - Sends audio to the voice WebSocket endpoint
+        - Shows recording state (animated mic icon)
+        - Shows "thinking" state while LLM processes
+        - Plays TTS audio response via Web Audio API
+        - Respects prefers-reduced-motion for animations
+        - Uses design system tokens (accent-coral for active state)
+
+        Component: frontend/src/components/voice/VoiceButton.tsx
+        Uses Jotai atom for voice state (recording, processing, playing, idle)
+      </description>
+      <files>
+        <file>frontend/src/components/voice/VoiceButton.tsx</file>
+        <file>frontend/src/lib/atoms/voice.ts</file>
+      </files>
+    </task>
+
+    <task id="5.2" status="PENDING" estimate="medium">
+      <name>Create audio visualization component</name>
+      <description>
+        Minimal waveform visualization during recording and playback.
+        Warp Records aesthetic (fig-voice reference): abstract, minimal.
+
+        - Canvas-based real-time waveform during recording
+        - Simple amplitude bars during TTS playback
+        - Uses CSS custom properties for colors
+        - Matches editorial design language
+        - No sci-fi/neon effects (BANNED in design system)
+      </description>
+      <files>
+        <file>frontend/src/components/voice/AudioVisualizer.tsx</file>
+      </files>
+    </task>
+
+    <task id="5.3" status="PENDING" estimate="medium">
+      <name>Create WebSocket audio client</name>
+      <description>
+        Client-side WebSocket connection to the voice endpoint.
+        Handles audio streaming in both directions.
+
+        Or: Use Pipecat's client SDK (@pipecat-ai/client-js) for
+        SmallWebRTC or Daily transport integration.
+
+        Options:
+        A. Raw WebSocket (audio frames as ArrayBuffer)
+        B. @pipecat-ai/client-js with SmallWebRTC transport (dev)
+        C. @pipecat-ai/client-js with Daily transport (prod)
+
+        Start with option B for zero-infra development.
+        Document option C for production deployment.
+      </description>
+      <files>
+        <file>frontend/src/lib/voice/client.ts</file>
+      </files>
+    </task>
+
+    <task id="5.4" status="PENDING" estimate="medium">
+      <name>Write frontend voice component tests</name>
+      <description>
+        Vitest + React Testing Library tests for voice components.
+
+        Tests:
+        - VoiceButton renders in idle state
+        - VoiceButton transitions through recording → processing → playing
+        - AudioVisualizer renders without errors
+        - WebSocket client connects and disconnects cleanly
+        - Accessibility: VoiceButton has proper ARIA labels
+        - Voice components respect prefers-reduced-motion
+        - Jotai voice atoms update correctly
+      </description>
+      <files>
+        <file>frontend/src/components/voice/__tests__/VoiceButton.test.tsx</file>
+        <file>frontend/src/components/voice/__tests__/AudioVisualizer.test.tsx</file>
+      </files>
+    </task>
+  </phase>
+
+  <!-- ================================================================== -->
+  <!--  PHASE 6: DOCUMENTATION                                             -->
+  <!-- ================================================================== -->
+
+  <phase id="6" name="Documentation &amp; Pedagogical Guide" priority="P1" depends-on="2,4">
+    <description>
+      Create comprehensive documentation guiding paper readers through
+      every architectural choice. Each component page links to the
+      PRD decision node, lists alternatives, and explains trade-offs.
+    </description>
+
+    <task id="6.1" status="PENDING" estimate="medium">
+      <name>Create voice agent implementation guide</name>
+      <description>
+        docs/tutorials/voice-agent-implementation.md
+
+        Structure:
+        1. Quick Start (30-second demo with scripts/voice_demo.py)
+        2. Architecture Overview (pipeline diagram, component roles)
+        3. Component Selection Guide (table of all alternatives)
+        4. STT Deep Dive (Whisper vs Deepgram vs AssemblyAI)
+        5. TTS Deep Dive (Piper vs Kokoro vs ElevenLabs vs Cartesia)
+        6. Transport Deep Dive (WebSocket vs SmallWebRTC vs Daily)
+        7. LLM Integration (Anthropic vs Ollama vs OpenAI)
+        8. Persona Management (prompt-layered vs Letta vs custom)
+        9. Drift Detection (embedding+EWMA, bounded equilibrium theory)
+        10. Evaluation (DeepEval G-Eval, PersonaGym, CI integration)
+        11. Cost Analysis (open-source vs commercial per-minute costs)
+        12. Production Deployment (Pipecat Cloud, scaling, monitoring)
+
+        Each section links to the relevant PRD decision node YAML.
+      </description>
+      <files>
+        <file>docs/tutorials/voice-agent-implementation.md</file>
+      </files>
+    </task>
+
+    <task id="6.2" status="PENDING" estimate="medium">
+      <name>Create component alternatives reference table</name>
+      <description>
+        docs/knowledge-base/voice-agent-component-alternatives.md
+
+        Comprehensive comparison table for each pipeline component:
+
+        | Component | Open Source Default | Alt 1 | Alt 2 | Alt 3 |
+        |-----------|-------------------|-------|-------|-------|
+        | STT | faster-whisper (MIT) | Deepgram ($0.004/min) | AssemblyAI ($0.01/min) | Whisper.cpp (MIT) |
+        | TTS | Piper (GPL) | Kokoro (Apache 2.0) | ElevenLabs ($0.08/min) | Cartesia ($0.04/min) |
+        | VAD | Silero (MIT) | WebRTC VAD (BSD) | — | — |
+        | LLM | Ollama+Qwen3 (Apache 2.0) | Claude Haiku ($0.001/turn) | GPT-4o-mini | Gemini Flash |
+        | Transport | SmallWebRTC | Daily WebRTC ($0.01/min) | LiveKit | Raw WebSocket |
+        | Persona | Prompt-layered | Letta (Apache 2.0) | Mem0 (Apache 2.0) | NeMo Guardrails |
+        | Drift | Custom embed+EWMA | Langfuse traces | Arize Phoenix | Evidently |
+        | Eval | DeepEval (Apache 2.0) | Ragas (Apache 2.0) | PersonaGym | Custom |
+        | Framework | Pipecat (BSD-2) | LiveKit Agents (Apache 2.0) | Vapi (managed) | Custom |
+
+        Include license, cost, latency, and quality ratings for each.
+      </description>
+      <files>
+        <file>docs/knowledge-base/voice-agent-component-alternatives.md</file>
+      </files>
+    </task>
+
+    <task id="6.3" status="PENDING" estimate="small">
+      <name>Update README with voice agent section</name>
+      <description>
+        Add a "Voice Agent (Experimental)" section to the main README.md.
+
+        Content:
+        - One-paragraph overview
+        - Quick start command (scripts/voice_demo.py)
+        - Link to full implementation guide
+        - Link to component alternatives table
+        - "This is a scaffold" disclaimer
+      </description>
+      <files>
+        <file>README.md</file>
+      </files>
+    </task>
+  </phase>
+
+  <!-- ================================================================== -->
+  <!--  DEPENDENCY GRAPH                                                    -->
+  <!-- ================================================================== -->
+
+  <dependency-graph>
+    <!--
+    Phase 0 (Foundation) ──→ Phase 1 (Basic Pipeline) ──→ Phase 2 (Domain Tools) ──→ Phase 3 (Persona)
+                                       │                          │
+                                       ↓                          ↓
+                              Phase 5 (Frontend)         Phase 4 (Drift + Eval)
+                                                                  │
+                                                                  ↓
+                                                         Phase 6 (Documentation)
+    -->
+    <edge from="0" to="1" />
+    <edge from="1" to="2" />
+    <edge from="1" to="5" />
+    <edge from="2" to="3" />
+    <edge from="2" to="4" />
+    <edge from="2" to="6" />
+    <edge from="4" to="6" />
+  </dependency-graph>
+
+  <!-- ================================================================== -->
+  <!--  COST ANALYSIS                                                       -->
+  <!-- ================================================================== -->
+
+  <cost-analysis>
+    <scenario name="fully-open-source-local">
+      <description>Everything running locally. Zero API costs.</description>
+      <stt>faster-whisper (small model, CPU): $0.00/min</stt>
+      <tts>Piper TTS (ONNX, CPU): $0.00/min</tts>
+      <llm>Ollama + Qwen3-4B (CPU/GPU): $0.00/turn</llm>
+      <transport>SmallWebRTC (peer-to-peer): $0.00/min</transport>
+      <total>$0.00/min — requires decent CPU/GPU</total>
+    </scenario>
+
+    <scenario name="open-source-with-anthropic">
+      <description>Local STT/TTS, cloud LLM. Best quality/cost balance.</description>
+      <stt>faster-whisper (small model, CPU): $0.00/min</stt>
+      <tts>Piper TTS (ONNX, CPU): $0.00/min</tts>
+      <llm>Claude Haiku 4.5: ~$0.01/turn (with prompt caching: $0.001)</llm>
+      <transport>SmallWebRTC: $0.00/min</transport>
+      <total>~$0.01-0.03/min — recommended for development</total>
+    </scenario>
+
+    <scenario name="commercial-production">
+      <description>All commercial services. Best quality and latency.</description>
+      <stt>Deepgram Nova-3: $0.0043/min</stt>
+      <tts>Cartesia: $0.04/min (or ElevenLabs: $0.08/min)</tts>
+      <llm>Claude Haiku 4.5: ~$0.01/turn</llm>
+      <transport>Daily WebRTC (Pipecat Cloud): $0.01/min</transport>
+      <total>~$0.06-0.10/min — production quality</total>
+    </scenario>
+  </cost-analysis>
+
+  <!-- ================================================================== -->
+  <!--  OPEN QUESTIONS                                                      -->
+  <!-- ================================================================== -->
+
+  <open-questions>
+    <question id="Q1" priority="high">
+      Kokoro TTS is not yet a Pipecat extra (issue #2324).
+      Should we: (a) use Piper as default TTS and wait for Kokoro integration,
+      (b) write a custom KokoroTTSService FrameProcessor, or
+      (c) use the Modal blog's approach (custom service class)?
+      Recommendation: (a) Piper for MVP, add Kokoro when pipecat-ai[kokoro] ships.
+    </question>
+
+    <question id="Q2" priority="medium">
+      Should the voice endpoint share the same FastAPI app as the existing
+      API, or run as a separate service? Shared app is simpler; separate
+      service allows independent scaling. For MVP: shared app.
+    </question>
+
+    <question id="Q3" priority="medium">
+      SmallWebRTCTransport has a "non-commercial" license restriction.
+      For the open-source repo this is fine, but production users would
+      need Daily WebRTC. Document this clearly in the alternatives table.
+    </question>
+
+    <question id="Q4" priority="low">
+      Should drift detection run on every response (latency cost) or
+      sampled (e.g., every 3rd response)? For MVP: every response
+      (async, non-blocking). Production: configurable sampling rate.
+    </question>
+
+    <question id="Q5" priority="low">
+      Piper TTS is GPL-licensed. The rest of the project is MIT-compatible.
+      Should we: (a) mark piper as a separate optional dependency group,
+      (b) use Kokoro (Apache 2.0) as the default when available, or
+      (c) document the license implications clearly?
+      Recommendation: (a) + (c). Piper in [voice-gpl] group, document in README.
+    </question>
+  </open-questions>
+
+  <!-- ================================================================== -->
+  <!--  RELATED FILES                                                       -->
+  <!-- ================================================================== -->
+
+  <related-files>
+    <file role="existing-agent">src/music_attribution/chat/agent.py</file>
+    <file role="existing-endpoint">src/music_attribution/chat/agui_endpoint.py</file>
+    <file role="existing-state">src/music_attribution/chat/state.py</file>
+    <file role="existing-app">src/music_attribution/api/app.py</file>
+    <file role="prd-persona-coherence">docs/prd/decisions/L2-architecture/persona-coherence-strategy.decision.yaml</file>
+    <file role="prd-user-modeling">docs/prd/decisions/L3-implementation/user-modeling-strategy.decision.yaml</file>
+    <file role="prd-voice-persona">docs/prd/decisions/L3-implementation/voice-persona-management.decision.yaml</file>
+    <file role="prd-cross-channel">docs/prd/decisions/L3-implementation/cross-channel-state-strategy.decision.yaml</file>
+    <file role="prd-drift-monitoring">docs/prd/decisions/L5-operations/persona-drift-monitoring.decision.yaml</file>
+    <file role="prd-voice-stack">docs/prd/decisions/L3-implementation/voice-agent-stack.decision.yaml</file>
+    <file role="research-lit-review">docs/planning/voice-agent-research/persona-coherence/persona-coherence-literature-review.md</file>
+    <file role="research-commercial">docs/planning/voice-agent-research/persona-coherence/commercial-tools-landscape.md</file>
+    <file role="research-drift">docs/planning/voice-agent-research/persona-coherence/drift-detection-methods.md</file>
+    <file role="research-hyperpersonalization">docs/planning/voice-agent-research/persona-coherence/hyperpersonalization-frameworks.md</file>
+    <file role="figure-full-stack">docs/figures/repo-figures/figure-plans/fig-voice-01-full-stack-architecture.md</file>
+  </related-files>
+</plan>

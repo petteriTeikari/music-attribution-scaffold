@@ -1,0 +1,245 @@
+# User Modeling Strategy
+#
+# Determines how the agent models and personalizes for individual users
+# across sessions. Balances personalization fidelity against safety risks
+# (PS-Bench: detailed memory increases attack success by up to 244%).
+
+decision_id: user_modeling_strategy
+title: "User Modeling Strategy"
+description: >
+  Selects the approach for modeling user preferences, history, and
+  context to enable personalized agent interactions. Research reveals
+  a critical safety-fidelity trade-off: detailed user memory provides
+  rich personalization but increases attack surface by up to 244%
+  (PS-Bench, 2025). Abstract category-level memory retains 97.2%
+  of personalization effectiveness at the most restrictive privacy
+  tier (Puda, 2025). Over-personalization causes three failure modes:
+  irrelevance (inserting memories where not relevant), repetition
+  (reusing same memory excessively), and sycophancy (validating user
+  preferences over factual evidence) — the last being critical for
+  music attribution where credits must be evidence-based.
+
+decision_level: L3_implementation
+status: active
+last_updated: 2026-02-20
+
+options:
+  - option_id: session_only
+    title: "Session-Only Context"
+    description: >
+      No cross-session memory. Each conversation starts fresh with
+      only the current session context. Simplest, privacy-safe, zero
+      infrastructure overhead. Loses personalization value across
+      sessions but eliminates all memory-based attack vectors.
+    prior_probability: 0.25
+    status: viable
+
+  - option_id: abstract_memory
+    title: "Abstract Category-Level Memory (Puda-Style)"
+    description: >
+      Category-level user preferences (e.g., "prefers detailed
+      explanations", "focuses on songwriter credits") without storing
+      specific conversation content. 97.2% effectiveness at most
+      restrictive privacy tier. Dominant strategy for responsible
+      personalization — retains nearly all value while reducing
+      attack surface. Minimal storage, simple retrieval.
+    prior_probability: 0.35
+    status: recommended
+    complements:
+      - "persona_coherence_strategy.memory_anchored"
+
+  - option_id: temporal_graph
+    title: "Temporal Knowledge Graph (Zep/Graphiti)"
+    description: >
+      Bi-temporal knowledge graph storing user facts with version
+      history. Answers time-dependent queries ("What did I decide
+      about the credits for Track 7 last month?"). Rich provenance
+      for attribution history. Higher complexity, requires graph
+      infrastructure. Best for Pro-tier users managing ongoing
+      attribution workflows.
+    prior_probability: 0.20
+    status: viable
+    constraints:
+      - "Requires graph infrastructure (Zep service or custom)"
+      - "Higher storage and query costs"
+    complements:
+      - "graph_strategy.age_in_postgres"
+      - "knowledge_graph_backend.age_postgresql"
+
+  - option_id: hierarchical_intent
+    title: "Hierarchical Intent Model (PersonalAlign)"
+    description: >
+      Three-tier preference model: reactive (in-session responses),
+      preference (stated likes/dislikes), and routine (behavioral
+      patterns). PersonalAlign framework with temporal decay and
+      confidence weighting. Moderate complexity, captures user
+      intent evolution without fine-grained fact storage.
+    prior_probability: 0.20
+    status: viable
+    complements:
+      - "persona_coherence_strategy.hybrid_layered"
+
+conditional_on:
+  - parent_decision_id: persona_coherence_strategy
+    influence_strength: strong
+    conditional_table:
+      - given_parent_option: prompt_layered
+        then_probabilities:
+          session_only: 0.40
+          abstract_memory: 0.35
+          temporal_graph: 0.10
+          hierarchical_intent: 0.15
+      - given_parent_option: memory_anchored
+        then_probabilities:
+          session_only: 0.10
+          abstract_memory: 0.40
+          temporal_graph: 0.25
+          hierarchical_intent: 0.25
+      - given_parent_option: activation_space
+        then_probabilities:
+          session_only: 0.30
+          abstract_memory: 0.30
+          temporal_graph: 0.20
+          hierarchical_intent: 0.20
+      - given_parent_option: training_based
+        then_probabilities:
+          session_only: 0.35
+          abstract_memory: 0.30
+          temporal_graph: 0.15
+          hierarchical_intent: 0.20
+      - given_parent_option: hybrid_layered
+        then_probabilities:
+          session_only: 0.10
+          abstract_memory: 0.35
+          temporal_graph: 0.25
+          hierarchical_intent: 0.30
+
+  - parent_decision_id: target_market_segment
+    influence_strength: moderate
+    conditional_table:
+      - given_parent_option: independent_creators
+        then_probabilities:
+          session_only: 0.20
+          abstract_memory: 0.40
+          temporal_graph: 0.15
+          hierarchical_intent: 0.25
+      - given_parent_option: mid_tier_labels
+        then_probabilities:
+          session_only: 0.15
+          abstract_memory: 0.30
+          temporal_graph: 0.35
+          hierarchical_intent: 0.20
+      - given_parent_option: enterprise_rights_orgs
+        then_probabilities:
+          session_only: 0.10
+          abstract_memory: 0.25
+          temporal_graph: 0.40
+          hierarchical_intent: 0.25
+      - given_parent_option: ai_platform_consumers
+        then_probabilities:
+          session_only: 0.45
+          abstract_memory: 0.30
+          temporal_graph: 0.10
+          hierarchical_intent: 0.15
+
+archetype_weights:
+  engineer_heavy_startup:
+    probability_overrides:
+      session_only: 0.15
+      abstract_memory: 0.35
+      temporal_graph: 0.30
+      hierarchical_intent: 0.20
+    rationale: >
+      Engineers can build temporal graph infrastructure. Abstract
+      memory is pragmatic default, temporal graph for differentiation.
+
+  musician_first_team:
+    probability_overrides:
+      session_only: 0.30
+      abstract_memory: 0.40
+      temporal_graph: 0.10
+      hierarchical_intent: 0.20
+    rationale: >
+      Musicians value personalization but team can't maintain graph
+      infra. Abstract memory provides best effort-to-value ratio.
+
+  solo_hacker:
+    probability_overrides:
+      session_only: 0.45
+      abstract_memory: 0.35
+      temporal_graph: 0.05
+      hierarchical_intent: 0.15
+    rationale: >
+      Solo developers skip cross-session complexity. Session-only
+      or simple abstract memory keeps scope manageable.
+
+  well_funded_startup:
+    probability_overrides:
+      session_only: 0.10
+      abstract_memory: 0.30
+      temporal_graph: 0.35
+      hierarchical_intent: 0.25
+    rationale: >
+      Can invest in temporal graph for premium tier differentiation.
+      Zep/Graphiti integration provides attribution history value.
+
+research_influences:
+  - paper: "PS-Bench: Evaluating Personalized Safety in LLMs"
+    venue: "2025"
+    authors: "PS-Bench authors"
+    concept: personalization_attack_surface
+    library_status: benchmark
+    prd_implication: >
+      Detailed personal memories increase attack success by up to
+      244%. Memory semantically aligned with harm category enables
+      intent legitimation. Design implication: prefer abstract over
+      detailed memory, apply safety filtering on retrieval.
+
+  - paper: "Puda: Privacy-Utility Data Abstraction"
+    venue: "2025"
+    authors: "Puda authors"
+    concept: abstract_memory_effectiveness
+    library_status: framework
+    prd_implication: >
+      Category-level memory retains 97.2% personalization effectiveness
+      at most restrictive privacy tier. Dominant strategy: nearly all
+      value, dramatically reduced risk.
+
+  - paper: "OP-Bench: Over-Personalization Benchmark"
+    venue: "2026"
+    authors: "OP-Bench authors"
+    concept: over_personalization_failure_modes
+    library_status: benchmark
+    prd_implication: >
+      Three failure modes — irrelevance, repetition, sycophancy.
+      Sycophancy is critical for music attribution: agent must not
+      validate user's preferred credit over metadata evidence.
+      Mitigation: factual grounding gate that overrides memory
+      with database evidence.
+
+volatility:
+  classification: shifting
+  last_assessed: 2026-02-20
+  next_review: 2026-05-20
+  change_drivers:
+    - "Mem0, Zep, Letta competing for memory layer standard"
+    - "PS-Bench and OP-Bench driving safety-aware personalization"
+    - "LLM providers adding native memory features"
+    - "Privacy regulations (GDPR, CCPA) constraining stored data"
+
+domain_applicability:
+  music_attribution: 1.0
+  dpp_traceability: 0.7
+  generic_graph_rag: 0.8
+
+tags:
+  - implementation
+  - persona
+  - memory
+  - privacy
+  - safety
+  - personalization
+
+references:
+  - "docs/planning/voice-agent-research/persona-coherence/hyperpersonalization-frameworks.md"
+  - "docs/planning/voice-agent-research/persona-coherence/persona-coherence-literature-review.md"

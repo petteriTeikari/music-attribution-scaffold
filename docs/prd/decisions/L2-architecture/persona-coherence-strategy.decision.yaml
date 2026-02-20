@@ -1,0 +1,267 @@
+# Persona Coherence Strategy
+#
+# Determines how the agent maintains consistent persona behavior across
+# conversation turns, sessions, and channels. Critical for voice agents
+# where the 8-turn drift cliff arrives in under 5 minutes.
+
+decision_id: persona_coherence_strategy
+title: "Persona Coherence Strategy"
+description: >
+  Selects the architectural approach for maintaining consistent agent
+  persona across multi-turn conversations. Research shows persona
+  adherence degrades sharply after ~8 turns (Li et al., 2024), with
+  larger models drifting more than smaller ones (Caron et al., 2024).
+  Voice conversations amplify drift through faster turn cadence (2-4x),
+  emotional tone leakage, and latency-driven response truncation.
+  The choice here determines drift resistance, implementation complexity,
+  and compatibility with API-hosted vs self-hosted LLMs.
+
+decision_level: L2_architecture
+status: active
+last_updated: 2026-02-20
+
+options:
+  - option_id: prompt_layered
+    title: "Prompt-Layered Persona"
+    description: >
+      System prompt with structured persona sections (identity, style,
+      boundaries). Simplest approach, universally deployable with any
+      LLM provider. Drift-prone after 8 turns as context window fills
+      and attention to system prompt decays. Mitigation: periodic
+      reinforcement injection every 5 turns (~3% context overhead).
+    prior_probability: 0.25
+    status: viable
+    complements:
+      - "llm_provider.anthropic_primary"
+      - "ai_framework_strategy.pydantic_ai_direct"
+
+  - option_id: memory_anchored
+    title: "Memory-Anchored Persona (Letta/MemGPT)"
+    description: >
+      Read-only persona blocks in a three-tier memory system
+      (core/conversational/archival). Core persona block is immutable
+      and injected at every turn, preventing self-modification drift.
+      Compatible with API-hosted LLMs. Requires Letta integration
+      but provides structural drift prevention without model access.
+      Recommended for teams using API providers (Anthropic, OpenAI).
+    prior_probability: 0.35
+    status: recommended
+    complements:
+      - "ai_framework_strategy.pydantic_ai_direct"
+      - "llm_provider.anthropic_primary"
+
+  - option_id: activation_space
+    title: "Activation Space Control (PERSONA Vectors)"
+    description: >
+      Persona trait directions identified in model activation space,
+      enabling 91% win rate on independent trait tuning. Requires
+      self-hosted models with mechanistic interpretability access.
+      Incompatible with API-hosted LLMs. Best long-term control but
+      highest infrastructure requirement.
+    prior_probability: 0.10
+    status: experimental
+    constraints:
+      - "Requires self-hosted model with activation access"
+      - "Incompatible with Anthropic/OpenAI API providers"
+      - "Requires mechanistic interpretability infrastructure"
+    complements:
+      - "llm_provider.open_source_local"
+
+  - option_id: training_based
+    title: "Training-Based Persona (Fine-Tuning)"
+    description: >
+      BIG5-CHAT or CoSER-style fine-tuning on persona-annotated
+      conversations. PersonaFuse MoE with Big Five trait experts.
+      High upfront cost (2-4 weeks training), best long-term stability.
+      Requires custom model deployment. Viable for teams building
+      artist-specific digital twins.
+    prior_probability: 0.10
+    status: experimental
+    constraints:
+      - "2-4 week training cycle per persona variant"
+      - "Requires GPU infrastructure for fine-tuning"
+      - "Model updates require retraining"
+    complements:
+      - "llm_provider.open_source_local"
+      - "build_vs_buy_posture.custom_build"
+
+  - option_id: hybrid_layered
+    title: "Hybrid (Prompt + Memory + Mitigation)"
+    description: >
+      Combines prompt-layered persona with memory-anchored read-only
+      blocks and runtime mitigation (Split-Softmax attention reweighting
+      or periodic reinforcement). Increases operational complexity but
+      provides defense-in-depth against drift. Natural evolution path:
+      start with prompt-layered, add memory blocks, then add monitoring.
+    prior_probability: 0.20
+    status: viable
+    complements:
+      - "persona_drift_monitoring.echomode_syncscore"
+
+conditional_on:
+  - parent_decision_id: ai_framework_strategy
+    influence_strength: moderate
+    conditional_table:
+      - given_parent_option: pydantic_ai_direct
+        then_probabilities:
+          prompt_layered: 0.25
+          memory_anchored: 0.40
+          activation_space: 0.05
+          training_based: 0.05
+          hybrid_layered: 0.25
+      - given_parent_option: lightweight_sdk
+        then_probabilities:
+          prompt_layered: 0.35
+          memory_anchored: 0.30
+          activation_space: 0.05
+          training_based: 0.10
+          hybrid_layered: 0.20
+      - given_parent_option: orchestration_framework
+        then_probabilities:
+          prompt_layered: 0.20
+          memory_anchored: 0.30
+          activation_space: 0.10
+          training_based: 0.15
+          hybrid_layered: 0.25
+      - given_parent_option: no_llm
+        then_probabilities:
+          prompt_layered: 0.00
+          memory_anchored: 0.00
+          activation_space: 0.00
+          training_based: 0.00
+          hybrid_layered: 0.00
+
+  - parent_decision_id: build_vs_buy_posture
+    influence_strength: moderate
+    conditional_table:
+      - given_parent_option: custom_build
+        then_probabilities:
+          prompt_layered: 0.15
+          memory_anchored: 0.30
+          activation_space: 0.15
+          training_based: 0.15
+          hybrid_layered: 0.25
+      - given_parent_option: managed_services
+        then_probabilities:
+          prompt_layered: 0.35
+          memory_anchored: 0.35
+          activation_space: 0.00
+          training_based: 0.05
+          hybrid_layered: 0.25
+      - given_parent_option: saas_maximalist
+        then_probabilities:
+          prompt_layered: 0.50
+          memory_anchored: 0.25
+          activation_space: 0.00
+          training_based: 0.00
+          hybrid_layered: 0.25
+
+archetype_weights:
+  engineer_heavy_startup:
+    probability_overrides:
+      prompt_layered: 0.15
+      memory_anchored: 0.35
+      activation_space: 0.15
+      training_based: 0.10
+      hybrid_layered: 0.25
+    rationale: >
+      Engineers can invest in Letta integration and may explore
+      activation space control. Memory-anchored is the sweet spot
+      for API-constrained teams with engineering capacity.
+
+  musician_first_team:
+    probability_overrides:
+      prompt_layered: 0.35
+      memory_anchored: 0.30
+      activation_space: 0.00
+      training_based: 0.05
+      hybrid_layered: 0.30
+    rationale: >
+      Musicians need consistent persona but lack infrastructure
+      for advanced approaches. Prompt-layered with gradual migration
+      to hybrid as team grows.
+
+  solo_hacker:
+    probability_overrides:
+      prompt_layered: 0.50
+      memory_anchored: 0.20
+      activation_space: 0.00
+      training_based: 0.00
+      hybrid_layered: 0.30
+    rationale: >
+      Solo developers start with prompt-layered for speed. Letta
+      adds complexity. Hybrid via simple periodic reinforcement
+      is achievable without infrastructure investment.
+
+  well_funded_startup:
+    probability_overrides:
+      prompt_layered: 0.10
+      memory_anchored: 0.35
+      activation_space: 0.15
+      training_based: 0.15
+      hybrid_layered: 0.25
+    rationale: >
+      Can invest in any approach. Memory-anchored or activation
+      space for competitive advantage. Training-based for digital
+      twin differentiation.
+
+research_influences:
+  - paper: "Evaluating Character Understanding of Large Language Models via Character Profiling"
+    venue: "arXiv 2024"
+    authors: "Li et al."
+    concept: eight_turn_drift_cliff
+    library_status: finding
+    prd_implication: >
+      Persona adherence degrades sharply after ~8 conversation turns.
+      Voice conversations reach this cliff in under 5 minutes due to
+      2-4x faster turn cadence. Any coherence strategy must account
+      for this critical threshold.
+
+  - paper: "PERSONA: A Reproducible Testbed for Pluralistic Alignment"
+    venue: "NeurIPS 2024"
+    authors: "Castricato et al."
+    concept: persona_activation_vectors
+    library_status: research_tool
+    prd_implication: >
+      91% win rate on independent trait tuning via activation space
+      steering. Demonstrates persona control without fine-tuning
+      but requires model internals access (self-hosted only).
+
+  - paper: "EchoMode"
+    venue: "2025"
+    authors: "EchoMode authors"
+    concept: syncscore_drift_detection
+    library_status: open_source
+    prd_implication: >
+      SyncScore + EWMA provides continuous drift signal without
+      model internals access. Apache 2.0 licensed, production-ready.
+      Pairs with any coherence strategy as monitoring layer.
+
+volatility:
+  classification: volatile
+  last_assessed: 2026-02-20
+  next_review: 2026-04-20
+  change_drivers:
+    - "Rapid evolution of persona-aware LLM architectures (PERSONA, PersonaFuse)"
+    - "Letta/MemGPT API stabilization and managed service availability"
+    - "Anthropic/OpenAI adding native persona persistence features"
+    - "EchoMode and PersonaGym maturity for production drift detection"
+    - "NO FAKES Act implications for artist persona digital twins"
+
+domain_applicability:
+  music_attribution: 1.0
+  dpp_traceability: 0.6
+  generic_graph_rag: 0.4
+
+tags:
+  - architecture
+  - persona
+  - agent
+  - drift
+  - memory
+  - voice
+
+references:
+  - "docs/planning/voice-agent-research/persona-coherence/persona-coherence-literature-review.md"
+  - "docs/planning/voice-agent-research/persona-coherence/drift-detection-methods.md"
+  - "docs/planning/voice-agent-research/persona-coherence/commercial-tools-landscape.md"

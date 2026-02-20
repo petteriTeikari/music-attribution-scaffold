@@ -12,12 +12,18 @@
 
 network:
   name: "Probabilistic PRD Decision Network"
-  version: "3.0.0"
-  last_updated: 2026-02-14
+  version: "3.1.0"
+  last_updated: 2026-02-20
   description: >
     Bayesian decision network for the Music Attribution Scaffold.
     5-level hierarchy (L1 Business → L5 Operations) with conditional
     probability edges encoding how upstream choices influence downstream options.
+    v3.1.0: Persona coherence expansion — 5 new nodes
+    (1 L2 architecture, 3 L3 implementation, 1 L5 operations) covering
+    persona coherence strategy, user modeling, voice persona management,
+    cross-channel state, and persona drift monitoring. ~20 new edges
+    bringing total to ~151. Based on 4 literature reviews in
+    docs/planning/voice-agent-research/persona-coherence/.
     v3.0.0: Discussion expansion — 28 new ecosystem integration nodes
     (2 L2 architecture, 18 L3 components, 4 L4 deployment, 4 L5 operations)
     covering platform strategy, partnerships, CMO licensing, edge inference,
@@ -100,6 +106,12 @@ nodes:
     file: L2-architecture/partnership-model.decision.yaml
     title: "Partnership Model"
 
+  # L2: Architecture Decisions (Persona coherence expansion v3.1.0)
+  - id: persona_coherence_strategy
+    level: L2_architecture
+    file: L2-architecture/persona-coherence-strategy.decision.yaml
+    title: "Persona Coherence Strategy"
+
   # L3: Implementation Decisions
   - id: primary_database
     level: L3_implementation
@@ -170,6 +182,22 @@ nodes:
     level: L3_implementation
     file: L3-implementation/mcp-production-deployment.decision.yaml
     title: "MCP Production Deployment"
+
+  # L3: Implementation Decisions (Persona coherence expansion v3.1.0)
+  - id: user_modeling_strategy
+    level: L3_implementation
+    file: L3-implementation/user-modeling-strategy.decision.yaml
+    title: "User Modeling Strategy"
+
+  - id: voice_persona_management
+    level: L3_implementation
+    file: L3-implementation/voice-persona-management.decision.yaml
+    title: "Voice Persona Management"
+
+  - id: cross_channel_state_strategy
+    level: L3_implementation
+    file: L3-implementation/cross-channel-state-strategy.decision.yaml
+    title: "Cross-Channel State Strategy"
 
   # L3: Component Decisions (commercial landscape stubs)
   - id: training_attribution_integration
@@ -438,6 +466,12 @@ nodes:
     level: L5_operations
     file: L5-operations/partnership-health-metrics.decision.yaml
     title: "Partnership Health Metrics"
+
+  # L5: Operations Decisions (Persona coherence expansion v3.1.0)
+  - id: persona_drift_monitoring
+    level: L5_operations
+    file: L5-operations/persona-drift-monitoring.decision.yaml
+    title: "Persona Drift Monitoring"
 
 # --- Edge Declarations ---
 
@@ -1491,3 +1525,122 @@ edges:
     to: ethics_governance
     influence: moderate
     rationale: "Code authorship transparency feeds governance-as-code for AI Act compliance"
+
+  # =================================================================
+  # Persona Coherence Expansion Edges (v3.1.0)
+  # 5 new persona/voice nodes, ~20 new edges
+  # =================================================================
+
+  # --- L1 → L2 edges (Business → persona coherence) ---
+
+  - from: build_vs_buy_posture
+    to: persona_coherence_strategy
+    influence: moderate
+    rationale: "Custom builders can invest in memory-anchored/activation-space approaches; SaaS teams use prompt-layered"
+
+  # --- L2 → L2 edges (existing Architecture → persona coherence) ---
+
+  - from: ai_framework_strategy
+    to: persona_coherence_strategy
+    influence: moderate
+    rationale: "PydanticAI direct API favors memory-anchored persona; no-LLM eliminates all persona strategies"
+
+  # --- L2 → L3 edges (persona coherence → new Implementation nodes) ---
+
+  - from: persona_coherence_strategy
+    to: user_modeling_strategy
+    influence: strong
+    rationale: "Persona architecture determines viable user modeling depth — memory-anchored enables cross-session; prompt-layered limits to session-only"
+
+  - from: persona_coherence_strategy
+    to: voice_persona_management
+    influence: moderate
+    rationale: "Advanced persona coherence (training-based) enables artist voice cloning; prompt-layered limits to system voice"
+
+  - from: persona_coherence_strategy
+    to: cross_channel_state_strategy
+    influence: moderate
+    rationale: "Memory-anchored persona naturally pairs with shared memory store; prompt-layered allows channel-independent"
+
+  # --- L1 → L3 skip-connections (Business → new L3 nodes) ---
+
+  - from: target_market_segment
+    to: user_modeling_strategy
+    influence: moderate
+    rationale: "Enterprise segments need temporal graph for attribution history; indie creators need abstract memory"
+
+  # --- L3 → L3 edges (existing Implementation → new nodes) ---
+
+  - from: voice_agent_stack
+    to: voice_persona_management
+    influence: strong
+    rationale: "Voice stack choice (Vapi/LiveKit/none) directly determines viable voice persona approaches"
+
+  - from: agentic_ui_framework
+    to: cross_channel_state_strategy
+    influence: moderate
+    rationale: "CopilotKit AG-UI provides agent runtime context that cross-channel state extends"
+
+  # --- L3 → L3 edges (new nodes → existing nodes) ---
+
+  - from: user_modeling_strategy
+    to: graph_rag_engine
+    influence: weak
+    rationale: "Temporal graph user modeling may leverage same graph infrastructure as RAG engine"
+
+  # --- L2/L3 → L5 edges (persona nodes → drift monitoring) ---
+
+  - from: persona_coherence_strategy
+    to: persona_drift_monitoring
+    influence: strong
+    rationale: "Coherence strategy determines which drift monitoring approaches are viable — activation-space enables probes; prompt-layered limits to embedding/SyncScore"
+
+  - from: user_modeling_strategy
+    to: persona_drift_monitoring
+    influence: moderate
+    rationale: "User modeling depth affects drift risk — detailed memory increases sycophancy drift requiring monitoring"
+
+  - from: observability_stack
+    to: persona_drift_monitoring
+    influence: moderate
+    rationale: "Drift monitoring builds on existing observability infrastructure for alerting and dashboards"
+
+  # --- L3 → L5 skip-connections (voice/channel → monitoring) ---
+
+  - from: voice_persona_management
+    to: persona_drift_monitoring
+    influence: moderate
+    rationale: "Voice persona adds emotional tone drift dimension not present in text-only interactions"
+
+  # --- L5 → L5 same-level cross-influences ---
+
+  - from: persona_drift_monitoring
+    to: ml_monitoring
+    influence: moderate
+    rationale: "Persona drift metrics are a specialized category of ML model monitoring"
+
+  - from: persona_drift_monitoring
+    to: attribution_accuracy_monitoring
+    influence: weak
+    rationale: "Persona drift may cause sycophancy, affecting attribution accuracy via biased responses"
+
+  # --- FinOps connections (voice cost) ---
+
+  - from: voice_persona_management
+    to: finops_strategy
+    influence: moderate
+    rationale: "Voice persona choice drives 10-50x cost multiplier ($0.028-0.164/min vs $0.001-0.01/turn text) — critical FinOps parameter"
+
+  # --- Regulatory connections (consent) ---
+
+  - from: regulatory_posture
+    to: voice_persona_management
+    influence: moderate
+    rationale: "NO FAKES Act and GEMA AI Charter require consent infrastructure for artist voice cloning"
+
+  # --- Revenue model connections ---
+
+  - from: revenue_model
+    to: voice_persona_management
+    influence: moderate
+    rationale: "Subscription tiers determine which voice persona features are available (free=text, premium=system voice, pro=artist clone)"
