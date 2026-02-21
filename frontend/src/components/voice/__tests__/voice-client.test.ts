@@ -168,3 +168,25 @@ describe("VoiceClient messaging", () => {
     expect(client.isConnected()).toBe(false);
   });
 });
+
+/* ── Voice store atoms ─────────────────────────────────────────── */
+
+describe("Voice store atoms", () => {
+  it("exports voiceStateAtom with idle default", async () => {
+    const { voiceStateAtom } = await import("@/lib/stores/voice");
+    expect(voiceStateAtom).toBeDefined();
+    expect(voiceStateAtom.init).toBe("idle");
+  });
+
+  it("exports voiceConnectionAtom with disconnected default", async () => {
+    const { voiceConnectionAtom } = await import("@/lib/stores/voice");
+    expect(voiceConnectionAtom).toBeDefined();
+    expect(voiceConnectionAtom.init).toBe("disconnected");
+  });
+
+  it("exports both atoms from the same module", async () => {
+    const mod = await import("@/lib/stores/voice");
+    expect(mod.voiceStateAtom).toBeDefined();
+    expect(mod.voiceConnectionAtom).toBeDefined();
+  });
+});

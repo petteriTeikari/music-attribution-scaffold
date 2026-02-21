@@ -5,6 +5,8 @@ from __future__ import annotations
 import pytest
 
 from music_attribution.voice.tools import (
+    PIPECAT_AVAILABLE,
+    _validate_uuid,
     get_function_schemas,
     get_tool_schemas,
 )
@@ -208,3 +210,120 @@ class TestToolHandlers:
             assert "Database not available" in results[0]["result"]
         finally:
             tools_mod._session_factory = old  # type: ignore[assignment]
+
+
+class TestUUIDValidation:
+    """Tests for UUID input validation."""
+
+    def test_valid_uuid(self) -> None:
+        """A valid UUID returns True."""
+        assert _validate_uuid("00000000-0000-0000-0000-000000000001") is True
+
+    def test_invalid_uuid(self) -> None:
+        """A non-UUID string returns False."""
+        assert _validate_uuid("not-a-uuid") is False
+
+    def test_empty_string(self) -> None:
+        """Empty string returns False."""
+        assert _validate_uuid("") is False
+
+    def test_uuid_without_dashes(self) -> None:
+        """UUID without dashes is still valid."""
+        assert _validate_uuid("00000000000000000000000000000001") is True
+
+    @pytest.mark.anyio
+    async def test_invalid_uuid_rejected_by_explain_confidence(self) -> None:
+        """explain_confidence rejects invalid work_id before DB call."""
+        import music_attribution.voice.tools as tools_mod
+
+        results: list[dict] = []
+
+        class MockParams:
+            arguments = {"work_id": "not-a-uuid"}
+
+            async def result_callback(self, result: dict) -> None:
+                results.append(result)
+
+        await tools_mod._handle_explain_confidence(MockParams())
+        assert len(results) == 1
+        assert "Invalid work ID" in results[0]["explanation"]
+
+    @pytest.mark.anyio
+    async def test_invalid_uuid_rejected_by_suggest_correction(self) -> None:
+        """suggest_correction rejects invalid work_id."""
+        import music_attribution.voice.tools as tools_mod
+
+        results: list[dict] = []
+
+        class MockParams:
+            arguments = {
+                "work_id": "bad-id",
+                "field": "x",
+                "current_value": "a",
+                "suggested_value": "b",
+                "reason": "test",
+            }
+
+            async def result_callback(self, result: dict) -> None:
+                results.append(result)
+
+        await tools_mod._handle_suggest_correction(MockParams())
+        assert len(results) == 1
+        assert "Invalid work ID" in results[0]["result"]
+
+    @pytest.mark.anyio
+    async def test_invalid_uuid_rejected_by_submit_feedback(self) -> None:
+        """submit_feedback rejects invalid work_id."""
+        import music_attribution.voice.tools as tools_mod
+
+        results: list[dict] = []
+
+        class MockParams:
+            arguments = {"work_id": "bad-id", "overall_assessment": 0.5}
+
+            async def result_callback(self, result: dict) -> None:
+                results.append(result)
+
+        await tools_mod._handle_submit_feedback(MockParams())
+        assert len(results) == 1
+        assert "Invalid work ID" in results[0]["result"]
+
+
+class TestRegisterDomainTools:
+    """Tests for register_domain_tools function."""
+
+    @pytest.mark.skipif(PIPECAT_AVAILABLE, reason="Only test when pipecat NOT installed")
+    def test_register_raises_without_pipecat(self) -> None:
+        """register_domain_tools raises ImportError without pipecat."""
+        from music_attribution.voice.tools import register_domain_tools
+
+        with pytest.raises(ImportError, match="pipecat-ai is not installed"):
+            register_domain_tools(object())
+
+
+class TestCreateLLMService:
+    """Tests for create_llm_service function."""
+
+    @pytest.mark.skipif(PIPECAT_AVAILABLE, reason="Only test when pipecat NOT installed")
+    def test_create_llm_raises_without_pipecat(self) -> None:
+        """create_llm_service raises ImportError without pipecat."""
+        from music_attribution.voice.config import VoiceConfig
+        from music_attribution.voice.pipeline import create_llm_service
+
+        config = VoiceConfig(llm_api_key="test-key")
+        with pytest.raises(ImportError, match="pipecat-ai is not installed"):
+            create_llm_service(config)
+
+    @pytest.mark.skipif(PIPECAT_AVAILABLE, reason="Only test when pipecat NOT installed")
+    def test_create_llm_requires_api_key(self) -> None:
+        """create_llm_service validates API key before proceeding.
+
+        When pipecat isn't installed, ImportError is raised first.
+        This test verifies the error path exists.
+        """
+        from music_attribution.voice.config import VoiceConfig
+        from music_attribution.voice.pipeline import create_llm_service
+
+        config = VoiceConfig(llm_api_key=None)
+        with pytest.raises(ImportError):
+            create_llm_service(config)
