@@ -5,13 +5,12 @@
  * manages connection lifecycle + message passing.
  */
 
+import type { VoiceConnectionState } from "@/lib/stores/voice";
+
 /* ── Types ───────────────────────────────────────────────────── */
 
-export type ConnectionState =
-  | "disconnected"
-  | "connecting"
-  | "connected"
-  | "error";
+/** Re-export for convenience. */
+export type ConnectionState = VoiceConnectionState;
 
 export interface VoiceClientConfig {
   /** WebSocket URL (e.g. "ws://localhost:8765/ws/voice"). */
@@ -19,7 +18,7 @@ export interface VoiceClientConfig {
   /** Called when a message arrives from the server. */
   onMessage?: (data: ArrayBuffer | string) => void;
   /** Called when connection state changes. */
-  onStateChange?: (state: ConnectionState) => void;
+  onStateChange?: (state: VoiceConnectionState) => void;
 }
 
 export interface VoiceClient {
@@ -50,6 +49,7 @@ export function createVoiceClient(config: VoiceClientConfig): VoiceClient {
         setState("connecting");
 
         ws = new WebSocket(config.url);
+        ws.binaryType = "arraybuffer";
 
         ws.onopen = () => {
           setState("connected");

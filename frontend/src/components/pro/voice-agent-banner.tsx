@@ -10,14 +10,14 @@ export function VoiceAgentBanner() {
   if (dismissed) return null;
 
   return (
-    <div className="mx-auto max-w-4xl px-6">
+    <div className="w-full px-6">
       <div className="relative overflow-hidden rounded-lg border border-accent bg-accent-muted p-6">
         <button
           onClick={() => setDismissed(true)}
-          className="absolute right-3 top-3 text-muted hover:text-body transition-colors"
+          className="absolute right-3 top-3 flex min-w-11 min-h-11 items-center justify-center text-muted hover:text-body transition-colors"
           aria-label="Dismiss"
         >
-          ×
+          {"\u00d7"}
         </button>
 
         <div className="flex items-center gap-6">

@@ -41,22 +41,21 @@ export function AudioVisualizer({
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
+    // Hoist color reads outside RAF loop (only changes on theme switch → re-render)
+    const computedStyle = getComputedStyle(document.documentElement);
+    const accentColor =
+      computedStyle.getPropertyValue("--color-accent").trim() ||
+      "currentColor";
+    const mutedColor =
+      computedStyle.getPropertyValue("--color-muted").trim() ||
+      "currentColor";
+
+    const barCount = 12;
+    const barWidth = width / (barCount * 2);
+    const isActive = voiceState === "recording" || voiceState === "playing";
+
     const drawBars = () => {
       ctx.clearRect(0, 0, width, height);
-
-      const barCount = 12;
-      const barWidth = width / (barCount * 2);
-      const isActive = voiceState === "recording" || voiceState === "playing";
-
-      // Get accent color from CSS variable (no fallback hex — design system enforced)
-      const computedStyle = getComputedStyle(document.documentElement);
-      const accentColor =
-        computedStyle.getPropertyValue("--color-accent").trim() ||
-        "currentColor";
-      const mutedColor =
-        computedStyle.getPropertyValue("--color-muted").trim() ||
-        "currentColor";
-
       ctx.fillStyle = isActive ? accentColor : mutedColor;
 
       for (let i = 0; i < barCount; i++) {

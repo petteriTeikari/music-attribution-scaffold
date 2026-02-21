@@ -1,7 +1,7 @@
 "use client";
 
 import { useAtom } from "jotai";
-import { useCallback, useRef } from "react";
+import { useCallback, useEffect, useRef } from "react";
 
 import { voiceStateAtom, type VoiceState } from "@/lib/stores/voice";
 
@@ -36,6 +36,14 @@ export function VoiceButton({ className = "", disabled = false }: VoiceButtonPro
   const [voiceState, setVoiceState] = useAtom(voiceStateAtom);
   const streamRef = useRef<MediaStream | null>(null);
 
+  // C2 fix: Clean up MediaStream on unmount to release microphone
+  useEffect(() => {
+    return () => {
+      streamRef.current?.getTracks().forEach((t) => t.stop());
+      streamRef.current = null;
+    };
+  }, []);
+
   const handleClick = useCallback(async () => {
     if (disabled) return;
 
@@ -65,7 +73,6 @@ export function VoiceButton({ className = "", disabled = false }: VoiceButtonPro
     <div className={className}>
       <button
         type="button"
-        role="button"
         onClick={handleClick}
         disabled={disabled}
         aria-label={STATE_LABELS[voiceState]}
