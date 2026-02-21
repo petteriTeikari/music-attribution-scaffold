@@ -27,7 +27,7 @@ class TestVoiceModuleExports:
     def test_pipeline_importable(self) -> None:
         """Pipeline module is importable."""
         mod = importlib.import_module("music_attribution.voice.pipeline")
-        assert hasattr(mod, "create_voice_pipeline")
+        assert hasattr(mod, "get_pipeline_config")
 
     def test_tools_importable(self) -> None:
         """Tools module is importable."""

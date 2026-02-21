@@ -143,9 +143,9 @@ async def main(argv: list[str] | None = None) -> None:
         sys.exit(1)
 
     # Create pipeline configuration
-    from music_attribution.voice.pipeline import create_voice_pipeline
+    from music_attribution.voice.pipeline import get_pipeline_config
 
-    pipeline_config = create_voice_pipeline(config)
+    pipeline_config = get_pipeline_config(config)
 
     logger.info("Pipeline configured: %s", pipeline_config)
     logger.info(

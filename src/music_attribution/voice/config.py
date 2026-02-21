@@ -187,6 +187,16 @@ class VoiceConfig(BaseSettings):
         description="Enable NeMo Guardrails persona boundary rails",
     )
 
+    # ── LLM Settings ──────────────────────────────────────────────────
+    llm_api_key: str | None = Field(
+        default=None,
+        description="API key for the voice pipeline LLM (OpenAI-compatible)",
+    )
+    llm_model: str = Field(
+        default="gpt-4o-mini",
+        description="LLM model name for voice pipeline (OpenAI-compatible)",
+    )
+
     # ── Commercial API Keys (all optional) ──────────────────────────
     deepgram_api_key: str | None = Field(
         default=None,

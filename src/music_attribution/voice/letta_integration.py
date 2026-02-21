@@ -70,13 +70,13 @@ def create_letta_client(config: VoiceConfig) -> Any:
     ImportError
         If letta-client is not installed.
     """
-    if not config.letta_base_url:
-        msg = "letta_base_url must be configured for Letta integration"
-        raise ValueError(msg)
-
     if not LETTA_AVAILABLE:
         msg = "letta-client is not installed. Install with: uv add letta-client"
         raise ImportError(msg)
+
+    if not config.letta_base_url:
+        msg = "letta_base_url must be configured for Letta integration"
+        raise ValueError(msg)
 
     client = Letta(base_url=config.letta_base_url)
     logger.info("Letta client connected to %s", config.letta_base_url)

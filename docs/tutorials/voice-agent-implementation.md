@@ -167,7 +167,7 @@ The voice agent wraps the existing PydanticAI text agent in a Pipecat audio pipe
                  └──────────────────────────────────┘
 ```
 
-When Pipecat is installed (`uv sync --group voice`), the `build_pipecat_pipeline()` function assembles the real pipeline. When Pipecat is not installed, `create_voice_pipeline()` returns a configuration dict for testing.
+When Pipecat is installed (`uv sync --group voice`), the `build_pipecat_pipeline()` function assembles the real pipeline. When Pipecat is not installed, `get_pipeline_config()` returns a configuration dict for testing.
 
 > **Source:** [`src/music_attribution/voice/pipeline.py`](../../src/music_attribution/voice/pipeline.py)
 

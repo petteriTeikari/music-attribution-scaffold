@@ -127,7 +127,7 @@ class TestToolHandlers:
         results: list[dict] = []
 
         class MockParams:
-            arguments = {"work_id": "test-id"}
+            arguments = {"work_id": "00000000-0000-0000-0000-000000000001"}
 
             async def result_callback(self, result: dict) -> None:
                 results.append(result)
@@ -171,7 +171,7 @@ class TestToolHandlers:
 
         class MockParams:
             arguments = {
-                "work_id": "abc-123",
+                "work_id": "00000000-0000-0000-0000-000000000002",
                 "field": "artist_name",
                 "current_value": "Imogene Heap",
                 "suggested_value": "Imogen Heap",
@@ -197,7 +197,7 @@ class TestToolHandlers:
         results: list[dict] = []
 
         class MockParams:
-            arguments = {"work_id": "abc-123", "overall_assessment": 0.8}
+            arguments = {"work_id": "00000000-0000-0000-0000-000000000003", "overall_assessment": 0.8}
 
             async def result_callback(self, result: dict) -> None:
                 results.append(result)

@@ -192,6 +192,28 @@ def register_domain_tools(llm_service: Any) -> None:
     logger.info("Voice tools: 4 domain functions registered with LLM service")
 
 
+def _validate_uuid(value: str) -> bool:
+    """Validate that a string is a valid UUID.
+
+    Parameters
+    ----------
+    value : str
+        String to validate.
+
+    Returns
+    -------
+    bool
+        True if the string is a valid UUID.
+    """
+    import uuid as _uuid
+
+    try:
+        _uuid.UUID(value)
+    except (ValueError, AttributeError):
+        return False
+    return True
+
+
 async def _handle_explain_confidence(params: Any) -> None:
     """Handle explain_confidence function call from voice LLM.
 
@@ -204,6 +226,10 @@ async def _handle_explain_confidence(params: Any) -> None:
         Pipecat function call parameters with work_id argument.
     """
     work_id = params.arguments.get("work_id", "")
+
+    if not _validate_uuid(work_id):
+        await params.result_callback({"explanation": f"Invalid work ID format: '{work_id}'. Expected a UUID."})
+        return
 
     if not _session_factory:
         await params.result_callback({"explanation": "Database not available. Cannot look up attribution records."})
@@ -304,6 +330,11 @@ async def _handle_suggest_correction(params: Any) -> None:
         Pipecat function call parameters with correction details.
     """
     work_id = params.arguments.get("work_id", "")
+
+    if not _validate_uuid(work_id):
+        await params.result_callback({"result": f"Invalid work ID format: '{work_id}'. Expected a UUID."})
+        return
+
     field_name = params.arguments.get("field", "")
     current_value = params.arguments.get("current_value", "")
     suggested_value = params.arguments.get("suggested_value", "")
@@ -328,6 +359,11 @@ async def _handle_submit_feedback(params: Any) -> None:
         Pipecat function call parameters with feedback details.
     """
     work_id = params.arguments.get("work_id", "")
+
+    if not _validate_uuid(work_id):
+        await params.result_callback({"result": f"Invalid work ID format: '{work_id}'. Expected a UUID."})
+        return
+
     assessment = params.arguments.get("overall_assessment", 0.5)
     free_text = params.arguments.get("free_text", "")
 

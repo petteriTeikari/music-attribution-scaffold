@@ -149,11 +149,11 @@ test-voice:  ## Run voice agent tests
 	.venv/bin/python -m pytest tests/unit/voice/ -v --timeout=60
 
 dev-voice:  ## Start voice agent dev server (localhost:8001)
-	VOICE_TRANSPORT=websocket uv run uvicorn music_attribution.voice.server:create_voice_router --factory --host 0.0.0.0 --port 8001 --reload
+	VOICE_TRANSPORT=websocket uv run uvicorn music_attribution.voice.server:create_voice_app --factory --host 0.0.0.0 --port 8001 --reload
 
-voice-local:  ## Run fully local voice agent (Whisper + Piper + Ollama, $0/min)
-	@echo "Starting fully local voice agent (no API keys needed)"
-	@echo "Requires: Ollama running locally with a model pulled"
+voice-local:  ## Run fully local voice agent (Whisper + Piper, $0/min)
+	@echo "Starting fully local voice agent"
+	@echo "Requires: VOICE_LLM_API_KEY set in .env (see .env.example)"
 	VOICE_STT_PROVIDER=whisper VOICE_TTS_PROVIDER=piper uv run python scripts/voice_demo.py
 
 # =============================================================================

@@ -45,12 +45,12 @@ except ImportError:
     PIPECAT_AVAILABLE = False
 
 
-def create_voice_pipeline(config: VoiceConfig) -> Any:
-    """Create a configured voice pipeline from config.
+def get_pipeline_config(config: VoiceConfig) -> dict[str, Any]:
+    """Return a pipeline configuration dict for inspection and testing.
 
-    When Pipecat is installed, delegates to :func:`_build_pipecat_pipeline`
-    to create a real ``Pipeline`` with selected services.  When Pipecat
-    is not installed, returns a configuration dict for testing.
+    This is a lightweight function that summarizes the pipeline config
+    without creating any Pipecat objects. Useful for health checks,
+    logging, and testing without Pipecat installed.
 
     Parameters
     ----------
@@ -59,9 +59,8 @@ def create_voice_pipeline(config: VoiceConfig) -> Any:
 
     Returns
     -------
-    Pipeline | dict
-        A real Pipecat Pipeline when ``pipecat-ai`` is installed,
-        otherwise a configuration dict describing the pipeline.
+    dict
+        Configuration dict describing the pipeline settings.
     """
     pipeline_config = {
         "stt": config.stt_provider.value,
@@ -222,20 +221,19 @@ def create_llm_service(config: VoiceConfig) -> Any:
         msg = "pipecat-ai is not installed. Install with: uv sync --group voice"
         raise ImportError(msg)
 
-    # Use OpenAI-compatible endpoint — works with Anthropic's compatibility API
-    # or any OpenAI-compatible LLM (Ollama, vLLM, etc.)
-    import os
-
     from pipecat.services.openai.llm import OpenAILLMService
 
     from music_attribution.voice.tools import register_domain_tools
 
-    # Log which provider config was used (validates config is wired through)
-    logger.info("Creating LLM service (transport=%s)", config.transport.value)
+    if not config.llm_api_key:
+        msg = "VOICE_LLM_API_KEY must be set for voice pipeline LLM. Set it in .env or environment variables."
+        raise ValueError(msg)
+
+    logger.info("Creating LLM service (model=%s, transport=%s)", config.llm_model, config.transport.value)
 
     llm = OpenAILLMService(
-        api_key=os.environ.get("OPENAI_API_KEY", "not-set"),
-        model=os.environ.get("VOICE_LLM_MODEL", "gpt-4o-mini"),
+        api_key=config.llm_api_key,
+        model=config.llm_model,
     )
 
     # Register domain tools as function handlers

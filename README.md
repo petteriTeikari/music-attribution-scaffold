@@ -259,10 +259,10 @@ uv run python scripts/voice_demo.py --stt deepgram --tts elevenlabs
 
 | Component | Open-Source Default | Commercial Alternative |
 |---|---|---|
-| STT | faster-whisper (MIT) | Deepgram Nova-3, AssemblyAI |
+| STT | Whisper (MIT) | Deepgram Nova-3, AssemblyAI |
 | TTS | Piper (GPL) | ElevenLabs, Cartesia, Kokoro |
-| Transport | WebSocket / SmallWebRTC | Daily WebRTC (Pipecat Cloud) |
-| LLM | Ollama + Qwen3 | Claude Haiku 4.5, GPT-4o-mini |
+| Transport | WebSocket | SmallWebRTC, Daily WebRTC (Pipecat Cloud) |
+| LLM | GPT-4o-mini (OpenAI-compatible) | Any OpenAI-compatible API (Ollama, vLLM, Anthropic) |
 | Persona | Prompt-layered | Letta (MemGPT), Mem0 |
 | Guardrails | Regex fallback | NeMo Guardrails (Colang 2.0) |
 

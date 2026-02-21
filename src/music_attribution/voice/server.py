@@ -18,9 +18,14 @@ music_attribution.voice.pipeline : Pipeline factory.
 
 from __future__ import annotations
 
+import asyncio
 import logging
+from typing import TYPE_CHECKING
 
 from fastapi import APIRouter, WebSocket
+
+if TYPE_CHECKING:
+    from fastapi import FastAPI
 
 logger = logging.getLogger(__name__)
 
@@ -36,8 +41,12 @@ try:
 except ImportError:
     PIPECAT_AVAILABLE = False
 
-# Track active connections for health monitoring
+# Track active connections — guarded by asyncio.Lock for thread safety
 _active_connections: int = 0
+_connections_lock = asyncio.Lock()
+
+# Maximum concurrent WebSocket connections to prevent resource exhaustion
+MAX_VOICE_CONNECTIONS = 10
 
 
 def create_voice_router() -> APIRouter:
@@ -55,11 +64,14 @@ def create_voice_router() -> APIRouter:
     @router.get("/health")
     async def voice_health() -> dict:
         """Voice agent health check."""
+        async with _connections_lock:
+            connections = _active_connections
         return {
             "status": "ok",
             "service": "voice-agent",
             "pipecat_available": PIPECAT_AVAILABLE,
-            "active_connections": _active_connections,
+            "active_connections": connections,
+            "max_connections": MAX_VOICE_CONNECTIONS,
         }
 
     @router.websocket("/ws")
@@ -79,7 +91,17 @@ def create_voice_router() -> APIRouter:
             await websocket.close()
             return
 
-        _active_connections += 1
+        # Connection limit guard — reject before allocating resources
+        async with _connections_lock:
+            if _active_connections >= MAX_VOICE_CONNECTIONS:
+                await websocket.accept()
+                await websocket.send_json(
+                    {"error": f"Too many connections ({MAX_VOICE_CONNECTIONS} max). Try again later."}
+                )
+                await websocket.close()
+                return
+            _active_connections += 1
+
         logger.info("Voice WebSocket connected (active: %d)", _active_connections)
 
         try:
@@ -107,7 +129,26 @@ def create_voice_router() -> APIRouter:
         except Exception:
             logger.exception("Voice WebSocket error")
         finally:
-            _active_connections -= 1
+            async with _connections_lock:
+                _active_connections -= 1
             logger.info("Voice WebSocket disconnected (active: %d)", _active_connections)
 
     return router
+
+
+def create_voice_app() -> FastAPI:
+    """Create a standalone FastAPI app for voice development.
+
+    Mounts the voice router on a minimal FastAPI app, suitable for
+    running with ``uvicorn --factory``.
+
+    Returns
+    -------
+    FastAPI
+        A FastAPI app with the voice router mounted.
+    """
+    from fastapi import FastAPI
+
+    app = FastAPI(title="Music Attribution Voice Agent (Dev)")
+    app.include_router(create_voice_router())
+    return app

@@ -58,6 +58,8 @@ class DriftDetector:
         self._reference_text = reference_text
         self._ewma_score: float = 1.0  # Start in sync
         self._raw_scores: list[float] = []
+        self._model: Any = None
+        self._ref_embedding: Any = None
 
     def score(self, response_text: str) -> float:
         """Compute drift score for a response.
@@ -156,10 +158,10 @@ class DriftDetector:
         """
         from sentence_transformers import SentenceTransformer
 
-        # Cache the model on the instance
-        if not hasattr(self, "_model"):
+        # Cache the model on the instance (initialized to None in __init__)
+        if self._model is None:
             self._model = SentenceTransformer("all-MiniLM-L6-v2")
-        if not hasattr(self, "_ref_embedding"):
+        if self._ref_embedding is None:
             self._ref_embedding = self._model.encode(self._reference_text)
 
         resp_embedding = self._model.encode(response_text)

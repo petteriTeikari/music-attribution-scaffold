@@ -25,12 +25,17 @@ class TestLettaClientFactory:
         assert isinstance(LETTA_AVAILABLE, bool)
 
     def test_create_letta_client_requires_base_url(self) -> None:
-        """create_letta_client raises ValueError without base_url."""
-        from music_attribution.voice.letta_integration import create_letta_client
+        """create_letta_client raises ValueError without base_url (when letta installed)."""
+        from music_attribution.voice.letta_integration import LETTA_AVAILABLE, create_letta_client
 
         config = VoiceConfig(letta_base_url=None)
-        with pytest.raises(ValueError, match="letta_base_url"):
-            create_letta_client(config)
+        if not LETTA_AVAILABLE:
+            # Without letta-client, ImportError is raised before config check
+            with pytest.raises(ImportError, match="letta-client"):
+                create_letta_client(config)
+        else:
+            with pytest.raises(ValueError, match="letta_base_url"):
+                create_letta_client(config)
 
     def test_create_letta_client_with_url(self) -> None:
         """create_letta_client returns a client dict/stub with URL set."""
