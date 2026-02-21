@@ -66,5 +66,23 @@ def find_classes(filepath: Path) -> list[str]:
 
 Using grep/sed/awk is allowed for:
 - Log file analysis
-- Non-Python text files
-- Simple string searches (not structural analysis)
+- Non-Python text files (YAML, JSON, Markdown, etc.)
+
+**NOT allowed even when "simpler":**
+- `"import_name" in source` — use `ast.Import`/`ast.ImportFrom` nodes
+- `"class_name" in source` — use `ast.ClassDef` nodes
+- `"function_name" in source` — use `ast.FunctionDef` nodes
+- `source.count("keyword")` — use `ast.Constant` string value checks
+- Any `str.find()`, `str.count()`, `re.search()` on Python source code
+
+## Documented Failures
+
+### 2026-02-22: test_demo_script.py string-based analysis
+
+`test_demo_script.py` used `"argparse" in source` and `"VoiceConfig" in source`
+to check for imports — string-based code analysis disguised as "simple checks."
+This violated the AST-only rule. Rewritten to use `ast.walk()` with proper
+`ast.Import`, `ast.ImportFrom`, and `ast.Constant` node inspection.
+
+**Lesson:** "It's just a test" and "it's simpler" are NOT valid exceptions.
+The AST-only rule applies to ALL Python source analysis in ALL contexts.
