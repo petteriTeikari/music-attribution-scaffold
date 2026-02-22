@@ -1,0 +1,94 @@
+# Voice Pipeline Benchmarking
+#
+# How the voice pipeline is benchmarked for latency, throughput, and
+# resource utilization across CPU and GPU hardware configurations.
+
+decision_id: voice_pipeline_benchmarking
+title: "Voice Pipeline Benchmarking"
+description: >
+  Determines the approach for benchmarking voice pipeline performance.
+  Critical for understanding hardware requirements (CPU vs GPU trade-offs),
+  regression detection, and capacity planning. The RTX 2070 Super (8 GB VRAM)
+  is the reference development GPU; benchmarks must respect VRAM constraints.
+
+decision_level: L5_operations
+status: active
+last_updated: 2026-02-22
+
+options:
+  - option_id: local_script
+    title: "Local Benchmark Script"
+    description: >
+      Standalone Python script that measures STT cold start, inference
+      latency (CPU vs CUDA), TTS synthesis time, and drift detection
+      overhead. Outputs JSON + stdout table. Uses synthetic test audio
+      (440 Hz sine wave) — zero external dependencies. VRAM guards
+      prevent OOM on consumer GPUs.
+    prior_probability: 0.55
+    status: selected
+
+  - option_id: ci_regression
+    title: "CI Regression Benchmarks"
+    description: >
+      Automated benchmarks in CI pipeline with regression thresholds.
+      Fails the build if latency exceeds baseline. Requires GPU runners
+      (expensive) or CPU-only subset. Deferred until baseline data exists.
+    prior_probability: 0.30
+    status: deferred
+    constraints:
+      - "GPU CI runners (GitHub Actions GPU runners are $0.07/min)"
+      - "Baseline latency data from local benchmarks"
+
+  - option_id: continuous_profiling
+    title: "Continuous Profiling (Pyroscope/Parca)"
+    description: >
+      Always-on profiling in staging/production that captures CPU/GPU
+      flame graphs and memory allocation patterns. Maximum observability
+      but significant infrastructure and runtime overhead. Deferred
+      until production traffic warrants it.
+    prior_probability: 0.15
+    status: deferred
+    constraints:
+      - "Pyroscope/Parca infrastructure"
+      - "Production traffic volume"
+      - "Profiling overhead budget (~2-5% CPU)"
+
+research_notes: >
+  Whisper model latency varies dramatically by size and hardware:
+  tiny (39M params, ~100ms GPU / ~2s CPU), small (244M, ~400ms GPU / ~8s CPU),
+  medium (769M, ~1.5s GPU / ~30s CPU). The 'large' model requires ~10 GB VRAM,
+  exceeding the RTX 2070 Super's 8 GB. Piper TTS is CPU-only (ONNX runtime)
+  with typical latency of 50-150ms for short utterances. Drift detection
+  via sentence-transformers all-MiniLM-L6-v2 adds ~10-15ms per scoring call.
+
+influences:
+  - from: voice_agent_stack
+    direction: upstream
+    rationale: "Voice stack choice determines which components need benchmarking"
+  - from: observability_stack
+    direction: upstream
+    rationale: "Observability infrastructure captures benchmark metrics in production"
+
+volatility:
+  classification: moderate
+  last_assessed: 2026-02-22
+  next_review: 2026-05-22
+  change_drivers:
+    - "New Whisper model releases (e.g. distil-whisper, whisper-turbo)"
+    - "GPU CI runner pricing changes"
+    - "Production traffic patterns"
+
+domain_applicability:
+  music_attribution: 1.0
+  dpp_traceability: 0.3
+
+tags:
+  - operations
+  - benchmarking
+  - voice
+  - performance
+
+references:
+  - "scripts/benchmark_voice.py"
+  - "src/music_attribution/observability/voice_metrics.py"
+  - "docker/grafana/dashboards/voice-pipeline.json"

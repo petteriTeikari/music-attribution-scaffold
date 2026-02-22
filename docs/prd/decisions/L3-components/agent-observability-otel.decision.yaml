@@ -10,8 +10,8 @@ description: >
   full OpenTelemetry-native tracing with GenAI semantic conventions.
 
 decision_level: L3_components
-status: stub
-last_updated: 2026-02-14
+status: draft
+last_updated: 2026-02-22
 
 options:
   - option_id: none
@@ -49,6 +49,22 @@ research_notes: >
   provides OTel-native observability specifically for PydanticAI agents.
   AG2 (AutoGen successor) integrated OTel in Feb 2026, validating the
   approach. Langfuse remains popular but is not OTel-native.
+
+  Prometheus 3.0 Convergence (Feb 2026): Native OTLP ingestion in Prometheus
+  3.0 means agent OTel traces can be exported to Prometheus directly.
+  UTF-8 metric names eliminate the naming convention gap. This makes the
+  full_otel option more practical as it no longer requires a separate
+  OTel-compatible backend.
+
+  LLM Observability Blind Spots identified: (1) probabilistic output quality
+  — need prompt/completion tracing not just latency; (2) token usage and cost
+  attribution per feature/user/tool; (3) multi-hop agent pipeline tracing for
+  tool call chains; (4) RAG retrieval quality scoring for silent failures;
+  (5) persona drift monitoring (8-turn cliff); (6) eBPF for zero-instrumentation
+  network-level LLM call visibility. Current logfire_langfuse selection
+  addresses blind spots 1-4; voice_metrics addresses 5.
+
+  See: docs/knowledge-base/technical/observability/prometheus-otel-convergence-2026.md
 
 influences:
   - from: observability_stack

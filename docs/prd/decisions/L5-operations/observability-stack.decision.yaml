@@ -12,7 +12,7 @@ description: >
 
 decision_level: L5_operations
 status: active
-last_updated: 2026-02-10
+last_updated: 2026-02-22
 
 options:
   - option_id: langfuse_plus_platform
@@ -29,7 +29,10 @@ options:
     description: >
       Full open-source observability: Prometheus for metrics, Loki for
       logs, Tempo for traces, Grafana for dashboards. Self-hosted or
-      Grafana Cloud. Comprehensive but requires setup.
+      Grafana Cloud. Comprehensive but requires setup. Prometheus 3.0
+      (Nov 2025) adds native OTLP ingestion, UTF-8 metric names, and
+      Remote Write 2.0 — significantly reducing the gap with OTel-native
+      solutions.
     prior_probability: 0.25
     status: viable
     constraints:
@@ -162,14 +165,33 @@ archetype_weights:
       minimal_logging: 0.10
     rationale: "Datadog for enterprise SLAs, PostHog for product analytics. Best of both worlds."
 
+research_notes: >
+  Prometheus 3.0 + OTel Convergence (Feb 2026 assessment): UTF-8 metric names
+  eliminate naming friction between Prometheus and OTel conventions. OTLP is
+  now a native ingestion protocol — no conversion proxies needed. OTel is
+  evaluating adoption of Prometheus exposition specs. Richard Hartmann
+  (Grafana Labs) frames this as "less tyranny of choice — one way to do
+  things that works on both sides."
+
+  LLM Observability Blind Spots: Traditional metrics/logs/traces were designed
+  for deterministic systems. LLM applications introduce: (1) probabilistic
+  output quality requiring prompt/completion tracing, (2) token-based cost
+  attribution, (3) multi-hop agent pipeline tracing, (4) RAG retrieval
+  quality scoring, (5) persona/behavioral drift (8-turn cliff), (6) eBPF
+  for zero-instrumentation network-level LLM call visibility.
+
+  See: docs/knowledge-base/technical/observability/prometheus-otel-convergence-2026.md
+
 volatility:
   classification: stable
-  last_assessed: 2026-02-10
-  next_review: 2026-05-10
+  last_assessed: 2026-02-22
+  next_review: 2026-05-22
   change_drivers:
     - "Langfuse feature expansion"
     - "OpenTelemetry ecosystem maturity"
+    - "Prometheus 3.0 OTLP convergence impact"
     - "Datadog pricing changes"
+    - "LLM-specific observability tooling emergence"
 
 domain_applicability:
   music_attribution: 1.0
