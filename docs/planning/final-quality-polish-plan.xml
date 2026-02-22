@@ -1,0 +1,329 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<plan version="1.0" name="Final Quality Polish for Zenodo Freeze">
+  <metadata>
+    <created>2026-02-22</created>
+    <branch>fix/final-quality-polish</branch>
+    <description>Fix all remaining quality issues found by 3 review agents (backend, frontend, docs/build). 22 open tracking issues.</description>
+  </metadata>
+
+  <!-- ===== PHASE 1: Backend Critical + Quick Wins ===== -->
+
+  <task id="T01" status="NOT_STARTED" priority="CRITICAL">
+    <name>Fix acoustid_fingerprint field name mismatch</name>
+    <issue>200</issue>
+    <dependencies/>
+    <files>
+      <file action="EDIT">src/music_attribution/resolution/orchestrator.py</file>
+    </files>
+    <tdd_spec>
+      <test_file>tests/unit/resolution/test_orchestrator_acoustid.py</test_file>
+      <tests>
+        <test>test_compute_resolution_details_uses_acoustid_field — Create records with IdentifierBundle(acoustid="abc123"), call _compute_resolution_details, verify matched_ids includes "acoustid:abc123"</test>
+      </tests>
+      <implementation>Change line 365 from ("isrc", "iswc", "isni", "mbid", "acoustid_fingerprint") to ("isrc", "iswc", "isni", "mbid", "acoustid")</implementation>
+    </tdd_spec>
+  </task>
+
+  <task id="T02" status="NOT_STARTED" priority="WARNING">
+    <name>Remove duplicate Settings() in app.py</name>
+    <issue>205</issue>
+    <dependencies/>
+    <files>
+      <file action="EDIT">src/music_attribution/api/app.py</file>
+    </files>
+    <tdd_spec>
+      <test_file>tests/unit/api/test_app_settings.py</test_file>
+      <tests>
+        <test>test_create_app_uses_single_settings — Verify Settings is instantiated exactly once via mock</test>
+      </tests>
+      <implementation>Move CORS settings access to lifespan or use app.state.settings. Remove duplicate Settings() call.</implementation>
+    </tdd_spec>
+  </task>
+
+  <task id="T03" status="NOT_STARTED" priority="WARNING">
+    <name>Type annotations and thread-safe singleton in agui_endpoint</name>
+    <issue>202,204</issue>
+    <dependencies/>
+    <files>
+      <file action="EDIT">src/music_attribution/chat/agui_endpoint.py</file>
+    </files>
+    <tdd_spec>
+      <test_file>tests/unit/chat/test_agui_singleton.py</test_file>
+      <tests>
+        <test>test_get_agent_returns_same_instance — Call _get_agent() twice, verify same object returned</test>
+        <test>test_get_agent_thread_safe — Call _get_agent() from multiple threads, verify exactly one agent created</test>
+      </tests>
+      <implementation>Add type annotation to _agent global. Add threading.Lock for singleton. Type session_factory parameter properly.</implementation>
+    </tdd_spec>
+  </task>
+
+  <task id="T04" status="NOT_STARTED" priority="WARNING">
+    <name>Fix error handling anti-patterns</name>
+    <issue>203</issue>
+    <dependencies/>
+    <files>
+      <file action="EDIT">src/music_attribution/resolution/llm_disambiguation.py</file>
+      <file action="EDIT">src/music_attribution/resolution/splink_linkage.py</file>
+    </files>
+    <tdd_spec>
+      <test_file>tests/unit/resolution/test_error_handling.py</test_file>
+      <tests>
+        <test>test_llm_disambiguation_timeout_handled — Verify TimeoutError produces specific error reasoning</test>
+        <test>test_splink_em_failure_logged — Verify suppressed EM errors are logged at WARNING</test>
+      </tests>
+      <implementation>Split except (TimeoutError, Exception) into separate handlers. Add logging to suppress(Exception) in EM loop.</implementation>
+    </tdd_spec>
+  </task>
+
+  <task id="T05" status="NOT_STARTED" priority="WARNING">
+    <name>Wire dependencies.get_db_session into routes</name>
+    <issue>201</issue>
+    <dependencies/>
+    <files>
+      <file action="EDIT">src/music_attribution/api/routes/attribution.py</file>
+      <file action="EDIT">src/music_attribution/api/routes/permissions.py</file>
+      <file action="EDIT">src/music_attribution/api/dependencies.py</file>
+    </files>
+    <tdd_spec>
+      <test_file>tests/unit/api/test_dependencies_usage.py</test_file>
+      <tests>
+        <test>test_attribution_routes_use_dependency — Verify _get_session removed, dependency used</test>
+        <test>test_permissions_routes_use_dependency — Same check for permissions routes</test>
+      </tests>
+      <implementation>Remove _get_session from both route modules. Refactor get_db_session to work as shared utility (extract factory from request.app.state). Use in all route endpoints.</implementation>
+    </tdd_spec>
+  </task>
+
+  <task id="T06" status="NOT_STARTED" priority="INFO">
+    <name>Backend dead code cleanup</name>
+    <issue>207</issue>
+    <dependencies/>
+    <files>
+      <file action="DELETE">src/music_attribution/core.py</file>
+      <file action="EDIT">src/music_attribution/__init__.py</file>
+      <file action="EDIT">src/music_attribution/observability/metrics.py</file>
+      <file action="EDIT">src/music_attribution/constants.py</file>
+      <file action="EDIT">src/music_attribution/attribution/priority_queue.py</file>
+    </files>
+    <tdd_spec>
+      <test_file>tests/unit/test_dead_code_cleanup.py</test_file>
+      <tests>
+        <test>test_core_module_removed — Verify core.py no longer exists</test>
+        <test>test_source_weights_immutable — Verify SOURCE_RELIABILITY_WEIGHTS is read-only</test>
+        <test>test_priority_weights_immutable — Verify _WEIGHTS is read-only</test>
+      </tests>
+      <implementation>Delete core.py. Remove empty TYPE_CHECKING block and unused string constants from metrics.py. Use MappingProxyType for mutable dicts. Clean up redundant top-level imports in voice modules.</implementation>
+    </tdd_spec>
+  </task>
+
+  <!-- ===== PHASE 2: Frontend Fixes ===== -->
+
+  <task id="T07" status="NOT_STARTED" priority="WARNING">
+    <name>Replace hardcoded boxShadow with shadow tokens</name>
+    <issue>211</issue>
+    <dependencies/>
+    <files>
+      <file action="EDIT">frontend/src/components/permissions/consent-profile.tsx</file>
+      <file action="EDIT">frontend/src/components/citations/inline-citation.tsx</file>
+      <file action="EDIT">frontend/src/app/globals.css</file>
+    </files>
+    <tdd_spec>
+      <test_file>frontend/src/__tests__/shadow-token-lint.test.ts</test_file>
+      <tests>
+        <test>test_no_hardcoded_rgba_shadows — Scan .tsx files for rgba box-shadow, assert zero matches</test>
+      </tests>
+      <implementation>Define --shadow-popover token in globals.css. Replace all 4 hardcoded rgba(0,0,0,0.12) box-shadows with var(--shadow-popover).</implementation>
+    </tdd_spec>
+  </task>
+
+  <task id="T08" status="NOT_STARTED" priority="WARNING">
+    <name>Extract permission result color mapping</name>
+    <issue>214</issue>
+    <dependencies/>
+    <files>
+      <file action="CREATE">frontend/src/lib/theme/permissions.ts</file>
+      <file action="EDIT">frontend/src/components/permissions/audit-log.tsx</file>
+      <file action="EDIT">frontend/src/components/mcp/mcp-query-mockup.tsx</file>
+    </files>
+    <tdd_spec>
+      <test_file>frontend/src/__tests__/permission-colors.test.ts</test_file>
+      <tests>
+        <test>test_getPermissionResultCssVar_deny — Returns --color-permission-deny for DENY</test>
+        <test>test_getPermissionResultCssVar_allow — Returns --color-permission-allow for ALLOW variants</test>
+        <test>test_getPermissionResultCssVar_ask — Returns --color-permission-ask for ASK</test>
+      </tests>
+      <implementation>Create lib/theme/permissions.ts with getPermissionResultCssVar(). Update audit-log.tsx and mcp-query-mockup.tsx to import from shared module.</implementation>
+    </tdd_spec>
+  </task>
+
+  <task id="T09" status="NOT_STARTED" priority="WARNING">
+    <name>Accessibility gaps — keyboard, ARIA, focus trap</name>
+    <issue>218</issue>
+    <dependencies/>
+    <files>
+      <file action="EDIT">frontend/src/components/notifications/notification-badge.tsx</file>
+      <file action="EDIT">frontend/src/app/permissions/page.tsx</file>
+      <file action="EDIT">frontend/src/components/layout/navigation.tsx</file>
+      <file action="EDIT">frontend/src/components/permissions/consent-profile.tsx</file>
+    </files>
+    <tdd_spec>
+      <test_file>frontend/src/__tests__/accessibility-fixes.test.ts</test_file>
+      <tests>
+        <test>test_notification_badge_escape_closes — Escape key closes dropdown</test>
+        <test>test_notification_badge_aria_expanded — Button has aria-expanded attribute</test>
+        <test>test_permission_tabs_tablist_role — Tab container has role="tablist"</test>
+        <test>test_count_bucket_keyboard — Enter/Space activates option</test>
+      </tests>
+      <implementation>Add Escape handler + aria-expanded to notification badge. Add role="tablist" to permission tabs. Add onKeyDown to CountBucket options. Add aria-hidden to decorative accent lines.</implementation>
+    </tdd_spec>
+  </task>
+
+  <task id="T10" status="NOT_STARTED" priority="WARNING">
+    <name>Remove dead components and unused atoms</name>
+    <issue>220</issue>
+    <dependencies/>
+    <files>
+      <file action="DELETE">frontend/src/components/feedback/feedback-panel.tsx</file>
+      <file action="DELETE">frontend/src/components/pro/voice-agent-banner.tsx</file>
+      <file action="DELETE">frontend/src/hooks/use-feature-flags.ts</file>
+      <file action="EDIT">frontend/src/lib/stores/works.ts</file>
+      <file action="EDIT">frontend/src/lib/stores/theme.ts</file>
+    </files>
+    <tdd_spec>
+      <test_file>frontend/src/__tests__/dead-code-cleanup.test.ts</test_file>
+      <tests>
+        <test>test_no_dead_todo_components — Scan for "TODO: Component not yet integrated" in non-test .tsx files, assert count is zero or only confidence-explanation.tsx remains</test>
+      </tests>
+      <implementation>Delete FeedbackPanel, VoiceAgentBanner, useFeatureFlags. Remove selectedWorkAtom and resolvedThemeAtom from stores. Keep ConfidenceExplanation (used by ConfidencePopover import chain).</implementation>
+    </tdd_spec>
+  </task>
+
+  <task id="T11" status="NOT_STARTED" priority="WARNING">
+    <name>Performance — memoize suggestions, pass ConsentGraph props</name>
+    <issue>222</issue>
+    <dependencies/>
+    <files>
+      <file action="EDIT">frontend/src/components/review/agent-review-queue.tsx</file>
+      <file action="EDIT">frontend/src/app/permissions/page.tsx</file>
+    </files>
+    <tdd_spec>
+      <test_file>frontend/src/__tests__/performance-fixes.test.ts</test_file>
+      <tests>
+        <test>test_suggestions_memoized — Verify generateAgentSuggestions not called on every render</test>
+        <test>test_consent_graph_receives_group_counts — Verify groupCounts prop is passed</test>
+      </tests>
+      <implementation>Wrap generateAgentSuggestions in useMemo. Pass groupCounts and totalPermissionCount to ConsentGraph from permissions page.</implementation>
+    </tdd_spec>
+  </task>
+
+  <task id="T12" status="NOT_STARTED" priority="WARNING">
+    <name>Remove banned rounded-* classes from MCP mockup</name>
+    <issue>225</issue>
+    <dependencies/>
+    <files>
+      <file action="EDIT">frontend/src/components/mcp/mcp-query-mockup.tsx</file>
+      <file action="EDIT">frontend/src/components/states/error-boundary.tsx</file>
+    </files>
+    <tdd_spec>
+      <test_file>frontend/src/__tests__/design-system-lint.test.ts</test_file>
+      <tests>
+        <test>test_no_rounded_lg_in_active_components — Scan active (non-dead) .tsx files for rounded-lg/rounded-md usage, assert minimal or zero</test>
+      </tests>
+      <implementation>Replace rounded-lg/md/full with sharp edges in MCP mockup and error boundary.</implementation>
+    </tdd_spec>
+  </task>
+
+  <task id="T13" status="NOT_STARTED" priority="WARNING">
+    <name>Move PostHog env vars to config.ts</name>
+    <issue>212</issue>
+    <dependencies/>
+    <files>
+      <file action="EDIT">frontend/src/lib/analytics/posthog-provider.tsx</file>
+      <file action="EDIT">frontend/src/config.ts</file>
+    </files>
+    <tdd_spec>
+      <test_file>frontend/src/__tests__/posthog-config.test.ts</test_file>
+      <tests>
+        <test>test_posthog_env_vars_in_config — Verify config.ts exports POSTHOG_KEY and POSTHOG_HOST</test>
+        <test>test_provider_imports_from_config — Verify posthog-provider imports from config, not process.env</test>
+      </tests>
+      <implementation>Add POSTHOG_KEY and POSTHOG_HOST to config.ts. Update posthog-provider.tsx to import from config.</implementation>
+    </tdd_spec>
+  </task>
+
+  <!-- ===== PHASE 3: Docs + Config ===== -->
+
+  <task id="T14" status="NOT_STARTED" priority="CRITICAL">
+    <name>Reconcile sample data count (9 vs 8 works)</name>
+    <issue>215</issue>
+    <dependencies/>
+    <files>
+      <file action="EDIT">src/music_attribution/seed/imogen_heap.py</file>
+      <file action="EDIT">README.md</file>
+    </files>
+    <tdd_spec>
+      <test_file>tests/unit/seed/test_seed_count.py</test_file>
+      <tests>
+        <test>test_seed_data_count_matches_readme — Count seed records, verify matches README claim</test>
+      </tests>
+      <implementation>Add "What Have You Done To Me?" to backend seed data (confidence 0.48, needs_review True) to match README's 9-work claim.</implementation>
+    </tdd_spec>
+  </task>
+
+  <task id="T15" status="NOT_STARTED" priority="WARNING">
+    <name>Update README test counts</name>
+    <issue>217</issue>
+    <dependencies/>
+    <files>
+      <file action="EDIT">README.md</file>
+    </files>
+    <tdd_spec>
+      <test_file>NONE</test_file>
+      <tests/>
+      <implementation>Run test suites, count actual results, update all test count references in README to match reality.</implementation>
+    </tdd_spec>
+  </task>
+
+  <task id="T16" status="NOT_STARTED" priority="WARNING">
+    <name>Fix PRD node counts across docs</name>
+    <issue>219</issue>
+    <dependencies/>
+    <files>
+      <file action="EDIT">CLAUDE.md</file>
+      <file action="EDIT">README.md</file>
+    </files>
+    <tdd_spec>
+      <test_file>NONE</test_file>
+      <tests/>
+      <implementation>Count actual .decision.yaml files, update CLAUDE.md (23 → actual), README (40+ → actual).</implementation>
+    </tdd_spec>
+  </task>
+
+  <task id="T17" status="NOT_STARTED" priority="WARNING">
+    <name>Add missing .gitignore entries</name>
+    <issue>224</issue>
+    <dependencies/>
+    <files>
+      <file action="EDIT">.gitignore</file>
+    </files>
+    <tdd_spec>
+      <test_file>NONE</test_file>
+      <tests/>
+      <implementation>Add benchmark-results.json, *.zip, frontend/test-results/, frontend/playwright-report/ to .gitignore.</implementation>
+    </tdd_spec>
+  </task>
+
+  <task id="T18" status="NOT_STARTED" priority="INFO">
+    <name>Zenodo DOI placeholder</name>
+    <issue>213</issue>
+    <dependencies/>
+    <files>
+      <file action="EDIT">README.md</file>
+    </files>
+    <tdd_spec>
+      <test_file>NONE</test_file>
+      <tests/>
+      <implementation>Remove Zenodo badge placeholder until actual DOI is assigned. Add TODO comment noting where to add it back.</implementation>
+    </tdd_spec>
+  </task>
+</plan>
