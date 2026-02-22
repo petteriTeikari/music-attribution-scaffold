@@ -8,16 +8,16 @@ backward compatibility.
 from __future__ import annotations
 
 import uuid
-from datetime import UTC, datetime
 
 import pytest
 
-from music_attribution.schemas.attribution import AttributionRecord, Credit
+from music_attribution.schemas.attribution import Credit
 from music_attribution.schemas.enums import (
     AssuranceLevelEnum,
     CreditRoleEnum,
     SourceEnum,
 )
+from tests.factories import make_attribution as _make_minimal_record
 
 
 @pytest.mark.unit
@@ -60,40 +60,6 @@ class TestCreditDisplayFields:
         data = credit.model_dump(mode="json")
         assert "entity_name" in data
         assert data["entity_name"] == "Guy Sigsworth"
-
-
-def _make_minimal_record(**overrides: object) -> AttributionRecord:
-    """Create a minimal valid AttributionRecord for testing."""
-    now = datetime.now(UTC)
-    defaults: dict = {
-        "work_entity_id": uuid.uuid4(),
-        "credits": [
-            Credit(
-                entity_id=uuid.uuid4(),
-                role=CreditRoleEnum.PERFORMER,
-                confidence=0.9,
-                sources=[SourceEnum.MUSICBRAINZ],
-                assurance_level=AssuranceLevelEnum.LEVEL_2,
-            )
-        ],
-        "assurance_level": AssuranceLevelEnum.LEVEL_2,
-        "confidence_score": 0.85,
-        "conformal_set": {
-            "coverage_level": 0.9,
-            "marginal_coverage": 0.88,
-            "calibration_error": 0.02,
-            "calibration_method": "platt",
-            "calibration_set_size": 100,
-        },
-        "source_agreement": 0.8,
-        "needs_review": False,
-        "review_priority": 0.5,
-        "created_at": now,
-        "updated_at": now,
-        "version": 1,
-    }
-    defaults.update(overrides)
-    return AttributionRecord(**defaults)
 
 
 @pytest.mark.unit

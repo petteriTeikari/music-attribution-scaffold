@@ -48,6 +48,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from music_attribution.attribution.persistence import AsyncAttributionRepository
+from music_attribution.constants import CONFIDENCE_HIGH_THRESHOLD, CONFIDENCE_MEDIUM_THRESHOLD
 from music_attribution.db.models import AttributionRecordModel
 from music_attribution.schemas.attribution import (
     AttributionRecord,
@@ -154,14 +155,14 @@ def _build_uncertainty_for_record(record: AttributionRecord) -> UncertaintyAware
         credit_sources.update(credit.sources)
 
     # Derive uncertainty from confidence level
-    if confidence >= 0.85:
+    if confidence >= CONFIDENCE_HIGH_THRESHOLD:
         intrinsic = 0.02
         extrinsic = 0.04
         total = 0.06
         dominant = UncertaintySourceEnum.ALEATORIC
         cal_status = CalibrationStatusEnum.CALIBRATED
         cal_ece = 0.02
-    elif confidence >= 0.50:
+    elif confidence >= CONFIDENCE_MEDIUM_THRESHOLD:
         intrinsic = 0.08
         extrinsic = 0.15
         total = 0.23

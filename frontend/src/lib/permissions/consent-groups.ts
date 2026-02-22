@@ -8,6 +8,7 @@
 import type { PermissionEntry } from "@/lib/types/permissions";
 import type { PermissionType } from "@/lib/types/enums";
 import { getPlatform } from "@/lib/data/ecosystem-platforms";
+import { formatSnakeCase } from "@/lib/utils/format";
 
 /** Roman-numeral labels for groups. */
 const ROMAN = ["I", "II", "III"] as const;
@@ -75,7 +76,7 @@ const GROUP_TOOLTIPS: Record<string, string> = {
     "Case-by-case approvals routed through the delegation chain. Remix, sample, and derivative requests go to management for review.",
 };
 
-function isAllowValue(value: string): boolean {
+export function isAllowValue(value: string): boolean {
   return value === "ALLOW" || value === "ALLOW_WITH_ATTRIBUTION" || value === "ALLOW_WITH_ROYALTY";
 }
 
@@ -137,9 +138,4 @@ export function buildConsentGroups(permissions: PermissionEntry[]): ConsentGroup
 }
 
 /** Format a permission type for display (e.g. "VOICE_CLONING" → "Voice Cloning"). */
-export function formatPermissionType(type: string): string {
-  return type
-    .split("_")
-    .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
-    .join(" ");
-}
+export const formatPermissionType = formatSnakeCase;

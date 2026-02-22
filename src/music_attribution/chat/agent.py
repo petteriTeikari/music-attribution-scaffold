@@ -46,6 +46,12 @@ from pydantic import BaseModel, Field
 from pydantic_ai import Agent
 
 from music_attribution.chat.state import AttributionAgentState, CorrectionPreview
+from music_attribution.constants import (
+    AGREEMENT_HIGH_THRESHOLD,
+    AGREEMENT_MODERATE_THRESHOLD,
+    CENTER_BIAS_HIGH,
+    CENTER_BIAS_LOW,
+)
 
 if TYPE_CHECKING:
     from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
@@ -312,9 +318,9 @@ def create_attribution_agent() -> Agent[AgentDeps, str]:
         agreement = record.source_agreement
 
         factors = []
-        if agreement > 0.8:
+        if agreement > AGREEMENT_HIGH_THRESHOLD:
             factors.append(f"High source agreement ({agreement:.0%})")
-        elif agreement > 0.5:
+        elif agreement > AGREEMENT_MODERATE_THRESHOLD:
             factors.append(f"Moderate source agreement ({agreement:.0%})")
         else:
             factors.append(f"Low source agreement ({agreement:.0%})")
@@ -473,7 +479,7 @@ def create_attribution_agent() -> Agent[AgentDeps, str]:
         """
         import uuid as _uuid
 
-        center_bias = 0.45 <= overall_assessment <= 0.55
+        center_bias = CENTER_BIAS_LOW <= overall_assessment <= CENTER_BIAS_HIGH
         bias_warning = ""
         if center_bias:
             bias_warning = " (center bias detected — consider whether you can be more decisive)"

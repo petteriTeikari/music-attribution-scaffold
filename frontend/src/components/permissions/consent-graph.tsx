@@ -12,6 +12,7 @@
 import { useRef, useEffect, useState, useMemo, useCallback } from "react";
 import type { AuditLogEntry } from "@/lib/types/permissions";
 import { buildGraphData, type GraphNode, type GraphLink } from "@/lib/permissions/graph-data";
+import { isAllowValue } from "@/lib/permissions/consent-groups";
 import { NodeOverlayPanel } from "./node-overlay-panel";
 import { trackEvent, EVENTS } from "@/lib/analytics/events";
 
@@ -28,15 +29,11 @@ interface ConsentGraphProps {
 const WIDTH = 600;
 const HEIGHT = 400;
 
-function isAllowResult(result: string): boolean {
-  return result === "ALLOW" || result === "ALLOW_WITH_ATTRIBUTION" || result === "ALLOW_WITH_ROYALTY";
-}
-
 function getLinkColor(result: string): string {
   if (result === "core") return "var(--color-border)";
   if (result === "DENY") return "var(--color-permission-deny)";
   if (result === "ASK") return "var(--color-permission-ask)";
-  if (isAllowResult(result)) return "var(--color-permission-allow)";
+  if (isAllowValue(result)) return "var(--color-permission-allow)";
   return "var(--color-muted)";
 }
 
@@ -60,7 +57,7 @@ function getNodeColor(type: string): string {
 
 function matchesFilter(result: string, filter: ResultFilter): boolean {
   if (filter === "all") return true;
-  if (filter === "allow") return isAllowResult(result);
+  if (filter === "allow") return isAllowValue(result);
   return result.toUpperCase() === filter.toUpperCase();
 }
 
@@ -133,15 +130,21 @@ export function ConsentGraph({
         .force("center", d3.forceCenter(cx, cy))
         .force("collide", d3.forceCollide().radius(25));
 
+      // Batch simulation ticks — only update React state via rAF to avoid 180+ re-renders
+      let rafId: number | null = null;
       simulation.on("tick", () => {
-        const newPos = new Map<string, { x: number; y: number }>();
-        for (const node of simNodes) {
-          // Clamp to viewport
-          const x = Math.max(30, Math.min(WIDTH - 30, node.x ?? cx));
-          const y = Math.max(30, Math.min(HEIGHT - 30, node.y ?? cy));
-          newPos.set(node.id, { x, y });
-        }
-        setPositions(new Map(newPos));
+        if (rafId !== null) return;
+        rafId = requestAnimationFrame(() => {
+          rafId = null;
+          const newPos = new Map<string, { x: number; y: number }>();
+          for (const node of simNodes) {
+            // Clamp to viewport
+            const x = Math.max(30, Math.min(WIDTH - 30, node.x ?? cx));
+            const y = Math.max(30, Math.min(HEIGHT - 30, node.y ?? cy));
+            newPos.set(node.id, { x, y });
+          }
+          setPositions(new Map(newPos));
+        });
       });
 
       // Stop after settling

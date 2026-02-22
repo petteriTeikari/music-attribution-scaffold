@@ -121,7 +121,10 @@ async def check_permission(
         The permission check result with entity ID, type, and outcome.
     """
     repo = AsyncPermissionRepository()
-    perm_type = PermissionTypeEnum(body.permission_type)
+    try:
+        perm_type = PermissionTypeEnum(body.permission_type)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=f"Invalid permission type: {body.permission_type}") from exc
 
     async with await _get_session(request) as session:
         result = await repo.check_permission(

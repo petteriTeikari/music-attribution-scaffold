@@ -2,22 +2,15 @@
 
 from __future__ import annotations
 
-import uuid
 from datetime import UTC, datetime, timedelta
 
 import pytest
 
 from music_attribution.attribution.priority_queue import ReviewPriorityQueue
-from music_attribution.schemas.attribution import (
-    AttributionRecord,
-    ConformalSet,
-    Credit,
-)
-from music_attribution.schemas.enums import (
-    AssuranceLevelEnum,
-    CreditRoleEnum,
-    SourceEnum,
-)
+from music_attribution.schemas.attribution import AttributionRecord
+from music_attribution.schemas.enums import AssuranceLevelEnum
+from tests.factories import make_attribution as _make_attribution_base
+from tests.factories import make_credit
 
 
 def _make_attribution(
@@ -28,27 +21,17 @@ def _make_attribution(
     updated_at: datetime | None = None,
 ) -> AttributionRecord:
     """Create an AttributionRecord for testing."""
+
     now = updated_at or datetime.now(UTC)
-    return AttributionRecord(
-        work_entity_id=uuid.uuid4(),
+    return _make_attribution_base(
         credits=[
-            Credit(
-                entity_id=uuid.uuid4(),
-                role=CreditRoleEnum.PERFORMER,
+            make_credit(
                 confidence=confidence,
-                sources=[SourceEnum.MUSICBRAINZ],
                 assurance_level=AssuranceLevelEnum.LEVEL_1,
-            ),
+            )
         ],
         assurance_level=AssuranceLevelEnum.LEVEL_1,
         confidence_score=confidence,
-        conformal_set=ConformalSet(
-            coverage_level=0.9,
-            marginal_coverage=0.9,
-            calibration_error=0.02,
-            calibration_method="APS",
-            calibration_set_size=100,
-        ),
         source_agreement=source_agreement,
         needs_review=needs_review,
         review_priority=0.5,

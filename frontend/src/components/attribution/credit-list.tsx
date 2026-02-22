@@ -4,6 +4,7 @@ import { AssuranceBadge } from "@/components/works/assurance-badge";
 import { SourceTag } from "@/components/works/source-tag";
 import { InlineCitation } from "@/components/citations/inline-citation";
 import type { Source } from "@/lib/types/enums";
+import { formatSnakeCase } from "@/lib/utils/format";
 
 interface CreditListProps {
   credits: Credit[];
@@ -11,12 +12,7 @@ interface CreditListProps {
   className?: string;
 }
 
-function formatRole(role: string): string {
-  return role
-    .split("_")
-    .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
-    .join(" ");
-}
+const formatRole = formatSnakeCase;
 
 function buildCitationsForSources(
   sources: Source[],

@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import ast
 import uuid
-from datetime import UTC, datetime
 from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock, patch
 
@@ -12,16 +11,8 @@ import pytest
 from fastapi.testclient import TestClient
 
 from music_attribution.api.app import create_app
-from music_attribution.schemas.attribution import (
-    AttributionRecord,
-    ConformalSet,
-    Credit,
-)
-from music_attribution.schemas.enums import (
-    AssuranceLevelEnum,
-    CreditRoleEnum,
-    SourceEnum,
-)
+from music_attribution.schemas.attribution import AttributionRecord
+from tests.factories import make_attribution
 
 
 def _make_attribution(
@@ -29,32 +20,10 @@ def _make_attribution(
     confidence: float = 0.9,
 ) -> AttributionRecord:
     """Create an AttributionRecord for testing."""
-    now = datetime.now(UTC)
-    return AttributionRecord(
+
+    return make_attribution(
         work_entity_id=work_id or uuid.uuid4(),
-        credits=[
-            Credit(
-                entity_id=uuid.uuid4(),
-                role=CreditRoleEnum.PERFORMER,
-                confidence=confidence,
-                sources=[SourceEnum.MUSICBRAINZ],
-                assurance_level=AssuranceLevelEnum.LEVEL_2,
-            ),
-        ],
-        assurance_level=AssuranceLevelEnum.LEVEL_2,
         confidence_score=confidence,
-        conformal_set=ConformalSet(
-            coverage_level=0.9,
-            marginal_coverage=0.9,
-            calibration_error=0.02,
-            calibration_method="APS",
-            calibration_set_size=100,
-        ),
-        source_agreement=0.95,
-        review_priority=0.1,
-        created_at=now,
-        updated_at=now,
-        version=1,
     )
 
 

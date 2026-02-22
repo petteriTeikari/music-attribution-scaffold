@@ -3,18 +3,14 @@
 from __future__ import annotations
 
 import uuid
-from datetime import UTC, datetime
 
 import pytest
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 
 from music_attribution.db.models import AttributionRecordModel
-from music_attribution.schemas.attribution import (
-    AttributionRecord,
-    ConformalSet,
-    Credit,
-)
-from music_attribution.schemas.enums import AssuranceLevelEnum, CreditRoleEnum, ProvenanceEventTypeEnum, SourceEnum
+from music_attribution.schemas.attribution import AttributionRecord
+from music_attribution.schemas.enums import ProvenanceEventTypeEnum
+from tests.factories import make_attribution
 
 
 def _make_record(
@@ -25,35 +21,13 @@ def _make_record(
     review_priority: float = 0.5,
 ) -> AttributionRecord:
     """Create a minimal valid AttributionRecord for testing."""
-    now = datetime.now(UTC)
-    return AttributionRecord(
+
+    return make_attribution(
         work_entity_id=work_entity_id or uuid.uuid4(),
-        credits=[
-            Credit(
-                entity_id=uuid.uuid4(),
-                role=CreditRoleEnum.PERFORMER,
-                confidence=confidence,
-                sources=[SourceEnum.MUSICBRAINZ],
-                assurance_level=AssuranceLevelEnum.LEVEL_2,
-            ),
-        ],
-        assurance_level=AssuranceLevelEnum.LEVEL_2,
         confidence_score=confidence,
-        conformal_set=ConformalSet(
-            coverage_level=0.9,
-            prediction_sets={},
-            set_sizes={},
-            marginal_coverage=0.91,
-            calibration_error=0.02,
-            calibration_method="lac",
-            calibration_set_size=100,
-        ),
         source_agreement=0.8,
         needs_review=needs_review,
         review_priority=review_priority,
-        created_at=now,
-        updated_at=now,
-        version=1,
     )
 
 

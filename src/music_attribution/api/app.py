@@ -25,6 +25,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from music_attribution import __version__
 from music_attribution.api.routes.attribution import router as attribution_router
 from music_attribution.api.routes.health import router as health_router
 from music_attribution.api.routes.metrics import router as metrics_router
@@ -101,12 +102,14 @@ def create_app() -> FastAPI:
     >>> app.title
     'Music Attribution API'
     """
+    # Settings are also created in lifespan() and stored on app.state.
+    # This instance is used only for CORS configuration at app creation time.
     settings = Settings()  # type: ignore[call-arg]
 
     app = FastAPI(
         title="Music Attribution API",
         description="REST API for querying music attribution records",
-        version="0.1.0",
+        version=__version__,
         lifespan=lifespan,
     )
 
@@ -115,8 +118,8 @@ def create_app() -> FastAPI:
         CORSMiddleware,
         allow_origins=settings.cors_origins.split(","),
         allow_credentials=True,
-        allow_methods=["*"],
-        allow_headers=["*"],
+        allow_methods=["GET", "POST", "OPTIONS"],
+        allow_headers=["Content-Type", "Authorization"],
     )
 
     app.include_router(health_router)

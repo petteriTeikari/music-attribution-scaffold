@@ -95,7 +95,7 @@ This repo is **not** a single-architecture implementation. It is a **scaffold** 
 - [.claude/golden-paths.md](.claude/golden-paths.md) - Approved patterns
 - [.claude/rules/](.claude/rules/) - Domain-specific rules
 - [docs/planning/](docs/planning/) - Architecture plans and PRDs
-- [docs/prd/decisions/](docs/prd/decisions/) - Probabilistic decision network (23 nodes, 5 levels)
+- [docs/prd/decisions/](docs/prd/decisions/) - Probabilistic decision network (85 nodes, 5 levels)
 - [docs/prd/decisions/REPORT.md](docs/prd/decisions/REPORT.md) - Decision network report with mermaid visualizations
 - [docs/prd/archetypes/](docs/prd/archetypes/) - Team archetype profiles
 - [docs/prd/domains/](docs/prd/domains/) - Domain overlay system (music attribution + DPP traceability)

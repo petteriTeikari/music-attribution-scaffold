@@ -3,6 +3,7 @@
 import { useState } from "react";
 import type { AuditLogEntry } from "@/lib/types/permissions";
 import { PlatformBadge } from "@/components/ui/platform-badge";
+import { formatDateTime } from "@/lib/utils/format";
 
 const FILTER_TABS = [
   { key: "all", label: "All" },
@@ -14,15 +15,7 @@ const FILTER_TABS = [
   { key: "individual", label: "Individual" },
 ] as const;
 
-function formatTimestamp(iso: string): string {
-  const date = new Date(iso);
-  return date.toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-}
+const formatTimestamp = formatDateTime;
 
 function getResultColorVar(result: string): string {
   if (result === "DENY") return "var(--color-permission-deny)";

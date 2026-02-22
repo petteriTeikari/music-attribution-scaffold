@@ -43,6 +43,18 @@ export function ConfidencePopover({
     setVisible(false);
   }, []);
 
+  const handleFocus = useCallback(() => {
+    setVisible(true);
+    if (!hasTracked.current) {
+      hasTracked.current = true;
+      onView?.();
+    }
+  }, [onView]);
+
+  const handleBlur = useCallback(() => {
+    setVisible(false);
+  }, []);
+
   const tier = getConfidenceTier(score);
   const color = getConfidenceCssVar(tier);
   const setEntries = Object.entries(conformalSet.set_sizes);
@@ -50,8 +62,11 @@ export function ConfidencePopover({
   return (
     <div
       className="relative inline-block"
+      tabIndex={0}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
+      onFocus={handleFocus}
+      onBlur={handleBlur}
     >
       {children}
 

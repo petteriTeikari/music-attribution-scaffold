@@ -288,7 +288,7 @@ Mic → [Silero VAD → STT → ContextAggregator → LLM (4 tools) → DriftMon
 - **Zero-API-key local dev**: Default stack (Whisper + Piper + WebSocket) runs entirely on your machine at $0.00/min
 - **Protocol-based swapping**: `STTServiceProtocol`, `TTSServiceProtocol`, and `DriftDetectorProtocol` use Python structural typing -- implement the methods and it just works, no inheritance required
 - **Persona drift prevention**: 5-dimension persona architecture with EWMA-smoothed drift detection prevents the 8-turn persona drift cliff documented in the literature (Li et al., 2024)
-- **Conditional imports**: Config, persona, drift, and tool schemas work without Pipecat installed -- only `build_pipecat_pipeline()` requires the actual library. All 54 voice tests pass in both modes
+- **Conditional imports**: Config, persona, drift, and tool schemas work without Pipecat installed -- only `build_pipecat_pipeline()` requires the actual library. All 161 voice tests pass in both modes
 
 ### Benchmarks (RTX 2070 Super)
 
@@ -441,7 +441,7 @@ All tests run in CI via GitHub Actions with path-based filtering — backend cha
 | [**API Reference**](https://petteriTeikari.github.io/music-attribution-scaffold/api-reference/) | Auto-generated from numpy-style docstrings (mkdocstrings) |
 | [**Tutorials**](https://petteriTeikari.github.io/music-attribution-scaffold/tutorials/) | Reproducing the paper, adding data sources, API examples |
 | [**Troubleshooting**](https://petteriTeikari.github.io/music-attribution-scaffold/troubleshooting/) | 15 common issues: Docker, database, testing, frontend, CI |
-| [**PRD Decision Network**](docs/prd/decisions/REPORT.md) | 40+ probabilistic decision nodes, 5 levels, 4 team archetypes |
+| [**PRD Decision Network**](docs/prd/decisions/REPORT.md) | 85 probabilistic decision nodes, 5 levels, 4 team archetypes |
 | [**FinOps Landscape**](docs/planning/deployement-finops-landscape.md) | Deployment cost analysis: 5 paths, DevOps tax, cloud credits, egress optimization |
 | [**Geopolitical Risk Assessment**](docs/planning/deployement-finops-landscape-geopolitical-risk-assessment.md) | Cloud sovereignty: CLOUD Act, EU providers, Schrems III, Section 301 |
 | [**Knowledge Base**](docs/knowledge-base/README.md) | RAG-optimized markdown: attribution papers, agentic systems research |
@@ -636,7 +636,7 @@ Full analysis: [`docs/planning/music-tech-landscape/`](docs/planning/music-tech-
 | **Observability** | Prometheus + PostHog | Metrics + product analytics |
 | **Quality** | ruff + mypy + pre-commit | Fast linting, strict typing, 13 hooks |
 
-Each choice is documented as a decision node in the [Probabilistic PRD](docs/prd/decisions/REPORT.md). The PRD models 40+ decision nodes across 5 levels, with conditional probabilities weighted by four team archetypes (Engineer-Heavy, Musician-First, Solo Hacker, Well-Funded).
+Each choice is documented as a decision node in the [Probabilistic PRD](docs/prd/decisions/REPORT.md). The PRD models 85 decision nodes across 5 levels, with conditional probabilities weighted by four team archetypes (Engineer-Heavy, Musician-First, Solo Hacker, Well-Funded).
 
 </details>
 
