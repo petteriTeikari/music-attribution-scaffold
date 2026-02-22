@@ -5,6 +5,7 @@
 .PHONY: ci-docker docker-build docker-clean clean
 .PHONY: dev-frontend test-frontend lint-frontend build-frontend test-e2e test-e2e-ui
 .PHONY: agent dev-agent
+.PHONY: install-voice test-voice dev-voice voice-local
 .PHONY: docs docs-serve test-docs
 
 .DEFAULT_GOAL := help
@@ -138,20 +139,54 @@ dev-agent:  ## Start agent backend + frontend dev server
 	NEXT_PUBLIC_API_URL=http://localhost:8000 $(MAKE) dev-frontend
 
 # =============================================================================
+# VOICE AGENT (Pipecat + open-source STT/TTS)
+# =============================================================================
+
+install-voice:  ## Install voice dependencies (open-source stack)
+	uv sync --frozen --group voice
+
+test-voice:  ## Run voice agent tests
+	.venv/bin/python -m pytest tests/unit/voice/ -v --timeout=60
+
+dev-voice:  ## Start voice agent dev server (localhost:8001)
+	VOICE_TRANSPORT=websocket uv run uvicorn music_attribution.voice.server:create_voice_app --factory --host 0.0.0.0 --port 8001 --reload
+
+voice-local:  ## Run fully local voice agent (Whisper + Piper, $0/min)
+	@echo "Starting fully local voice agent"
+	@echo "Requires: VOICE_LLM_API_KEY set in .env (see .env.example)"
+	VOICE_STT_PROVIDER=whisper VOICE_TTS_PROVIDER=piper uv run python scripts/voice_demo.py
+
+# =============================================================================
 # DOCUMENTATION
 # =============================================================================
 
 test-docs:  ## Run docs safety tests (math overflow, dollar signs)
 	.venv/bin/python -m pytest tests/unit/test_docs_math_safety.py -v
 
+GITHUB_BLOB := https://github.com/petteriTeikari/music-attribution-scaffold/blob/main
+TUTORIAL_FIXUP = \
+	sed -i 's|../figures/repo-figures/assets/|../figures/|g' docs/site/tutorials/voice-agent-implementation.md && \
+	sed -i 's|../../src/|$(GITHUB_BLOB)/src/|g' docs/site/tutorials/voice-agent-implementation.md && \
+	sed -i 's|../../scripts/|$(GITHUB_BLOB)/scripts/|g' docs/site/tutorials/voice-agent-implementation.md && \
+	sed -i 's|../../pyproject.toml|$(GITHUB_BLOB)/pyproject.toml|g' docs/site/tutorials/voice-agent-implementation.md && \
+	sed -i 's|../planning/|$(GITHUB_BLOB)/docs/planning/|g' docs/site/tutorials/voice-agent-implementation.md && \
+	sed -i 's|../prd/|$(GITHUB_BLOB)/docs/prd/|g' docs/site/tutorials/voice-agent-implementation.md && \
+	sed -i 's|../../.claude/|$(GITHUB_BLOB)/.claude/|g' docs/site/tutorials/voice-agent-implementation.md
+
 docs:  ## Build MkDocs site (copies figures first)
 	@mkdir -p docs/site/figures
 	@cp docs/figures/repo-figures/assets/*.jpg docs/site/figures/
+	@mkdir -p docs/site/tutorials
+	@cp docs/tutorials/voice-agent-implementation.md docs/site/tutorials/
+	@$(TUTORIAL_FIXUP)
 	uv run mkdocs build --strict
 
 docs-serve:  ## Serve MkDocs locally with live reload
 	@mkdir -p docs/site/figures
 	@cp docs/figures/repo-figures/assets/*.jpg docs/site/figures/
+	@mkdir -p docs/site/tutorials
+	@cp docs/tutorials/voice-agent-implementation.md docs/site/tutorials/
+	@$(TUTORIAL_FIXUP)
 	uv run mkdocs serve
 
 # =============================================================================

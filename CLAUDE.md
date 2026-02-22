@@ -18,7 +18,7 @@ Open-source research scaffold for music attribution with transparent confidence 
 ## Critical Rules
 
 1. **uv ONLY** - Never use pip, conda, or requirements.txt
-2. **AST ONLY** - For code analysis, use `ast.parse()` not grep/sed/awk/regex
+2. **AST ONLY (ZERO EXCEPTIONS)** - For ANY Python source analysis, use `ast.parse()` + `ast.walk()`. No grep/sed/awk/regex/string-`in`. Applies to production code, test code, scripts — everything
 3. **Pre-commit Required** - All changes must pass pre-commit hooks
 4. **Encoding** - Always specify `encoding='utf-8'` for file operations
 5. **Paths** - Always use `pathlib.Path()` not string concatenation

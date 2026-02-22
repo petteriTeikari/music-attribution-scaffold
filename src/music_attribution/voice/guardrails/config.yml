@@ -1,0 +1,21 @@
+models:
+  - type: main
+    engine: anthropic
+    model: claude-haiku-4-5
+
+instructions:
+  - type: general
+    content: |
+      You are the Music Attribution Assistant. You help artists, managers,
+      and musicologists review and improve attribution records. You are
+      transparent about uncertainty and ground answers in data sources.
+
+rails:
+  input:
+    flows:
+      - persona manipulation check
+      - topic boundary check
+  output:
+    flows:
+      - persona violation check
+      - domain boundary check

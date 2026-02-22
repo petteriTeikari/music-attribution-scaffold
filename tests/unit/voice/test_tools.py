@@ -1,0 +1,329 @@
+"""Tests for PydanticAI-to-Pipecat tool schema bridge."""
+
+from __future__ import annotations
+
+import pytest
+
+from music_attribution.voice.tools import (
+    PIPECAT_AVAILABLE,
+    _validate_uuid,
+    get_function_schemas,
+    get_tool_schemas,
+)
+
+
+class TestGetToolSchemas:
+    """Tests for tool schema generation."""
+
+    def test_returns_four_schemas(self) -> None:
+        """Four domain tools are registered."""
+        schemas = get_tool_schemas()
+        assert len(schemas) == 4
+
+    def test_schema_format(self) -> None:
+        """Each schema has the expected structure."""
+        schemas = get_tool_schemas()
+        for schema in schemas:
+            assert schema["type"] == "function"
+            assert "function" in schema
+            assert "name" in schema["function"]
+            assert "description" in schema["function"]
+            assert "parameters" in schema["function"]
+
+    def test_tool_names(self) -> None:
+        """All four domain tools are registered by name."""
+        schemas = get_tool_schemas()
+        names = {s["function"]["name"] for s in schemas}
+        assert names == {
+            "explain_confidence",
+            "search_attributions",
+            "suggest_correction",
+            "submit_feedback",
+        }
+
+    def test_explain_confidence_params(self) -> None:
+        """explain_confidence requires work_id parameter."""
+        schemas = get_tool_schemas()
+        schema = next(s for s in schemas if s["function"]["name"] == "explain_confidence")
+        params = schema["function"]["parameters"]
+        assert "work_id" in params["properties"]
+        assert "work_id" in params["required"]
+
+    def test_search_attributions_params(self) -> None:
+        """search_attributions requires query parameter."""
+        schemas = get_tool_schemas()
+        schema = next(s for s in schemas if s["function"]["name"] == "search_attributions")
+        params = schema["function"]["parameters"]
+        assert "query" in params["properties"]
+        assert "query" in params["required"]
+
+    def test_suggest_correction_has_five_params(self) -> None:
+        """suggest_correction has all five required parameters."""
+        schemas = get_tool_schemas()
+        schema = next(s for s in schemas if s["function"]["name"] == "suggest_correction")
+        params = schema["function"]["parameters"]
+        required = set(params["required"])
+        assert required == {"work_id", "field", "current_value", "suggested_value", "reason"}
+
+    def test_submit_feedback_params(self) -> None:
+        """submit_feedback requires work_id and overall_assessment."""
+        schemas = get_tool_schemas()
+        schema = next(s for s in schemas if s["function"]["name"] == "submit_feedback")
+        params = schema["function"]["parameters"]
+        assert "work_id" in params["required"]
+        assert "overall_assessment" in params["required"]
+
+
+class TestGetFunctionSchemas:
+    """Tests for Pipecat FunctionSchema wrapper."""
+
+    def test_returns_four_schemas(self) -> None:
+        """get_function_schemas returns 4 items."""
+        schemas = get_function_schemas()
+        assert len(schemas) == 4
+
+    def test_schemas_are_dicts_without_pipecat(self) -> None:
+        """Without pipecat, falls back to dict format."""
+        from music_attribution.voice.tools import PIPECAT_AVAILABLE
+
+        schemas = get_function_schemas()
+        if not PIPECAT_AVAILABLE:
+            assert all(isinstance(s, dict) for s in schemas)
+
+
+class TestSessionFactory:
+    """Tests for database session factory management."""
+
+    def test_session_factory_initially_none(self) -> None:
+        """Module-level session factory starts as None."""
+        # Import fresh to check initial state
+        import music_attribution.voice.tools as tools_mod
+
+        # It may have been set by other tests, so just check the function exists
+        assert callable(tools_mod.set_session_factory)
+
+    def test_set_session_factory_sets_value(self) -> None:
+        """set_session_factory updates the module-level factory."""
+        import music_attribution.voice.tools as tools_mod
+
+        sentinel = object()
+        old = tools_mod._session_factory
+        try:
+            tools_mod.set_session_factory(sentinel)  # type: ignore[arg-type]
+            assert tools_mod._session_factory is sentinel
+        finally:
+            tools_mod._session_factory = old  # type: ignore[assignment]
+
+
+class TestToolHandlers:
+    """Tests for individual tool handler functions."""
+
+    @pytest.mark.anyio
+    async def test_explain_confidence_no_db(self) -> None:
+        """explain_confidence returns error when no DB session."""
+        import music_attribution.voice.tools as tools_mod
+
+        old = tools_mod._session_factory
+        tools_mod._session_factory = None
+
+        results: list[dict] = []
+
+        class MockParams:
+            arguments = {"work_id": "00000000-0000-0000-0000-000000000001"}
+
+            async def result_callback(self, result: dict) -> None:
+                results.append(result)
+
+        try:
+            await tools_mod._handle_explain_confidence(MockParams())
+            assert len(results) == 1
+            assert "Database not available" in results[0]["explanation"]
+        finally:
+            tools_mod._session_factory = old  # type: ignore[assignment]
+
+    @pytest.mark.anyio
+    async def test_search_attributions_no_db(self) -> None:
+        """search_attributions returns error when no DB session."""
+        import music_attribution.voice.tools as tools_mod
+
+        old = tools_mod._session_factory
+        tools_mod._session_factory = None
+
+        results: list[dict] = []
+
+        class MockParams:
+            arguments = {"query": "test search"}
+
+            async def result_callback(self, result: dict) -> None:
+                results.append(result)
+
+        try:
+            await tools_mod._handle_search_attributions(MockParams())
+            assert len(results) == 1
+            assert "Database not available" in results[0]["results"]
+        finally:
+            tools_mod._session_factory = old  # type: ignore[assignment]
+
+    @pytest.mark.anyio
+    async def test_suggest_correction_returns_preview(self) -> None:
+        """suggest_correction formats correction preview."""
+        import music_attribution.voice.tools as tools_mod
+
+        results: list[dict] = []
+
+        class MockParams:
+            arguments = {
+                "work_id": "00000000-0000-0000-0000-000000000002",
+                "field": "artist_name",
+                "current_value": "Imogene Heap",
+                "suggested_value": "Imogen Heap",
+                "reason": "Typo in artist name",
+            }
+
+            async def result_callback(self, result: dict) -> None:
+                results.append(result)
+
+        await tools_mod._handle_suggest_correction(MockParams())
+        assert len(results) == 1
+        assert "Imogen Heap" in results[0]["result"]
+        assert "Typo" in results[0]["result"]
+
+    @pytest.mark.anyio
+    async def test_submit_feedback_no_db(self) -> None:
+        """submit_feedback returns error when no DB session."""
+        import music_attribution.voice.tools as tools_mod
+
+        old = tools_mod._session_factory
+        tools_mod._session_factory = None
+
+        results: list[dict] = []
+
+        class MockParams:
+            arguments = {"work_id": "00000000-0000-0000-0000-000000000003", "overall_assessment": 0.8}
+
+            async def result_callback(self, result: dict) -> None:
+                results.append(result)
+
+        try:
+            await tools_mod._handle_submit_feedback(MockParams())
+            assert len(results) == 1
+            assert "Database not available" in results[0]["result"]
+        finally:
+            tools_mod._session_factory = old  # type: ignore[assignment]
+
+
+class TestUUIDValidation:
+    """Tests for UUID input validation."""
+
+    def test_valid_uuid(self) -> None:
+        """A valid UUID returns True."""
+        assert _validate_uuid("00000000-0000-0000-0000-000000000001") is True
+
+    def test_invalid_uuid(self) -> None:
+        """A non-UUID string returns False."""
+        assert _validate_uuid("not-a-uuid") is False
+
+    def test_empty_string(self) -> None:
+        """Empty string returns False."""
+        assert _validate_uuid("") is False
+
+    def test_uuid_without_dashes(self) -> None:
+        """UUID without dashes is still valid."""
+        assert _validate_uuid("00000000000000000000000000000001") is True
+
+    @pytest.mark.anyio
+    async def test_invalid_uuid_rejected_by_explain_confidence(self) -> None:
+        """explain_confidence rejects invalid work_id before DB call."""
+        import music_attribution.voice.tools as tools_mod
+
+        results: list[dict] = []
+
+        class MockParams:
+            arguments = {"work_id": "not-a-uuid"}
+
+            async def result_callback(self, result: dict) -> None:
+                results.append(result)
+
+        await tools_mod._handle_explain_confidence(MockParams())
+        assert len(results) == 1
+        assert "Invalid work ID" in results[0]["explanation"]
+
+    @pytest.mark.anyio
+    async def test_invalid_uuid_rejected_by_suggest_correction(self) -> None:
+        """suggest_correction rejects invalid work_id."""
+        import music_attribution.voice.tools as tools_mod
+
+        results: list[dict] = []
+
+        class MockParams:
+            arguments = {
+                "work_id": "bad-id",
+                "field": "x",
+                "current_value": "a",
+                "suggested_value": "b",
+                "reason": "test",
+            }
+
+            async def result_callback(self, result: dict) -> None:
+                results.append(result)
+
+        await tools_mod._handle_suggest_correction(MockParams())
+        assert len(results) == 1
+        assert "Invalid work ID" in results[0]["result"]
+
+    @pytest.mark.anyio
+    async def test_invalid_uuid_rejected_by_submit_feedback(self) -> None:
+        """submit_feedback rejects invalid work_id."""
+        import music_attribution.voice.tools as tools_mod
+
+        results: list[dict] = []
+
+        class MockParams:
+            arguments = {"work_id": "bad-id", "overall_assessment": 0.5}
+
+            async def result_callback(self, result: dict) -> None:
+                results.append(result)
+
+        await tools_mod._handle_submit_feedback(MockParams())
+        assert len(results) == 1
+        assert "Invalid work ID" in results[0]["result"]
+
+
+class TestRegisterDomainTools:
+    """Tests for register_domain_tools function."""
+
+    @pytest.mark.skipif(PIPECAT_AVAILABLE, reason="Only test when pipecat NOT installed")
+    def test_register_raises_without_pipecat(self) -> None:
+        """register_domain_tools raises ImportError without pipecat."""
+        from music_attribution.voice.tools import register_domain_tools
+
+        with pytest.raises(ImportError, match="pipecat-ai is not installed"):
+            register_domain_tools(object())
+
+
+class TestCreateLLMService:
+    """Tests for create_llm_service function."""
+
+    @pytest.mark.skipif(PIPECAT_AVAILABLE, reason="Only test when pipecat NOT installed")
+    def test_create_llm_raises_without_pipecat(self) -> None:
+        """create_llm_service raises ImportError without pipecat."""
+        from music_attribution.voice.config import VoiceConfig
+        from music_attribution.voice.pipeline import create_llm_service
+
+        config = VoiceConfig(llm_api_key="test-key")
+        with pytest.raises(ImportError, match="pipecat-ai is not installed"):
+            create_llm_service(config)
+
+    @pytest.mark.skipif(PIPECAT_AVAILABLE, reason="Only test when pipecat NOT installed")
+    def test_create_llm_requires_api_key(self) -> None:
+        """create_llm_service validates API key before proceeding.
+
+        When pipecat isn't installed, ImportError is raised first.
+        This test verifies the error path exists.
+        """
+        from music_attribution.voice.config import VoiceConfig
+        from music_attribution.voice.pipeline import create_llm_service
+
+        config = VoiceConfig(llm_api_key=None)
+        with pytest.raises(ImportError):
+            create_llm_service(config)

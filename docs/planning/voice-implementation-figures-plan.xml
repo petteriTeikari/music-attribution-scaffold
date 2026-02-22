@@ -1,0 +1,389 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Voice Implementation Figures Plan
+  Branch: feat/voice-agent-mvp
+  Created: 2026-02-22
+
+  This plan adds 16 implementation-focused figures (fig-voice-33 through fig-voice-48)
+  to the voice agent documentation. These figures map directly to actual code in
+  src/music_attribution/voice/ and show spatial relationships, state machines,
+  data flow, and architectural layering that prose cannot convey.
+
+  Nikola T. Markov rule: Every figure must carry its own information weight.
+  If you can remove it without losing understanding, it shouldn't exist.
+-->
+<plan>
+  <metadata>
+    <title>Voice Implementation Figures + Body Text + README Update</title>
+    <version>1.0.0</version>
+    <date>2026-02-22</date>
+    <branch>feat/voice-agent-mvp</branch>
+    <author>Claude Code</author>
+    <companion-doc>docs/tutorials/voice-agent-implementation.md</companion-doc>
+    <figure-range>fig-voice-33 through fig-voice-48</figure-range>
+    <total-new-figures>16</total-new-figures>
+    <total-body-text-words>~4100</total-body-text-words>
+  </metadata>
+
+  <!-- ════════════════════════════════════════════════════════════════════ -->
+  <!-- PHASE 1: Figure Plan Files (parallelizable)                        -->
+  <!-- ════════════════════════════════════════════════════════════════════ -->
+  <phase id="1" name="Figure Plan Creation">
+    <description>Create 16 figure plan markdown files following CONTENT-TEMPLATE-REPO.md format</description>
+
+    <task id="1.1" status="done">
+      <file>docs/figures/repo-figures/figure-plans/fig-voice-33-voice-module-file-map.md</file>
+      <title>Voice Module File Map</title>
+      <layout>B (Multi-Panel)</layout>
+      <audience>L3</audience>
+      <section-target>S2.2 Component Roles</section-target>
+      <markov-justification>Shows 11-file module layout with dependency arrows -- no prose can convey the import graph spatially</markov-justification>
+    </task>
+
+    <task id="1.2" status="done">
+      <file>docs/figures/repo-figures/figure-plans/fig-voice-34-voiceconfig-anatomy.md</file>
+      <title>VoiceConfig Anatomy</title>
+      <layout>D (Split-Panel)</layout>
+      <audience>L3</audience>
+      <section-target>S1.4 Environment Variables</section-target>
+      <markov-justification>Maps 21 config fields to 6 enum types to Pipecat services -- env var tables can't show the cascade</markov-justification>
+    </task>
+
+    <task id="1.3" status="done">
+      <file>docs/figures/repo-figures/figure-plans/fig-voice-35-pipeline-assembly-flowchart.md</file>
+      <title>Pipeline Assembly Flowchart</title>
+      <layout>C (Flowchart)</layout>
+      <audience>L3</audience>
+      <section-target>S2.1 Pipeline Diagram</section-target>
+      <markov-justification>build_pipecat_pipeline() decision tree with branching logic that the ASCII diagram cannot show</markov-justification>
+    </task>
+
+    <task id="1.4" status="done">
+      <file>docs/figures/repo-figures/figure-plans/fig-voice-36-persona-dimension-layers.md</file>
+      <title>5-Dimension Persona Layers</title>
+      <layout>D (Split-Panel)</layout>
+      <audience>L2</audience>
+      <section-target>S8.1 Persona Architecture</section-target>
+      <markov-justification>Concentric layers with mutability gradient -- the prose table is 1D; this is 2D with visual weight</markov-justification>
+    </task>
+
+    <task id="1.5" status="done">
+      <file>docs/figures/repo-figures/figure-plans/fig-voice-37-ewma-drift-state-machine.md</file>
+      <title>EWMA Drift State Machine</title>
+      <layout>C (Flowchart)</layout>
+      <audience>L4</audience>
+      <section-target>S9.2 DriftDetector</section-target>
+      <markov-justification>Three states with transition thresholds, EWMA formula, and restoring force -- state machines demand visual representation</markov-justification>
+    </task>
+
+    <task id="1.6" status="done">
+      <file>docs/figures/repo-figures/figure-plans/fig-voice-38-tool-bridge-architecture.md</file>
+      <title>Tool Bridge Architecture</title>
+      <layout>B (Multi-Panel)</layout>
+      <audience>L3</audience>
+      <section-target>S2.3 Domain Tools</section-target>
+      <markov-justification>The bridge crosses two SDKs; a figure shows where the boundary sits</markov-justification>
+    </task>
+
+    <task id="1.7" status="done">
+      <file>docs/figures/repo-figures/figure-plans/fig-voice-39-server-lifecycle-connection.md</file>
+      <title>Server Lifecycle &amp; Connection Management</title>
+      <layout>C (Flowchart)</layout>
+      <audience>L3</audience>
+      <section-target>S12.1 Mounting Router</section-target>
+      <markov-justification>Shows the lock pattern and MAX_CONNECTIONS=10 lifecycle that code comments can't convey</markov-justification>
+    </task>
+
+    <task id="1.8" status="done">
+      <file>docs/figures/repo-figures/figure-plans/fig-voice-40-guardrails-architecture.md</file>
+      <title>Guardrails Architecture</title>
+      <layout>B (Multi-Panel)</layout>
+      <audience>L3</audience>
+      <section-target>S8.5 NeMo Guardrails</section-target>
+      <markov-justification>Input rails + output rails with NeMo/regex decision -- dual-path architecture needs visual</markov-justification>
+    </task>
+
+    <task id="1.9" status="done">
+      <file>docs/figures/repo-figures/figure-plans/fig-voice-41-memory-integration-letta-mem0.md</file>
+      <title>Memory Integration: Letta + Mem0</title>
+      <layout>D (Split-Panel)</layout>
+      <audience>L3</audience>
+      <section-target>S8.3-8.4 Letta/Mem0</section-target>
+      <markov-justification>Two memory systems with complementary roles converging into build_system_prompt()</markov-justification>
+    </task>
+
+    <task id="1.10" status="done">
+      <file>docs/figures/repo-figures/figure-plans/fig-voice-42-protocol-component-swapping.md</file>
+      <title>Protocol-Based Component Swapping</title>
+      <layout>B (Multi-Panel)</layout>
+      <audience>L3</audience>
+      <section-target>Appendix: protocols.py</section-target>
+      <markov-justification>Structural typing contracts -- dashed "satisfies" lines show duck typing vs inheritance</markov-justification>
+    </task>
+
+    <task id="1.11" status="done">
+      <file>docs/figures/repo-figures/figure-plans/fig-voice-43-frontend-voice-components.md</file>
+      <title>Frontend Voice Components</title>
+      <layout>B (Multi-Panel)</layout>
+      <audience>L3</audience>
+      <section-target>S12 (new subsection)</section-target>
+      <markov-justification>Shows the frontend↔backend boundary with Jotai atoms and WebSocket</markov-justification>
+    </task>
+
+    <task id="1.12" status="done">
+      <file>docs/figures/repo-figures/figure-plans/fig-voice-44-conditional-import-pattern.md</file>
+      <title>Conditional Import Pattern</title>
+      <layout>C (Flowchart)</layout>
+      <audience>L3</audience>
+      <section-target>Cross-cutting (new subsection)</section-target>
+      <markov-justification>Shows why tests pass without Pipecat installed -- the branching import pattern</markov-justification>
+    </task>
+
+    <task id="1.13" status="done">
+      <file>docs/figures/repo-figures/figure-plans/fig-voice-45-end-to-end-voice-turn.md</file>
+      <title>End-to-End Voice Turn Anatomy</title>
+      <layout>E (Steps)</layout>
+      <audience>L2</audience>
+      <section-target>S2.1 Pipeline Diagram</section-target>
+      <markov-justification>Annotated with latency budget at each hop -- the ASCII diagram shows structure; this shows timing</markov-justification>
+    </task>
+
+    <task id="1.14" status="done">
+      <file>docs/figures/repo-figures/figure-plans/fig-voice-46-test-architecture-map.md</file>
+      <title>Test Architecture Map</title>
+      <layout>B (Multi-Panel)</layout>
+      <audience>L3</audience>
+      <section-target>New subsection</section-target>
+      <markov-justification>54 tests across 4 files with mock boundaries -- shows coverage and test isolation</markov-justification>
+    </task>
+
+    <task id="1.15" status="done">
+      <file>docs/figures/repo-figures/figure-plans/fig-voice-47-evaluation-metrics-traces.md</file>
+      <title>Evaluation Metrics &amp; Traces</title>
+      <layout>D (Split-Panel)</layout>
+      <audience>L4</audience>
+      <section-target>S10.1 DeepEval</section-target>
+      <markov-justification>G-Eval dimensions + PersonaGym drift trace over 20 turns -- dual visualization</markov-justification>
+    </task>
+
+    <task id="1.16" status="done">
+      <file>docs/figures/repo-figures/figure-plans/fig-voice-48-extension-points-plugins.md</file>
+      <title>Extension Points &amp; Plugin Architecture</title>
+      <layout>B (Multi-Panel)</layout>
+      <audience>L3</audience>
+      <section-target>New subsection</section-target>
+      <markov-justification>6 extension points with Protocol interfaces -- shows the plugin architecture</markov-justification>
+    </task>
+  </phase>
+
+  <!-- ════════════════════════════════════════════════════════════════════ -->
+  <!-- PHASE 2: Body Text Additions (sequential, top-to-bottom)            -->
+  <!-- ════════════════════════════════════════════════════════════════════ -->
+  <phase id="2" name="Body Text Integration">
+    <description>Add ~200-350 words of body text around each figure placement in the implementation guide</description>
+    <target-file>docs/tutorials/voice-agent-implementation.md</target-file>
+    <total-insertion-points>14</total-insertion-points>
+    <estimated-words>4100</estimated-words>
+
+    <insertion id="2.1" status="done">
+      <section>S1.4 (Environment Variables)</section>
+      <after-line>After "Source: src/music_attribution/voice/config.py -- VoiceConfig class."</after-line>
+      <figures>fig-voice-34</figures>
+      <content>Figure embed + contextual paragraph on config cascade + ELI5 mixing console analogy</content>
+    </insertion>
+
+    <insertion id="2.2" status="done">
+      <section>S2.1 (Pipeline Diagram)</section>
+      <after-line>After existing ASCII pipeline diagram</after-line>
+      <figures>fig-voice-35, fig-voice-45</figures>
+      <content>Pipeline assembly flowchart + end-to-end turn anatomy with latency budget</content>
+    </insertion>
+
+    <insertion id="2.3" status="done">
+      <section>S2.2 (Component Roles)</section>
+      <after-line>After component roles table</after-line>
+      <figures>fig-voice-33</figures>
+      <content>Module file map showing dependency graph</content>
+    </insertion>
+
+    <insertion id="2.4" status="done">
+      <section>S2.3 (Domain Tools)</section>
+      <after-line>After tool bridge description</after-line>
+      <figures>fig-voice-38</figures>
+      <content>Tool bridge architecture showing SDK boundary</content>
+    </insertion>
+
+    <insertion id="2.5" status="done">
+      <section>S8.1 (Persona Architecture)</section>
+      <after-line>After persona dimension table</after-line>
+      <figures>fig-voice-36</figures>
+      <content>Concentric persona layers with mutability gradient</content>
+    </insertion>
+
+    <insertion id="2.6" status="done">
+      <section>S8.3-8.4 (Letta/Mem0)</section>
+      <after-line>After Mem0 safety gate description</after-line>
+      <figures>fig-voice-41</figures>
+      <content>Side-by-side memory integration showing convergence into build_system_prompt()</content>
+    </insertion>
+
+    <insertion id="2.7" status="done">
+      <section>S8.5 (Guardrails)</section>
+      <after-line>After guardrails_integration.py source reference</after-line>
+      <figures>fig-voice-40</figures>
+      <content>Dual-path guardrails architecture</content>
+    </insertion>
+
+    <insertion id="2.8" status="done">
+      <section>S9.2 (DriftDetector)</section>
+      <after-line>After DriftDetector code example</after-line>
+      <figures>fig-voice-37</figures>
+      <content>EWMA state machine with transition thresholds</content>
+    </insertion>
+
+    <insertion id="2.9" status="done">
+      <section>S10.1 (DeepEval)</section>
+      <after-line>After G-Eval dimensions table</after-line>
+      <figures>fig-voice-47</figures>
+      <content>Evaluation metrics visualization + PersonaGym drift trace</content>
+    </insertion>
+
+    <insertion id="2.10" status="done">
+      <section>S12.1 (Production)</section>
+      <after-line>After server.py source reference</after-line>
+      <figures>fig-voice-39, fig-voice-43</figures>
+      <content>Server lifecycle + frontend voice components</content>
+    </insertion>
+
+    <insertion id="2.11" status="done">
+      <section>New: Protocol-Based Swapping</section>
+      <location>Before Appendix A</location>
+      <figures>fig-voice-42</figures>
+      <content>Protocol-based component swapping with structural typing</content>
+    </insertion>
+
+    <insertion id="2.12" status="done">
+      <section>New: Conditional Imports</section>
+      <location>Before Appendix A</location>
+      <figures>fig-voice-44</figures>
+      <content>Conditional import pattern for test compatibility</content>
+    </insertion>
+
+    <insertion id="2.13" status="done">
+      <section>New: Test Architecture</section>
+      <location>Before Appendix A</location>
+      <figures>fig-voice-46</figures>
+      <content>Test architecture map with coverage and mock boundaries</content>
+    </insertion>
+
+    <insertion id="2.14" status="done">
+      <section>New: Extension Points</section>
+      <location>Before Appendix A</location>
+      <figures>fig-voice-48</figures>
+      <content>6 extension points with Protocol interfaces</content>
+    </insertion>
+  </phase>
+
+  <!-- ════════════════════════════════════════════════════════════════════ -->
+  <!-- PHASE 3: README Update                                              -->
+  <!-- ════════════════════════════════════════════════════════════════════ -->
+  <phase id="3" name="README Voice Section">
+    <description>Expand README voice section from 27 to ~85 lines</description>
+    <target-file>README.md</target-file>
+
+    <task id="3.1" status="done">
+      <action>Add hero figure embeds (fig-voice-01, fig-voice-45)</action>
+    </task>
+    <task id="3.2" status="done">
+      <action>Expand component table with correct defaults and config column</action>
+    </task>
+    <task id="3.3" status="done">
+      <action>Add "What makes this different" bullet list</action>
+    </task>
+    <task id="3.4" status="done">
+      <action>Add 3-line pipeline ASCII snippet</action>
+    </task>
+    <task id="3.5" status="done">
+      <action>Add links to research base and figure gallery</action>
+    </task>
+  </phase>
+
+  <!-- ════════════════════════════════════════════════════════════════════ -->
+  <!-- PHASE 4: Alt-Text Catalog                                           -->
+  <!-- ════════════════════════════════════════════════════════════════════ -->
+  <phase id="4" name="Alt-Text Catalog Update">
+    <description>Append 16 new entries to figure-alt-text-catalog.md</description>
+    <target-file>docs/figures/repo-figures/figure-alt-text-catalog.md</target-file>
+
+    <task id="4.1" status="done">
+      <action>Add 16 entries (fig-voice-33 through fig-voice-48) with alt text, caption, and embed</action>
+    </task>
+    <task id="4.2" status="done">
+      <action>Update statistics table: fig-voice 32→48, total 262→278</action>
+    </task>
+  </phase>
+
+  <!-- ════════════════════════════════════════════════════════════════════ -->
+  <!-- PHASE 5: Verification                                               -->
+  <!-- ════════════════════════════════════════════════════════════════════ -->
+  <phase id="5" name="Verification">
+    <description>Run pre-commit and verify no breakage</description>
+
+    <task id="5.1" status="done">
+      <action>pre-commit run --all-files</action>
+    </task>
+    <task id="5.2" status="done">
+      <action>make test (verify no Python breakage)</action>
+    </task>
+    <task id="5.3" status="done">
+      <action>Verify all 16 figure plan files parse as valid markdown</action>
+    </task>
+    <task id="5.4" status="done">
+      <action>Verify all figure embeds reference correct asset paths</action>
+    </task>
+  </phase>
+
+  <!-- ════════════════════════════════════════════════════════════════════ -->
+  <!-- Figure Index                                                        -->
+  <!-- ════════════════════════════════════════════════════════════════════ -->
+  <figure-index>
+    <figure id="fig-voice-33" file="fig-voice-33-voice-module-file-map.md" layout="B" level="L3" />
+    <figure id="fig-voice-34" file="fig-voice-34-voiceconfig-anatomy.md" layout="D" level="L3" />
+    <figure id="fig-voice-35" file="fig-voice-35-pipeline-assembly-flowchart.md" layout="C" level="L3" />
+    <figure id="fig-voice-36" file="fig-voice-36-persona-dimension-layers.md" layout="D" level="L2" />
+    <figure id="fig-voice-37" file="fig-voice-37-ewma-drift-state-machine.md" layout="C" level="L4" />
+    <figure id="fig-voice-38" file="fig-voice-38-tool-bridge-architecture.md" layout="B" level="L3" />
+    <figure id="fig-voice-39" file="fig-voice-39-server-lifecycle-connection.md" layout="C" level="L3" />
+    <figure id="fig-voice-40" file="fig-voice-40-guardrails-architecture.md" layout="B" level="L3" />
+    <figure id="fig-voice-41" file="fig-voice-41-memory-integration-letta-mem0.md" layout="D" level="L3" />
+    <figure id="fig-voice-42" file="fig-voice-42-protocol-component-swapping.md" layout="B" level="L3" />
+    <figure id="fig-voice-43" file="fig-voice-43-frontend-voice-components.md" layout="B" level="L3" />
+    <figure id="fig-voice-44" file="fig-voice-44-conditional-import-pattern.md" layout="C" level="L3" />
+    <figure id="fig-voice-45" file="fig-voice-45-end-to-end-voice-turn.md" layout="E" level="L2" />
+    <figure id="fig-voice-46" file="fig-voice-46-test-architecture-map.md" layout="B" level="L3" />
+    <figure id="fig-voice-47" file="fig-voice-47-evaluation-metrics-traces.md" layout="D" level="L4" />
+    <figure id="fig-voice-48" file="fig-voice-48-extension-points-plugins.md" layout="B" level="L3" />
+  </figure-index>
+
+  <!-- ════════════════════════════════════════════════════════════════════ -->
+  <!-- ELI5 Callout Index                                                  -->
+  <!-- ════════════════════════════════════════════════════════════════════ -->
+  <eli5-index>
+    <callout figure="fig-voice-33" analogy="Instruments in a band: config is conductor's score, pipeline is stage manager" />
+    <callout figure="fig-voice-34" analogy="Recording studio mixing console with 21 knobs controlling the signal chain" />
+    <callout figure="fig-voice-35" analogy="Session engineer calling five specialists to set up recording studio" />
+    <callout figure="fig-voice-36" analogy="Tree rings: heartwood (core identity) never changes, bark adapts to seasons" />
+    <callout figure="fig-voice-37" analogy="Click track noticing when session musician drifts from the chart" />
+    <callout figure="fig-voice-38" analogy="UN translator ensuring same ideas expressed in two languages" />
+    <callout figure="fig-voice-39" analogy="Recording studio with 10 booths, each with fresh mixing setup" />
+    <callout figure="fig-voice-40" analogy="Bouncer at door (input) + QC engineer before mix leaves (output)" />
+    <callout figure="fig-voice-41" analogy="Permanent bio + personal notepad (Letta) / studio whiteboard with bouncer (Mem0)" />
+    <callout figure="fig-voice-42" analogy="Standard 1/4-inch jack: any instrument plugs in with same connector" />
+    <callout figure="fig-voice-43" analogy="Stage monitor showing mic status, connected to backstage rack via audio cable" />
+    <callout figure="fig-voice-44" analogy="Musician who can play acoustic or electric, adapting to available instrument" />
+    <callout figure="fig-voice-45" analogy="Relay race with 7 runners, completing in under half a second" />
+    <callout figure="fig-voice-46" analogy="Sound check: mixer, EQ presets, feedback eliminator, overall signal chain" />
+    <callout figure="fig-voice-47" analogy="Music teacher's report card: right notes, dynamics, character, projection" />
+    <callout figure="fig-voice-48" analogy="Modular synthesizer rack: standard-format modules in 6 slots" />
+  </eli5-index>
+</plan>

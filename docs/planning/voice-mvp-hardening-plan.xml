@@ -1,0 +1,634 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<plan version="1.0" created="2026-02-22" context="voice-mvp-hardening">
+  <metadata>
+    <title>Voice Agent MVP Hardening — WARNING-Level Issue Resolution Plan</title>
+    <description>
+      Executable plan to close all WARNING-level findings from the 5-reviewer
+      code review of branch feat/voice-agent-mvp. These are hardening items —
+      not blockers for the MVP merge, but required for production readiness.
+
+      Organized into 6 phases by theme with dependency ordering.
+      Each task maps to one or more GitHub issues labeled voice-mvp-hardening.
+    </description>
+    <review-context>
+      Source: 5 parallel code review agents (2026-02-21)
+        - Architecture &amp; Modularity: 7 WARNINGs, 8 INFOs, 11 PASSes
+        - Security &amp; Input Validation: 10 WARNINGs, 7 INFOs, 8 PASSes
+        - Frontend Components Quality: 8 WARNINGs, 7 INFOs, 12 PASSes
+        - Documentation Completeness: 8 WARNINGs, 6 INFOs, 9 PASSes
+        - Test Coverage: ~7 WARNINGs (estimated from dedup)
+
+      After deduplication: 29 unique WARNING items.
+      Already fixed (pre-hardening): ARCH-W3, DOC-W5 (VoiceConfig LLM fields)
+      Remaining: 27 actionable items grouped into 20 tasks across 6 phases.
+    </review-context>
+    <constraints>
+      - Branch: feat/voice-agent-mvp (or new feat/voice-hardening branch)
+      - Mode: maintenance (max 3 files, 200 lines per task)
+      - All changes must pass pre-commit + full test suite
+      - No new dependencies unless strictly required
+      - Scaffold philosophy: document trade-offs, don't over-engineer
+    </constraints>
+  </metadata>
+
+  <!-- ================================================================== -->
+  <!--  PHASE 1: Security Foundations (blocks all other hardening)          -->
+  <!-- ================================================================== -->
+
+  <phase id="H1" name="Security Foundations" priority="P0">
+    <description>
+      Core security hardening that must happen first because later phases
+      (auth-gated feedback, user data isolation) depend on these primitives.
+    </description>
+
+    <task id="H1.1" status="NOT_STARTED" estimate="medium">
+      <name>Add WebSocket rate limiting per connection</name>
+      <description>
+        SEC-W1: No rate limiting on WebSocket messages.
+
+        Add per-connection byte-rate and frame-rate limiting to the voice
+        WebSocket endpoint. A malicious client can currently monopolize CPU
+        by sending continuous audio to a single connection.
+
+        Implementation approach:
+        1. Add `max_audio_bytes_per_second` and `max_frames_per_second` fields
+           to VoiceConfig (with sensible defaults: 32KB/s for 16kHz PCM, 50 fps)
+        2. Track bytes/frames received per second per connection in server.py
+        3. If rate exceeded, send warning JSON and disconnect after 3 violations
+        4. Log rate limit events for monitoring
+
+        Note: Pipecat's VAD already discards silence frames, so this is a
+        defense-in-depth measure against intentional abuse, not normal operation.
+      </description>
+      <files>
+        <file>src/music_attribution/voice/config.py</file>
+        <file>src/music_attribution/voice/server.py</file>
+        <file>tests/unit/voice/test_server.py</file>
+      </files>
+      <issues>SEC-W1</issues>
+    </task>
+
+    <task id="H1.2" status="NOT_STARTED" estimate="medium">
+      <name>Enforce WSS in production and default server_host to 127.0.0.1</name>
+      <description>
+        SEC-W9: Frontend client does not enforce WSS.
+        SEC-W10: VoiceConfig.server_host defaults to 0.0.0.0.
+
+        Two changes:
+        1. In config.py: Change `server_host` default from "0.0.0.0" to "127.0.0.1".
+           Add `require_wss: bool` field (default True in production, False in dev).
+        2. In frontend client.ts: Add URL validation — warn on ws:// when not localhost.
+           Optionally enforce wss:// when `NEXT_PUBLIC_REQUIRE_WSS=true`.
+
+        The 0.0.0.0 default was acceptable during development but must not ship
+        as the default for the published scaffold.
+      </description>
+      <files>
+        <file>src/music_attribution/voice/config.py</file>
+        <file>frontend/src/lib/voice/client.ts</file>
+        <file>tests/unit/voice/test_config.py</file>
+      </files>
+      <issues>SEC-W9, SEC-W10</issues>
+    </task>
+
+    <task id="H1.3" status="NOT_STARTED" estimate="small">
+      <name>Wire session factory into application lifespan</name>
+      <description>
+        ARCH-W5 / SEC-W8: _session_factory is never set in the app lifecycle.
+
+        The module-level `_session_factory` in tools.py is set via
+        `set_session_factory()` but this function is never called in server.py
+        or app.py. All tool handlers return "Database not available".
+
+        Fix: In create_voice_router() or create_voice_app(), call
+        set_session_factory() with the app's session factory during lifespan.
+        This unblocks real database access for voice tool handlers.
+
+        Depends on: existing database session factory from api/app.py.
+      </description>
+      <files>
+        <file>src/music_attribution/voice/server.py</file>
+        <file>tests/unit/voice/test_server.py</file>
+      </files>
+      <issues>ARCH-W5, SEC-W8</issues>
+    </task>
+  </phase>
+
+  <!-- ================================================================== -->
+  <!--  PHASE 2: Type Safety &amp; Code Quality                              -->
+  <!-- ================================================================== -->
+
+  <phase id="H2" name="Type Safety &amp; Code Quality" priority="P1" depends-on="H1">
+    <description>
+      Narrow return types, fix code smells, move hot-path imports.
+      These don't change behavior but improve maintainability and IDE support.
+    </description>
+
+    <task id="H2.1" status="NOT_STARTED" estimate="medium">
+      <name>Narrow return types from Any to Protocol types in pipeline.py</name>
+      <description>
+        ARCH-W1: All factory functions return Any.
+
+        Change return types:
+        - create_stt_service() -> STTServiceProtocol (from protocols.py)
+        - create_tts_service() -> TTSServiceProtocol (from protocols.py)
+        - create_llm_service() -> Any (keep, no LLM protocol yet)
+        - build_pipecat_pipeline() -> tuple[Any, Any] (Pipeline, PipelineTask)
+
+        Use TYPE_CHECKING blocks for Pipecat concrete type imports.
+        This enables IDE autocompletion and mypy catching misuse.
+      </description>
+      <files>
+        <file>src/music_attribution/voice/pipeline.py</file>
+        <file>src/music_attribution/voice/protocols.py</file>
+      </files>
+      <issues>ARCH-W1</issues>
+    </task>
+
+    <task id="H2.2" status="NOT_STARTED" estimate="small">
+      <name>Make drift detector embedding model name configurable</name>
+      <description>
+        ARCH-W2 (remaining part): The sentence-transformer model name
+        "all-MiniLM-L6-v2" is hardcoded in drift.py.
+
+        Add `drift_embedding_model: str` field to VoiceConfig with default
+        "all-MiniLM-L6-v2". Pass through to DriftMonitorProcessor.
+
+        Note: The hasattr→proper instance variable part was already fixed
+        in commit cf78917. This is the config-wiring remainder.
+      </description>
+      <files>
+        <file>src/music_attribution/voice/config.py</file>
+        <file>src/music_attribution/voice/drift.py</file>
+      </files>
+      <issues>ARCH-W2</issues>
+    </task>
+
+    <task id="H2.3" status="NOT_STARTED" estimate="small">
+      <name>Move hot-path import out of DriftMonitorProcessor.process_frame</name>
+      <description>
+        ARCH-W7: `from pipecat.frames.frames import LLMFullResponseEndFrame`
+        runs inside process_frame() on every audio frame.
+
+        Move to the module-level try/except ImportError block alongside the
+        other Pipecat frame imports. While Python caches imports, the lookup
+        overhead is unnecessary in a real-time audio pipeline.
+      </description>
+      <files>
+        <file>src/music_attribution/voice/drift.py</file>
+      </files>
+      <issues>ARCH-W7</issues>
+    </task>
+
+    <task id="H2.4" status="NOT_STARTED" estimate="small">
+      <name>Sanitize user input in tool handler error responses and logs</name>
+      <description>
+        SEC-W6: Broad except Exception logs full stack traces including
+        potentially sensitive data. User-supplied work_id echoed in responses.
+
+        Fix:
+        1. Truncate and sanitize work_id before including in response strings
+        2. Use structured logging that escapes special characters
+        3. Don't include raw user input in logger.exception() calls
+        4. Keep the broad except (graceful degradation is correct) but log
+           only sanitized identifiers
+      </description>
+      <files>
+        <file>src/music_attribution/voice/tools.py</file>
+        <file>tests/unit/voice/test_tools.py</file>
+      </files>
+      <issues>SEC-W6</issues>
+    </task>
+  </phase>
+
+  <!-- ================================================================== -->
+  <!--  PHASE 3: Guardrails &amp; Safety                                     -->
+  <!-- ================================================================== -->
+
+  <phase id="H3" name="Guardrails &amp; Safety" priority="P1" depends-on="H1">
+    <description>
+      Wire guardrails into the pipeline, expand regex patterns,
+      and document limitations. Currently all guardrails code is dead code.
+    </description>
+
+    <task id="H3.1" status="NOT_STARTED" estimate="medium">
+      <name>Wire guardrails into Pipecat pipeline as FrameProcessor</name>
+      <description>
+        ARCH-W4 / SEC-W3: check_input() and check_output() exist but are
+        never called. Guardrails code is completely dead.
+
+        Implementation:
+        1. Create a GuardrailsProcessor(FrameProcessor) that:
+           - On STT transcript frames: calls check_input(), blocks if flagged
+           - On LLM response frames: calls check_output(), filters if flagged
+        2. In build_pipecat_pipeline(): insert GuardrailsProcessor when
+           config.guardrails_enabled is True
+        3. Update check_input/check_output to accept RailsConfig when NeMo
+           is available, fall back to regex when not
+
+        This is the single highest-impact safety improvement.
+      </description>
+      <files>
+        <file>src/music_attribution/voice/guardrails_integration.py</file>
+        <file>src/music_attribution/voice/pipeline.py</file>
+        <file>tests/unit/voice/test_guardrails.py</file>
+      </files>
+      <issues>ARCH-W4, SEC-W3</issues>
+    </task>
+
+    <task id="H3.2" status="NOT_STARTED" estimate="small">
+      <name>Expand guardrails regex patterns and document limitations</name>
+      <description>
+        SEC-W2: Current regex patterns are trivially bypassable.
+
+        Expand patterns to include:
+        - "disregard/override/set aside your instructions"
+        - "roleplay as / imagine you're / behave like"
+        - "you are now / from now on you are"
+        - Common unicode homoglyph variants
+
+        Add prominent docstring noting this is a speed-bump, NOT a security
+        boundary. Recommend NeMo Guardrails or LLM-based classifier for
+        production deployments.
+      </description>
+      <files>
+        <file>src/music_attribution/voice/guardrails_integration.py</file>
+        <file>tests/unit/voice/test_guardrails.py</file>
+      </files>
+      <issues>SEC-W2</issues>
+    </task>
+
+    <task id="H3.3" status="NOT_STARTED" estimate="small">
+      <name>Add authentication guard for feedback submission</name>
+      <description>
+        SEC-W7: submit_feedback writes to database without authorization.
+        reviewer_id is hardcoded to "voice-agent-assisted".
+
+        Once session factory is wired (H1.3), add:
+        1. Accept user_id from authenticated session context (not client input)
+        2. Set reviewer_id to the authenticated user, not hardcoded string
+        3. Rate-limit feedback submissions per user (max 10/minute)
+
+        Note: Full WebSocket auth (CRITICAL, already fixed) is the prerequisite.
+        This task adds the feedback-specific authorization layer.
+      </description>
+      <files>
+        <file>src/music_attribution/voice/tools.py</file>
+        <file>tests/unit/voice/test_tools.py</file>
+      </files>
+      <issues>SEC-W7</issues>
+      <depends-on>H1.3</depends-on>
+    </task>
+
+    <task id="H3.4" status="NOT_STARTED" estimate="small">
+      <name>Document suggest_correction as preview-only (no persistence)</name>
+      <description>
+        ARCH-W6: suggest_correction handler returns "Please confirm to apply"
+        but has no confirmation mechanism and never persists corrections.
+
+        Options:
+        A. Document as intentional: corrections are previews only, actual
+           application requires the text agent's suggest_correction tool.
+        B. Implement persistence with a corrections queue table.
+
+        Recommendation: Option A for the scaffold. Add clear docstring and
+        update the tool description to say "previews a correction suggestion"
+        rather than implying it will be applied.
+      </description>
+      <files>
+        <file>src/music_attribution/voice/tools.py</file>
+      </files>
+      <issues>ARCH-W6</issues>
+    </task>
+  </phase>
+
+  <!-- ================================================================== -->
+  <!--  PHASE 4: Frontend Hardening                                        -->
+  <!-- ================================================================== -->
+
+  <phase id="H4" name="Frontend Hardening" priority="P1" depends-on="H1">
+    <description>
+      Fix frontend WARNING items: reactivity, reconnection, error handling,
+      accessibility, and state management.
+    </description>
+
+    <task id="H4.1" status="NOT_STARTED" estimate="small">
+      <name>Add reactive prefers-reduced-motion listener to AudioVisualizer</name>
+      <description>
+        FE-W1: prefers-reduced-motion checked once at mount, not reactively.
+
+        Add a useEffect with MediaQueryList change listener that updates a
+        state variable when the OS setting changes. Clean up listener on unmount.
+      </description>
+      <files>
+        <file>frontend/src/components/voice/AudioVisualizer.tsx</file>
+        <file>frontend/src/components/voice/__tests__/AudioVisualizer.test.tsx</file>
+      </files>
+      <issues>FE-W1</issues>
+    </task>
+
+    <task id="H4.2" status="NOT_STARTED" estimate="small">
+      <name>Wire voiceConnectionAtom or remove if unused</name>
+      <description>
+        FE-W2: voiceConnectionAtom defined but never imported or used.
+
+        Decision: Wire it up — have the VoiceClient's onStateChange callback
+        update this atom. This enables components to reactively display
+        connection status (connecting/connected/disconnected/error).
+
+        If wiring is deferred, remove the atom to avoid dead code.
+      </description>
+      <files>
+        <file>frontend/src/lib/stores/voice.ts</file>
+        <file>frontend/src/components/voice/VoiceButton.tsx</file>
+      </files>
+      <issues>FE-W2</issues>
+    </task>
+
+    <task id="H4.3" status="NOT_STARTED" estimate="medium">
+      <name>Add WebSocket reconnection with exponential backoff</name>
+      <description>
+        FE-W3: One-shot WebSocket connection with no retry.
+
+        Add reconnection logic to createVoiceClient:
+        1. On unexpected disconnect, attempt reconnect with exponential backoff
+           (1s, 2s, 4s, 8s, max 30s)
+        2. Max retry attempts configurable (default 5)
+        3. Call onStateChange("reconnecting") during retries
+        4. Call onStateChange("disconnected") after max retries exhausted
+        5. Manual disconnect() should NOT trigger reconnection
+      </description>
+      <files>
+        <file>frontend/src/lib/voice/client.ts</file>
+        <file>frontend/src/components/voice/__tests__/voice-client.test.ts</file>
+      </files>
+      <issues>FE-W3</issues>
+    </task>
+
+    <task id="H4.4" status="NOT_STARTED" estimate="small">
+      <name>Set binaryType and guard state transitions in voice components</name>
+      <description>
+        FE-W4: event.data cast without validation (could be Blob).
+        FE-W5: VoiceButton clickable during processing/playing states.
+
+        Two small fixes:
+        1. In client.ts: Add `ws.binaryType = "arraybuffer"` after construction
+        2. In VoiceButton.tsx: Disable button or guard click handler when
+           voiceState is "processing" or "playing"
+      </description>
+      <files>
+        <file>frontend/src/lib/voice/client.ts</file>
+        <file>frontend/src/components/voice/VoiceButton.tsx</file>
+      </files>
+      <issues>FE-W4, FE-W5</issues>
+    </task>
+
+    <task id="H4.5" status="NOT_STARTED" estimate="small">
+      <name>Add focus indicators and error feedback to voice UI</name>
+      <description>
+        FE-W6: Banner button lacks keyboard focus indicator.
+        FE-W7: VoiceButton swallows mic permission errors silently.
+
+        Fixes:
+        1. Add focus:outline-2 focus:outline-offset-2 to banner buttons
+        2. In VoiceButton catch block: set voiceState to "error" and show
+           a brief accessible notification about mic access denial
+        3. Add aria-live region announcement for the error state
+      </description>
+      <files>
+        <file>frontend/src/components/pro/voice-agent-banner.tsx</file>
+        <file>frontend/src/components/voice/VoiceButton.tsx</file>
+      </files>
+      <issues>FE-W6, FE-W7</issues>
+    </task>
+
+    <task id="H4.6" status="NOT_STARTED" estimate="small">
+      <name>Replace fragile regex test with semantic assertion</name>
+      <description>
+        FE-W8: VoiceButton touch target test uses brittle regex on class names.
+
+        Replace `expect(button.className).toMatch(/min-w-|w-1[1-9]|w-[2-9]/)` with:
+        - Either `getComputedStyle` check (if jsdom supports it)
+        - Or check for specific Tailwind classes: `expect(button.className).toContain("min-w-11")`
+        - Or use a data attribute: `data-testid="voice-button"` + snapshot
+      </description>
+      <files>
+        <file>frontend/src/components/voice/__tests__/VoiceButton.test.tsx</file>
+      </files>
+      <issues>FE-W8</issues>
+    </task>
+  </phase>
+
+  <!-- ================================================================== -->
+  <!--  PHASE 5: Documentation Completeness                                -->
+  <!-- ================================================================== -->
+
+  <phase id="H5" name="Documentation Completeness" priority="P1" depends-on="H2">
+    <description>
+      Fill documentation gaps identified by the documentation reviewer.
+      Ensure README, Makefile targets, and module docs are consistent with code.
+    </description>
+
+    <task id="H5.1" status="NOT_STARTED" estimate="small">
+      <name>Add voice Make targets to README and fix env vars table</name>
+      <description>
+        DOC-W1: Voice Make targets not in README.
+        DOC-W2: VOICE_LLM_MODEL not in env vars table.
+
+        Add to README:
+        1. Voice Make targets in the "Make commands reference" collapsible:
+           install-voice, test-voice, dev-voice, voice-local
+        2. Voice environment variables to the env vars table:
+           VOICE_LLM_API_KEY, VOICE_LLM_MODEL, VOICE_STT_PROVIDER, etc.
+      </description>
+      <files>
+        <file>README.md</file>
+      </files>
+      <issues>DOC-W1, DOC-W2</issues>
+    </task>
+
+    <task id="H5.2" status="NOT_STARTED" estimate="small">
+      <name>Add __all__ exports to voice __init__.py</name>
+      <description>
+        DOC-W3: voice/__init__.py has no exports.
+
+        Add __all__ with the public API:
+        - VoiceConfig (from config)
+        - get_pipeline_config (from pipeline)
+        - create_voice_router (from server)
+        - DriftDetector (from drift)
+
+        Keep other internals as submodule imports only.
+      </description>
+      <files>
+        <file>src/music_attribution/voice/__init__.py</file>
+      </files>
+      <issues>DOC-W3</issues>
+    </task>
+
+    <task id="H5.3" status="NOT_STARTED" estimate="small">
+      <name>Document guardrails config files and Colang syntax</name>
+      <description>
+        DOC-W4: config.yml and rails.co are undocumented.
+
+        Add inline comments to:
+        1. guardrails/config.yml: explain each NeMo config field, note that
+           `engine: anthropic` is the production default (NOT open-source)
+        2. guardrails/rails.co: document the Colang 2.0 flow syntax
+
+        Also update the implementation guide to reference these files.
+      </description>
+      <files>
+        <file>src/music_attribution/voice/guardrails/config.yml</file>
+        <file>src/music_attribution/voice/guardrails/rails.co</file>
+      </files>
+      <issues>DOC-W4</issues>
+    </task>
+
+    <task id="H5.4" status="NOT_STARTED" estimate="small">
+      <name>Clarify letta vs letta-client dependency and add voice README</name>
+      <description>
+        DOC-W6: Ambiguity between `letta` and `letta-client` packages.
+        DOC-W7: No voice module README.md.
+
+        Fixes:
+        1. Add comment in pyproject.toml clarifying letta vs letta-client
+           relationship. If letta-client is the actual SDK, add it explicitly.
+        2. Create src/music_attribution/voice/README.md following the pattern
+           of other module READMEs (etl/, resolution/, etc.)
+      </description>
+      <files>
+        <file>pyproject.toml</file>
+        <file>src/music_attribution/voice/README.md</file>
+      </files>
+      <issues>DOC-W6, DOC-W7</issues>
+    </task>
+
+    <task id="H5.5" status="NOT_STARTED" estimate="small">
+      <name>Fix Quick Start claims (GPU requirement, API keys)</name>
+      <description>
+        DOC-W8: "30 seconds" claim requires GPU + API keys.
+
+        Update the implementation guide Quick Start to:
+        1. Add "Prerequisites" section noting GPU recommended for Whisper
+        2. Document CPU fallback (slower but functional)
+        3. Clarify that VOICE_LLM_API_KEY is required for the default LLM
+        4. Add a "truly zero-cost" path using Ollama for local LLM
+        5. Change "30 seconds" to a more realistic "5 minutes" for first run
+      </description>
+      <files>
+        <file>docs/tutorials/voice-agent-implementation.md</file>
+      </files>
+      <issues>DOC-W8</issues>
+    </task>
+  </phase>
+
+  <!-- ================================================================== -->
+  <!--  PHASE 6: Integration &amp; User Data Safety                          -->
+  <!-- ================================================================== -->
+
+  <phase id="H6" name="Integration &amp; User Data Safety" priority="P2" depends-on="H1,H3">
+    <description>
+      User data isolation and integration hardening. Lower priority because
+      Mem0 and Letta are optional integrations not in the default pipeline.
+    </description>
+
+    <task id="H6.1" status="NOT_STARTED" estimate="small">
+      <name>Derive Mem0 user_id from authenticated session</name>
+      <description>
+        SEC-W4: Mem0 user data isolation relies on trusted user_id parameter.
+
+        Once WebSocket auth is in place, derive user_id from the authenticated
+        session context rather than accepting it as client-supplied input.
+        Add validation that user_id matches the session's authenticated identity.
+      </description>
+      <files>
+        <file>src/music_attribution/voice/mem0_integration.py</file>
+        <file>tests/unit/voice/test_mem0_integration.py</file>
+      </files>
+      <issues>SEC-W4</issues>
+    </task>
+
+    <task id="H6.2" status="NOT_STARTED" estimate="small">
+      <name>Add filtered agent lookup for Letta integration</name>
+      <description>
+        SEC-W5: Letta integration iterates ALL agents with O(N) scan.
+
+        Fix: Use filtered query if Letta API supports it:
+        `client.agents.list(metadata={"user_id": user_id})`
+
+        If filtered query not supported, maintain a local user_id → agent_id
+        mapping (dict or simple cache) to avoid full iteration.
+
+        Also add pagination if the list call supports it.
+      </description>
+      <files>
+        <file>src/music_attribution/voice/letta_integration.py</file>
+        <file>tests/unit/voice/test_letta_integration.py</file>
+      </files>
+      <issues>SEC-W5</issues>
+    </task>
+  </phase>
+
+  <!-- ================================================================== -->
+  <!--  EXECUTION SUMMARY                                                  -->
+  <!-- ================================================================== -->
+
+  <execution-summary>
+    <total-phases>6</total-phases>
+    <total-tasks>20</total-tasks>
+    <dependency-graph>
+      H1 (Security Foundations) → H2 (Type Safety), H3 (Guardrails), H4 (Frontend)
+      H2 (Type Safety) → H5 (Documentation)
+      H1 + H3 → H6 (Integration Safety)
+    </dependency-graph>
+    <estimated-effort>
+      P0 (must do): 3 tasks (H1.1–H1.3)
+      P1 (should do): 15 tasks (H2.1–H5.5)
+      P2 (nice to have): 2 tasks (H6.1–H6.2)
+    </estimated-effort>
+    <already-fixed>
+      - ARCH-W3: LLM API key/model wired through VoiceConfig (commit cf78917)
+      - DOC-W5: VOICE_LLM_MODEL added to VoiceConfig (commit cf78917)
+      - ARCH-W2 partial: hasattr→instance variable fix (commit cf78917)
+      - Thread-safe _active_connections with asyncio.Lock (commit cf78917)
+      - Connection limit MAX_VOICE_CONNECTIONS=10 (commit cf78917)
+      - UUID validation on all work_id inputs (commit cf78917)
+    </already-fixed>
+    <github-issue-mapping>
+      <!-- Architecture issues -->
+      <issue id="167" task="H2.1">ARCH-W1: Pervasive Any return types in pipeline.py</issue>
+      <issue id="168" task="H2.2">ARCH-W2: Embedding model name hardcoded in drift.py</issue>
+      <issue id="169" task="H3.1">ARCH-W4 / SEC-W3: Guardrails integration is dead code</issue>
+      <issue id="170" task="H1.3">ARCH-W5 / SEC-W8: Module-level mutable global _session_factory</issue>
+      <issue id="171" task="H3.4">ARCH-W6: suggest_correction handler does not persist</issue>
+      <issue id="172" task="H2.3">ARCH-W7: DriftMonitorProcessor imports inside process_frame</issue>
+      <!-- Security issues -->
+      <issue id="173" task="H1.1">SEC-W1: No rate limiting on WebSocket messages</issue>
+      <issue id="174" task="H3.2">SEC-W2: Guardrails regex patterns trivially bypassable</issue>
+      <issue id="175" task="H6.1">SEC-W4: Mem0 user data isolation relies on trusted user_id</issue>
+      <issue id="176" task="H6.2">SEC-W5: Letta integration iterates ALL agents</issue>
+      <issue id="177" task="H2.4">SEC-W6: Broad except Exception swallows errors</issue>
+      <issue id="178" task="H3.3">SEC-W7: submit_feedback writes without authorization</issue>
+      <issue id="179" task="H1.2">SEC-W9: Frontend WebSocket client does not enforce WSS</issue>
+      <issue id="180" task="H1.2">SEC-W10: VoiceConfig.server_host defaults to 0.0.0.0</issue>
+      <!-- Frontend issues -->
+      <issue id="181" task="H4.1">FE-W1: prefers-reduced-motion not reactive</issue>
+      <issue id="182" task="H4.2">FE-W2: voiceConnectionAtom is unused</issue>
+      <issue id="183" task="H4.3">FE-W3: WebSocket client no reconnection logic</issue>
+      <issue id="184" task="H4.4">FE-W4: WebSocket event.data cast without validation</issue>
+      <issue id="185" task="H4.4">FE-W5: VoiceButton does not handle processing/playing</issue>
+      <issue id="186" task="H4.5">FE-W6: VoiceAgentBanner button lacks focus indicator</issue>
+      <issue id="187" task="H4.5">FE-W7: VoiceButton click handler swallows errors</issue>
+      <issue id="188" task="H4.6">FE-W8: VoiceButton touch target test is fragile</issue>
+      <!-- Documentation issues -->
+      <issue id="189" task="H5.1">DOC-W1: Makefile voice targets not in README</issue>
+      <issue id="190" task="H5.1">DOC-W2: Voice env vars missing from README table</issue>
+      <issue id="191" task="H5.2">DOC-W3: voice/__init__.py no public API exports</issue>
+      <issue id="192" task="H5.3">DOC-W4: Guardrails config files undocumented</issue>
+      <issue id="193" task="H5.4">DOC-W6: Letta package name ambiguity</issue>
+      <issue id="194" task="H5.4">DOC-W7: No voice module README.md</issue>
+      <issue id="195" task="H5.5">DOC-W8: Quick Start claims require GPU + API keys</issue>
+    </github-issue-mapping>
+  </execution-summary>
+</plan>

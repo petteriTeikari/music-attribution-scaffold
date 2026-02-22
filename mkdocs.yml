@@ -189,6 +189,7 @@ nav:
     - Reproducing the Paper: tutorials/reproducing-the-paper.md
     - Adding Data Sources: tutorials/adding-data-sources.md
     - API Examples: tutorials/api-examples.md
+    - Voice Agent: tutorials/voice-agent-implementation.md
 
   - Troubleshooting: troubleshooting.md
 

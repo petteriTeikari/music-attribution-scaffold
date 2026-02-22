@@ -70,13 +70,26 @@ dev = [
     "testcontainers[postgres]>=4.0",
     "psycopg[binary]>=3.0",
     "aiosqlite>=0.22.1",
-    "pillow>=12.1.1",
+    "pillow>=11.1.0",
 ]
 test = [
     "pytest>=8.3.0",
     "pytest-cov>=6.0.0",
     "pytest-timeout>=2.3.0",
     "pytest-asyncio>=0.25.0",
+]
+voice = [
+    "pipecat-ai[silero,whisper]>=0.0.100",
+    "pipecat-ai[smallwebrtc]>=0.0.100",
+    "deepeval>=3.8",
+]
+voice-persona = [
+    "letta>=0.16",
+    "mem0ai>=1.0",
+    "nemoguardrails>=0.20",
+]
+voice-gpl = [
+    "pipecat-ai[piper]>=0.0.100",
 ]
 docs = [
     "mkdocs>=1.6.1",
@@ -103,6 +116,7 @@ markers = [
     "integration: Integration tests using external services",
     "e2e: End-to-end tests (full pipeline, may be slow)",
     "slow: Tests that take > 30 seconds",
+    "persona_eval: Persona fidelity evaluation tests (uses LLM, slow)",
 ]
 asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "function"
@@ -153,7 +167,7 @@ exclude = [
 ]
 
 [[tool.mypy.overrides]]
-module = ["musicbrainzngs", "musicbrainzngs.*", "discogs_client", "discogs_client.*", "acoustid", "acoustid.*", "jellyfish", "jellyfish.*", "thefuzz", "thefuzz.*", "pandas", "pandas.*", "splink", "splink.*", "pgvector", "pgvector.*", "sse_starlette", "sse_starlette.*", "pydantic_ai", "pydantic_ai.*", "tinytag", "tinytag.*"]
+module = ["musicbrainzngs", "musicbrainzngs.*", "discogs_client", "discogs_client.*", "acoustid", "acoustid.*", "jellyfish", "jellyfish.*", "thefuzz", "thefuzz.*", "pandas", "pandas.*", "splink", "splink.*", "pgvector", "pgvector.*", "sse_starlette", "sse_starlette.*", "pydantic_ai", "pydantic_ai.*", "tinytag", "tinytag.*", "pipecat", "pipecat.*", "deepeval", "deepeval.*", "letta", "letta.*", "letta_client", "letta_client.*", "mem0", "mem0.*", "nemoguardrails", "nemoguardrails.*"]
 ignore_missing_imports = true
 follow_untyped_imports = true
 

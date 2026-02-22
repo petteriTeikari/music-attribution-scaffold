@@ -34,10 +34,22 @@ jobs:
       - name: Install docs dependencies
         run: uv python install 3.13 && uv sync --only-group docs --frozen
 
-      - name: Copy figures to MkDocs site directory
+      - name: Copy figures and tutorials to MkDocs site directory
+        env:
+          GITHUB_BLOB: https://github.com/petteriTeikari/music-attribution-scaffold/blob/main
         run: |
           mkdir -p docs/site/figures
           cp docs/figures/repo-figures/assets/*.jpg docs/site/figures/
+          mkdir -p docs/site/tutorials
+          cp docs/tutorials/voice-agent-implementation.md docs/site/tutorials/
+          TUTORIAL=docs/site/tutorials/voice-agent-implementation.md
+          sed -i "s|../figures/repo-figures/assets/|../figures/|g" "$TUTORIAL"
+          sed -i "s|../../src/|${GITHUB_BLOB}/src/|g" "$TUTORIAL"
+          sed -i "s|../../scripts/|${GITHUB_BLOB}/scripts/|g" "$TUTORIAL"
+          sed -i "s|../../pyproject.toml|${GITHUB_BLOB}/pyproject.toml|g" "$TUTORIAL"
+          sed -i "s|../planning/|${GITHUB_BLOB}/docs/planning/|g" "$TUTORIAL"
+          sed -i "s|../prd/|${GITHUB_BLOB}/docs/prd/|g" "$TUTORIAL"
+          sed -i "s|../../.claude/|${GITHUB_BLOB}/.claude/|g" "$TUTORIAL"
 
       - name: Build docs
         run: uv run python -m mkdocs build --strict

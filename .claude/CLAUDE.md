@@ -21,10 +21,20 @@ This file defines the complete behavior contract for AI assistants working on th
 - NEVER use `conda` - TOTAL BAN
 - NEVER create `requirements.txt` - use `pyproject.toml`
 
-### Code Analysis
+### Code Analysis — ABSOLUTE BAN (NO EXCEPTIONS)
 - NEVER use `grep`, `sed`, or `awk` to parse Python code
 - NEVER use regex to extract imports, classes, or functions
-- ALWAYS use `ast.parse()` and `ast.walk()` for code analysis
+- NEVER use string operations (`in`, `.find()`, `.count()`) on Python source code to check for imports, classes, functions, or any structural element
+- ALWAYS use `ast.parse()` and `ast.walk()` for ANY analysis of Python source code
+- This applies to ALL contexts: production code, test code, scripts, one-off checks
+- There are ZERO exceptions — "it's just a test" or "it's simpler" is NOT a valid reason
+
+**Documented failure (2026-02-22):** `test_demo_script.py` was written with
+`"argparse" in source` and `"VoiceConfig" in source` — string-based code analysis
+that violates the AST-only rule. This was caught during code review and rewritten
+to use `ast.walk()` with proper `ast.Import`/`ast.ImportFrom`/`ast.Constant` checks.
+The "simple string search" excuse is explicitly rejected — ALL Python source analysis
+MUST use AST, no matter how "simple" the check appears.
 
 ### File Operations
 - ALWAYS specify `encoding='utf-8'` when opening files

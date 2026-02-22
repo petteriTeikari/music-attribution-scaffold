@@ -1,6 +1,6 @@
 # Visual Documentation Gallery
 
-> All 200 figures generated for the Music Attribution Scaffold documentation. Each figure provides a visual explanation of architecture decisions, implementation patterns, and design choices.
+> All 278 figures generated for the Music Attribution Scaffold documentation. Each figure provides a visual explanation of architecture decisions, implementation patterns, and design choices.
 >
 > Figures generated with [Nano Banana Pro](https://nanobananapro.com/) (Google Gemini image generation). Figure plans in [`docs/figures/repo-figures/figure-plans/`](https://github.com/petteriTeikari/music-attribution-scaffold/tree/main/docs/figures/repo-figures/figure-plans).
 
@@ -1291,3 +1291,497 @@ Trend figures track the fast-moving technology landscape that influences PRD nod
 ![Trend-to-scaffold matrix: 10 tech trends mapped to PRD node impacts and reclassifications](figures/fig-trends-08-scaffold-to-trend-implication-matrix.jpg)
 
 *Trend-to-scaffold matrix: ten technology trends mapped to specific PRD node impacts and option reclassifications.*
+
+---
+
+## Voice Agent
+
+The voice agent figures cover the complete real-time voice pipeline for music attribution -- from full-stack architecture and latency budgets through STT/TTS/LLM component selection, evaluation benchmarks, cost economics, compliance, and the implementation-level module architecture including config anatomy, pipeline assembly, persona layers, drift detection, tool bridging, guardrails, memory integration, protocols, frontend components, testing, and extension points.
+
+<details>
+<summary><strong>48 figures</strong> -- click to expand</summary>
+
+### Infrastructure & Frameworks (fig-voice-01 to 06)
+
+![Architecture diagram of a five-stage real-time voice agent pipeline showing Transport, STT, LLM, TTS, and output stages with semantic endpointing as the orchestration layer for music attribution voice interactions.](figures/fig-voice-01-full-stack-architecture.jpg)
+
+*Five-panel architecture diagram showing the complete voice agent pipeline from transport input through STT, LLM, TTS, and back to transport output, with semantic endpointing as the critical orchestration layer.*
+
+---
+
+![Vertical latency budget diagram for a real-time voice agent pipeline showing VAD, speech-to-text, LLM, text-to-speech, and transport stages targeting under 500ms total, with best-available Feb 2026 stack achieving 484ms.](figures/fig-voice-02-pipeline-latency-budget.jpg)
+
+*Vertical timeline showing the voice agent latency budget across five pipeline stages, targeting under 500 milliseconds total with concrete Feb 2026 best-available stack achieving ~484ms.*
+
+---
+
+![Split-panel comparison of cascaded voice agent pipeline (STT, LLM, TTS modules) versus monolithic speech-to-speech model, with the tandem Kame pattern combining both for optimal latency and reasoning in music attribution workflows.](figures/fig-voice-03-cascaded-vs-speech-to-speech.jpg)
+
+*Split-panel comparison of cascaded modular pipeline versus speech-to-speech end-to-end architecture, with the tandem pattern combining both approaches for optimal latency and reasoning depth.*
+
+---
+
+![Decision tree for voice agent framework selection comparing open-source (Pipecat, LiveKit), managed (Retell AI, Vapi), and custom options, with Pipecat highlighted as the recommended Python-native MVP choice for music attribution.](figures/fig-voice-04-framework-landscape.jpg)
+
+*Decision tree mapping the voice agent framework choice from build-vs-buy through open-source and managed options, with Pipecat selected as the recommended MVP framework for Python-native PydanticAI compatibility.*
+
+---
+
+![Dual persona voice agent system showing a shared pipeline branching into Attribution Agent (system voice for metadata gap-filling) and Digital Twin (artist voice clone), gated by progressive consent levels L1 through L3 for music attribution.](figures/fig-voice-05-dual-persona-system.jpg)
+
+*Dual persona voice system showing how a shared pipeline branches into Attribution Agent and Digital Twin personas, with progressive consent levels (L1/L2/L3) gating access to each persona's features.*
+
+---
+
+![Split-panel comparison of WebRTC and WebSocket voice transport protocols for real-time voice agents, showing WebRTC recommended with sub-30ms latency and built-in echo cancellation versus WebSocket adding 50-100ms overhead.](figures/fig-voice-06-webrtc-transport-layer.jpg)
+
+*Split-panel comparison of WebRTC and WebSocket voice transport protocols, with WebRTC recommended for its sub-30ms latency and built-in audio processing capabilities.*
+
+---
+
+### STT / TTS / LLM Components (fig-voice-07 to 21)
+
+![Four-quadrant positioning chart of speech-to-text models (Feb 2026) mapping accuracy versus cost, with Canary-Qwen leading accuracy at 5.63% WER, Deepgram Nova-3 for production, Faster-Whisper for self-hosted, and Moonshine for edge deployment.](figures/fig-voice-07-stt-model-landscape.jpg)
+
+*Four-quadrant STT model positioning chart showing accuracy versus cost for Feb 2026, with category leaders identified for production, self-hosted, accuracy-optimized, and edge deployment scenarios.*
+
+---
+
+![Scatter plot of speech-to-text models positioned by accuracy (inverse WER) versus latency (RTFx), with a Pareto frontier connecting Canary-Qwen, Deepgram Nova-3, Faster-Whisper, and Moonshine as tradeoff leaders.](figures/fig-voice-08-stt-accuracy-vs-latency.jpg)
+
+*Scatter plot showing STT models positioned by accuracy versus latency, with a coral Pareto frontier line connecting models where no alternative dominates on both axes simultaneously.*
+
+---
+
+![Three-generation evolution of voice activity detection and turn detection for voice agents: from silence thresholds (50% TPR) through deep learning VAD with Silero (87.7% TPR) to semantic endpointing achieving 260ms latency and 30% fewer false interruptions.](figures/fig-voice-09-vad-turn-detection-evolution.jpg)
+
+*Three-generation evolution of voice activity detection from silence thresholds through deep learning VAD to semantic endpointing, showing how each generation reduces false interruptions.*
+
+---
+
+![Split-panel comparison of traditional fragmented speech recognition pipeline versus Deepgram Flux Conversational Speech Recognition unified model fusing acoustic and semantic streams for 260ms end-of-turn latency.](figures/fig-voice-10-conversational-speech-recognition.jpg)
+
+*Split-panel comparison of traditional fragmented speech recognition pipeline versus Deepgram Flux CSR unified model with acoustic and semantic stream fusion achieving 260ms end-of-turn latency.*
+
+---
+
+![Two-row text-to-speech model landscape for Feb 2026 comparing commercial APIs (ElevenLabs, Cartesia, Inworld, Rime) with open-source models (Chatterbox, Orpheus, Kokoro, CosyVoice) that crossed the quality threshold enabling 100x cost reduction.](figures/fig-voice-11-tts-model-landscape.jpg)
+
+*Two-row landscape of TTS models as of February 2026: commercial providers versus open-source models with parameter counts, latency, cost, and license for each.*
+
+---
+
+![Horizontal bar chart of TTS Arena blind preference leaderboard (Feb 2026) ranking seven speech synthesis models by Elo score, with Vocu V3.0 at #1 and ElevenLabs Flash displaced to #7, showing market fragmentation in text-to-speech quality.](figures/fig-voice-12-tts-arena-leaderboard.jpg)
+
+*Horizontal bar chart of TTS Arena blind preference leaderboard as of February 2026, showing Vocu V3.0 at #1 and ElevenLabs Flash displaced to #7 by specialized competitors.*
+
+---
+
+![Three-panel comparison of open-source TTS models: Chatterbox (MIT, 350M params), Orpheus (Apache 2.0, emotion tags, 200ms streaming), and Kokoro (82M params, $0.06/hr self-hosted), demonstrating 100x cost reduction over commercial APIs.](figures/fig-voice-13-open-source-tts-revolution.jpg)
+
+*Three-panel showcase of the open-source TTS revolution: Chatterbox, Orpheus, and Kokoro reducing TTS cost by 100x through self-hosting.*
+
+---
+
+![Flowchart mapping six PRAC3 voice cloning consent dimensions to A0-A3 music attribution assurance levels, showing voice consent as a progressive spectrum from no provenance to artist-verified voice prints.](figures/fig-voice-14-voice-cloning-consent-framework.jpg)
+
+*Flowchart mapping PRAC3 voice cloning consent dimensions to A0-A3 assurance levels, showing consent as a spectrum from no provenance to artist-verified voice prints.*
+
+---
+
+![Taxonomy diagram of three Speech LLM architecture families from the ACL 2025 survey: Encoder-Decoder, Decoder-Only, and Hierarchical Codebook, with quality and latency tradeoff indicators.](figures/fig-voice-15-speech-llm-taxonomy.jpg)
+
+*Three-family taxonomy of Speech LLM architectures from the ACL 2025 survey with quality and latency indicators.*
+
+---
+
+![Hero figure showing Ultravox v0.7 achieving 97.7% on production benchmarks as the first speech-to-speech model to beat text-mode LLMs, compared against GPT Realtime (86.7%) and Gemini Live (86.0%).](figures/fig-voice-16-ultravox-breakthrough.jpg)
+
+*Hero figure showing Ultravox v0.7 achieving 97.7% versus GPT Realtime (86.7%) and Gemini Live (86.0%), with simplified architecture diagram.*
+
+---
+
+![Split-panel diagram comparing half-duplex turn-based voice interaction versus full-duplex simultaneous listen-and-speak architecture with backchanneling, featuring Moshi, SALMONN-omni, and PersonaPlex models.](figures/fig-voice-17-full-duplex-architecture.jpg)
+
+*Split-panel comparing half-duplex turn-based voice interaction with full-duplex simultaneous listen-and-speak architecture.*
+
+---
+
+![Step-by-step architecture diagram of the Pipecat voice agent framework showing five layers: transport, FrameProcessor chain, 40+ service plugins, parallel pipeline, and Smart Turn with Pipecat Flows for state management.](figures/fig-voice-18-pipecat-pipeline-anatomy.jpg)
+
+*Step-by-step anatomy of a Pipecat voice agent pipeline showing transport, FrameProcessor chain, 40+ service plugins, parallel pipeline, and Smart Turn with Flows.*
+
+---
+
+![Architecture diagram of LiveKit Agents showing the agent-as-participant model where the voice agent joins a WebRTC room alongside users, with VoicePipelineAgent, pluggable services, telephony integration, and managed Cloud Agents deployment.](figures/fig-voice-19-livekit-agents-architecture.jpg)
+
+*LiveKit Agents architecture showing the agent-as-participant model in a WebRTC room with voice pipeline, pluggable services, and Cloud Agents deployment.*
+
+---
+
+![Decision tree flowchart for voice agent deployment showing four paths: managed platforms, framework + cloud APIs (highlighted as sweet spot), self-hosted open-source, and hybrid edge + cloud approaches.](figures/fig-voice-20-production-deployment-options.jpg)
+
+*Decision tree for voice agent deployment showing four paths from fully managed through framework + APIs to self-hosted and hybrid approaches.*
+
+---
+
+![Four-column decision matrix comparing voice agent deployment approaches across six dimensions: cost per minute, time to market, customization, scalability, vendor lock-in, and DevOps burden, with framework + APIs highlighted as the recommended sweet spot.](figures/fig-voice-21-managed-vs-self-hosted-decision.jpg)
+
+*Four-column decision matrix comparing managed platforms, framework + APIs (sweet spot), self-hosted, and hybrid deployment approaches.*
+
+---
+
+### Evaluation, Economics & Compliance (fig-voice-22 to 32)
+
+![Timeline showing voice agent evaluation benchmark evolution across five phases from 2024 to 2026: component metrics, multi-dimensional scoring, agentic benchmarks, LLM-as-judge paradigms, and safety + emotion assessment.](figures/fig-voice-22-evaluation-evolution-timeline.jpg)
+
+*Timeline showing voice agent evaluation evolution from WER-only component metrics (2024) through multi-dimensional benchmarks to safety and emotion assessment (early 2026).*
+
+---
+
+![Four-panel diagram showing fragmented voice agent evaluation landscape across STT, TTS, end-to-end, and voice cloning leaderboards, revealing no unified benchmark exists for full pipeline assessment.](figures/fig-voice-23-leaderboard-landscape-fragmentation.jpg)
+
+*Four-panel diagram showing the fragmented voice agent leaderboard landscape with no unified benchmark capturing the full voice agent experience.*
+
+---
+
+![Two-panel aiewf-eval benchmark comparison of text-mode LLMs scoring 100% versus speech-to-speech models at 86-98%, illustrating the intelligence-latency tradeoff in voice agent evaluation.](figures/fig-voice-24-aiewf-eval-benchmark-results.jpg)
+
+*Two-panel comparison of aiewf-eval benchmark results showing text-mode LLMs versus speech-to-speech models evaluated on tool use, instruction following, and knowledge grounding.*
+
+---
+
+![Radar chart displaying 10 critical voice agent evaluation dimensions where current leaderboards cover only WER, MOS, and task completion, leaving 8 production-critical gaps untested.](figures/fig-voice-25-evaluation-gaps-radar.jpg)
+
+*Radar chart showing 10 critical evaluation dimensions for voice agents, revealing that current leaderboards cover only 3 while 8 remain untested.*
+
+---
+
+![Stacked cost breakdown of voice agent operation per minute across three FinOps tiers showing Budget at $0.01-0.02, Mid at $0.05-0.08, and Premium at $0.15-0.20, revealing a 10x cost difference driven by LLM and TTS choices.](figures/fig-voice-26-cost-per-minute-breakdown.jpg)
+
+*Stacked cost breakdown across three tiers showing a 10x cost difference driven primarily by LLM and TTS choices.*
+
+---
+
+![Six-panel FinOps grid presenting voice AI cost optimization levers -- model selection, semantic caching, on-device STT/TTS, context management, tiered quality, and volume commitments -- combining for up to 16x total cost reduction.](figures/fig-voice-27-finops-optimization-strategies.jpg)
+
+*Six cost optimization levers for voice AI infrastructure, each independently quantified and combinable for up to 16x total cost reduction.*
+
+---
+
+![Split-panel diagram illustrating the AI companion cost trap with Character.AI's 11x loss ratio from $365M serving costs against $32M revenue, alongside five FinOps escape strategies for sustainable voice agent economics.](figures/fig-voice-28-ai-companion-cost-trap.jpg)
+
+*Split-panel showing the AI companion cost trap and five escape strategies for sustainable voice agent economics.*
+
+---
+
+![Flowchart mapping PRAC3 voice rights framework with six dimensions to concrete music attribution implementations connected to A0-A3 assurance levels.](figures/fig-voice-29-prac3-assurance-mapping.jpg)
+
+*Mapping of PRAC3 voice rights framework to music attribution implementations, showing how each dimension translates to technical mechanisms and A0-A3 assurance levels.*
+
+---
+
+![Five-step EU AI Act compliance checklist for voice agent systems covering Article 50 disclosure, synthetic audio labeling, deepfake consent, transparency documentation, and risk classification, with enforcement timeline through August 2026.](figures/fig-voice-30-eu-ai-act-voice-compliance.jpg)
+
+*Five EU AI Act compliance requirements for voice agent systems with enforcement timeline through August 2026.*
+
+---
+
+![Six-layer recommended voice agent MVP stack for music attribution showing Pipecat, Deepgram Nova-3, PydanticAI, Cartesia Sonic, Daily.co WebRTC, and Smart Turn with $0.05-0.08/min operating cost.](figures/fig-voice-31-recommended-mvp-stack.jpg)
+
+*Recommended six-layer voice agent MVP stack for music attribution at $0.05-0.08/min operating cost.*
+
+---
+
+![Five-phase voice agent implementation roadmap for music attribution starting with STT-only input shipping in 2 months, progressing through system voice, turn detection, digital twin with consent, to premium features.](figures/fig-voice-32-implementation-roadmap.jpg)
+
+*Five-phase voice agent implementation roadmap from Phase I voice-to-text (Month 1-2) through Phase V premium features (Month 6+).*
+
+---
+
+### Implementation Architecture (fig-voice-33 to 48)
+
+![Dependency graph of the 11-file voice module showing config.py as root, pipeline.py as orchestrator, and specialized leaf files for persona, drift, tools, server, protocols, and integrations in the music attribution scaffold.](figures/fig-voice-33-voice-module-file-map.jpg)
+
+*Dependency graph of the voice module's 11 files with config.py as root, pipeline.py as orchestrator, and specialized leaf files for persona, drift detection, tools, and external integrations.*
+
+---
+
+![Split-panel diagram mapping VoiceConfig's 21 environment variables through 6 typed enums to concrete Pipecat service instances, showing the single config object controlling the entire voice pipeline.](figures/fig-voice-34-voiceconfig-anatomy.jpg)
+
+*VoiceConfig anatomy: 21 environment variables cascade through 6 typed enums to concrete Pipecat service instances -- one Pydantic Settings model controls the entire pipeline.*
+
+---
+
+![Flowchart of build_pipecat_pipeline() showing five factory function calls fanning out to create STT, TTS, LLM, transport, and persona components, with conditional drift monitor insertion before PipelineRunner assembly.](figures/fig-voice-35-pipeline-assembly-flowchart.jpg)
+
+*Pipeline assembly flowchart: build_pipecat_pipeline() calls five factory functions, conditionally inserts a DriftMonitorProcessor, and wires everything into a PipelineRunner.*
+
+---
+
+![Concentric ring diagram of the five persona dimensions from immutable core identity at center to freely mutable conversation flow at edge, showing how the most important layers change the least.](figures/fig-voice-36-persona-dimension-layers.jpg)
+
+*Five concentric persona dimensions with mutability gradient: Core Identity (IMMUTABLE) at center through Conversation Flow (FREE) at edge -- the most critical layers change the least.*
+
+---
+
+![Three-state drift detection state machine showing sync, drift, and desync states with EWMA-smoothed transition thresholds at 0.85 and 0.70, and a restoring force arrow from periodic reinforcement prompts.](figures/fig-voice-37-ewma-drift-state-machine.jpg)
+
+*Drift detection state machine: three states (sync ≥0.85, drift 0.70-0.85, desync <0.70) with EWMA smoothing and periodic reinforcement as the restoring force back to sync.*
+
+---
+
+![Multi-panel diagram showing PydanticAI domain tools translated through get_tool_schemas() to Pipecat FunctionSchema declarations, with the SDK boundary and shared database session factory clearly marked.](figures/fig-voice-38-tool-bridge-architecture.jpg)
+
+*Tool bridge architecture: PydanticAI's 4 domain tools are translated to Pipecat FunctionSchema declarations via get_tool_schemas(), sharing the same database session factory as the REST API.*
+
+---
+
+![Flowchart of voice server lifecycle from FastAPI startup through WebSocket accept, asyncio.Lock acquisition, pipeline building, PipelineRunner execution, to cleanup on disconnect with MAX_CONNECTIONS limit of 10.](figures/fig-voice-39-server-lifecycle-connection.jpg)
+
+*Server lifecycle: WebSocket accept → connection limit check (MAX=10) → asyncio.Lock → build_pipecat_pipeline() → PipelineRunner → cleanup on disconnect.*
+
+---
+
+![Multi-panel guardrails architecture showing input rails with five detection patterns and output rails with four detection patterns, branching between NeMo Colang production path and regex fallback path.](figures/fig-voice-40-guardrails-architecture.jpg)
+
+*Guardrails architecture: input rails (5 patterns) and output rails (4 patterns) with a runtime branch between NeMo Colang and regex fallback, ensuring persona boundaries in both paths.*
+
+---
+
+![Split-panel diagram comparing Letta's read-only persona block with mutable human block against Mem0's category-level preferences with safety gate, both converging into build_system_prompt().](figures/fig-voice-41-memory-integration-letta-mem0.jpg)
+
+*Memory integration: Letta (immutable persona block + mutable user memory) and Mem0 (category preferences + safety gate) converge into build_system_prompt() to assemble the system prompt.*
+
+---
+
+![Three-column diagram showing STTServiceProtocol, TTSServiceProtocol, and DriftDetectorProtocol with dashed satisfies lines connecting to concrete implementations, demonstrating structural typing without inheritance.](figures/fig-voice-42-protocol-component-swapping.jpg)
+
+*Protocol-based swapping: three protocols (STT, TTS, Drift) with dashed "satisfies" lines to concrete implementations -- structural typing means no import or inheritance needed.*
+
+---
+
+![Multi-panel diagram showing browser-side Jotai atoms and voice client connecting via WebSocket to server-side FastAPI and Pipecat pipeline, with audio frames flowing bidirectionally across the boundary.](figures/fig-voice-43-frontend-voice-components.jpg)
+
+*Frontend voice architecture: Jotai atoms (voiceState, voiceConnection) drive the React UI, with createVoiceClient() managing the WebSocket link to the Pipecat pipeline on the server.*
+
+---
+
+![Flowchart showing the conditional import branch where successful Pipecat import enables full pipeline mode while ImportError falls back to config-only mode, with both paths supporting the complete test suite.](figures/fig-voice-44-conditional-import-pattern.jpg)
+
+*Conditional import pattern: try/except at module level sets PIPECAT_AVAILABLE, branching to full pipeline mode or config-only mode -- all 54 tests pass in both branches.*
+
+---
+
+![Step-by-step anatomy of a single voice turn traversing seven processing stages with latency budget annotations, targeting under 500 milliseconds total for natural conversational music attribution interactions.](figures/fig-voice-45-end-to-end-voice-turn.jpg)
+
+*End-to-end voice turn anatomy: 7 processing steps from VAD (4ms) through TTS to transport, with open-source stack at ~799ms and commercial stack at ~389ms against a 500ms target.*
+
+---
+
+![Four-column test architecture map showing 54 voice tests across test_voice_config (17), test_voice_persona (14), test_voice_drift (15), and test_demo_script (8) with mock boundaries marked.](figures/fig-voice-46-test-architecture-map.jpg)
+
+*Test architecture: 54 tests across 4 files covering config validation, persona building, drift detection, and demo script structure, all running without Pipecat via precise mock boundaries.*
+
+---
+
+![Split-panel showing four G-Eval dimension bars with target scores and a PersonaGym multi-turn trace revealing the 8-turn persona drift cliff, with CI integration cadence for each evaluation type.](figures/fig-voice-47-evaluation-metrics-traces.jpg)
+
+*Evaluation metrics: four G-Eval dimensions with targets (Task >90%, Confidence >85%, Persona >90%, Voice >80%) plus a PersonaGym 20-turn drift trace showing the 8-turn cliff.*
+
+---
+
+![Six-panel grid showing voice module extension points for custom STT, TTS, drift detector, guardrails, memory backend, and tools, each with the Protocol interface to implement for plug-in compatibility.](figures/fig-voice-48-extension-points-plugins.jpg)
+
+*Six extension points: custom STT, TTS, drift detector, guardrails, memory, and tools -- each defined by a Protocol interface that any implementation can satisfy via structural typing.*
+
+</details>
+
+---
+
+## Persona Coherence
+
+The persona coherence figures cover the engineering of consistent AI agent personalities -- from multi-dimensional persona architecture and mixture-of-experts training through drift detection, memory systems, over-personalization risks, privacy-preserving personalization, evaluation benchmarks, cross-channel synchronization, and the recommended technology stack for maintaining persona consistency across text and voice modalities.
+
+<details>
+<summary><strong>30 figures</strong> -- click to expand</summary>
+
+![Architecture diagram showing five persona dimensions arranged by graduated stability from immutable Core Identity to free Conversation Flow, divided into stable and adaptive layers by a stability boundary for persona coherence engineering.](figures/fig-persona-01-multi-dimensional-persona-architecture.jpg)
+
+*Multi-dimensional persona architecture showing five dimensions with graduated stability properties.*
+
+---
+
+![System architecture diagram of PersonaFuse Mixture-of-Experts showing a three-stage training pipeline and inference flow where a Qwen2.5-0.5B situation-aware router composes 10 Big Five personality LoRA experts via weighted combination and Persona-CoT reasoning.](figures/fig-persona-02-personafuse-moe-architecture.jpg)
+
+*PersonaFuse MoE architecture showing three-stage training pipeline and inference flow with situation-aware router.*
+
+---
+
+![Visualization of persona trait vectors in LLM activation space with directions for helpfulness, sycophancy, hallucination, and evil radiating from an origin point, highlighting the Assistant Axis principal component and the steering mechanism formula.](figures/fig-persona-03-persona-vectors-activation-space.jpg)
+
+*Persona vectors in activation space showing identifiable directions for traits, with the Assistant Axis principal component and steering formula.*
+
+---
+
+![Architecture diagram of the Intelligence Sandwich pattern showing proprietary pre-processing and post-processing layers sandwiching a commodity swappable LLM core for music attribution systems.](figures/fig-persona-04-intelligence-sandwich.jpg)
+
+*The Intelligence Sandwich architecture with proprietary value in pre/post-processing layers sandwiching a commodity LLM core.*
+
+---
+
+![Dual-row mapping diagram of the Atkinson-Shiffrin cognitive memory model to LLM persona memory implementation, showing four tiers mapped to Conversation Buffer, Session Context, Vector DB, and Persistent User Profile.](figures/fig-persona-05-memory-architecture-cognitive.jpg)
+
+*Cognitive memory architecture mapping the Atkinson-Shiffrin model to LLM implementation tiers.*
+
+---
+
+![Line chart of persona consistency score over 20 conversation turns showing a sharp drift cliff at turn 8 for text modality and turns 4-5 for voice modality, with root cause analysis of attention decay on persona tokens.](figures/fig-persona-06-drift-cliff-8-turns.jpg)
+
+*Persona consistency score over 20 turns showing drift cliff at turn 8 (text) and turns 4-5 (voice).*
+
+---
+
+![Four-panel comparison of persona drift detection methods: embedding-based, probe-based, attention-based, and persona vector monitoring with thresholds and trade-offs.](figures/fig-persona-07-drift-detection-methods.jpg)
+
+*Four drift detection methods compared with cost, accuracy, and trade-off analysis.*
+
+---
+
+![Split-panel diagram of the EchoMode SyncScope drift detection system showing EWMA-smoothed SyncScore time series with threshold-based drift detection and a four-state behavioral model with persona repair trigger.](figures/fig-persona-08-echomode-syncscope.jpg)
+
+*EchoMode SyncScope system with EWMA-smoothed drift detection and four-state behavioral model.*
+
+---
+
+![Three-panel taxonomy of over-personalization failure modes: irrelevance, repetition, and sycophancy, with Self-ReCheck mitigations and 26.2-61.1% memory-induced performance drops.](figures/fig-persona-09-over-personalization-taxonomy.jpg)
+
+*Three over-personalization failure modes with mitigations and quantified performance impact.*
+
+---
+
+![Split-panel security diagram contrasting normal interaction where a harmful query is blocked versus an intent legitimation attack where accumulated benign memories bypass the safety filter with 15.8-243.7% attack success increase.](figures/fig-persona-10-intent-legitimation.jpg)
+
+*Intent legitimation attack showing how accumulated benign memories shift harmful queries into the model's benign region.*
+
+---
+
+![Multi-panel comparison of four agent memory systems for persona coherence -- Letta, Zep, Mem0, and MemoryOS -- showing architecture diagrams, performance metrics, and convergence on temporal knowledge graphs.](figures/fig-persona-11-memory-system-comparison.jpg)
+
+*Four leading agent memory systems compared across architecture and performance, all converging on temporal knowledge graphs.*
+
+---
+
+![Tiered diagram of privacy-preserving personalization showing three data minimization levels achieving 97.2% effectiveness at maximum privacy.](figures/fig-persona-12-privacy-preserving-personalization.jpg)
+
+*Three privacy tiers for personalization data minimization retaining 97.2% effectiveness at categories-only.*
+
+---
+
+![Stepped diagram of user modeling spectrum with five personalization depth levels, with the music attribution scaffold positioned at Level 3 (Proficiency Tiers).](figures/fig-persona-13-user-modeling-spectrum.jpg)
+
+*Five levels of user modeling depth with scaffold positioned at Level 3.*
+
+---
+
+![Consent-first decision flowchart for celebrity AI persona ethics showing PRAC3 dimension checkpoints gating progression to A3 artist-verified approval for music attribution.](figures/fig-persona-14-celebrity-persona-ethics.jpg)
+
+*Decision flowchart for celebrity AI persona ethics with PRAC3 checkpoints.*
+
+---
+
+![Split-panel comparison of Suno Personas inference-based style capture versus Soundverse DNA consent-by-design attribution, highlighting the quality gap between A1 and A2-A3 provenance.](figures/fig-persona-15-suno-vs-soundverse.jpg)
+
+*Split comparison of inference-based versus consent-by-design attribution approaches.*
+
+---
+
+![2x2 landscape matrix of persona platforms mapping commercial versus open-source and text versus voice modalities, revealing no single platform bridges persona coherence across both modalities.](figures/fig-persona-16-persona-platform-landscape.jpg)
+
+*2x2 landscape of persona platforms revealing no single platform bridges both modalities.*
+
+---
+
+![Multi-panel comparison of five persona evaluation benchmarks -- PersonaGym, CharacterBench, InCharacter, CoSER, and RoleBench -- including the finding that GPT-4 matched LLaMA-3-8B on persona adherence.](figures/fig-persona-17-evaluation-benchmark-comparison.jpg)
+
+*Five persona evaluation benchmarks compared with the key finding about model size vs adherence.*
+
+---
+
+![Four-tier comparison of traditional confidence badges versus persona-appropriate uncertainty language across A3 to A0 assurance levels for transparent confidence in music attribution.](figures/fig-persona-18-confidence-as-character.jpg)
+
+*Four assurance tiers with traditional badges alongside persona-appropriate language expressions.*
+
+---
+
+![Dual persona architecture diagram showing the Attribution Agent (system voice) and Digital Twin (artist voice) separated by a consent gate barrier, sharing common memory and confidence scoring.](figures/fig-persona-19-dual-persona-architecture.jpg)
+
+*Dual persona architecture with Attribution Agent and Digital Twin separated by consent barrier.*
+
+---
+
+![Multi-agent attribution architecture flowchart with central orchestrator routing queries to four specialized agents then meta-agent synthesis producing a unified persona voice.](figures/fig-persona-20-multi-agent-attribution.jpg)
+
+*Multi-agent attribution architecture with four specialized agents and unified persona voice.*
+
+---
+
+![Flowchart showing cross-channel state synchronization where Chat, Voice, and MCP channels read and write bidirectionally to a shared PostgreSQL and pgvector backend state store.](figures/fig-persona-21-cross-channel-state.jpg)
+
+*Cross-channel state synchronization with three channels converging on shared PostgreSQL + pgvector backend.*
+
+---
+
+![PRD decision network expansion showing five new persona coherence nodes forming a persona pillar with dependency arrows to three existing nodes for music attribution.](figures/fig-persona-22-prd-expansion-5-nodes.jpg)
+
+*PRD expansion showing 5 new persona decision nodes forming a persona pillar.*
+
+---
+
+![NVIDIA PersonaPlex architecture diagram showing dual-input persona control achieving 0.07s speaker-switch latency versus Gemini Live 1.3s for voice agent persona coherence.](figures/fig-persona-23-personaplex-architecture.jpg)
+
+*NVIDIA PersonaPlex architecture with dual-input persona control and 0.07s speaker-switch latency.*
+
+---
+
+![Parasocial bond spectrum for music attribution agents showing five stages from Transactional Tool to Trusted Advisor design target, with guardrails preventing dangerous emotional dependency.](figures/fig-persona-24-parasocial-bond-spectrum.jpg)
+
+*Five-stage parasocial bond spectrum with Trusted Advisor as target and guardrails against dependency.*
+
+---
+
+![Warmth-competence 2x2 matrix for AI agent persona design showing High Warmth + High Competence as target, with Ibrahim et al. warning that warmth training degrades factual reliability.](figures/fig-persona-25-warmth-competence-matrix.jpg)
+
+*Warmth-competence matrix with target quadrant highlighting the warmth-reliability tension.*
+
+---
+
+![Brand voice validation pipeline showing a deterministic regex and rule-based validator as a last-mile guardrail between LLM output and user delivery, catching persona coherence violations.](figures/fig-persona-26-brand-voice-validation.jpg)
+
+*Deterministic brand voice validator as last-mile guardrail catching violation patterns LLM guardrails miss.*
+
+---
+
+![Power user economics comparison of three AI agent pricing models showing only Credit-Based earning profit, with 5-10% of power users consuming 60-80% of resources.](figures/fig-persona-27-power-user-economics.jpg)
+
+*Three pricing scenarios demonstrating credit-based pricing as the only sustainable model.*
+
+---
+
+![Modality cost hierarchy showing four ascending interaction modalities from Text to Voice to Avatar to Video, spanning a 10,000 to 100,000x cost range mapped to pricing tiers.](figures/fig-persona-28-modality-cost-hierarchy.jpg)
+
+*Four interaction modalities in ascending cost spanning 10,000-100,000x range mapped to pricing tiers.*
+
+---
+
+![Six-layer persona coherence recommended technology stack for music attribution building on PydanticAI MVP foundation with Memory, Persona Engine, Drift Detection, Voice Persona, and Evaluation layers.](figures/fig-persona-29-persona-coherence-recommended-stack.jpg)
+
+*Six-layer recommended stack building on existing PydanticAI MVP through evaluation layer.*
+
+---
+
+![Split-panel comparison of persona drift models showing old view of inevitable monotonic decay versus new view from Drift No More research of bounded controllable equilibrium maintained by restoring forces.](figures/fig-persona-30-drift-equilibrium.jpg)
+
+*Split-panel comparison of old monotonic decay view versus new bounded equilibrium view of persona drift.*
+
+</details>

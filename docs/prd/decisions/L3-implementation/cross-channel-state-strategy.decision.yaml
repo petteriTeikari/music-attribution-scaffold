@@ -1,0 +1,207 @@
+# Cross-Channel State Strategy
+#
+# Determines how agent state (persona context, user preferences,
+# conversation history) is managed across interaction channels
+# (text chat, voice, API, MCP tools).
+
+decision_id: cross_channel_state_strategy
+title: "Cross-Channel State Strategy"
+description: >
+  Selects the approach for maintaining coherent agent state across
+  multiple interaction channels. Users may interact via text chat
+  (CopilotKit sidebar), voice agent, direct API, or MCP tools —
+  and expect consistent persona behavior and context awareness
+  across all channels. The choice affects consistency guarantees,
+  implementation complexity, and latency characteristics.
+
+decision_level: L3_implementation
+status: active
+last_updated: 2026-02-20
+
+options:
+  - option_id: shared_memory_store
+    title: "Shared Memory Store"
+    description: >
+      Centralized state store (PostgreSQL or dedicated memory service)
+      with channel-specific adapters. All channels read/write to the
+      same user state. Consistency guaranteed via database transactions.
+      Channel adapters translate state to channel-appropriate format
+      (e.g., voice responses are shorter, text includes links).
+      Natural fit for Letta memory-anchored persona strategy.
+    prior_probability: 0.40
+    status: recommended
+    complements:
+      - "persona_coherence_strategy.memory_anchored"
+      - "primary_database.postgresql"
+
+  - option_id: event_sourced
+    title: "Event-Sourced State"
+    description: >
+      Event log with per-channel projections. All interactions stored
+      as events; each channel materializes its own view. Full audit
+      trail for attribution decisions. Eventual consistency between
+      channels (slight delay). Higher implementation complexity but
+      provides provenance chain for every state change.
+    prior_probability: 0.20
+    status: viable
+    constraints:
+      - "Eventual consistency may cause brief cross-channel divergence"
+      - "Event schema design requires careful planning"
+    complements:
+      - "provenance_strategy.full_provenance"
+
+  - option_id: channel_independent
+    title: "Channel-Independent State"
+    description: >
+      Separate state per channel. Text chat and voice maintain
+      independent conversation contexts. Simplest implementation,
+      no cross-channel infrastructure needed. Loses coherence across
+      channels (voice agent doesn't know what user did in text chat).
+      Acceptable for MVP where channels are distinct use cases.
+    prior_probability: 0.30
+    status: viable
+
+  - option_id: real_time_sync
+    title: "Real-Time WebSocket Sync"
+    description: >
+      WebSocket-based live synchronization between channels. State
+      changes propagate immediately to all active channels. Highest
+      UX consistency but significant operational overhead. Best for
+      scenarios where users actively switch between channels in the
+      same session (e.g., voice query while viewing text dashboard).
+    prior_probability: 0.10
+    status: experimental
+    constraints:
+      - "Requires persistent WebSocket connections per channel"
+      - "Conflict resolution needed for concurrent edits"
+      - "Higher infrastructure cost (connection management)"
+
+conditional_on:
+  - parent_decision_id: agentic_ui_framework
+    influence_strength: moderate
+    conditional_table:
+      - given_parent_option: copilotkit_agui
+        then_probabilities:
+          shared_memory_store: 0.40
+          event_sourced: 0.20
+          channel_independent: 0.25
+          real_time_sync: 0.15
+      - given_parent_option: vercel_ai_sdk
+        then_probabilities:
+          shared_memory_store: 0.35
+          event_sourced: 0.15
+          channel_independent: 0.40
+          real_time_sync: 0.10
+      - given_parent_option: custom_agent_ui
+        then_probabilities:
+          shared_memory_store: 0.35
+          event_sourced: 0.25
+          channel_independent: 0.20
+          real_time_sync: 0.20
+      - given_parent_option: no_agentic_ui
+        then_probabilities:
+          shared_memory_store: 0.20
+          event_sourced: 0.10
+          channel_independent: 0.65
+          real_time_sync: 0.05
+
+  - parent_decision_id: persona_coherence_strategy
+    influence_strength: moderate
+    conditional_table:
+      - given_parent_option: prompt_layered
+        then_probabilities:
+          shared_memory_store: 0.25
+          event_sourced: 0.10
+          channel_independent: 0.55
+          real_time_sync: 0.10
+      - given_parent_option: memory_anchored
+        then_probabilities:
+          shared_memory_store: 0.50
+          event_sourced: 0.20
+          channel_independent: 0.15
+          real_time_sync: 0.15
+      - given_parent_option: activation_space
+        then_probabilities:
+          shared_memory_store: 0.30
+          event_sourced: 0.15
+          channel_independent: 0.40
+          real_time_sync: 0.15
+      - given_parent_option: training_based
+        then_probabilities:
+          shared_memory_store: 0.30
+          event_sourced: 0.15
+          channel_independent: 0.45
+          real_time_sync: 0.10
+      - given_parent_option: hybrid_layered
+        then_probabilities:
+          shared_memory_store: 0.45
+          event_sourced: 0.25
+          channel_independent: 0.15
+          real_time_sync: 0.15
+
+archetype_weights:
+  engineer_heavy_startup:
+    probability_overrides:
+      shared_memory_store: 0.40
+      event_sourced: 0.25
+      channel_independent: 0.20
+      real_time_sync: 0.15
+    rationale: >
+      Engineers can build shared memory or event-sourced architecture.
+      Shared memory store is pragmatic; event-sourced for provenance value.
+
+  musician_first_team:
+    probability_overrides:
+      shared_memory_store: 0.35
+      event_sourced: 0.10
+      channel_independent: 0.45
+      real_time_sync: 0.10
+    rationale: >
+      Musicians may use only one channel initially. Channel-independent
+      is simplest. Shared memory when cross-channel usage grows.
+
+  solo_hacker:
+    probability_overrides:
+      shared_memory_store: 0.20
+      event_sourced: 0.05
+      channel_independent: 0.70
+      real_time_sync: 0.05
+    rationale: >
+      Solo developers avoid cross-channel complexity. Single channel
+      per use case is the pragmatic choice.
+
+  well_funded_startup:
+    probability_overrides:
+      shared_memory_store: 0.40
+      event_sourced: 0.25
+      channel_independent: 0.15
+      real_time_sync: 0.20
+    rationale: >
+      Can invest in real-time sync for premium UX. Shared memory
+      store or event-sourced for production reliability.
+
+volatility:
+  classification: shifting
+  last_assessed: 2026-02-20
+  next_review: 2026-05-20
+  change_drivers:
+    - "AG-UI protocol evolution for multi-channel state management"
+    - "CopilotKit/Vercel adding native cross-channel state"
+    - "Letta managed service providing built-in multi-channel memory"
+    - "Industry convergence on agent state management patterns"
+
+domain_applicability:
+  music_attribution: 0.9
+  dpp_traceability: 0.7
+  generic_graph_rag: 0.6
+
+tags:
+  - implementation
+  - state-management
+  - agent
+  - voice
+  - cross-channel
+
+references:
+  - "docs/planning/voice-agent-research/persona-coherence/persona-coherence-literature-review.md"
+  - "docs/planning/voice-agent-research/persona-coherence/commercial-tools-landscape.md"
