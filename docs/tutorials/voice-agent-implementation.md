@@ -22,6 +22,10 @@
 10. [Evaluation](#10-evaluation)
 11. [Cost Analysis](#11-cost-analysis)
 12. [Production Deployment](#12-production-deployment)
+13. [Protocol-Based Component Swapping](#13-protocol-based-component-swapping)
+14. [Conditional Import Pattern](#14-conditional-import-pattern)
+15. [Test Architecture](#15-test-architecture)
+16. [Extension Points](#16-extension-points)
 
 ---
 
@@ -138,6 +142,14 @@ VOICE_ASSEMBLYAI_API_KEY=
 
 > **Source:** [`src/music_attribution/voice/config.py`](../../src/music_attribution/voice/config.py) -- `VoiceConfig` class.
 
+![Split-panel diagram mapping VoiceConfig's 21 environment variables through 6 typed enums to concrete Pipecat service instances, showing the single config object controlling the entire voice pipeline.](../figures/repo-figures/assets/fig-voice-34-voiceconfig-anatomy.jpg)
+
+*VoiceConfig anatomy: 21 environment variables cascade through 6 typed enums to concrete Pipecat service instances -- one Pydantic Settings model controls the entire pipeline.*
+
+The environment variables above are not a flat list -- they form a cascade. Each `VOICE_` environment variable is read into a typed field on `VoiceConfig`, which resolves to a Python enum (`STTProvider`, `TTSProvider`, `TransportType`, `WhisperModel`), which the pipeline factory uses to instantiate the correct Pipecat service class. This means changing `VOICE_STT_PROVIDER=deepgram` doesn't just flip a string -- it changes the enum, which changes the factory branch, which creates a completely different service object with different dependencies and API key requirements. The diagram above shows this three-stage cascade from left to right: env var → config field → enum → service.
+
+> **ELI5 for music people:** Think of VoiceConfig like a recording studio's mixing console: one desk with 21 knobs and switches. Each knob (environment variable) controls one aspect of the signal chain, and moving a knob automatically reconfigures the right piece of gear downstream.
+
 ---
 
 ## 2. Architecture Overview
@@ -171,6 +183,22 @@ When Pipecat is installed (`uv sync --group voice`), the `build_pipecat_pipeline
 
 > **Source:** [`src/music_attribution/voice/pipeline.py`](../../src/music_attribution/voice/pipeline.py)
 
+![Flowchart of build_pipecat_pipeline() showing five factory function calls fanning out to create STT, TTS, LLM, transport, and persona components, with conditional drift monitor insertion before PipelineRunner assembly.](../figures/repo-figures/assets/fig-voice-35-pipeline-assembly-flowchart.jpg)
+
+*Pipeline assembly flowchart: build_pipecat_pipeline() calls five factory functions, conditionally inserts a DriftMonitorProcessor, and wires everything into a PipelineRunner.*
+
+The assembly is a factory-of-factories pattern. `build_pipecat_pipeline(config, websocket)` calls five creator functions in sequence -- `create_stt_service()`, `create_tts_service()`, `create_llm_service()`, `create_transport()`, and `build_system_prompt()` -- each reading from the same `VoiceConfig` instance. The results are collected into a `processors` list, and if `config.drift_monitoring` is enabled, a `DriftMonitorProcessor` is inserted between the LLM and TTS positions. The final `Pipeline(processors)` is handed to a `PipelineRunner` for execution.
+
+> **ELI5 for music people:** Building the voice pipeline is like setting up a recording studio for a session: the session engineer calls five specialists to bring their gear (microphone, preamp, compressor, EQ, monitors), optionally adds a tuning meter, then connects everything through the patch bay.
+
+![Step-by-step anatomy of a single voice turn traversing seven processing stages with latency budget annotations, targeting under 500 milliseconds total for natural conversational music attribution interactions.](../figures/repo-figures/assets/fig-voice-45-end-to-end-voice-turn.jpg)
+
+*End-to-end voice turn anatomy: 7 processing steps from VAD (4ms) through TTS to transport, with open-source stack at ~799ms and commercial stack at ~389ms against a 500ms target.*
+
+A single voice turn traverses 7 processing steps: Silero VAD detection (4ms) → STT transcription (150-300ms depending on provider) → context aggregation (~5ms) → LLM inference TTFT (100-200ms) → drift check (~10ms, optional) → TTS synthesis TTFA (40-200ms) → transport out (30-80ms). The fully open-source stack (Whisper + Piper + WebSocket) totals ~799ms -- above the 500ms conversational threshold but acceptable for development. The commercial stack (Deepgram + Cartesia + Daily) brings this down to ~389ms, well within the target.
+
+> **ELI5 for music people:** Think of a voice turn like a relay race with 7 runners: the baton passes from the microphone through seven specialists, each adding their time. The goal is to complete the entire relay in under half a second -- faster than a drummer's hi-hat stroke.
+
 ### 2.2 Component Roles
 
 | Component | Module | Role |
@@ -185,6 +213,14 @@ When Pipecat is installed (`uv sync --group voice`), the `build_pipecat_pipeline
 | **Letta Integration** | `voice/letta_integration.py` | Optional memory-anchored persona via Letta (MemGPT) |
 | **Mem0 Integration** | `voice/mem0_integration.py` | Optional cross-session user preferences with safety gate |
 | **Guardrails** | `voice/guardrails_integration.py` | NeMo Guardrails with regex fallback for persona boundaries |
+
+![Dependency graph of the 11-file voice module showing config.py as root, pipeline.py as orchestrator, and specialized leaf files for persona, drift, tools, server, protocols, and integrations in the music attribution scaffold.](../figures/repo-figures/assets/fig-voice-33-voice-module-file-map.jpg)
+
+*Dependency graph of the voice module's 11 files with config.py as root, pipeline.py as orchestrator, and specialized leaf files for persona, drift detection, tools, and external integrations.*
+
+The table above lists what each file does; the figure shows how they relate. `config.py` sits at the top of the dependency tree -- every other file imports it. `pipeline.py` is the orchestrator: it imports from `config`, `persona`, `tools`, `drift`, and `protocols` to assemble the pipeline. `server.py` is the entry point: it imports `pipeline` and `config` to create the FastAPI router. The leaf files (`persona.py`, `tools.py`, `drift.py`, `letta_integration.py`, `mem0_integration.py`, `guardrails_integration.py`) are independent of each other -- they can be modified, tested, or replaced without touching their siblings.
+
+> **ELI5 for music people:** Think of these 11 files like instruments in a band: config.py is the conductor's score that everyone reads from, pipeline.py is the stage manager who connects everyone, and each specialized file is an instrumentalist who plays their part independently.
 
 ### 2.3 The 4 Domain Tools
 
@@ -202,6 +238,14 @@ The tool bridge uses Pipecat's `FunctionSchema` for declaration and `register_fu
 > **Source:** [`src/music_attribution/voice/tools.py`](../../src/music_attribution/voice/tools.py)
 >
 > **See also:** [`src/music_attribution/chat/agent.py`](../../src/music_attribution/chat/agent.py) -- the original PydanticAI agent with the same 4 tools.
+
+![Multi-panel diagram showing PydanticAI domain tools translated through get_tool_schemas() to Pipecat FunctionSchema declarations, with the SDK boundary and shared database session factory clearly marked.](../figures/repo-figures/assets/fig-voice-38-tool-bridge-architecture.jpg)
+
+*Tool bridge architecture: PydanticAI's 4 domain tools are translated to Pipecat FunctionSchema declarations via get_tool_schemas(), sharing the same database session factory as the REST API.*
+
+The tool bridge is the thinnest layer in the voice module -- its job is purely translation, not logic. `get_tool_schemas()` converts PydanticAI tool definitions into Pipecat `FunctionSchema` objects (name, description, parameter schema), and `register_function()` wires each handler to the `OpenAILLMService`. The critical design choice is the shared `_session_factory`: when `server.py` starts, it calls `set_session_factory(async_session_factory)` to give voice tools the same database connection pool used by the REST API. This means voice and text queries hit the same data with the same connection lifecycle.
+
+> **ELI5 for music people:** Think of the tool bridge like a translator at a United Nations session: the same ideas (attribution queries) are expressed in two languages (PydanticAI for text chat, Pipecat for voice), and the translator ensures both sides understand each other perfectly. Both languages draw from the same dictionary (database).
 
 ### 2.4 How Voice and Text Share the Agent
 
@@ -556,6 +600,14 @@ The voice agent's personality is defined by 5 dimensions with different mutabili
 | **User Context** | FREE | User expertise level, preferences | Built from Letta/Mem0 |
 | **Conversation Flow** | FREE | Turn-taking, topic management | Dynamic per session |
 
+![Concentric ring diagram of the five persona dimensions from immutable core identity at center to freely mutable conversation flow at edge, showing how the most important layers change the least.](../figures/repo-figures/assets/fig-voice-36-persona-dimension-layers.jpg)
+
+*Five concentric persona dimensions with mutability gradient: Core Identity (IMMUTABLE) at center through Conversation Flow (FREE) at edge -- the most critical layers change the least.*
+
+The table above is a flat list; the figure shows the architectural intent. The 5 dimensions form concentric rings: the innermost ring (Core Identity) has the highest visual weight and never changes. Each successive ring is more mutable and less critical. This gradient is deliberate -- it mirrors how real personas work. An artist's identity doesn't change conversation to conversation, but their mood and conversation topics do. The design ensures that the LLM can adapt to users (outer rings) without losing its fundamental character (inner rings).
+
+> **ELI5 for music people:** Think of the persona like the rings of a tree: the heartwood at the center (core identity) never changes, the outer bark (conversation flow) adapts to every season. You can trim the branches but you can't change the trunk.
+
 The system prompt is assembled by `build_system_prompt()`:
 
 ```python
@@ -633,6 +685,14 @@ VOICE_MEM0_API_KEY=your-mem0-key
 
 > **Source:** [`src/music_attribution/voice/mem0_integration.py`](../../src/music_attribution/voice/mem0_integration.py)
 
+![Split-panel diagram comparing Letta's read-only persona block with mutable human block against Mem0's category-level preferences with safety gate, both converging into build_system_prompt().](../figures/repo-figures/assets/fig-voice-41-memory-integration-letta-mem0.jpg)
+
+*Memory integration: Letta (immutable persona block + mutable user memory) and Mem0 (category preferences + safety gate) converge into build_system_prompt() to assemble the system prompt.*
+
+Letta and Mem0 serve complementary roles. Letta anchors the persona: its persona block is read-only (the agent cannot rewrite its own identity), while the human block stores mutable user context (expertise level, interaction history). Mem0 tracks cross-session preferences at the category level ("prefers detailed explanations", "focuses on songwriter credits") but deliberately avoids fine-grained facts -- the PS-Bench findings show a 244% attack surface increase for fact storage in personalization systems. Both systems feed their output into `build_system_prompt()`, where the persona dimensions (Section 8.1) integrate memory context into the `User Context` ring.
+
+> **ELI5 for music people:** Letta is like a musician's permanent bio that never changes, plus a personal notepad about what each collaborator prefers. Mem0 is like a studio whiteboard where you track each client's preferences -- but with a bouncer who erases anything that contradicts the master credits sheet.
+
 ### 8.5 NeMo Guardrails
 
 When `VOICE_GUARDRAILS_ENABLED=true` and `nemoguardrails` is installed, the system uses Colang 2.0 rails for persona boundary enforcement. When NeMo is not installed, a lightweight regex-based fallback provides basic protection.
@@ -655,6 +715,14 @@ _INPUT_MANIPULATION_PATTERNS = [
 ```
 
 > **Source:** [`src/music_attribution/voice/guardrails_integration.py`](../../src/music_attribution/voice/guardrails_integration.py)
+
+![Multi-panel guardrails architecture showing input rails with five detection patterns and output rails with four detection patterns, branching between NeMo Colang production path and regex fallback path.](../figures/repo-figures/assets/fig-voice-40-guardrails-architecture.jpg)
+
+*Guardrails architecture: input rails (5 patterns) and output rails (4 patterns) with a runtime branch between NeMo Colang and regex fallback, ensuring persona boundaries in both paths.*
+
+The guardrails operate as a two-layer sandwich around the LLM: input rails filter user messages before they reach the model, and output rails filter agent responses before they reach the user. The runtime check `if NEMO_AVAILABLE` branches between the full NeMo Colang 2.0 engine (production) and a lightweight regex fallback (development/testing). Input rails catch 5 pattern categories: persona manipulation, role override, instruction extraction, off-topic requests, and adversarial probing. Output rails catch 4 categories: persona violations, domain boundary violations, confidence hallucination (fabricating data sources), and tool misuse.
+
+> **ELI5 for music people:** Guardrails are like the house rules at a recording studio: the bouncer at the door (input rails) stops troublemakers before they get in, and the quality control engineer (output rails) catches any mistakes before the mix leaves the building.
 
 ### 8.6 Choosing a Persona Strategy
 
@@ -719,6 +787,14 @@ class DriftDetector:
 ```
 
 > **Source:** [`src/music_attribution/voice/drift.py`](../../src/music_attribution/voice/drift.py)
+
+![Three-state drift detection state machine showing sync, drift, and desync states with EWMA-smoothed transition thresholds at 0.85 and 0.70, and a restoring force arrow from periodic reinforcement prompts.](../figures/repo-figures/assets/fig-voice-37-ewma-drift-state-machine.jpg)
+
+*Drift detection state machine: three states (sync >=0.85, drift 0.70-0.85, desync <0.70) with EWMA smoothing and periodic reinforcement as the restoring force back to sync.*
+
+The code above implements a three-state bounded equilibrium. The EWMA formula (`score_t = alpha * raw_t + (1 - alpha) * score_{t-1}`) smooths raw similarity scores to prevent a single off-topic response from triggering false alarms. The three states have distinct behaviors: **sync** (EWMA >= 0.85) means the agent is on-persona and no action is needed; **drift** (0.70-0.85) triggers a warning and injects the `REINFORCEMENT_REMINDER` from `persona.py`; **desync** (< 0.70) triggers an alert for full context recalibration. The curved "restoring force" arrow in the diagram shows the key mechanism: the periodic reinforcement prompt actively pushes the agent from drift back toward sync, creating a bounded oscillation rather than monotonic decay.
+
+> **ELI5 for music people:** Imagine a session musician who starts playing your song but gradually drifts into jazz improvisation. The drift detector is like a click track -- it notices when the player strays too far from the chart and gives them a nudge back to the arrangement.
 
 ### 9.3 Similarity Computation
 
@@ -785,6 +861,14 @@ For the voice agent, four evaluation dimensions are recommended:
 | **Confidence Communication** | > 85% | Did the agent accurately convey uncertainty (A0-A3)? |
 | **Persona Consistency** | > 90% | Did the agent maintain its Music Attribution Assistant identity? |
 | **Voice-Appropriateness** | > 80% | Were responses concise enough for voice (2-3 sentences)? |
+
+![Split-panel showing four G-Eval dimension bars with target scores and a PersonaGym multi-turn trace revealing the 8-turn persona drift cliff, with CI integration cadence for each evaluation type.](../figures/repo-figures/assets/fig-voice-47-evaluation-metrics-traces.jpg)
+
+*Evaluation metrics: four G-Eval dimensions with targets (Task >90%, Confidence >85%, Persona >90%, Voice >80%) plus a PersonaGym 20-turn drift trace showing the 8-turn cliff.*
+
+The figure shows both evaluation approaches side by side. The left panel visualizes the 4 G-Eval dimension scores as horizontal bars against their target thresholds -- a quick health check that runs weekly. The right panel shows a PersonaGym multi-turn trace: persona consistency starts high but degrades visibly around turn 8 (the "drift cliff" documented by Li et al., 2024). Without the periodic reinforcement from Section 8.2, this degradation is monotonic. With reinforcement, the trace shows bounded oscillation -- the restoring force in Section 9.2 prevents free-fall.
+
+> **ELI5 for music people:** Evaluation is like a music teacher's report card with four grades: Did the student play the right notes (task completion)? Did they express dynamics correctly (confidence communication)? Did they stay in character for the whole recital (persona consistency)? Were they projecting to the back row (voice-appropriateness)?
 
 ### 10.2 PersonaGym for Persona Evaluation
 
@@ -898,6 +982,22 @@ Each WebSocket connection creates a fresh Pipecat pipeline (via `build_pipecat_p
 
 > **Source:** [`src/music_attribution/voice/server.py`](../../src/music_attribution/voice/server.py)
 
+![Flowchart of voice server lifecycle from FastAPI startup through WebSocket accept, asyncio.Lock acquisition, pipeline building, PipelineRunner execution, to cleanup on disconnect with MAX_CONNECTIONS limit of 10.](../figures/repo-figures/assets/fig-voice-39-server-lifecycle-connection.jpg)
+
+*Server lifecycle: WebSocket accept → connection limit check (MAX=10) → asyncio.Lock → build_pipecat_pipeline() → PipelineRunner → cleanup on disconnect.*
+
+Each WebSocket connection gets a fresh Pipecat pipeline -- no state is shared between connections. The lifecycle follows a strict sequence: accept the WebSocket, check if `active_connections < MAX_CONNECTIONS` (hard-coded to 10), acquire an `asyncio.Lock` to serialize pipeline construction, call `build_pipecat_pipeline(config, websocket)`, hand the pipeline to `PipelineRunner.run()`, and on disconnect, stop the pipeline, release the lock, and decrement the connection counter. The health endpoint (`GET /api/v1/voice/health`) reports the current `active_connections` count for monitoring.
+
+> **ELI5 for music people:** Think of the voice server like a recording studio with 10 booths: when all booths are occupied, new artists have to wait. Each booth gets its own fresh mixing setup, and when the artist leaves, the booth is cleaned and reset for the next session.
+
+![Multi-panel diagram showing browser-side Jotai atoms and voice client connecting via WebSocket to server-side FastAPI and Pipecat pipeline, with audio frames flowing bidirectionally across the boundary.](../figures/repo-figures/assets/fig-voice-43-frontend-voice-components.jpg)
+
+*Frontend voice architecture: Jotai atoms (voiceState, voiceConnection) drive the React UI, with createVoiceClient() managing the WebSocket link to the Pipecat pipeline on the server.*
+
+On the frontend side, the voice UI uses the same Jotai atom pattern as the rest of the application. Two atoms track voice state: `voiceStateAtom` (idle / listening / thinking / speaking) drives the UI indicators, and `voiceConnectionAtom` (disconnected / connecting / connected) manages the WebSocket lifecycle. The `createVoiceClient()` function handles connection setup, audio capture via the Web Audio API, and PCM frame serialization. The WebSocket boundary is the key architectural split -- everything to the left (React components, Jotai atoms, audio capture) runs in the browser; everything to the right (Pipecat pipeline, STT, LLM, TTS) runs on the server.
+
+> **ELI5 for music people:** Think of the frontend as the performer's stage monitor: it shows whether the mic is live (listening), the producer is thinking (processing), or the response is playing back (speaking). The heavy lifting happens in the backstage rack (server), connected by a single audio cable (WebSocket).
+
 ### 12.2 Database Integration
 
 Voice tool handlers need database access for attribution queries. The session factory is shared between the REST API and voice tools:
@@ -992,6 +1092,96 @@ Phase I is the fastest path to user feedback: voice input to the existing text a
 
 ---
 
+## 13. Protocol-Based Component Swapping
+
+![Three-column diagram showing STTServiceProtocol, TTSServiceProtocol, and DriftDetectorProtocol with dashed satisfies lines connecting to concrete implementations, demonstrating structural typing without inheritance.](../figures/repo-figures/assets/fig-voice-42-protocol-component-swapping.jpg)
+
+*Protocol-based swapping: three protocols (STT, TTS, Drift) with dashed "satisfies" lines to concrete implementations -- structural typing means no import or inheritance needed.*
+
+Every swappable component in the voice module is defined by a Python `Protocol` -- not an abstract base class, not an interface, not inheritance. This is structural typing (duck typing with type checking): any class that implements the right method signatures automatically satisfies the protocol, even if it has never heard of the protocol definition.
+
+Three protocols define the swap points:
+
+- **`STTServiceProtocol`**: `transcribe(audio: bytes) -> str` and `close() -> None`
+- **`TTSServiceProtocol`**: `synthesize(text: str) -> bytes` and `close() -> None`
+- **`DriftDetectorProtocol`**: `score(response_text: str) -> float` and `state() -> str`
+
+This means adding a new STT provider (say, a fine-tuned Whisper for music vocabulary) requires zero changes to the voice module core. Implement `transcribe()` and `close()`, add a branch in `create_stt_service()`, and the type checker confirms compatibility. The dashed lines in the figure (not solid inheritance arrows) emphasize this: providers don't extend a base class -- they just happen to have the right shape.
+
+> **ELI5 for music people:** Like a standard 1/4-inch jack -- any guitar, synth, or bass can plug in because they all use the same connector shape. The instruments don't need to know about each other; they just need to fit the jack.
+
+> **Source:** [`src/music_attribution/voice/protocols.py`](../../src/music_attribution/voice/protocols.py)
+
+---
+
+## 14. Conditional Import Pattern
+
+![Flowchart showing the conditional import branch where successful Pipecat import enables full pipeline mode while ImportError falls back to config-only mode, with both paths supporting the complete test suite.](../figures/repo-figures/assets/fig-voice-44-conditional-import-pattern.jpg)
+
+*Conditional import pattern: try/except at module level sets PIPECAT_AVAILABLE, branching to full pipeline mode or config-only mode -- all 54 tests pass in both branches.*
+
+The voice module uses a conditional import pattern at the module level:
+
+```python
+try:
+    import pipecat
+    PIPECAT_AVAILABLE = True
+except ImportError:
+    PIPECAT_AVAILABLE = False
+```
+
+This single boolean controls the entire module's behavior. When `PIPECAT_AVAILABLE` is `True` (after `uv sync --group voice`), all services are real: `build_pipecat_pipeline()` creates actual Pipecat processors, `DriftMonitorProcessor` processes real frames, and `server.py` serves real WebSocket connections. When `False` (the default install), the module gracefully degrades: `VoiceConfig` still validates environment variables, `build_system_prompt()` still assembles persona prompts, `DriftDetector` still computes EWMA scores (with Jaccard fallback), and `get_tool_schemas()` still returns tool definitions.
+
+This design means all 54 voice tests pass without Pipecat installed. The test suite mocks at precise boundaries (sentence-transformers for drift, Pipecat for everything else) and tests the configuration, persona, and drift logic directly.
+
+> **ELI5 for music people:** Like a musician who can play either acoustic or electric -- the code checks which instrument (library) is available and adapts accordingly. The sheet music (config, persona, tools) works with either instrument; only the actual performance (pipeline) needs the specific gear.
+
+---
+
+## 15. Test Architecture
+
+![Four-column test architecture map showing 54 voice tests across test_voice_config (17), test_voice_persona (14), test_voice_drift (15), and test_demo_script (8) with mock boundaries marked.](../figures/repo-figures/assets/fig-voice-46-test-architecture-map.jpg)
+
+*Test architecture: 54 tests across 4 files covering config validation, persona building, drift detection, and demo script structure, all running without Pipecat via precise mock boundaries.*
+
+The voice module has 54 unit tests across 4 files, each targeting a different layer:
+
+| Test File | Tests | Coverage Area |
+|-----------|-------|--------------|
+| `test_voice_config.py` | 17 | VoiceConfig validation, enum types, defaults, env var parsing |
+| `test_voice_persona.py` | 14 | `build_system_prompt()`, persona dimensions, reinforcement intervals |
+| `test_voice_drift.py` | 15 | `DriftDetector` scoring, EWMA smoothing, state transitions, Jaccard fallback |
+| `test_demo_script.py` | 8 | Demo script structure, CLI argument parsing, AST-based analysis |
+
+The mock boundaries are precise: `sentence-transformers` is mocked in drift tests (so embedding similarity uses the Jaccard fallback), and Pipecat is never imported (all tests run in `PIPECAT_AVAILABLE=False` mode). Zero network calls, zero API keys required.
+
+> **ELI5 for music people:** Think of the test suite like a sound check before a gig: each test file checks a different part of the PA system -- the mixer (config), the EQ presets (persona), the feedback eliminator (drift), and the overall signal chain (demo script) -- all without needing the actual speakers connected.
+
+---
+
+## 16. Extension Points
+
+![Six-panel grid showing voice module extension points for custom STT, TTS, drift detector, guardrails, memory backend, and tools, each with the Protocol interface to implement for plug-in compatibility.](../figures/repo-figures/assets/fig-voice-48-extension-points-plugins.jpg)
+
+*Six extension points: custom STT, TTS, drift detector, guardrails, memory, and tools -- each defined by a Protocol interface that any implementation can satisfy via structural typing.*
+
+The voice module has 6 extension points where teams can plug in custom implementations:
+
+| Extension Point | Protocol/Interface | Example Use Case |
+|----------------|-------------------|-----------------|
+| **Custom STT** | `STTServiceProtocol` | Fine-tuned Whisper for music vocabulary (artist names, ISRC codes) |
+| **Custom TTS** | `TTSServiceProtocol` | Orpheus-TTS for emotional voice with `<laugh>` and `<sigh>` tags |
+| **Custom Drift Detector** | `DriftDetectorProtocol` | LLM-as-judge drift detection using Claude as evaluator |
+| **Custom Guardrails** | Replace `guardrails_integration.py` | Domain-specific Colang rules for music IP |
+| **Custom Memory** | Replace `letta_integration.py` / `mem0_integration.py` | Redis-backed session memory |
+| **Custom Tools** | `register_function()` on LLM service | Spotify API search, live ISRC lookup |
+
+Each extension point is defined by a Protocol (Sections 13 and [`protocols.py`](../../src/music_attribution/voice/protocols.py)). To add a custom STT provider, implement `transcribe(audio: bytes) -> str` and `close() -> None`, add a branch in `create_stt_service()`, and the type checker confirms compatibility. No base classes, no registration frameworks, no plugin discovery -- just structural typing.
+
+> **ELI5 for music people:** Think of the voice module like a modular synthesizer rack: the core frame accepts standard-format modules in 6 slots. Any manufacturer can build a module that fits the slot -- all they need is to match the connector pattern. Swap a filter module, add a new oscillator, replace the sequencer -- the rack doesn't care who made it.
+
+---
+
 ## Appendix A: File Reference
 
 All voice agent source files:
@@ -1041,5 +1231,5 @@ Voice-related decision nodes in the probabilistic PRD:
 
 ---
 
-*Music Attribution Scaffold -- Voice Agent Implementation Guide v2.0.0*
-*Last updated: 2026-02-20*
+*Music Attribution Scaffold -- Voice Agent Implementation Guide v2.1.0*
+*Last updated: 2026-02-22*
