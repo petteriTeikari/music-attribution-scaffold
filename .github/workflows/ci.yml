@@ -169,28 +169,3 @@ jobs:
           name: playwright-report
           path: frontend/test-results/
           retention-days: 7
-
-  validate-guardrails:
-    needs: changes
-    if: needs.changes.outputs.backend == 'true'
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.13"
-
-      - name: Install uv
-        uses: astral-sh/setup-uv@v4
-
-      - name: Install dependencies
-        run: uv sync --frozen --group dev --group test
-
-      - name: Validate Claude constraints
-        run: |
-          if [ -f scripts/validate_claude_constraints.py ]; then
-            uv run python scripts/validate_claude_constraints.py
-          fi

@@ -127,3 +127,13 @@ docs/figures/repo-figures/generated/
 docs/figures/repo-figures/figure-plans-todo/
 docs/figures/repo-figures/screenshots/*
 !docs/figures/repo-figures/screenshots/youtube_demo.png
+
+# Benchmark output
+benchmark-results.json
+
+# Release archives
+*.zip
+
+# Playwright output
+frontend/test-results/
+frontend/playwright-report/
