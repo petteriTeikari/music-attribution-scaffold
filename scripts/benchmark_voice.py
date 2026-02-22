@@ -3,6 +3,9 @@
 Measures hardware capabilities and inference latency for each stage of the
 voice pipeline. Generates a JSON report suitable for CI regression tracking.
 
+Uses faster-whisper (CTranslate2) for STT and Piper for TTS — the same
+libraries used by the production Pipecat pipeline.
+
 Test audio is a synthetic 440 Hz sine wave (16 kHz, 16-bit, 10 s) created
 in memory — no external audio files required.
 
@@ -17,6 +20,7 @@ See Also
 --------
 src/music_attribution/observability/voice_metrics.py : Prometheus metrics.
 docs/prd/decisions/L5-operations/voice-pipeline-benchmarking.decision.yaml
+docs/planning/voice-agent-benchmarking-plan.md : Full benchmarking plan.
 """
 
 from __future__ import annotations
@@ -145,7 +149,10 @@ def benchmark_stt(
     devices: list[str],
     vram_gb: float,
 ) -> list[dict[str, Any]]:
-    """Benchmark Whisper STT inference.
+    """Benchmark faster-whisper STT inference.
+
+    Uses CTranslate2 via faster-whisper — the same backend as the
+    production Pipecat WhisperSTTService.
 
     Parameters
     ----------
@@ -161,14 +168,14 @@ def benchmark_stt(
     Returns
     -------
     list[dict[str, Any]]
-        Benchmark results per model × device combination.
+        Benchmark results per model x device combination.
     """
     results: list[dict[str, Any]] = []
 
     try:
-        import whisper
+        from faster_whisper import WhisperModel
     except ImportError:
-        logger.warning("whisper not installed — skipping STT benchmarks")
+        logger.warning("faster-whisper not installed — skipping STT benchmarks")
         return results
 
     for model_name in models:
@@ -183,20 +190,25 @@ def benchmark_stt(
                 )
                 continue
 
+            compute_type = "float16" if device == "cuda" else "int8"
+
             # Cold start: model load time
             t0 = time.perf_counter()
             try:
-                model = whisper.load_model(model_name, device=device)
+                model = WhisperModel(model_name, device=device, compute_type=compute_type)
             except Exception:
-                logger.exception("Failed to load whisper %s on %s", model_name, device)
+                logger.exception("Failed to load faster-whisper %s on %s", model_name, device)
                 continue
             load_ms = (time.perf_counter() - t0) * 1000
 
             # Warm inference: multiple iterations, take median
+            # Must consume the segments generator to measure full decode time
             latencies: list[float] = []
             for _ in range(_BENCHMARK_ITERATIONS):
                 t0 = time.perf_counter()
-                model.transcribe(str(audio_path), fp16=(device == "cuda"))
+                segments, _info = model.transcribe(str(audio_path))
+                for _ in segments:
+                    pass  # Force full decode — generator is lazy
                 latencies.append((time.perf_counter() - t0) * 1000)
 
             latencies.sort()
@@ -206,6 +218,7 @@ def benchmark_stt(
                 {
                     "model": model_name,
                     "device": device,
+                    "compute_type": compute_type,
                     "load_ms": round(load_ms, 1),
                     "inference_ms": round(median_ms, 1),
                     "rss_mb": round(_get_rss_mb(), 1),
@@ -226,8 +239,17 @@ def benchmark_stt(
     return results
 
 
-def benchmark_tts() -> list[dict[str, Any]]:
+def benchmark_tts(piper_model: str | None = None) -> list[dict[str, Any]]:
     """Benchmark Piper TTS synthesis.
+
+    Uses piper-tts directly — the same backend that Pipecat's
+    PiperTTSService wraps.
+
+    Parameters
+    ----------
+    piper_model : str | None
+        Path to Piper ONNX model file. If None, uses Pipecat's
+        PiperTTSService default model auto-download.
 
     Returns
     -------
@@ -239,23 +261,38 @@ def benchmark_tts() -> list[dict[str, Any]]:
     try:
         from piper import PiperVoice
     except ImportError:
-        logger.warning("piper-tts not installed — skipping TTS benchmarks")
+        logger.warning("piper-tts not installed — skipping TTS benchmarks (install with: uv sync --group voice-gpl)")
+        return results
+
+    model_path = piper_model
+
+    # Auto-discover model from Pipecat's default download location
+    if model_path is None:
+        search_dirs = [
+            Path.home() / ".local/share/piper",
+            Path.home() / ".cache/piper",
+            Path("/tmp/piper"),  # noqa: S108
+        ]
+        for d in search_dirs:
+            if d.exists():
+                onnx_files = list(d.glob("**/*.onnx"))
+                if onnx_files:
+                    model_path = str(onnx_files[0])
+                    logger.info("Found Piper model: %s", model_path)
+                    break
+
+    if model_path is None:
+        logger.warning(
+            "No Piper model found. Run the voice server once to auto-download, "
+            "or pass --piper-model /path/to/model.onnx"
+        )
         return results
 
     try:
-        # Use default model if available
-        voice = PiperVoice.load(str(Path.home() / ".local/share/piper/en_US-lessac-medium.onnx"))
+        voice = PiperVoice.load(model_path)
         test_text = "This is a benchmark test for the voice synthesis pipeline."
 
         latencies: list[float] = []
-        for _ in range(_BENCHMARK_ITERATIONS):
-            buf = io.BytesIO()
-            with wave.open(buf, "wb") as wf:
-                voice.synthesize(test_text, wf)
-            latencies.append(0.0)  # placeholder — timed below
-
-        # Re-run with actual timing
-        latencies = []
         for _ in range(_BENCHMARK_ITERATIONS):
             buf = io.BytesIO()
             t0 = time.perf_counter()
@@ -267,7 +304,9 @@ def benchmark_tts() -> list[dict[str, Any]]:
         results.append(
             {
                 "provider": "piper",
+                "model": Path(model_path).stem,
                 "synthesis_ms": round(latencies[len(latencies) // 2], 1),
+                "text_length": len(test_text),
             }
         )
     except Exception:
@@ -310,6 +349,7 @@ def benchmark_drift() -> list[dict[str, Any]]:
         results.append(
             {
                 "method": "embedding",
+                "model": "all-MiniLM-L6-v2",
                 "score_ms": round(latencies[len(latencies) // 2], 1),
             }
         )
@@ -322,6 +362,7 @@ def benchmark_drift() -> list[dict[str, Any]]:
 def run_benchmarks(
     models: list[str],
     cpu_only: bool = False,
+    piper_model: str | None = None,
     output_path: Path | None = None,
 ) -> dict[str, Any]:
     """Run all voice pipeline benchmarks.
@@ -332,6 +373,8 @@ def run_benchmarks(
         Whisper model sizes to benchmark.
     cpu_only : bool
         If True, skip GPU benchmarks.
+    piper_model : str | None
+        Path to Piper ONNX model file.
     output_path : Path | None
         If provided, write JSON results to this path.
 
@@ -356,7 +399,7 @@ def run_benchmarks(
 
     try:
         stt_results = benchmark_stt(audio_path, models, devices, hw.get("vram_gb", 0))
-        tts_results = benchmark_tts()
+        tts_results = benchmark_tts(piper_model=piper_model)
         drift_results = benchmark_drift()
     finally:
         audio_path.unlink(missing_ok=True)
@@ -380,24 +423,27 @@ def run_benchmarks(
     print()
 
     if stt_results:
-        print("STT (Whisper):")
-        print(f"  {'Model':<10} {'Device':<8} {'Load (ms)':<12} {'Inference (ms)':<16} {'RSS (MB)':<10}")
+        print("STT (faster-whisper):")
+        print(
+            f"  {'Model':<10} {'Device':<8} {'Compute':<10} {'Load (ms)':<12} {'Inference (ms)':<16} {'RSS (MB)':<10}"
+        )
         for r in stt_results:
             print(
-                f"  {r['model']:<10} {r['device']:<8} {r['load_ms']:<12.1f} {r['inference_ms']:<16.1f} {r['rss_mb']:<10.1f}"
+                f"  {r['model']:<10} {r['device']:<8} {r['compute_type']:<10} "
+                f"{r['load_ms']:<12.1f} {r['inference_ms']:<16.1f} {r['rss_mb']:<10.1f}"
             )
         print()
 
     if tts_results:
-        print("TTS:")
+        print("TTS (Piper):")
         for r in tts_results:
-            print(f"  {r['provider']}: {r['synthesis_ms']:.1f} ms")
+            print(f"  {r['provider']} ({r['model']}): {r['synthesis_ms']:.1f} ms")
         print()
 
     if drift_results:
         print("Drift Detection:")
         for r in drift_results:
-            print(f"  {r['method']}: {r['score_ms']:.1f} ms")
+            print(f"  {r['method']} ({r['model']}): {r['score_ms']:.1f} ms")
         print()
 
     if output_path:
@@ -424,6 +470,12 @@ def main() -> None:
         help="Skip GPU benchmarks even if CUDA is available",
     )
     parser.add_argument(
+        "--piper-model",
+        type=str,
+        default=None,
+        help="Path to Piper ONNX model file (auto-discovers if not set)",
+    )
+    parser.add_argument(
         "--output",
         type=str,
         default=None,
@@ -435,7 +487,12 @@ def main() -> None:
     output_path = Path(args.output) if args.output else None
 
     logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
-    run_benchmarks(models=models, cpu_only=args.cpu_only, output_path=output_path)
+    run_benchmarks(
+        models=models,
+        cpu_only=args.cpu_only,
+        piper_model=args.piper_model,
+        output_path=output_path,
+    )
 
 
 if __name__ == "__main__":

@@ -197,6 +197,20 @@ class VoiceConfig(BaseSettings):
         description="LLM model name for voice pipeline (OpenAI-compatible)",
     )
 
+    # ── TTS Voice IDs ──────────────────────────────────────────────
+    piper_voice_id: str = Field(
+        default="en_US-lessac-medium",
+        description="Piper voice model name (auto-downloaded on first use)",
+    )
+    elevenlabs_voice_id: str = Field(
+        default="21m00Tcm4TlvDq8ikWAM",
+        description="ElevenLabs voice ID (default: Rachel)",
+    )
+    cartesia_voice_id: str = Field(
+        default="a0e99841-438c-4a64-b679-ae501e7d6091",
+        description="Cartesia voice ID (default: Barbershop Man)",
+    )
+
     # ── Commercial API Keys (all optional) ──────────────────────────
     deepgram_api_key: str | None = Field(
         default=None,
