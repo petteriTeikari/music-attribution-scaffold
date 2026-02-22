@@ -3449,6 +3449,214 @@
 
 ---
 
+### fig-voice-33: Voice Module File Map
+
+**Alt text:** Dependency graph of the 11-file voice module showing config.py as root, pipeline.py as orchestrator, and specialized leaf files for persona, drift, tools, server, protocols, and integrations in the music attribution scaffold.
+
+**Caption:** *Dependency graph of the voice module's 11 files with config.py as root, pipeline.py as orchestrator, and specialized leaf files for persona, drift detection, tools, and external integrations.*
+
+**Embed:**
+```markdown
+![Dependency graph of the 11-file voice module showing config.py as root, pipeline.py as orchestrator, and specialized leaf files for persona, drift, tools, server, protocols, and integrations in the music attribution scaffold.](docs/figures/repo-figures/assets/fig-voice-33-voice-module-file-map.jpg)
+```
+
+---
+
+### fig-voice-34: VoiceConfig Anatomy
+
+**Alt text:** Split-panel diagram mapping VoiceConfig's 21 environment variables through 6 typed enums to concrete Pipecat service instances, showing the single config object controlling the entire voice pipeline.
+
+**Caption:** *VoiceConfig anatomy: 21 environment variables cascade through 6 typed enums to concrete Pipecat service instances -- one Pydantic Settings model controls the entire pipeline.*
+
+**Embed:**
+```markdown
+![Split-panel diagram mapping VoiceConfig's 21 environment variables through 6 typed enums to concrete Pipecat service instances, showing the single config object controlling the entire voice pipeline.](docs/figures/repo-figures/assets/fig-voice-34-voiceconfig-anatomy.jpg)
+```
+
+---
+
+### fig-voice-35: Pipeline Assembly Flowchart
+
+**Alt text:** Flowchart of build_pipecat_pipeline() showing five factory function calls fanning out to create STT, TTS, LLM, transport, and persona components, with conditional drift monitor insertion before PipelineRunner assembly.
+
+**Caption:** *Pipeline assembly flowchart: build_pipecat_pipeline() calls five factory functions, conditionally inserts a DriftMonitorProcessor, and wires everything into a PipelineRunner.*
+
+**Embed:**
+```markdown
+![Flowchart of build_pipecat_pipeline() showing five factory function calls fanning out to create STT, TTS, LLM, transport, and persona components, with conditional drift monitor insertion before PipelineRunner assembly.](docs/figures/repo-figures/assets/fig-voice-35-pipeline-assembly-flowchart.jpg)
+```
+
+---
+
+### fig-voice-36: 5-Dimension Persona Layers
+
+**Alt text:** Concentric ring diagram of the five persona dimensions from immutable core identity at center to freely mutable conversation flow at edge, showing how the most important layers change the least.
+
+**Caption:** *Five concentric persona dimensions with mutability gradient: Core Identity (IMMUTABLE) at center through Conversation Flow (FREE) at edge -- the most critical layers change the least.*
+
+**Embed:**
+```markdown
+![Concentric ring diagram of the five persona dimensions from immutable core identity at center to freely mutable conversation flow at edge, showing how the most important layers change the least.](docs/figures/repo-figures/assets/fig-voice-36-persona-dimension-layers.jpg)
+```
+
+---
+
+### fig-voice-37: EWMA Drift State Machine
+
+**Alt text:** Three-state drift detection state machine showing sync, drift, and desync states with EWMA-smoothed transition thresholds at 0.85 and 0.70, and a restoring force arrow from periodic reinforcement prompts.
+
+**Caption:** *Drift detection state machine: three states (sync ≥0.85, drift 0.70-0.85, desync <0.70) with EWMA smoothing and periodic reinforcement as the restoring force back to sync.*
+
+**Embed:**
+```markdown
+![Three-state drift detection state machine showing sync, drift, and desync states with EWMA-smoothed transition thresholds at 0.85 and 0.70, and a restoring force arrow from periodic reinforcement prompts.](docs/figures/repo-figures/assets/fig-voice-37-ewma-drift-state-machine.jpg)
+```
+
+---
+
+### fig-voice-38: Tool Bridge Architecture
+
+**Alt text:** Multi-panel diagram showing PydanticAI domain tools translated through get_tool_schemas() to Pipecat FunctionSchema declarations, with the SDK boundary and shared database session factory clearly marked.
+
+**Caption:** *Tool bridge architecture: PydanticAI's 4 domain tools are translated to Pipecat FunctionSchema declarations via get_tool_schemas(), sharing the same database session factory as the REST API.*
+
+**Embed:**
+```markdown
+![Multi-panel diagram showing PydanticAI domain tools translated through get_tool_schemas() to Pipecat FunctionSchema declarations, with the SDK boundary and shared database session factory clearly marked.](docs/figures/repo-figures/assets/fig-voice-38-tool-bridge-architecture.jpg)
+```
+
+---
+
+### fig-voice-39: Server Lifecycle & Connection Management
+
+**Alt text:** Flowchart of voice server lifecycle from FastAPI startup through WebSocket accept, asyncio.Lock acquisition, pipeline building, PipelineRunner execution, to cleanup on disconnect with MAX_CONNECTIONS limit of 10.
+
+**Caption:** *Server lifecycle: WebSocket accept → connection limit check (MAX=10) → asyncio.Lock → build_pipecat_pipeline() → PipelineRunner → cleanup on disconnect.*
+
+**Embed:**
+```markdown
+![Flowchart of voice server lifecycle from FastAPI startup through WebSocket accept, asyncio.Lock acquisition, pipeline building, PipelineRunner execution, to cleanup on disconnect with MAX_CONNECTIONS limit of 10.](docs/figures/repo-figures/assets/fig-voice-39-server-lifecycle-connection.jpg)
+```
+
+---
+
+### fig-voice-40: Guardrails Architecture
+
+**Alt text:** Multi-panel guardrails architecture showing input rails with five detection patterns and output rails with four detection patterns, branching between NeMo Colang production path and regex fallback path.
+
+**Caption:** *Guardrails architecture: input rails (5 patterns) and output rails (4 patterns) with a runtime branch between NeMo Colang and regex fallback, ensuring persona boundaries in both paths.*
+
+**Embed:**
+```markdown
+![Multi-panel guardrails architecture showing input rails with five detection patterns and output rails with four detection patterns, branching between NeMo Colang production path and regex fallback path.](docs/figures/repo-figures/assets/fig-voice-40-guardrails-architecture.jpg)
+```
+
+---
+
+### fig-voice-41: Memory Integration: Letta + Mem0
+
+**Alt text:** Split-panel diagram comparing Letta's read-only persona block with mutable human block against Mem0's category-level preferences with safety gate, both converging into build_system_prompt().
+
+**Caption:** *Memory integration: Letta (immutable persona block + mutable user memory) and Mem0 (category preferences + safety gate) converge into build_system_prompt() to assemble the system prompt.*
+
+**Embed:**
+```markdown
+![Split-panel diagram comparing Letta's read-only persona block with mutable human block against Mem0's category-level preferences with safety gate, both converging into build_system_prompt().](docs/figures/repo-figures/assets/fig-voice-41-memory-integration-letta-mem0.jpg)
+```
+
+---
+
+### fig-voice-42: Protocol-Based Component Swapping
+
+**Alt text:** Three-column diagram showing STTServiceProtocol, TTSServiceProtocol, and DriftDetectorProtocol with dashed satisfies lines connecting to concrete implementations, demonstrating structural typing without inheritance.
+
+**Caption:** *Protocol-based swapping: three protocols (STT, TTS, Drift) with dashed "satisfies" lines to concrete implementations -- structural typing means no import or inheritance needed.*
+
+**Embed:**
+```markdown
+![Three-column diagram showing STTServiceProtocol, TTSServiceProtocol, and DriftDetectorProtocol with dashed satisfies lines connecting to concrete implementations, demonstrating structural typing without inheritance.](docs/figures/repo-figures/assets/fig-voice-42-protocol-component-swapping.jpg)
+```
+
+---
+
+### fig-voice-43: Frontend Voice Components
+
+**Alt text:** Multi-panel diagram showing browser-side Jotai atoms and voice client connecting via WebSocket to server-side FastAPI and Pipecat pipeline, with audio frames flowing bidirectionally across the boundary.
+
+**Caption:** *Frontend voice architecture: Jotai atoms (voiceState, voiceConnection) drive the React UI, with createVoiceClient() managing the WebSocket link to the Pipecat pipeline on the server.*
+
+**Embed:**
+```markdown
+![Multi-panel diagram showing browser-side Jotai atoms and voice client connecting via WebSocket to server-side FastAPI and Pipecat pipeline, with audio frames flowing bidirectionally across the boundary.](docs/figures/repo-figures/assets/fig-voice-43-frontend-voice-components.jpg)
+```
+
+---
+
+### fig-voice-44: Conditional Import Pattern
+
+**Alt text:** Flowchart showing the conditional import branch where successful Pipecat import enables full pipeline mode while ImportError falls back to config-only mode, with both paths supporting the complete test suite.
+
+**Caption:** *Conditional import pattern: try/except at module level sets PIPECAT_AVAILABLE, branching to full pipeline mode or config-only mode -- all 54 tests pass in both branches.*
+
+**Embed:**
+```markdown
+![Flowchart showing the conditional import branch where successful Pipecat import enables full pipeline mode while ImportError falls back to config-only mode, with both paths supporting the complete test suite.](docs/figures/repo-figures/assets/fig-voice-44-conditional-import-pattern.jpg)
+```
+
+---
+
+### fig-voice-45: End-to-End Voice Turn Anatomy
+
+**Alt text:** Step-by-step anatomy of a single voice turn traversing seven processing stages with latency budget annotations, targeting under 500 milliseconds total for natural conversational music attribution interactions.
+
+**Caption:** *End-to-end voice turn anatomy: 7 processing steps from VAD (4ms) through TTS to transport, with open-source stack at ~799ms and commercial stack at ~389ms against a 500ms target.*
+
+**Embed:**
+```markdown
+![Step-by-step anatomy of a single voice turn traversing seven processing stages with latency budget annotations, targeting under 500 milliseconds total for natural conversational music attribution interactions.](docs/figures/repo-figures/assets/fig-voice-45-end-to-end-voice-turn.jpg)
+```
+
+---
+
+### fig-voice-46: Test Architecture Map
+
+**Alt text:** Four-column test architecture map showing 54 voice tests across test_voice_config (17), test_voice_persona (14), test_voice_drift (15), and test_demo_script (8) with mock boundaries marked.
+
+**Caption:** *Test architecture: 54 tests across 4 files covering config validation, persona building, drift detection, and demo script structure, all running without Pipecat via precise mock boundaries.*
+
+**Embed:**
+```markdown
+![Four-column test architecture map showing 54 voice tests across test_voice_config (17), test_voice_persona (14), test_voice_drift (15), and test_demo_script (8) with mock boundaries marked.](docs/figures/repo-figures/assets/fig-voice-46-test-architecture-map.jpg)
+```
+
+---
+
+### fig-voice-47: Evaluation Metrics & Traces
+
+**Alt text:** Split-panel showing four G-Eval dimension bars with target scores and a PersonaGym multi-turn trace revealing the 8-turn persona drift cliff, with CI integration cadence for each evaluation type.
+
+**Caption:** *Evaluation metrics: four G-Eval dimensions with targets (Task >90%, Confidence >85%, Persona >90%, Voice >80%) plus a PersonaGym 20-turn drift trace showing the 8-turn cliff.*
+
+**Embed:**
+```markdown
+![Split-panel showing four G-Eval dimension bars with target scores and a PersonaGym multi-turn trace revealing the 8-turn persona drift cliff, with CI integration cadence for each evaluation type.](docs/figures/repo-figures/assets/fig-voice-47-evaluation-metrics-traces.jpg)
+```
+
+---
+
+### fig-voice-48: Extension Points & Plugin Architecture
+
+**Alt text:** Six-panel grid showing voice module extension points for custom STT, TTS, drift detector, guardrails, memory backend, and tools, each with the Protocol interface to implement for plug-in compatibility.
+
+**Caption:** *Six extension points: custom STT, TTS, drift detector, guardrails, memory, and tools -- each defined by a Protocol interface that any implementation can satisfy via structural typing.*
+
+**Embed:**
+```markdown
+![Six-panel grid showing voice module extension points for custom STT, TTS, drift detector, guardrails, memory backend, and tools, each with the Protocol interface to implement for plug-in compatibility.](docs/figures/repo-figures/assets/fig-voice-48-extension-points-plugins.jpg)
+```
+
+---
+
 ## Statistics
 
 | Category | Count |
@@ -3466,5 +3674,5 @@
 | fig-scenario | 8 |
 | fig-theory | 22 |
 | fig-trends | 8 |
-| fig-voice | 32 |
-| **Total** | **262** |
+| fig-voice | 48 |
+| **Total** | **278** |
