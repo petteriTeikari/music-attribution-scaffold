@@ -2,20 +2,14 @@
 
 import type { ProvenanceEvent } from "@/lib/types/attribution";
 import { getSourceCssVar } from "@/lib/theme/confidence";
+import { formatDate } from "@/lib/utils/format";
 
 interface ProvenanceTimelineProps {
   events: ProvenanceEvent[];
   className?: string;
 }
 
-function formatTimestamp(iso: string): string {
-  const date = new Date(iso);
-  return date.toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
-}
+const formatTimestamp = formatDate;
 
 function getEventDescription(event: ProvenanceEvent): string {
   const { details } = event;

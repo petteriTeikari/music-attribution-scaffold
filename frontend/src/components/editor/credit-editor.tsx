@@ -5,6 +5,7 @@
 import { useState, useRef, useEffect } from "react";
 import type { Credit } from "@/lib/types/attribution";
 import { CreditRole } from "@/lib/types/enums";
+import { formatSnakeCase } from "@/lib/utils/format";
 
 interface CreditEditorProps {
   credit: Credit;
@@ -13,13 +14,7 @@ interface CreditEditorProps {
 }
 
 const ROLE_OPTIONS = Object.values(CreditRole);
-
-function formatRole(role: string): string {
-  return role
-    .split("_")
-    .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
-    .join(" ");
-}
+const formatRole = formatSnakeCase;
 
 export function CreditEditor({ credit, onSave, onCancel }: CreditEditorProps) {
   const [editingField, setEditingField] = useState<string | null>(null);

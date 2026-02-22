@@ -13,20 +13,14 @@
 
 import { useState } from "react";
 import type { ProvenanceEvent } from "@/lib/types/attribution";
+import { formatDate } from "@/lib/utils/format";
 
 interface ProvenancePanelProps {
   events: ProvenanceEvent[];
   defaultExpanded?: boolean;
 }
 
-function formatTimestamp(iso: string): string {
-  const d = new Date(iso);
-  return d.toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
-}
+const formatTimestamp = formatDate;
 
 function EventTypeBadge({ type }: { type: string }) {
   return (

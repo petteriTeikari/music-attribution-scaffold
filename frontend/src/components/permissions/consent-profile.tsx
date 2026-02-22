@@ -14,6 +14,7 @@ import type { PermissionEntry } from "@/lib/types/permissions";
 import {
   buildConsentGroups,
   formatPermissionType,
+  isAllowValue,
   type ConsentGroup,
 } from "@/lib/permissions/consent-groups";
 
@@ -224,10 +225,6 @@ function GroupRow({
       <div className="accent-line mt-4" style={{ opacity: 0.2 }} />
     </div>
   );
-}
-
-function isAllowValue(value: string): boolean {
-  return value === "ALLOW" || value === "ALLOW_WITH_ATTRIBUTION" || value === "ALLOW_WITH_ROYALTY";
 }
 
 interface CountDotsProps {

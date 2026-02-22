@@ -3,6 +3,7 @@
 // TODO: Component not yet integrated — wire up during UI fine-tuning
 
 import type { AttributionRecord } from "@/lib/types/attribution";
+import { getConfidenceCssVar, getConfidenceTier } from "@/lib/theme/confidence";
 
 interface SourceContribution {
   source: string;
@@ -43,15 +44,15 @@ function getSourceContributions(work: AttributionRecord): SourceContribution[] {
     .sort((a, b) => b.contribution - a.contribution);
 }
 
-function getConfidenceTier(score: number): { label: string; color: string } {
-  if (score >= 0.85) return { label: "High", color: "var(--color-confidence-high)" };
-  if (score >= 0.5) return { label: "Medium", color: "var(--color-confidence-medium)" };
-  return { label: "Low", color: "var(--color-confidence-low)" };
+function getTierDisplay(score: number): { label: string; color: string } {
+  const tier = getConfidenceTier(score);
+  const labels = { high: "High", medium: "Medium", low: "Low" } as const;
+  return { label: labels[tier], color: getConfidenceCssVar(tier) };
 }
 
 export function ConfidenceExplanation({ work }: ConfidenceExplanationProps) {
   const contributions = getSourceContributions(work);
-  const tier = getConfidenceTier(work.confidence_score);
+  const tier = getTierDisplay(work.confidence_score);
 
   return (
     <div className="space-y-5">
