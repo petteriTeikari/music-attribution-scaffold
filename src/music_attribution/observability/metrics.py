@@ -43,12 +43,8 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass
-from typing import TYPE_CHECKING
 
 from prometheus_client import CollectorRegistry, Counter, Histogram
-
-if TYPE_CHECKING:
-    pass
 
 logger = logging.getLogger(__name__)
 
@@ -175,11 +171,3 @@ def get_metrics() -> AppMetrics:
 
         _default_metrics = create_metrics(REGISTRY)
     return _default_metrics
-
-
-# Convenience exports for direct import
-ATTRIBUTION_REQUESTS = "attribution_requests_total"
-CONFIDENCE_HISTOGRAM = "attribution_confidence_score"
-AGENT_LATENCY = "agent_response_latency_seconds"
-DRIFT_DETECTED = "drift_detected_total"
-CENTER_BIAS_DETECTIONS = "center_bias_detections_total"

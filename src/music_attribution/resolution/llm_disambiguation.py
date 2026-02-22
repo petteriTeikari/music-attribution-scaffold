@@ -145,7 +145,15 @@ class LLMDisambiguator:
             result = await self._call_llm(candidates, context)
             self._cache[cache_key] = result
             return result
-        except (TimeoutError, Exception) as e:
+        except TimeoutError as e:
+            logger.warning("LLM disambiguation timed out: %s", e)
+            return DisambiguationResult(
+                chosen_index=None,
+                confidence=0.0,
+                reasoning=f"LLM timeout: {e}",
+                alternatives_considered=len(candidates),
+            )
+        except Exception as e:  # noqa: BLE001
             logger.warning("LLM disambiguation failed: %s", e)
             return DisambiguationResult(
                 chosen_index=None,

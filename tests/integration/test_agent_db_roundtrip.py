@@ -154,7 +154,7 @@ class TestAgentEndpointWithSessionFactory:
         from music_attribution.api.app import create_app
 
         mock_result = AsyncMock()
-        mock_result.data = "Test response with DB."
+        mock_result.output = "Test response with DB."
         mock_agent = AsyncMock()
         mock_agent.run = AsyncMock(return_value=mock_result)
 

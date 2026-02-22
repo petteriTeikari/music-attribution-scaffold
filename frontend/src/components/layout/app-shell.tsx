@@ -14,10 +14,19 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="min-h-screen bg-surface">
+      {/* Skip-nav link for keyboard users */}
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:bg-surface-elevated focus:px-4 focus:py-2 focus:text-sm focus:text-heading focus:border focus:border-accent"
+      >
+        Skip to main content
+      </a>
+
       <Navigation />
 
       {/* Main content: offset by sidebar on desktop, offset by top bar on mobile */}
       <main
+        id="main-content"
         className="min-h-screen pt-[48px] md:pt-0"
         style={{ marginLeft: "var(--sidebar-width)" }}
       >

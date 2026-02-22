@@ -20,7 +20,7 @@ pytestmark = pytest.mark.integration
 def _mock_agent():
     """Create a mock agent that returns a canned response."""
     mock_result = AsyncMock()
-    mock_result.data = "Hide and Seek has a confidence of 95% based on MUSICBRAINZ, DISCOGS, ACOUSTID."
+    mock_result.output = "Hide and Seek has a confidence of 95% based on MUSICBRAINZ, DISCOGS, ACOUSTID."
     agent = AsyncMock()
     agent.run = AsyncMock(return_value=mock_result)
     return agent

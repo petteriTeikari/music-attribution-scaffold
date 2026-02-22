@@ -9,7 +9,7 @@
 <p align="center"><strong>▶ <a href="https://youtu.be/7wuUiH8YmSQ?si=6TwuK7evAKFHoi_i">Watch the 1-minute demo</a></strong> · <strong>📄 <a href="https://dx.doi.org/10.2139/ssrn.6109087">Read the paper</a></strong> (supplementary material includes an annotated screenshot walkthrough)</p>
 
 [![CI](https://github.com/petteriTeikari/music-attribution-scaffold/actions/workflows/ci.yml/badge.svg)](https://github.com/petteriTeikari/music-attribution-scaffold/actions/workflows/ci.yml)
-[![Tests: 1304](https://img.shields.io/badge/tests-1304_passing-brightgreen)](tests/)
+[![Tests: 1311](https://img.shields.io/badge/tests-1311_passing-brightgreen)](tests/)
 [![Python 3.13](https://img.shields.io/badge/python-3.13-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
 [![DOI](https://img.shields.io/badge/DOI-10.5281%2Fzenodo.PLACEHOLDER-blue)](https://doi.org/10.5281/zenodo.PLACEHOLDER)
@@ -333,7 +333,7 @@ The benchmark script auto-detects hardware (CPU, GPU, VRAM), applies VRAM guards
 
 ## Sample Data
 
-The scaffold ships with **9 Imogen Heap works** as seed data, spanning the full confidence spectrum from 0.00 to 0.95:
+The scaffold ships with **8 Imogen Heap works** as seed data, spanning the full confidence spectrum from 0.00 to 0.95:
 
 | Work | Confidence | Assurance | Sources | Status |
 |---|---|---|---|---|
@@ -342,7 +342,6 @@ The scaffold ships with **9 Imogen Heap works** as seed data, spanning the full 
 | The Moment I Said It | 0.82 | A2 | MB, Discogs, File | Stable |
 | Goodnight and Go | 0.72 | A2 | MB, Discogs | Stable |
 | Headlock | 0.58 | A1 | MB, Discogs | Needs review |
-| What Have You Done To Me? | 0.48 | A1 | MB, Discogs | Needs review |
 | Just for Now | 0.35 | A1 | MB only | Needs review |
 | 2-1 | 0.28 | A1 | File metadata only | Needs review |
 | Blanket (unreleased) | 0.00 | A0 | None | Needs review |

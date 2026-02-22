@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import type { AttributionRecord } from "@/lib/types/attribution";
 import { ConfidenceGauge } from "@/components/confidence/confidence-gauge";
 import { AssuranceBadge } from "@/components/works/assurance-badge";

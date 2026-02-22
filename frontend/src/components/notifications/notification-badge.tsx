@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useAtomValue } from "jotai";
 import { userRoleAtom } from "@/lib/stores/mode";
 import { MOCK_NOTIFICATIONS } from "@/lib/data/mock-notifications";
@@ -9,17 +9,20 @@ export function NotificationBadge() {
   const role = useAtomValue(userRoleAtom);
   const [isOpen, setIsOpen] = useState(false);
   const [notifications] = useState(MOCK_NOTIFICATIONS);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   if (role !== "artist") return null;
 
   const unreadCount = notifications.filter((n) => !n.read).length;
 
   return (
-    <div className="relative">
+    <div className="relative" ref={containerRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
         className="relative flex h-6 w-6 items-center justify-center text-label hover:text-heading transition-colors"
         aria-label={`Notifications (${unreadCount} unread)`}
+        aria-expanded={isOpen}
+        aria-haspopup="true"
       >
         <svg
           width="14"
@@ -46,7 +49,10 @@ export function NotificationBadge() {
 
       {/* Dropdown */}
       {isOpen && (
-        <div className="absolute left-full top-0 ml-2 w-72 border border-border bg-surface-elevated shadow-lg z-50">
+        <div
+          role="menu"
+          className="absolute left-full top-0 ml-2 w-72 border border-border bg-surface-elevated z-50"
+        >
           <div className="p-3 border-b border-divider">
             <h3 className="editorial-caps text-xs text-heading">
               Notifications

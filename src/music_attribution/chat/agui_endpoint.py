@@ -33,8 +33,9 @@ from __future__ import annotations
 
 import json
 import logging
+import threading
 from collections.abc import AsyncGenerator
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from fastapi import APIRouter, Request
 from fastapi.responses import StreamingResponse
@@ -42,19 +43,26 @@ from fastapi.responses import StreamingResponse
 from music_attribution.chat.agent import AgentDeps, create_attribution_agent
 from music_attribution.chat.state import AttributionAgentState
 
+if TYPE_CHECKING:
+    from pydantic_ai import Agent
+
+    from music_attribution.chat.agent import AgentDeps as _AgentDeps
+
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
-# Lazy singleton agent instance
-_agent = None
+# Lazy singleton agent instance — guarded by _agent_lock for thread safety.
+_agent: Agent[_AgentDeps, str] | None = None
+_agent_lock = threading.Lock()
 
 
-def _get_agent():
+def _get_agent() -> Agent[AgentDeps, str]:
     """Get or create the singleton PydanticAI agent instance.
 
-    Uses a module-level global to ensure only one agent is created
-    per process. The lazy initialisation avoids requiring environment
+    Uses a module-level global guarded by a threading lock to ensure
+    exactly one agent is created per process, even under concurrent
+    requests. The lazy initialisation avoids requiring environment
     variables (e.g. ``ANTHROPIC_API_KEY``) at import time.
 
     Returns
@@ -64,8 +72,10 @@ def _get_agent():
     """
     global _agent  # noqa: PLW0603
     if _agent is None:
-        _agent = create_attribution_agent()
-    return _agent
+        with _agent_lock:
+            if _agent is None:
+                _agent = create_attribution_agent()
+    return _agent  # narrowed by double-check above
 
 
 async def _generate_sse_events(
@@ -139,7 +149,7 @@ async def _generate_sse_events(
 
     try:
         result = await agent.run(user_message, deps=deps)
-        response_text = result.data if isinstance(result.data, str) else str(result.data)
+        response_text = result.output if isinstance(result.output, str) else str(result.output)
     except Exception:
         logger.exception("Agent error")
         response_text = "I encountered an error processing your request. Please try again."
