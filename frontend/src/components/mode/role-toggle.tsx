@@ -35,6 +35,7 @@ export function RoleToggle() {
               flex h-6 w-6 items-center justify-center
               text-[10px] font-bold
               transition-all duration-150
+              focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent
               ${
                 isActive
                   ? ""

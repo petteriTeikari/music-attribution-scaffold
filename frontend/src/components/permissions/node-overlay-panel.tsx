@@ -136,7 +136,7 @@ export function NodeOverlayPanel({
     <div
       role="dialog"
       aria-label={`Details for ${node.label}`}
-      className="absolute right-0 top-0 z-50 w-64 bg-surface-elevated border border-border shadow-md p-4"
+      className="absolute right-0 top-0 z-50 w-64 bg-surface-elevated border border-border p-4"
     >
       <button
         onClick={onClose}

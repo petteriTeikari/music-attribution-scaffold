@@ -146,7 +146,7 @@ function OnboardingTooltip({
       style={{
         backgroundColor: "var(--color-surface-elevated)",
         border: "1px solid var(--color-accent)",
-        boxShadow: "0 2px 8px rgba(0,0,0,0.12)",
+        boxShadow: "var(--shadow-md)",
       }}
     >
       <p className="text-body">{step.content}</p>
@@ -317,7 +317,7 @@ function CountBucket({
           style={{
             backgroundColor: "var(--color-surface-elevated)",
             border: "1px solid var(--color-border)",
-            boxShadow: "0 2px 8px rgba(0,0,0,0.12)",
+            boxShadow: "var(--shadow-md)",
           }}
         >
           {entries.map((entry) => (
@@ -370,7 +370,7 @@ function InfoTooltip({ text }: { text: string }) {
             backgroundColor: "var(--color-surface-elevated)",
             color: "var(--color-heading)",
             border: "1px solid var(--color-border)",
-            boxShadow: "0 2px 8px rgba(0,0,0,0.12)",
+            boxShadow: "var(--shadow-md)",
           }}
         >
           {text}
