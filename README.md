@@ -734,4 +734,4 @@ This scaffold was developed with extensive use of Anthropic's Claude Opus 4.5 an
 
 ## License
 
-[MIT](LICENSE)
+[MIT](LICENSE) | [Detailed dependency licenses](license-advanced.md)
