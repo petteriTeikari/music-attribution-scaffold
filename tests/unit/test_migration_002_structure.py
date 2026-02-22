@@ -94,10 +94,14 @@ class TestMigration002Structure:
 
     def test_migration_002_uses_halfvec(self) -> None:
         """Migration 002 uses pgvector halfvec for embeddings."""
+        import ast
+
         migration_path = Path("alembic/versions/002_permissions_feedback_graph_vectors.py")
         source = migration_path.read_text(encoding="utf-8")
+        tree = ast.parse(source)
 
-        assert "HALFVEC" in source, "No HALFVEC reference in migration"
+        halfvec_found = any(isinstance(node, ast.Name) and node.id == "HALFVEC" for node in ast.walk(tree))
+        assert halfvec_found, "No HALFVEC reference in migration AST"
 
     def test_alembic_single_head(self) -> None:
         """After adding migration 002, there is still only one head."""

@@ -32,6 +32,7 @@ import uuid
 from collections import Counter, defaultdict
 from datetime import UTC, datetime
 
+from music_attribution.constants import REVIEW_THRESHOLD
 from music_attribution.resolution.identifier_match import IdentifierMatcher
 from music_attribution.resolution.string_similarity import StringSimilarityMatcher
 from music_attribution.schemas.enums import (
@@ -59,8 +60,8 @@ _DEFAULT_WEIGHTS: dict[str, float] = {
     "llm": 0.85,
 }
 
-# Threshold below which resolution is flagged for review
-_REVIEW_THRESHOLD = 0.5
+# Threshold below which resolution is flagged for review — imported from constants
+_REVIEW_THRESHOLD = REVIEW_THRESHOLD
 
 
 class ResolutionOrchestrator:
@@ -262,7 +263,7 @@ class ResolutionOrchestrator:
         id_index: dict[str, list[int]] = defaultdict(list)
         for i, record in enumerate(records):
             ids = record.identifiers
-            for field in ("isrc", "iswc", "isni", "mbid", "acoustid_fingerprint"):
+            for field in ("isrc", "iswc", "isni", "mbid", "acoustid"):
                 val = getattr(ids, field, None)
                 if val:
                     id_index[f"{field}:{val}"].append(i)
@@ -439,15 +440,15 @@ class ResolutionOrchestrator:
         scores: list[tuple[float, float]] = []
 
         if details.matched_identifiers:
-            scores.append((1.0, self._weights.get("identifier", 1.0)))
+            scores.append((1.0, self._weights.get("identifier", _DEFAULT_WEIGHTS["identifier"])))
         if details.string_similarity is not None:
-            scores.append((details.string_similarity, self._weights.get("string", 0.6)))
+            scores.append((details.string_similarity, self._weights.get("string", _DEFAULT_WEIGHTS["string"])))
         if details.embedding_similarity is not None:
-            scores.append((details.embedding_similarity, self._weights.get("embedding", 0.7)))
+            scores.append((details.embedding_similarity, self._weights.get("embedding", _DEFAULT_WEIGHTS["embedding"])))
         if details.graph_path_confidence is not None:
-            scores.append((details.graph_path_confidence, self._weights.get("graph", 0.75)))
+            scores.append((details.graph_path_confidence, self._weights.get("graph", _DEFAULT_WEIGHTS["graph"])))
         if details.llm_confidence is not None:
-            scores.append((details.llm_confidence, self._weights.get("llm", 0.85)))
+            scores.append((details.llm_confidence, self._weights.get("llm", _DEFAULT_WEIGHTS["llm"])))
 
         if not scores:
             return 0.5  # Default for singletons
@@ -563,7 +564,7 @@ class ResolutionOrchestrator:
             Merged identifier bundle with best-available value per field.
         """
         merged: dict[str, str | int | None] = {}
-        fields = ("isrc", "iswc", "isni", "mbid", "acoustid_fingerprint", "discogs_id")
+        fields = ("isrc", "iswc", "isni", "mbid", "acoustid", "discogs_id")
         for field in fields:
             for r in records:
                 val = getattr(r.identifiers, field, None)

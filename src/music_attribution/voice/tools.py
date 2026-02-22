@@ -19,6 +19,13 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING, Any
 
+from music_attribution.constants import (
+    AGREEMENT_HIGH_THRESHOLD,
+    AGREEMENT_MODERATE_THRESHOLD,
+    CENTER_BIAS_HIGH,
+    CENTER_BIAS_LOW,
+)
+
 if TYPE_CHECKING:
     from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
@@ -256,9 +263,9 @@ async def _handle_explain_confidence(params: Any) -> None:
         agreement = record.source_agreement
 
         factors = []
-        if agreement > 0.8:
+        if agreement > AGREEMENT_HIGH_THRESHOLD:
             factors.append(f"High source agreement at {agreement:.0%}")
-        elif agreement > 0.5:
+        elif agreement > AGREEMENT_MODERATE_THRESHOLD:
             factors.append(f"Moderate source agreement at {agreement:.0%}")
         else:
             factors.append(f"Low source agreement at {agreement:.0%}")
@@ -379,7 +386,7 @@ async def _handle_submit_feedback(params: Any) -> None:
         from music_attribution.schemas.enums import EvidenceTypeEnum, ReviewerRoleEnum
         from music_attribution.schemas.feedback import FeedbackCard
 
-        center_bias = 0.45 <= assessment <= 0.55
+        center_bias = CENTER_BIAS_LOW <= assessment <= CENTER_BIAS_HIGH
         card = FeedbackCard(
             feedback_id=_uuid.uuid4(),
             attribution_id=_uuid.UUID(work_id),

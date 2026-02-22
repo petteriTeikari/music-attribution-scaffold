@@ -24,6 +24,7 @@ from datetime import datetime
 
 from pydantic import BaseModel, Field, field_validator, model_validator
 
+from music_attribution.constants import CENTER_BIAS_HIGH, CENTER_BIAS_LOW
 from music_attribution.schemas.enums import EvidenceTypeEnum, ReviewerRoleEnum
 
 
@@ -185,7 +186,7 @@ class FeedbackCard(BaseModel):
 
     @model_validator(mode="after")
     def validate_center_bias(self) -> FeedbackCard:
-        """Set center_bias_flag if overall_assessment is in [0.45, 0.55]."""
-        if 0.45 <= self.overall_assessment <= 0.55:
+        """Set center_bias_flag if overall_assessment is in [CENTER_BIAS_LOW, CENTER_BIAS_HIGH]."""
+        if CENTER_BIAS_LOW <= self.overall_assessment <= CENTER_BIAS_HIGH:
             object.__setattr__(self, "center_bias_flag", True)
         return self

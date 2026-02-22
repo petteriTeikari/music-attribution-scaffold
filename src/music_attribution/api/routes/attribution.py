@@ -198,7 +198,7 @@ async def get_provenance(
 @router.get("/attributions/search")
 async def search_attributions(
     request: Request,
-    q: str = Query(default="", description="Search query"),
+    q: str = Query(default="", max_length=500, description="Search query"),
     limit: int = Query(default=20, ge=1, le=100),
 ) -> list[dict]:
     """Hybrid search across attribution records using RRF fusion.

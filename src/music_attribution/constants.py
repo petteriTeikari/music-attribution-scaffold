@@ -44,6 +44,22 @@ CONFIDENCE_MEDIUM_THRESHOLD: float = 0.50
 REVIEW_THRESHOLD: float = CONFIDENCE_MEDIUM_THRESHOLD
 """Attributions below this score are flagged for human review."""
 
+# ── Source agreement description thresholds ─────────────────────────
+# Used by: chat agent (explain_confidence), voice tools
+AGREEMENT_HIGH_THRESHOLD: float = 0.80
+"""Source agreement >= this is described as "High"."""
+
+AGREEMENT_MODERATE_THRESHOLD: float = 0.50
+"""Source agreement >= this is described as "Moderate"; below is "Low"."""
+
+# ── Center-bias detection ───────────────────────────────────────────
+# Used by: FeedbackCard validator, chat agent, voice tools
+CENTER_BIAS_LOW: float = 0.45
+"""Lower bound of center-bias detection range."""
+
+CENTER_BIAS_HIGH: float = 0.55
+"""Upper bound of center-bias detection range."""
+
 # ── Default source reliability weights ──────────────────────────────
 # Used by: CreditAggregator (weighted voting), tests
 SOURCE_RELIABILITY_WEIGHTS: dict[SourceEnum, float] = {
