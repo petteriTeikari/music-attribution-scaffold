@@ -1,0 +1,326 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Voice Benchmarking TDD Plan — Phases 2-4
+  Implements synthetic voice commands, end-to-end pipeline benchmark,
+  and optional microphone support for scripts/benchmark_voice.py.
+
+  Phase 1 (fix STT/TTS libraries) already complete.
+-->
+<plan version="1.0" name="voice-benchmarking-phases-2-4">
+  <metadata>
+    <created>2026-02-22</created>
+    <branch>feat/voice-benchmarking</branch>
+    <source>docs/planning/voice-agent-benchmarking-plan.md</source>
+  </metadata>
+
+  <!-- ═══════════════════════════════════════════════════════════════
+       PHASE 2: Synthetic Voice Commands
+       ═══════════════════════════════════════════════════════════════ -->
+
+  <task id="T01" status="NOT_STARTED">
+    <name>Inline WER computation helper</name>
+    <description>
+      Add compute_wer() to benchmark_voice.py — Word Error Rate via
+      Levenshtein distance on word sequences. Normalizes both texts
+      (lowercase, strip punctuation) before comparison. No jiwer dependency.
+    </description>
+    <dependencies/>
+    <tdd_spec>
+      <test_file>tests/unit/test_benchmark_wer.py</test_file>
+      <tests>
+        <test>test_wer_identical_strings_returns_zero</test>
+        <test>test_wer_completely_different_returns_one</test>
+        <test>test_wer_single_substitution</test>
+        <test>test_wer_insertion_and_deletion</test>
+        <test>test_wer_case_insensitive</test>
+        <test>test_wer_strips_punctuation</test>
+        <test>test_wer_empty_reference_returns_one</test>
+        <test>test_wer_empty_hypothesis_returns_one</test>
+        <test>test_wer_both_empty_returns_zero</test>
+      </tests>
+      <source_files>
+        <file>scripts/benchmark_voice.py</file>
+      </source_files>
+    </tdd_spec>
+  </task>
+
+  <task id="T02" status="NOT_STARTED">
+    <name>Domain keyword accuracy checker</name>
+    <description>
+      Add check_domain_keywords() that verifies domain-specific terms
+      survived the TTS->STT round trip. Returns (found, missed) lists.
+      Keywords are case-insensitive and match partial words (e.g.,
+      "confidence" matches "confidence-score").
+    </description>
+    <dependencies>
+      <dep>T01</dep>
+    </dependencies>
+    <tdd_spec>
+      <test_file>tests/unit/test_benchmark_wer.py</test_file>
+      <tests>
+        <test>test_domain_keywords_all_found</test>
+        <test>test_domain_keywords_some_missing</test>
+        <test>test_domain_keywords_case_insensitive</test>
+        <test>test_domain_keywords_empty_text</test>
+        <test>test_domain_keywords_empty_keywords_list</test>
+      </tests>
+      <source_files>
+        <file>scripts/benchmark_voice.py</file>
+      </source_files>
+    </tdd_spec>
+  </task>
+
+  <task id="T03" status="NOT_STARTED">
+    <name>Synthetic command corpus constant</name>
+    <description>
+      Add SYNTHETIC_COMMANDS list to benchmark_voice.py. Each entry is a
+      dict with id, text, category, and domain_keywords. Categories A
+      (simple query), B (action command). Multi-turn (C) deferred.
+    </description>
+    <dependencies/>
+    <tdd_spec>
+      <test_file>tests/unit/test_benchmark_synthetic.py</test_file>
+      <tests>
+        <test>test_synthetic_commands_is_list</test>
+        <test>test_synthetic_commands_has_required_keys</test>
+        <test>test_synthetic_commands_has_categories_a_and_b</test>
+        <test>test_synthetic_commands_all_have_domain_keywords</test>
+        <test>test_synthetic_commands_ids_are_unique</test>
+      </tests>
+      <source_files>
+        <file>scripts/benchmark_voice.py</file>
+      </source_files>
+    </tdd_spec>
+  </task>
+
+  <task id="T04" status="NOT_STARTED">
+    <name>Generate command WAVs with Piper TTS</name>
+    <description>
+      Add generate_command_wavs() that pre-synthesizes all SYNTHETIC_COMMANDS
+      to WAV using Piper TTS. Returns dict mapping command_id -> (wav_bytes,
+      duration_ms). Gracefully returns empty dict if Piper not available.
+    </description>
+    <dependencies>
+      <dep>T03</dep>
+    </dependencies>
+    <tdd_spec>
+      <test_file>tests/unit/test_benchmark_synthetic.py</test_file>
+      <tests>
+        <test>test_generate_command_wavs_returns_dict</test>
+        <test>test_generate_command_wavs_graceful_without_piper</test>
+        <test>test_generate_command_wavs_returns_valid_wav_bytes</test>
+      </tests>
+      <source_files>
+        <file>scripts/benchmark_voice.py</file>
+      </source_files>
+    </tdd_spec>
+  </task>
+
+  <task id="T05" status="NOT_STARTED">
+    <name>Benchmark synthetic STT round-trip</name>
+    <description>
+      Add benchmark_synthetic_stt() that feeds pre-generated WAVs through
+      faster-whisper and computes WER + domain keyword accuracy per command.
+      Returns list of result dicts matching the synthetic_stt JSON schema.
+      Graceful skip if Piper or faster-whisper unavailable.
+    </description>
+    <dependencies>
+      <dep>T01</dep>
+      <dep>T02</dep>
+      <dep>T04</dep>
+    </dependencies>
+    <tdd_spec>
+      <test_file>tests/unit/test_benchmark_synthetic.py</test_file>
+      <tests>
+        <test>test_benchmark_synthetic_stt_returns_list</test>
+        <test>test_benchmark_synthetic_stt_result_schema</test>
+        <test>test_benchmark_synthetic_stt_skips_without_deps</test>
+      </tests>
+      <source_files>
+        <file>scripts/benchmark_voice.py</file>
+      </source_files>
+    </tdd_spec>
+  </task>
+
+  <task id="T06" status="NOT_STARTED">
+    <name>Add --skip-synthetic CLI flag</name>
+    <description>
+      Add --skip-synthetic argparse flag. When set, skip synthetic command
+      benchmarks entirely. Wire into run_benchmarks() and main().
+      Update JSON output to include synthetic_stt section (null if skipped).
+    </description>
+    <dependencies>
+      <dep>T05</dep>
+    </dependencies>
+    <tdd_spec>
+      <test_file>tests/unit/test_benchmark_script.py</test_file>
+      <tests>
+        <test>test_script_has_skip_synthetic_flag</test>
+        <test>test_run_benchmarks_accepts_skip_synthetic</test>
+      </tests>
+      <source_files>
+        <file>scripts/benchmark_voice.py</file>
+      </source_files>
+    </tdd_spec>
+  </task>
+
+  <!-- ═══════════════════════════════════════════════════════════════
+       PHASE 3: End-to-End Pipeline Benchmark
+       ═══════════════════════════════════════════════════════════════ -->
+
+  <task id="T07" status="NOT_STARTED">
+    <name>MockLLM class with configurable delay</name>
+    <description>
+      Add MockLLM class to benchmark_voice.py with a respond(text) method
+      that sleeps for a configurable delay (default 500ms) and returns a
+      canned response string. Thread-safe. Used for end-to-end benchmarks
+      without requiring API keys.
+    </description>
+    <dependencies/>
+    <tdd_spec>
+      <test_file>tests/unit/test_benchmark_e2e.py</test_file>
+      <tests>
+        <test>test_mock_llm_returns_string</test>
+        <test>test_mock_llm_respects_delay</test>
+        <test>test_mock_llm_default_delay_500ms</test>
+        <test>test_mock_llm_custom_delay</test>
+      </tests>
+      <source_files>
+        <file>scripts/benchmark_voice.py</file>
+      </source_files>
+    </tdd_spec>
+  </task>
+
+  <task id="T08" status="NOT_STARTED">
+    <name>End-to-end pipeline benchmark function</name>
+    <description>
+      Add benchmark_end_to_end() that runs STT -> LLM -> TTS for each
+      synthetic command WAV. Returns list of result dicts with per-stage
+      latency breakdown (stt_ms, llm_ms, tts_ms, total_ms, overhead_ms,
+      rtf). Accepts mock_llm or live_llm flag. Graceful skip if
+      dependencies unavailable.
+    </description>
+    <dependencies>
+      <dep>T05</dep>
+      <dep>T07</dep>
+    </dependencies>
+    <tdd_spec>
+      <test_file>tests/unit/test_benchmark_e2e.py</test_file>
+      <tests>
+        <test>test_benchmark_e2e_returns_list</test>
+        <test>test_benchmark_e2e_result_has_latency_fields</test>
+        <test>test_benchmark_e2e_skips_without_deps</test>
+        <test>test_benchmark_e2e_rtf_calculation</test>
+      </tests>
+      <source_files>
+        <file>scripts/benchmark_voice.py</file>
+      </source_files>
+    </tdd_spec>
+  </task>
+
+  <task id="T09" status="NOT_STARTED">
+    <name>Add --mock-llm, --live-llm, --llm-delay-ms CLI flags</name>
+    <description>
+      Add argparse flags for LLM mode selection and mock delay config.
+      --mock-llm (default true), --live-llm (overrides mock), --llm-delay-ms
+      (default 500). Wire into run_benchmarks() and update JSON output
+      with end_to_end section.
+    </description>
+    <dependencies>
+      <dep>T08</dep>
+    </dependencies>
+    <tdd_spec>
+      <test_file>tests/unit/test_benchmark_script.py</test_file>
+      <tests>
+        <test>test_script_has_llm_flags</test>
+        <test>test_run_benchmarks_accepts_llm_params</test>
+      </tests>
+      <source_files>
+        <file>scripts/benchmark_voice.py</file>
+      </source_files>
+    </tdd_spec>
+  </task>
+
+  <!-- ═══════════════════════════════════════════════════════════════
+       PHASE 4: Microphone Support
+       ═══════════════════════════════════════════════════════════════ -->
+
+  <task id="T10" status="NOT_STARTED">
+    <name>Microphone capture function (soft dependency)</name>
+    <description>
+      Add capture_microphone(duration_s, sample_rate) that records audio
+      from the default input device using sounddevice. Returns WAV bytes.
+      Raises ImportError with friendly message if sounddevice not installed.
+      Raises RuntimeError if no audio device found.
+    </description>
+    <dependencies/>
+    <tdd_spec>
+      <test_file>tests/unit/test_benchmark_microphone.py</test_file>
+      <tests>
+        <test>test_capture_microphone_import_error_without_sounddevice</test>
+        <test>test_capture_microphone_returns_bytes_type_hint</test>
+        <test>test_capture_microphone_accepts_duration_and_sample_rate</test>
+      </tests>
+      <source_files>
+        <file>scripts/benchmark_voice.py</file>
+      </source_files>
+    </tdd_spec>
+  </task>
+
+  <task id="T11" status="NOT_STARTED">
+    <name>Add --with-microphone and --record-seconds CLI flags</name>
+    <description>
+      Add argparse flags for microphone support. --with-microphone (default
+      false), --record-seconds (default 5). When enabled, capture audio and
+      feed through the same STT pipeline as synthetic commands. Wire into
+      run_benchmarks() and update JSON output with microphone section.
+    </description>
+    <dependencies>
+      <dep>T10</dep>
+      <dep>T05</dep>
+    </dependencies>
+    <tdd_spec>
+      <test_file>tests/unit/test_benchmark_script.py</test_file>
+      <tests>
+        <test>test_script_has_microphone_flags</test>
+        <test>test_run_benchmarks_accepts_microphone_params</test>
+      </tests>
+      <source_files>
+        <file>scripts/benchmark_voice.py</file>
+      </source_files>
+    </tdd_spec>
+  </task>
+
+  <!-- ═══════════════════════════════════════════════════════════════
+       INTEGRATION: Wire everything together + final output format
+       ═══════════════════════════════════════════════════════════════ -->
+
+  <task id="T12" status="NOT_STARTED">
+    <name>Integration: full JSON output schema + summary table</name>
+    <description>
+      Update run_benchmarks() to orchestrate all benchmark stages and
+      produce the complete JSON output matching section 6.1 of the plan.
+      Update the stdout summary table to include synthetic STT results,
+      end-to-end latency breakdown, and microphone results.
+      Verify the complete output schema with a structural test.
+    </description>
+    <dependencies>
+      <dep>T06</dep>
+      <dep>T09</dep>
+      <dep>T11</dep>
+    </dependencies>
+    <tdd_spec>
+      <test_file>tests/unit/test_benchmark_integration.py</test_file>
+      <tests>
+        <test>test_run_benchmarks_returns_complete_schema</test>
+        <test>test_run_benchmarks_output_has_all_sections</test>
+        <test>test_run_benchmarks_json_serializable</test>
+        <test>test_run_benchmarks_skip_synthetic_excludes_section</test>
+      </tests>
+      <source_files>
+        <file>scripts/benchmark_voice.py</file>
+      </source_files>
+    </tdd_spec>
+  </task>
+
+</plan>

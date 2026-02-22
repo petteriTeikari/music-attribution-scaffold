@@ -104,6 +104,14 @@ def create_voice_router() -> APIRouter:
 
         logger.info("Voice WebSocket connected (active: %d)", _active_connections)
 
+        # Best-effort Prometheus gauge — never block the pipeline
+        try:
+            from music_attribution.observability.voice_metrics import get_voice_metrics
+
+            get_voice_metrics().voice_active_connections.inc()
+        except Exception:  # noqa: BLE001
+            pass
+
         try:
             from music_attribution.voice.config import VoiceConfig
             from music_attribution.voice.pipeline import build_pipecat_pipeline
@@ -131,6 +139,15 @@ def create_voice_router() -> APIRouter:
         finally:
             async with _connections_lock:
                 _active_connections -= 1
+
+            # Best-effort Prometheus gauge decrement
+            try:
+                from music_attribution.observability.voice_metrics import get_voice_metrics
+
+                get_voice_metrics().voice_active_connections.dec()
+            except Exception:  # noqa: BLE001
+                pass
+
             logger.info("Voice WebSocket disconnected (active: %d)", _active_connections)
 
     return router

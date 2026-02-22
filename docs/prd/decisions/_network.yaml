@@ -12,12 +12,15 @@
 
 network:
   name: "Probabilistic PRD Decision Network"
-  version: "3.1.0"
-  last_updated: 2026-02-20
+  version: "3.2.0"
+  last_updated: 2026-02-22
   description: >
     Bayesian decision network for the Music Attribution Scaffold.
     5-level hierarchy (L1 Business → L5 Operations) with conditional
     probability edges encoding how upstream choices influence downstream options.
+    v3.2.0: Voice pipeline benchmarking node + Prometheus 3.0/OTel
+    convergence research notes in observability nodes. Agent observability
+    promoted stub → draft with LLM blind spots analysis.
     v3.1.0: Persona coherence expansion — 5 new nodes
     (1 L2 architecture, 3 L3 implementation, 1 L5 operations) covering
     persona coherence strategy, user modeling, voice persona management,
@@ -472,6 +475,12 @@ nodes:
     level: L5_operations
     file: L5-operations/persona-drift-monitoring.decision.yaml
     title: "Persona Drift Monitoring"
+
+  # L5: Operations Decisions (Voice benchmarking v3.2.0)
+  - id: voice_pipeline_benchmarking
+    level: L5_operations
+    file: L5-operations/voice-pipeline-benchmarking.decision.yaml
+    title: "Voice Pipeline Benchmarking"
 
 # --- Edge Declarations ---
 
@@ -1644,3 +1653,17 @@ edges:
     to: voice_persona_management
     influence: moderate
     rationale: "Subscription tiers determine which voice persona features are available (free=text, premium=system voice, pro=artist clone)"
+
+  # =================================================================
+  # Voice Pipeline Benchmarking Edges (v3.2.0)
+  # =================================================================
+
+  - from: voice_agent_stack
+    to: voice_pipeline_benchmarking
+    influence: strong
+    rationale: "Voice stack choice determines which pipeline stages need benchmarking (STT model, TTS provider, drift detection)"
+
+  - from: observability_stack
+    to: voice_pipeline_benchmarking
+    influence: moderate
+    rationale: "Observability infrastructure captures benchmark metrics (Prometheus histograms) for production regression tracking"

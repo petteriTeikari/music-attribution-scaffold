@@ -167,7 +167,7 @@ def create_tts_service(config: VoiceConfig) -> Any:
     if config.tts_provider == TTSProvider.PIPER:
         from pipecat.services.piper.tts import PiperTTSService
 
-        return PiperTTSService()
+        return PiperTTSService(voice_id=config.piper_voice_id)
 
     if config.tts_provider == TTSProvider.ELEVENLABS:
         from pipecat.services.elevenlabs.tts import ElevenLabsTTSService
@@ -175,7 +175,10 @@ def create_tts_service(config: VoiceConfig) -> Any:
         if not config.elevenlabs_api_key:
             msg = "VOICE_ELEVENLABS_API_KEY required for ElevenLabs TTS"
             raise ValueError(msg)
-        return ElevenLabsTTSService(api_key=config.elevenlabs_api_key)
+        return ElevenLabsTTSService(
+            api_key=config.elevenlabs_api_key,
+            voice_id=config.elevenlabs_voice_id,
+        )
 
     if config.tts_provider == TTSProvider.CARTESIA:
         from pipecat.services.cartesia.tts import CartesiaTTSService
@@ -183,14 +186,17 @@ def create_tts_service(config: VoiceConfig) -> Any:
         if not config.cartesia_api_key:
             msg = "VOICE_CARTESIA_API_KEY required for Cartesia TTS"
             raise ValueError(msg)
-        return CartesiaTTSService(api_key=config.cartesia_api_key)
+        return CartesiaTTSService(
+            api_key=config.cartesia_api_key,
+            voice_id=config.cartesia_voice_id,
+        )
 
     if config.tts_provider == TTSProvider.KOKORO:
         # Kokoro is not yet a Pipecat extra — use Piper as fallback
         logger.warning("Kokoro TTS not yet available in Pipecat; falling back to Piper")
         from pipecat.services.piper.tts import PiperTTSService
 
-        return PiperTTSService()
+        return PiperTTSService(voice_id=config.piper_voice_id)
 
     msg = f"Unknown TTS provider: {config.tts_provider}"
     raise ValueError(msg)
@@ -288,9 +294,15 @@ def build_pipecat_pipeline(
     tool_schemas = get_function_schemas()
     tools = ToolsSchema(standard_tools=tool_schemas)
 
-    # Context setup
+    # Context setup — cast needed due to list invariance with Pipecat's
+    # union of OpenAI typed dicts + LLMSpecificMessage
+    from typing import cast
+
     messages = [{"role": "system", "content": system_prompt}]
-    context = LLMContext(messages, tools)
+    context = LLMContext(
+        cast(list[Any], messages),
+        tools,
+    )
 
     user_aggregator, assistant_aggregator = LLMContextAggregatorPair(
         context,

@@ -9,7 +9,7 @@
 <p align="center"><strong>▶ <a href="https://youtu.be/7wuUiH8YmSQ?si=6TwuK7evAKFHoi_i">Watch the 1-minute demo</a></strong> · <strong>📄 <a href="https://dx.doi.org/10.2139/ssrn.6109087">Read the paper</a></strong> (supplementary material includes an annotated screenshot walkthrough)</p>
 
 [![CI](https://github.com/petteriTeikari/music-attribution-scaffold/actions/workflows/ci.yml/badge.svg)](https://github.com/petteriTeikari/music-attribution-scaffold/actions/workflows/ci.yml)
-[![Tests: 1012](https://img.shields.io/badge/tests-1012_passing-brightgreen)](tests/)
+[![Tests: 1304](https://img.shields.io/badge/tests-1304_passing-brightgreen)](tests/)
 [![Python 3.13](https://img.shields.io/badge/python-3.13-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
 [![DOI](https://img.shields.io/badge/DOI-10.5281%2Fzenodo.PLACEHOLDER-blue)](https://doi.org/10.5281/zenodo.PLACEHOLDER)
@@ -145,9 +145,9 @@ Create a `.env` file in the project root, or export directly. See [`src/music_at
 | `make dev` | Start backend API + PostgreSQL |
 | `make dev-frontend` | Start frontend dev server |
 | `make agent` | Start full agentic UI (backend + CopilotKit) |
-| `make test-local` | Run 459 unit + 43 integration tests locally |
-| `make test` | Run 502 tests in Docker (CI-parity) |
-| `make test-frontend` | Run 510 Vitest tests + WCAG checks |
+| `make test-local` | Run 687 unit + 43 integration tests locally |
+| `make test` | Run 744 tests in Docker (CI-parity) |
+| `make test-frontend` | Run 560 Vitest tests + WCAG checks |
 | `make test-all` | Full CI: lint + typecheck + backend + frontend |
 | `make lint-local` | ruff check + ruff format --check |
 | `make typecheck` | mypy (strict) |
@@ -290,6 +290,39 @@ Mic → [Silero VAD → STT → ContextAggregator → LLM (4 tools) → DriftMon
 - **Persona drift prevention**: 5-dimension persona architecture with EWMA-smoothed drift detection prevents the 8-turn persona drift cliff documented in the literature (Li et al., 2024)
 - **Conditional imports**: Config, persona, drift, and tool schemas work without Pipecat installed -- only `build_pipecat_pipeline()` requires the actual library. All 54 voice tests pass in both modes
 
+### Benchmarks (RTX 2070 Super)
+
+STT inference is the latency bottleneck. GPU acceleration provides 4–16x speedup over CPU, with larger models benefiting disproportionately:
+
+| Component | Model | CPU | GPU (CUDA) | Speedup |
+|---|---|---|---|---|
+| **STT** (faster-whisper) | tiny | 801 ms | 188 ms | **4.3x** |
+| **STT** (faster-whisper) | small | 4,316 ms | 267 ms | **16.2x** |
+| **Drift detection** | all-MiniLM-L6-v2 | 4.4 ms | — | — |
+
+*Measured on NVIDIA GeForce RTX 2070 Super (7.6 GB VRAM), PyTorch 2.10.0+cu128, 10-second synthetic 440 Hz sine wave (16 kHz, 16-bit PCM). CPU uses int8 quantization; GPU uses float16. Model load times: tiny CPU 5.9s vs CUDA 0.4s; small CPU 41.1s vs CUDA 0.4s.*
+
+<details>
+<summary><strong>Run the benchmark yourself</strong></summary>
+
+```bash
+# CPU + GPU benchmark (tiny and small models)
+uv run python scripts/benchmark_voice.py --models tiny,small --output results.json
+
+# CPU-only (no CUDA required)
+uv run python scripts/benchmark_voice.py --cpu-only --models tiny
+
+# With synthetic command accuracy (WER + domain keyword survival)
+uv run python scripts/benchmark_voice.py --models tiny
+
+# End-to-end pipeline with mock LLM (STT → LLM → TTS latency breakdown)
+uv run python scripts/benchmark_voice.py --models tiny --mock-llm --llm-delay-ms 200
+```
+
+The benchmark script auto-detects hardware (CPU, GPU, VRAM), applies VRAM guards (skips models too large for available memory), and outputs structured JSON + a summary table. See [`scripts/benchmark_voice.py`](scripts/benchmark_voice.py).
+
+</details>
+
 ![Step-by-step anatomy of a single voice turn traversing seven processing stages with latency budget annotations, targeting under 500 milliseconds total for natural conversational music attribution interactions.](docs/figures/repo-figures/assets/fig-voice-45-end-to-end-voice-turn.jpg)
 
 *A single voice turn: 7 steps from utterance to response, targeting <500ms total.*
@@ -343,7 +376,7 @@ music-attribution-scaffold/
 │   ├── pipeline/                   # DAG runner for orchestration
 │   ├── observability/              # Prometheus metrics
 │   └── seed/                       # Imogen Heap mock data
-├── tests/                          # 502 tests: 459 unit + 43 integration
+├── tests/                          # 744 tests: 687 unit + 43 integration + 14 eval
 ├── frontend/                       # Next.js 15, TypeScript strict, Tailwind v4
 ├── docker/                         # Dockerfiles: dev, test, prod
 ├── alembic/                        # Database migrations
@@ -373,12 +406,12 @@ Each module has its own README with architecture details:
 
 ## Testing
 
-**1,012 tests** across backend and frontend:
+**1,304 tests** across backend and frontend:
 
 ```bash
-make test-local          # 502 backend tests locally (~30s)
-make test                # 502 backend tests in Docker (CI-parity, ~90s)
-make test-frontend       # 510 Vitest tests + WCAG accessibility checks (~15s)
+make test-local          # 744 backend tests locally (~30s)
+make test                # 744 backend tests in Docker (CI-parity, ~90s)
+make test-frontend       # 560 Vitest tests + WCAG accessibility checks (~15s)
 make test-all            # Full CI: lint + typecheck + all tests
 ```
 
@@ -387,9 +420,10 @@ make test-all            # Full CI: lint + typecheck + all tests
 
 | Tier | Count | Speed | Infrastructure | What It Tests |
 |---|---|---|---|---|
-| **Unit** | 459 | ~30s | None (all mocked) | Business logic, schema validation, algorithm correctness |
+| **Unit** | 687 | ~30s | None (all mocked) | Business logic, schema validation, algorithm correctness |
 | **Integration** | 43 | ~60s | Docker (PostgreSQL + pgvector) | Database round-trips, API endpoints, search |
-| **Frontend** | 510 | ~15s | jsdom (Vitest) | Components, hooks, stores, WCAG accessibility |
+| **Eval** | 14 | ~5s | None | Benchmark validation, output schema checks |
+| **Frontend** | 560 | ~15s | jsdom (Vitest) | Components, hooks, stores, WCAG accessibility |
 | **Smoke** | — | ~5s | Docker | Container health, migration success |
 
 All tests run in CI via GitHub Actions with path-based filtering — backend changes don't trigger frontend CI and vice versa. See [`tests/README.md`](tests/README.md).
@@ -735,4 +769,4 @@ This scaffold was developed with extensive use of Anthropic's Claude Opus 4.5 an
 
 ## License
 
-[MIT](LICENSE) | [Detailed dependency licenses](license-advanced.md)
+[MIT](LICENSE) | [Detailed dependency licenses](docs/license-advanced.md)

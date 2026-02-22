@@ -81,6 +81,19 @@ class DriftDetector:
         raw_score = self._compute_similarity(response_text)
         self._raw_scores.append(raw_score)
         self._ewma_score = self._alpha * raw_score + (1 - self._alpha) * self._ewma_score
+
+        # Best-effort Prometheus metrics — never block the pipeline
+        try:
+            from music_attribution.observability.voice_metrics import get_voice_metrics
+
+            vm = get_voice_metrics()
+            current_state = self.state()
+            vm.voice_drift_score.labels(state=current_state).observe(self._ewma_score)
+            if current_state != "sync":
+                vm.voice_drift_events_total.labels(state=current_state).inc()
+        except Exception:  # noqa: BLE001
+            pass
+
         return self._ewma_score
 
     def state(self) -> str:

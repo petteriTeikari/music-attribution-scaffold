@@ -5,7 +5,7 @@
 .PHONY: ci-docker docker-build docker-clean clean
 .PHONY: dev-frontend test-frontend lint-frontend build-frontend test-e2e test-e2e-ui
 .PHONY: agent dev-agent
-.PHONY: install-voice test-voice dev-voice voice-local
+.PHONY: install-voice test-voice dev-voice benchmark-voice voice-local
 .PHONY: docs docs-serve test-docs
 .PHONY: zenodo-archive
 
@@ -151,6 +151,9 @@ test-voice:  ## Run voice agent tests
 
 dev-voice:  ## Start voice agent dev server (localhost:8001)
 	VOICE_TRANSPORT=websocket uv run uvicorn music_attribution.voice.server:create_voice_app --factory --host 0.0.0.0 --port 8001 --reload
+
+benchmark-voice:  ## Run voice pipeline benchmark (CPU+GPU latency)
+	uv run python scripts/benchmark_voice.py --output benchmark-results.json
 
 voice-local:  ## Run fully local voice agent (Whisper + Piper, $0/min)
 	@echo "Starting fully local voice agent"
