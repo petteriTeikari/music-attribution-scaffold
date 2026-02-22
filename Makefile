@@ -7,6 +7,7 @@
 .PHONY: agent dev-agent
 .PHONY: install-voice test-voice dev-voice voice-local
 .PHONY: docs docs-serve test-docs
+.PHONY: zenodo-archive
 
 .DEFAULT_GOAL := help
 
@@ -188,6 +189,17 @@ docs-serve:  ## Serve MkDocs locally with live reload
 	@cp docs/tutorials/voice-agent-implementation.md docs/site/tutorials/
 	@$(TUTORIAL_FIXUP)
 	uv run mkdocs serve
+
+# =============================================================================
+# RELEASE / ZENODO
+# =============================================================================
+
+zenodo-archive:  ## Build clean archive for Zenodo upload
+	$(eval VERSION := $(shell grep '^version' pyproject.toml | head -1 | sed 's/.*"\(.*\)"/\1/'))
+	git archive --format=zip --prefix=music-attribution-scaffold-$(VERSION)/ \
+		-o music-attribution-scaffold-$(VERSION).zip HEAD
+	@ls -lh music-attribution-scaffold-$(VERSION).zip
+	@echo "Upload to https://zenodo.org/deposit/new"
 
 # =============================================================================
 # CLEANUP

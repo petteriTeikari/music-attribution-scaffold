@@ -1,0 +1,41 @@
+{
+  "upload_type": "software",
+  "title": "Music Attribution Scaffold",
+  "version": "1.0.0",
+  "publication_date": "2026-02-22",
+  "creators": [
+    {
+      "name": "Teikari, Petteri",
+      "orcid": "0000-0002-0844-8662"
+    }
+  ],
+  "description": "Open-source research scaffold for music attribution with transparent confidence scoring. Companion code to Teikari (2026), SSRN No. 6109087.",
+  "access_right": "open",
+  "license": "mit",
+  "language": "eng",
+  "keywords": [
+    "music attribution",
+    "confidence scoring",
+    "conformal prediction",
+    "MCP protocol",
+    "provenance",
+    "generative AI",
+    "voice agent",
+    "agentic UI",
+    "entity resolution"
+  ],
+  "related_identifiers": [
+    {
+      "identifier": "10.2139/ssrn.6109087",
+      "relation": "isSupplementTo",
+      "resource_type": "publication-article"
+    },
+    {
+      "identifier": "https://github.com/petteriTeikari/music-attribution-scaffold",
+      "relation": "isSupplementTo",
+      "resource_type": "software",
+      "scheme": "url"
+    }
+  ],
+  "notes": "Frozen snapshot for peer review. The live repository may contain updates beyond this version."
+}

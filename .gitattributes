@@ -1,0 +1,11 @@
+# Zenodo/archive exclusions
+.github/                        export-ignore
+.pre-commit-config.yaml         export-ignore
+docker/                         export-ignore
+docs/figures/visual-references/ export-ignore
+docs/site/                      export-ignore
+site/                           export-ignore
+petteriTeikari/                 export-ignore
+frontend/node_modules/          export-ignore
+frontend/.next/                 export-ignore
+frontend/coverage/              export-ignore

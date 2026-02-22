@@ -8,6 +8,8 @@ authors:
     orcid: "https://orcid.org/0000-0002-0844-8662"
 repository-code: "https://github.com/petteriTeikari/music-attribution-scaffold"
 url: "https://doi.org/10.2139/ssrn.6109087"
+version: "1.0.0"
+date-released: "2026-02-22"
 license: MIT
 keywords:
   - music attribution
