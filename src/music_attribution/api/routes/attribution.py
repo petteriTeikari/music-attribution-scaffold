@@ -15,9 +15,7 @@ references (see companion paper, Section 5.2).
 Notes
 -----
 Sessions are obtained from ``app.state.async_session_factory`` via the
-``_get_session`` helper rather than ``Depends`` — this keeps the router
-self-contained without requiring the caller to wire up a dependency
-override.
+shared ``get_session`` helper in ``dependencies``.
 """
 
 from __future__ import annotations
@@ -25,29 +23,11 @@ from __future__ import annotations
 import uuid
 
 from fastapi import APIRouter, HTTPException, Query, Request
-from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
+from music_attribution.api.dependencies import get_session
 from music_attribution.attribution.persistence import AsyncAttributionRepository
 
 router = APIRouter()
-
-
-async def _get_session(request: Request) -> AsyncSession:
-    """Get an async session from the application's session factory.
-
-    Parameters
-    ----------
-    request : Request
-        FastAPI request object with access to ``app.state``.
-
-    Returns
-    -------
-    AsyncSession
-        A new async database session (caller must use it as a context
-        manager to ensure proper cleanup).
-    """
-    factory: async_sessionmaker[AsyncSession] = request.app.state.async_session_factory
-    return factory()
 
 
 @router.get("/attributions/work/{work_id}")
@@ -80,7 +60,7 @@ async def get_attribution_by_work_id(
         404 if no attribution is found for the given ``work_id``.
     """
     repo = AsyncAttributionRepository()
-    async with await _get_session(request) as session:
+    async with get_session(request) as session:
         record = await repo.find_by_work_entity_id(work_id, session)
         if record is None:
             raise HTTPException(status_code=404, detail="Attribution not found")
@@ -126,7 +106,7 @@ async def list_attributions(
         confidence score descending.
     """
     repo = AsyncAttributionRepository()
-    async with await _get_session(request) as session:
+    async with get_session(request) as session:
         if needs_review is True:
             records = await repo.find_needs_review(limit=limit, session=session)
             return [r.model_dump(mode="json") for r in records]
@@ -182,7 +162,7 @@ async def get_provenance(
         404 if no attribution record exists for the given ID.
     """
     repo = AsyncAttributionRepository()
-    async with await _get_session(request) as session:
+    async with get_session(request) as session:
         record = await repo.find_by_id(attribution_id, session)
         if record is None:
             raise HTTPException(status_code=404, detail="Attribution not found")
@@ -234,7 +214,7 @@ async def search_attributions(
     from music_attribution.search.hybrid_search import HybridSearchService
 
     service = HybridSearchService()
-    async with await _get_session(request) as session:
+    async with get_session(request) as session:
         results = await service.search(q, limit=limit, session=session)
         return [
             {

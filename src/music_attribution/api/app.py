@@ -102,10 +102,6 @@ def create_app() -> FastAPI:
     >>> app.title
     'Music Attribution API'
     """
-    # Settings are also created in lifespan() and stored on app.state.
-    # This instance is used only for CORS configuration at app creation time.
-    settings = Settings()  # type: ignore[call-arg]
-
     app = FastAPI(
         title="Music Attribution API",
         description="REST API for querying music attribution records",
@@ -113,10 +109,13 @@ def create_app() -> FastAPI:
         lifespan=lifespan,
     )
 
-    # CORS for frontend dev server
+    # CORS for frontend dev server — read from Settings once.
+    # The same Settings instance is created in lifespan() and stored on
+    # app.state; here we only need cors_origins at app creation time.
+    cors_settings = Settings()  # type: ignore[call-arg]
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=settings.cors_origins.split(","),
+        allow_origins=cors_settings.cors_origins.split(","),
         allow_credentials=True,
         allow_methods=["GET", "POST", "OPTIONS"],
         allow_headers=["Content-Type", "Authorization"],

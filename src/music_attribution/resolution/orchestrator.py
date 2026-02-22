@@ -362,7 +362,7 @@ class ResolutionOrchestrator:
         matched_ids: list[str] = []
 
         # Check identifier matches
-        id_fields = ("isrc", "iswc", "isni", "mbid", "acoustid_fingerprint")
+        id_fields = ("isrc", "iswc", "isni", "mbid", "acoustid")
         for field in id_fields:
             vals = {getattr(r.identifiers, field, None) for r in records}
             vals.discard(None)

@@ -23,8 +23,8 @@ import uuid
 
 from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel
-from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
+from music_attribution.api.dependencies import get_session
 from music_attribution.permissions.persistence import AsyncPermissionRepository
 from music_attribution.schemas.enums import PermissionTypeEnum
 
@@ -75,24 +75,6 @@ class PermissionCheckResponse(BaseModel):
     result: str
 
 
-async def _get_session(request: Request) -> AsyncSession:
-    """Get an async session from the application's session factory.
-
-    Parameters
-    ----------
-    request : Request
-        FastAPI request object with access to ``app.state``.
-
-    Returns
-    -------
-    AsyncSession
-        A new async database session (caller must use it as a context
-        manager to ensure proper cleanup).
-    """
-    factory: async_sessionmaker[AsyncSession] = request.app.state.async_session_factory
-    return factory()
-
-
 @router.post("/permissions/check")
 async def check_permission(
     request: Request,
@@ -126,7 +108,7 @@ async def check_permission(
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=f"Invalid permission type: {body.permission_type}") from exc
 
-    async with await _get_session(request) as session:
+    async with get_session(request) as session:
         result = await repo.check_permission(
             entity_id=body.entity_id,
             permission_type=perm_type,
@@ -190,7 +172,7 @@ async def list_permissions(
     """
     repo = AsyncPermissionRepository()
 
-    async with await _get_session(request) as session:
+    async with get_session(request) as session:
         bundles = await repo.find_by_entity_id(entity_id, session)
 
     if not bundles:

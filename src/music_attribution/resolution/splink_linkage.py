@@ -33,7 +33,6 @@ music_attribution.resolution.graph_resolution : Stage 5 (runs after this).
 
 from __future__ import annotations
 
-import contextlib
 import logging
 from collections import defaultdict
 from typing import Any
@@ -135,11 +134,20 @@ class SplinkMatcher:
             self._linker.training.estimate_u_using_random_sampling(max_pairs=1e5)
 
             # Try to estimate probability two random records match
+            em_failures = 0
             for col in self._comparison_columns:
-                with contextlib.suppress(Exception):
+                try:
                     self._linker.training.estimate_parameters_using_expectation_maximisation(
                         block_on(col), fix_u_probabilities=False
                     )
+                except Exception:  # noqa: BLE001
+                    em_failures += 1
+                    logger.debug("EM estimation failed for column %s", col)
+            if em_failures == len(self._comparison_columns):
+                logger.warning(
+                    "EM estimation failed for all %d columns — predictions may use unestimated parameters",
+                    em_failures,
+                )
 
         except ImportError:
             logger.warning("Splink not available, using fallback parameter estimation")

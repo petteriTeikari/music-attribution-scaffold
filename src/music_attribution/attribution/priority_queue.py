@@ -33,20 +33,23 @@ music_attribution.attribution.aggregator : Produces the confidence and
 from __future__ import annotations
 
 import logging
+import types
 from datetime import UTC, datetime
 
 from music_attribution.schemas.attribution import AttributionRecord
 
 logger = logging.getLogger(__name__)
 
-# Priority formula weights
-_WEIGHTS = {
-    "boundary": 0.30,  # Proximity to decision boundary
-    "disagreement": 0.25,  # Source disagreement
-    "ambiguity": 0.15,  # Entity ambiguity (conformal set size)
-    "never_reviewed": 0.15,  # Never reviewed penalty
-    "staleness": 0.15,  # Time since last review
-}
+# Priority formula weights (read-only to prevent accidental mutation)
+_WEIGHTS = types.MappingProxyType(
+    {
+        "boundary": 0.30,  # Proximity to decision boundary
+        "disagreement": 0.25,  # Source disagreement
+        "ambiguity": 0.15,  # Entity ambiguity (conformal set size)
+        "never_reviewed": 0.15,  # Never reviewed penalty
+        "staleness": 0.15,  # Time since last review
+    }
+)
 
 
 class ReviewPriorityQueue:

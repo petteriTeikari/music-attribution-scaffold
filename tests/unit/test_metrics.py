@@ -17,21 +17,31 @@ import pytest
 class TestMetricsModule:
     """Tests for observability.metrics module."""
 
-    def test_metrics_module_exports_expected_metrics(self) -> None:
-        """All domain-specific metrics are importable."""
+    def test_metrics_module_exports_expected_factories(self) -> None:
+        """Core factory functions and AppMetrics class are importable."""
         from music_attribution.observability.metrics import (
-            AGENT_LATENCY,
-            ATTRIBUTION_REQUESTS,
-            CENTER_BIAS_DETECTIONS,
-            CONFIDENCE_HISTOGRAM,
-            DRIFT_DETECTED,
+            AppMetrics,
+            create_metrics,
+            get_metrics,
         )
 
-        assert ATTRIBUTION_REQUESTS is not None
-        assert CONFIDENCE_HISTOGRAM is not None
-        assert AGENT_LATENCY is not None
-        assert DRIFT_DETECTED is not None
-        assert CENTER_BIAS_DETECTIONS is not None
+        assert AppMetrics is not None
+        assert create_metrics is not None
+        assert get_metrics is not None
+
+    def test_create_metrics_returns_all_instruments(self) -> None:
+        """create_metrics returns AppMetrics with all 5 instruments."""
+        from prometheus_client import CollectorRegistry
+
+        from music_attribution.observability.metrics import create_metrics
+
+        registry = CollectorRegistry()
+        metrics = create_metrics(registry)
+        assert metrics.attribution_requests is not None
+        assert metrics.confidence_histogram is not None
+        assert metrics.agent_latency is not None
+        assert metrics.drift_detected is not None
+        assert metrics.center_bias_detections is not None
 
     def test_request_counter_increments(self) -> None:
         """ATTRIBUTION_REQUESTS counter increments correctly."""

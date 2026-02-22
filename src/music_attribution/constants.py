@@ -31,6 +31,8 @@ SOURCE_RELIABILITY_WEIGHTS : dict[SourceEnum, float]
 
 from __future__ import annotations
 
+import types
+
 from music_attribution.schemas.enums import SourceEnum
 
 # ── Confidence tier boundaries ──────────────────────────────────────
@@ -62,11 +64,13 @@ CENTER_BIAS_HIGH: float = 0.55
 
 # ── Default source reliability weights ──────────────────────────────
 # Used by: CreditAggregator (weighted voting), tests
-SOURCE_RELIABILITY_WEIGHTS: dict[SourceEnum, float] = {
-    SourceEnum.MUSICBRAINZ: 0.95,
-    SourceEnum.DISCOGS: 0.85,
-    SourceEnum.ACOUSTID: 0.80,
-    SourceEnum.FILE_METADATA: 0.70,
-    SourceEnum.ARTIST_INPUT: 0.60,
-}
-"""Default weight per data source for weighted aggregation (0.0–1.0)."""
+SOURCE_RELIABILITY_WEIGHTS: types.MappingProxyType[SourceEnum, float] = types.MappingProxyType(
+    {
+        SourceEnum.MUSICBRAINZ: 0.95,
+        SourceEnum.DISCOGS: 0.85,
+        SourceEnum.ACOUSTID: 0.80,
+        SourceEnum.FILE_METADATA: 0.70,
+        SourceEnum.ARTIST_INPUT: 0.60,
+    }
+)
+"""Default weight per data source for weighted aggregation (0.0–1.0). Read-only."""

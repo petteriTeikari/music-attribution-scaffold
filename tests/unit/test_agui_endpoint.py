@@ -28,7 +28,7 @@ def client(app: FastAPI) -> TestClient:
 def _mock_agent_run():
     """Create mock for the agent run method."""
     mock_result = AsyncMock()
-    mock_result.data = "This is a test response from the attribution agent."
+    mock_result.output = "This is a test response from the attribution agent."
     mock_agent = AsyncMock()
     mock_agent.run = AsyncMock(return_value=mock_result)
     return mock_agent

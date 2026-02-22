@@ -2,51 +2,38 @@
 
 from __future__ import annotations
 
-import contextlib
+from unittest.mock import MagicMock
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
 
-class TestGetDbSession:
-    """Tests for the get_db_session dependency."""
+class TestGetSession:
+    """Tests for the get_session dependency."""
 
-    async def test_get_db_session_yields_session(self) -> None:
-        """Dependency yields an AsyncSession instance."""
-        from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
+    def test_get_session_returns_session(self) -> None:
+        """get_session returns a session from the app's factory."""
+        from music_attribution.api.dependencies import get_session
 
-        from music_attribution.api.dependencies import get_db_session
+        mock_session = MagicMock(spec=AsyncSession)
+        mock_factory = MagicMock(return_value=mock_session)
 
-        engine = create_async_engine("sqlite+aiosqlite://", echo=False)
-        factory = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
+        mock_request = MagicMock()
+        mock_request.app.state.async_session_factory = mock_factory
 
-        session_gen = get_db_session(factory)
-        session = await session_gen.__anext__()
-        assert isinstance(session, AsyncSession)
+        result = get_session(mock_request)
+        assert result is mock_session
+        mock_factory.assert_called_once()
 
-        # Cleanup
-        with contextlib.suppress(StopAsyncIteration):
-            await session_gen.__anext__()
-        await engine.dispose()
+    def test_get_session_reads_from_app_state(self) -> None:
+        """get_session extracts factory from request.app.state."""
+        from music_attribution.api.dependencies import get_session
 
-    async def test_db_session_closes_after_request(self) -> None:
-        """Session is closed after the generator finishes."""
-        from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
+        mock_factory = MagicMock()
+        mock_request = MagicMock()
+        mock_request.app.state.async_session_factory = mock_factory
 
-        from music_attribution.api.dependencies import get_db_session
-
-        engine = create_async_engine("sqlite+aiosqlite://", echo=False)
-        factory = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
-
-        session_gen = get_db_session(factory)
-        session = await session_gen.__anext__()
-
-        # Exhaust the generator (simulates request completion)
-        with contextlib.suppress(StopAsyncIteration):
-            await session_gen.__anext__()
-
-        # Session should be closed
-        assert session.is_active is False or session.get_bind() is not None
-        await engine.dispose()
+        get_session(mock_request)
+        mock_factory.assert_called_once()
 
 
 class TestAppLifespan:
