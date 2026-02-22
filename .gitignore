@@ -119,6 +119,7 @@ docs/figures/generated/*
 !docs/figures/generated/.gitkeep
 docs/figures/visual-references/
 docs/site/figures/
+docs/site/tutorials/voice-agent-implementation.md
 docs/knowledge-base/sources/
 docs/tmp/*
 docs/figures/frontend-figures/

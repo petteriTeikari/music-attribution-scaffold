@@ -163,14 +163,30 @@ voice-local:  ## Run fully local voice agent (Whisper + Piper, $0/min)
 test-docs:  ## Run docs safety tests (math overflow, dollar signs)
 	.venv/bin/python -m pytest tests/unit/test_docs_math_safety.py -v
 
+GITHUB_BLOB := https://github.com/petteriTeikari/music-attribution-scaffold/blob/main
+TUTORIAL_FIXUP = \
+	sed -i 's|../figures/repo-figures/assets/|../figures/|g' docs/site/tutorials/voice-agent-implementation.md && \
+	sed -i 's|../../src/|$(GITHUB_BLOB)/src/|g' docs/site/tutorials/voice-agent-implementation.md && \
+	sed -i 's|../../scripts/|$(GITHUB_BLOB)/scripts/|g' docs/site/tutorials/voice-agent-implementation.md && \
+	sed -i 's|../../pyproject.toml|$(GITHUB_BLOB)/pyproject.toml|g' docs/site/tutorials/voice-agent-implementation.md && \
+	sed -i 's|../planning/|$(GITHUB_BLOB)/docs/planning/|g' docs/site/tutorials/voice-agent-implementation.md && \
+	sed -i 's|../prd/|$(GITHUB_BLOB)/docs/prd/|g' docs/site/tutorials/voice-agent-implementation.md && \
+	sed -i 's|../../.claude/|$(GITHUB_BLOB)/.claude/|g' docs/site/tutorials/voice-agent-implementation.md
+
 docs:  ## Build MkDocs site (copies figures first)
 	@mkdir -p docs/site/figures
 	@cp docs/figures/repo-figures/assets/*.jpg docs/site/figures/
+	@mkdir -p docs/site/tutorials
+	@cp docs/tutorials/voice-agent-implementation.md docs/site/tutorials/
+	@$(TUTORIAL_FIXUP)
 	uv run mkdocs build --strict
 
 docs-serve:  ## Serve MkDocs locally with live reload
 	@mkdir -p docs/site/figures
 	@cp docs/figures/repo-figures/assets/*.jpg docs/site/figures/
+	@mkdir -p docs/site/tutorials
+	@cp docs/tutorials/voice-agent-implementation.md docs/site/tutorials/
+	@$(TUTORIAL_FIXUP)
 	uv run mkdocs serve
 
 # =============================================================================
