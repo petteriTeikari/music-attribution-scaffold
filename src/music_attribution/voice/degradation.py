@@ -16,6 +16,8 @@ from pathlib import Path
 
 import numpy as np
 
+from music_attribution.voice.config import PIPELINE_SAMPLE_RATE
+
 logger = logging.getLogger(__name__)
 
 
@@ -202,7 +204,7 @@ def apply_degradation(
     return result
 
 
-def write_audio(path: Path, audio: np.ndarray, sample_rate: int = 16000) -> None:
+def write_audio(path: Path, audio: np.ndarray, sample_rate: int = PIPELINE_SAMPLE_RATE) -> None:
     """Write float32 audio to FLAC file with int16 subtype.
 
     Args:

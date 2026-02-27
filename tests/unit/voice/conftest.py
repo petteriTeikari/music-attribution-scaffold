@@ -4,15 +4,11 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from typing import TYPE_CHECKING
 
 import numpy as np
 import pytest
 
 from music_attribution.voice.config import VoiceConfig
-
-if TYPE_CHECKING:
-    pass
 
 
 @pytest.fixture
@@ -79,4 +75,5 @@ def whisper_model():
         from faster_whisper import WhisperModel
     except ImportError:
         pytest.skip("faster-whisper not installed")
-    return WhisperModel("small", device="cpu", compute_type="int8")
+    model_size = VoiceConfig().whisper_model
+    return WhisperModel(model_size, device="cpu", compute_type="int8")

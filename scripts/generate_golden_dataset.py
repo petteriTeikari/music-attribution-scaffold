@@ -13,92 +13,67 @@ import argparse
 import hashlib
 import json
 import logging
-import subprocess
-import tempfile
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import numpy as np
 
+from music_attribution.voice.config import (
+    DEFAULT_PIPER_VOICE_ID,
+    PIPELINE_SAMPLE_RATE,
+)
+from music_attribution.voice.piper_utils import (
+    load_piper_voice,
+    synthesize_speech,
+)
+
+if TYPE_CHECKING:
+    from piper import PiperVoice
+
 logger = logging.getLogger(__name__)
 
-# Target sample rate for all fixtures
-TARGET_SR = 16000
-
-# Piper native output rate
-PIPER_SR = 22050
-
-
-def _call_piper_tts(
-    text: str,
-    voice_id: str = "en_US-lessac-medium",
-) -> tuple[np.ndarray, int]:
-    """Call Piper TTS via subprocess to synthesize speech.
-
-    Args:
-        text: Text to synthesize.
-        voice_id: Piper voice model identifier.
-
-    Returns:
-        Tuple of (audio_array_float32, sample_rate).
-    """
-    import soundfile as sf
-
-    with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as tmp:
-        tmp_path = Path(tmp.name)
-
-    try:
-        cmd = [
-            "piper",
-            "--model",
-            voice_id,
-            "--output_file",
-            str(tmp_path),
-        ]
-        subprocess.run(
-            cmd,
-            input=text.encode("utf-8"),
-            check=True,
-            capture_output=True,
-        )
-        audio, sr = sf.read(str(tmp_path), dtype="float32")
-        return audio, sr
-    finally:
-        tmp_path.unlink(missing_ok=True)
+# Module-level voice instance, set in main() before generation loop
+_voice: PiperVoice | None = None
 
 
 def synthesize_command(
     text: str,
-    voice_id: str = "en_US-lessac-medium",
 ) -> tuple[np.ndarray, int]:
-    """Synthesize a voice command and resample to 16kHz.
+    """Synthesize a voice command and resample to pipeline sample rate.
 
     Args:
         text: Command text to synthesize.
-        voice_id: Piper voice model identifier.
 
     Returns:
-        Tuple of (audio_float32_16kHz, 16000).
+        Tuple of (audio_float32, PIPELINE_SAMPLE_RATE).
+
+    Raises:
+        RuntimeError: If ``_voice`` has not been initialized via ``main()``.
     """
     import soxr
 
-    audio, sr = _call_piper_tts(text, voice_id)
+    if _voice is None:
+        msg = "Piper voice not initialized — call main() or set _voice first"
+        raise RuntimeError(msg)
 
-    # Resample from Piper native rate to target rate
-    if sr != TARGET_SR:
-        audio = soxr.resample(audio, sr, TARGET_SR, quality="HQ")
+    audio, sr = synthesize_speech(_voice, text)
 
-    return audio.astype(np.float32), TARGET_SR
+    # Resample from Piper native rate to pipeline target rate
+    if sr != PIPELINE_SAMPLE_RATE:
+        audio = soxr.resample(audio, sr, PIPELINE_SAMPLE_RATE, quality="HQ")
+
+    return audio.astype(np.float32), PIPELINE_SAMPLE_RATE
 
 
 def generate_clean_fixtures(
     output_dir: Path,
-    voice_id: str = "en_US-lessac-medium",
 ) -> list[Path]:
     """Generate 20 clean FLAC fixtures from GOLDEN_COMMANDS.
 
+    Requires ``_voice`` module-level variable to be initialized.
+
     Args:
         output_dir: Directory to write FLAC files to.
-        voice_id: Piper voice model identifier.
 
     Returns:
         List of created FLAC file paths.
@@ -106,9 +81,10 @@ def generate_clean_fixtures(
     from music_attribution.voice.degradation import write_audio
     from music_attribution.voice.golden_commands import GOLDEN_COMMANDS
 
+    output_dir.mkdir(parents=True, exist_ok=True)
     paths: list[Path] = []
     for cmd in GOLDEN_COMMANDS:
-        audio, sr = synthesize_command(cmd["text"], voice_id)
+        audio, sr = synthesize_command(cmd["text"])
         filename = f"{cmd['id']}_clean.flac"
         path = output_dir / filename
         write_audio(path, audio, sample_rate=sr)
@@ -173,12 +149,14 @@ def generate_degraded_fixtures(
 def generate_manifest(
     output_dir: Path,
     paths: list[Path],
+    seed: int = 42,
 ) -> dict:
     """Create manifest dict describing all generated fixture files.
 
     Args:
         output_dir: Directory containing FLAC files.
         paths: List of FLAC file paths to include.
+        seed: Random seed used for generation.
 
     Returns:
         Manifest dict with version, seed, sample_rate, format, and files list.
@@ -217,8 +195,8 @@ def generate_manifest(
 
     return {
         "version": "1.0",
-        "seed": 42,
-        "sample_rate": TARGET_SR,
+        "seed": seed,
+        "sample_rate": PIPELINE_SAMPLE_RATE,
         "format": "FLAC",
         "output_directory": str(output_dir),
         "files": files,
@@ -231,6 +209,8 @@ def main(argv: list[str] | None = None) -> None:
     Args:
         argv: Command-line arguments (defaults to sys.argv[1:]).
     """
+    global _voice  # noqa: PLW0603
+
     parser = argparse.ArgumentParser(
         description="Generate golden voice dataset fixtures.",
     )
@@ -248,15 +228,26 @@ def main(argv: list[str] | None = None) -> None:
     )
     parser.add_argument(
         "--voice-id",
-        default="en_US-lessac-medium",
+        default=DEFAULT_PIPER_VOICE_ID,
         help="Piper TTS voice model identifier.",
+    )
+    parser.add_argument(
+        "--model-dir",
+        type=Path,
+        default=None,
+        help="Explicit Piper model directory (auto-discovered if omitted).",
     )
     args = parser.parse_args(argv)
 
     logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 
+    # Initialize Piper voice once (downloads model if necessary)
+    logger.info("Loading Piper voice '%s'...", args.voice_id)
+    _voice = load_piper_voice(args.voice_id, model_dir=args.model_dir)
+    logger.info("Piper voice loaded.")
+
     logger.info("Generating clean fixtures...")
-    clean_paths = generate_clean_fixtures(args.output_dir, args.voice_id)
+    clean_paths = generate_clean_fixtures(args.output_dir)
     logger.info("Generated %d clean fixtures.", len(clean_paths))
 
     logger.info("Generating degraded fixtures...")
@@ -268,8 +259,7 @@ def main(argv: list[str] | None = None) -> None:
     logger.info("Generated %d degraded fixtures.", len(degraded_paths))
 
     all_paths = clean_paths + degraded_paths
-    manifest = generate_manifest(args.output_dir, all_paths)
-    manifest["seed"] = args.seed
+    manifest = generate_manifest(args.output_dir, all_paths, seed=args.seed)
 
     manifest_path = args.output_dir / "manifest.json"
     manifest_path.write_text(

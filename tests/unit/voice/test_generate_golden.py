@@ -6,7 +6,7 @@ import hashlib
 import json
 import sys
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -14,6 +14,35 @@ import pytest
 _SCRIPTS_DIR = Path(__file__).resolve().parents[3] / "scripts"
 if str(_SCRIPTS_DIR) not in sys.path:
     sys.path.insert(0, str(_SCRIPTS_DIR))
+
+
+def _set_mock_voice(fake_audio_22k: object) -> MagicMock:
+    """Create a mock PiperVoice and install it in the generate_golden_dataset module.
+
+    Args:
+        fake_audio_22k: Fake audio array at 22050 Hz.
+
+    Returns:
+        The mock voice object.
+    """
+    import generate_golden_dataset as mod
+
+    mock_voice = MagicMock()
+
+    import wave
+
+    import numpy as np
+
+    def fake_synthesize(text: str, wav_file: wave.Wave_write) -> None:
+        wav_file.setnchannels(1)
+        wav_file.setsampwidth(2)
+        wav_file.setframerate(22050)
+        audio_int16 = (np.asarray(fake_audio_22k) * 32767).astype(np.int16)
+        wav_file.writeframes(audio_int16.tobytes())
+
+    mock_voice.synthesize_wav = fake_synthesize
+    mod._voice = mock_voice
+    return mock_voice
 
 
 class TestSynthesizeCommand:
@@ -26,16 +55,17 @@ class TestSynthesizeCommand:
         import numpy as np_mod
         from generate_golden_dataset import synthesize_command
 
-        # Mock Piper TTS to return fake 22050Hz int16 audio
         fake_audio = np_mod.random.randn(22050).astype(np_mod.float32) * 0.5
-        with patch(
-            "generate_golden_dataset._call_piper_tts",
-            return_value=(fake_audio, 22050),
-        ):
+        _set_mock_voice(fake_audio)
+        try:
             audio, sr = synthesize_command("hello world")
-        assert isinstance(audio, np_mod.ndarray)
-        assert len(audio) > 0
-        assert audio.dtype == np_mod.float32
+            assert isinstance(audio, np_mod.ndarray)
+            assert len(audio) > 0
+            assert audio.dtype == np_mod.float32
+        finally:
+            import generate_golden_dataset as mod
+
+            mod._voice = None
 
     @pytest.mark.voice
     def test_synthesize_command_resampled_to_16k(self) -> None:
@@ -46,15 +76,17 @@ class TestSynthesizeCommand:
 
         # 1 second at 22050Hz
         fake_audio = np_mod.random.randn(22050).astype(np_mod.float32) * 0.5
-        with patch(
-            "generate_golden_dataset._call_piper_tts",
-            return_value=(fake_audio, 22050),
-        ):
+        _set_mock_voice(fake_audio)
+        try:
             audio, sr = synthesize_command("hello world")
-        assert sr == 16000
-        # Length ratio should be approximately 16000/22050
-        expected_len = int(22050 * 16000 / 22050)
-        assert abs(len(audio) - expected_len) <= 2
+            assert sr == 16000
+            # Length ratio should be approximately 16000/22050
+            expected_len = int(22050 * 16000 / 22050)
+            assert abs(len(audio) - expected_len) <= 2
+        finally:
+            import generate_golden_dataset as mod
+
+            mod._voice = None
 
     @pytest.mark.voice
     def test_generate_clean_fixtures_creates_20_files(self, tmp_path: Path) -> None:
@@ -63,16 +95,18 @@ class TestSynthesizeCommand:
         import numpy as np_mod
         from generate_golden_dataset import generate_clean_fixtures
 
-        fake_audio = np_mod.random.randn(16000).astype(np_mod.float32) * 0.5
-        with patch(
-            "generate_golden_dataset._call_piper_tts",
-            return_value=(fake_audio, 22050),
-        ):
+        fake_audio = np_mod.random.randn(22050).astype(np_mod.float32) * 0.5
+        _set_mock_voice(fake_audio)
+        try:
             paths = generate_clean_fixtures(tmp_path)
-        assert len(paths) == 20
-        for p in paths:
-            assert p.exists()
-            assert p.suffix == ".flac"
+            assert len(paths) == 20
+            for p in paths:
+                assert p.exists()
+                assert p.suffix == ".flac"
+        finally:
+            import generate_golden_dataset as mod
+
+            mod._voice = None
 
     @pytest.mark.voice
     def test_clean_fixture_naming_convention(self, tmp_path: Path) -> None:
@@ -81,15 +115,17 @@ class TestSynthesizeCommand:
         import numpy as np_mod
         from generate_golden_dataset import generate_clean_fixtures
 
-        fake_audio = np_mod.random.randn(16000).astype(np_mod.float32) * 0.5
-        with patch(
-            "generate_golden_dataset._call_piper_tts",
-            return_value=(fake_audio, 22050),
-        ):
+        fake_audio = np_mod.random.randn(22050).astype(np_mod.float32) * 0.5
+        _set_mock_voice(fake_audio)
+        try:
             paths = generate_clean_fixtures(tmp_path)
-        names = sorted(p.name for p in paths)
-        expected = sorted(f"cmd_{i:02d}_clean.flac" for i in range(1, 21))
-        assert names == expected
+            names = sorted(p.name for p in paths)
+            expected = sorted(f"cmd_{i:02d}_clean.flac" for i in range(1, 21))
+            assert names == expected
+        finally:
+            import generate_golden_dataset as mod
+
+            mod._voice = None
 
     @pytest.mark.voice
     def test_synthesize_command_approximate_idempotency(self) -> None:
@@ -100,20 +136,25 @@ class TestSynthesizeCommand:
 
         np_mod.random.seed(42)
         fake_audio = np_mod.random.randn(22050).astype(np_mod.float32) * 0.5
-
-        with patch(
-            "generate_golden_dataset._call_piper_tts",
-            return_value=(fake_audio.copy(), 22050),
-        ):
+        _set_mock_voice(fake_audio)
+        try:
             out1, _ = synthesize_command("hello world")
-
-        with patch(
-            "generate_golden_dataset._call_piper_tts",
-            return_value=(fake_audio.copy(), 22050),
-        ):
             out2, _ = synthesize_command("hello world")
+            assert np_mod.allclose(out1, out2, atol=1e-4)
+        finally:
+            import generate_golden_dataset as mod
 
-        assert np_mod.allclose(out1, out2, atol=1e-4)
+            mod._voice = None
+
+    @pytest.mark.voice
+    def test_synthesize_raises_without_voice(self) -> None:
+        """synthesize_command raises RuntimeError if _voice not set."""
+        import generate_golden_dataset as mod
+        from generate_golden_dataset import synthesize_command
+
+        mod._voice = None
+        with pytest.raises(RuntimeError, match="not initialized"):
+            synthesize_command("hello world")
 
 
 class TestGenerateDegradedFixtures:
@@ -265,19 +306,27 @@ class TestCLIEntryPoint:
         pytest.importorskip("soundfile")
         pytest.importorskip("audiomentations")
         import numpy as np_mod
-        from generate_golden_dataset import main
 
-        fake_audio = np_mod.random.randn(16000).astype(np_mod.float32) * 0.1
-        with patch(
-            "generate_golden_dataset._call_piper_tts",
-            return_value=(fake_audio, 22050),
-        ):
-            main(["--output-dir", str(tmp_path), "--seed", "42"])
+        fake_audio = np_mod.random.randn(22050).astype(np_mod.float32) * 0.1
+        mock_voice = _set_mock_voice(fake_audio)
 
-        # Should have 100 FLAC files + manifest.json
-        flacs = list(tmp_path.glob("*.flac"))
-        assert len(flacs) == 100
-        manifest_path = tmp_path / "manifest.json"
-        assert manifest_path.exists()
-        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
-        assert len(manifest["files"]) == 100
+        try:
+            with patch(
+                "generate_golden_dataset.load_piper_voice",
+                return_value=mock_voice,
+            ):
+                from generate_golden_dataset import main
+
+                main(["--output-dir", str(tmp_path), "--seed", "42"])
+
+            # Should have 100 FLAC files + manifest.json
+            flacs = list(tmp_path.glob("*.flac"))
+            assert len(flacs) == 100
+            manifest_path = tmp_path / "manifest.json"
+            assert manifest_path.exists()
+            manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+            assert len(manifest["files"]) == 100
+        finally:
+            import generate_golden_dataset as mod
+
+            mod._voice = None
