@@ -81,6 +81,7 @@ class TestDownloadPiperModel:
 
     def test_downloads_to_specified_dir(self, tmp_path: Path) -> None:
         """Calls download_voice and returns expected model path."""
+        pytest.importorskip("piper")
         from music_attribution.voice.piper_utils import download_piper_model
 
         model_path = tmp_path / f"{DEFAULT_PIPER_VOICE_ID}.onnx"
@@ -100,6 +101,7 @@ class TestDownloadPiperModel:
 
     def test_raises_if_download_fails(self, tmp_path: Path) -> None:
         """Raises FileNotFoundError if file not created after download."""
+        pytest.importorskip("piper")
         from music_attribution.voice.piper_utils import download_piper_model
 
         with (
@@ -113,6 +115,7 @@ class TestDownloadPiperModel:
 
     def test_creates_download_dir_if_missing(self, tmp_path: Path) -> None:
         """Creates download_dir if it doesn't exist."""
+        pytest.importorskip("piper")
         from music_attribution.voice.piper_utils import download_piper_model
 
         target = tmp_path / "new" / "dir"
@@ -174,6 +177,7 @@ class TestLoadPiperVoice:
 
     def test_loads_voice_from_model_path(self, tmp_path: Path) -> None:
         """Loads PiperVoice from an existing model path."""
+        pytest.importorskip("piper")
         from music_attribution.voice.piper_utils import load_piper_voice
 
         model_file = tmp_path / f"{DEFAULT_PIPER_VOICE_ID}.onnx"

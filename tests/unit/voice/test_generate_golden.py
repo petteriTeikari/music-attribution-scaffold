@@ -149,6 +149,7 @@ class TestSynthesizeCommand:
     @pytest.mark.voice
     def test_synthesize_raises_without_voice(self) -> None:
         """synthesize_command raises RuntimeError if _voice not set."""
+        pytest.importorskip("soxr")
         import generate_golden_dataset as mod
         from generate_golden_dataset import synthesize_command
 
