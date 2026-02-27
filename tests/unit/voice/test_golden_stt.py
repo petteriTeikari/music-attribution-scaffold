@@ -4,11 +4,17 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from typing import TYPE_CHECKING
 from unittest.mock import patch
 
 import pytest
 
 from music_attribution.voice.degradation import DegradationPreset
+from music_attribution.voice.golden_commands import GOLDEN_COMMANDS
+from tests.unit.voice.conftest import golden_fixtures_available, load_fixture
+
+if TYPE_CHECKING:
+    pass
 
 # ─── WER and keyword survival thresholds per preset ────────────────────
 
@@ -95,3 +101,106 @@ class TestFixtureHelpers:
 
         assert "files" in result
         assert len(result["files"]) == 1
+
+
+# ─── Whisper domain prompt for improved recognition ────────────────────
+
+_WHISPER_INITIAL_PROMPT = (
+    "Music attribution, confidence score, assurance level, MusicBrainz, Discogs, Imogen Heap, Frou Frou"
+)
+
+
+def _transcribe_fixture(
+    whisper_model: object,
+    command_id: str,
+    preset: str,
+) -> str:
+    """Transcribe a golden fixture and return the text.
+
+    Args:
+        whisper_model: faster-whisper WhisperModel instance.
+        command_id: Command ID (e.g., "cmd_01").
+        preset: Preset name (e.g., "clean").
+
+    Returns:
+        Transcribed text string.
+    """
+    audio, _sr = load_fixture(command_id, preset)
+    segments, _ = whisper_model.transcribe(  # type: ignore[union-attr]
+        audio,
+        vad_filter=True,
+        initial_prompt=_WHISPER_INITIAL_PROMPT,
+    )
+    return " ".join(seg.text.strip() for seg in segments)
+
+
+# ─── STT accuracy tests (require golden fixtures + faster-whisper) ─────
+
+
+@pytest.mark.slow
+@pytest.mark.voice
+@pytest.mark.skipif(
+    not golden_fixtures_available(),
+    reason="Golden fixtures not generated",
+)
+class TestSTTAccuracy:
+    """Parametrized STT accuracy tests across presets."""
+
+    @pytest.mark.parametrize("preset", list(DegradationPreset))
+    def test_stt_wer_per_preset_aggregate(
+        self,
+        whisper_model: object,
+        preset: DegradationPreset,
+    ) -> None:
+        """Mean WER across 20 commands is below threshold for each preset."""
+        from music_attribution.voice.metrics import compute_wer
+
+        wer_values = []
+        for cmd in GOLDEN_COMMANDS:
+            transcript = _transcribe_fixture(whisper_model, cmd["id"], preset.value)
+            wer = compute_wer(cmd["text"], transcript)
+            wer_values.append(wer)
+
+        mean_wer = sum(wer_values) / len(wer_values)
+        threshold = WER_THRESHOLDS[preset]
+        assert mean_wer < threshold, f"{preset.value}: mean WER {mean_wer:.3f} >= threshold {threshold}"
+
+    @pytest.mark.parametrize("preset", list(DegradationPreset))
+    def test_stt_keyword_survival_per_preset(
+        self,
+        whisper_model: object,
+        preset: DegradationPreset,
+    ) -> None:
+        """Keyword survival rate across 20 commands meets threshold."""
+        from music_attribution.voice.metrics import check_domain_keywords
+
+        total_keywords = 0
+        total_found = 0
+        for cmd in GOLDEN_COMMANDS:
+            transcript = _transcribe_fixture(whisper_model, cmd["id"], preset.value)
+            found, missed = check_domain_keywords(transcript, cmd["domain_keywords"])
+            total_found += len(found)
+            total_keywords += len(found) + len(missed)
+
+        survival_rate = total_found / total_keywords if total_keywords > 0 else 0.0
+        threshold = KEYWORD_THRESHOLDS[preset]
+        assert survival_rate >= threshold, (
+            f"{preset.value}: keyword survival {survival_rate:.3f} < threshold {threshold}"
+        )
+
+    @pytest.mark.parametrize(
+        "cmd",
+        GOLDEN_COMMANDS,
+        ids=[c["id"] for c in GOLDEN_COMMANDS],
+    )
+    def test_stt_clean_individual_commands(
+        self,
+        whisper_model: object,
+        cmd: dict,
+    ) -> None:
+        """Each individual clean command has WER < 0.20."""
+        from music_attribution.voice.metrics import compute_wer
+
+        transcript = _transcribe_fixture(whisper_model, cmd["id"], "clean")
+        wer = compute_wer(cmd["text"], transcript)
+        assert wer < 0.20, f"{cmd['id']}: WER {wer:.3f} >= 0.20 (ref={cmd['text']!r}, hyp={transcript!r})"
