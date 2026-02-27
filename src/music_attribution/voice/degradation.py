@@ -178,7 +178,7 @@ def apply_degradation(
         room.add_microphone([5.0, 3.0, 1.5])
         room.simulate()
         # Output is LONGER than input due to reverb tail — keep it
-        mic_signals = room.mic_array.signals  # type: ignore[union-attr]
+        mic_signals = room.mic_array.signals  # type: ignore[union-attr, unused-ignore]
         degraded = mic_signals[0].astype(np.float32)
 
     # Step 4: Remove DC offset
