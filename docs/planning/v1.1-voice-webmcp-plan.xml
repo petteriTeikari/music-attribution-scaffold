@@ -1,0 +1,1423 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  v1.1 Feature 3: Voice Interface, WebMCP Integration, and Agentic Testing
+  =========================================================================
+
+  SCOPE
+  ─────
+  This plan covers the full implementation of production-ready voice I/O
+  (Kokoro TTS + faster-whisper STT), audio degradation testing, WebMCP
+  tool registration (Chrome 146+), and agentic E2E testing infrastructure.
+
+  EXISTING CODEBASE CONTEXT
+  ─────────────────────────
+  Backend (Python 3.13, FastAPI):
+  - PydanticAI agent with 4 tools: explain_confidence, search_attributions,
+    suggest_correction, submit_feedback (src/music_attribution/chat/agent.py)
+  - AG-UI SSE endpoint via CopilotKit (src/music_attribution/chat/agui_endpoint.py)
+  - Pipecat voice pipeline factory with STT/TTS/LLM services
+    (src/music_attribution/voice/pipeline.py)
+  - Voice config with STTProvider/TTSProvider enums, VoiceConfig Pydantic
+    Settings (src/music_attribution/voice/config.py)
+  - Voice WebSocket server with connection limits
+    (src/music_attribution/voice/server.py)
+  - Pipecat tool bridge for 4 domain tools
+    (src/music_attribution/voice/tools.py)
+  - Protocol interfaces: STTServiceProtocol, TTSServiceProtocol
+    (src/music_attribution/voice/protocols.py)
+  - Persona, drift detection, guardrails modules exist
+
+  Frontend (Next.js 15 App Router, TypeScript, Tailwind v4):
+  - VoiceButton component: functional mic toggle with getUserMedia,
+    Jotai voiceStateAtom (idle/recording/processing/playing)
+    (frontend/src/components/voice/VoiceButton.tsx)
+  - VoiceAgentBanner: aspirational Pro tier upsell UI
+    (frontend/src/components/pro/voice-agent-banner.tsx)
+  - WebSocket voice client factory with connect/disconnect/send
+    (frontend/src/lib/voice/client.ts)
+  - Voice store atoms: voiceStateAtom, voiceConnectionAtom
+    (frontend/src/lib/stores/voice.ts)
+  - CopilotKit sidebar + useCopilotReadable/useCopilotAction hooks
+  - use-agent-actions.ts: 4 UI-manipulation actions registered
+
+  RESEARCH FINDINGS
+  ─────────────────
+  Voice Synthesis (TTS) — MVP stack:
+  - Kokoro 82M: Apache 2.0, pip install kokoro, <0.3s all lengths,
+    #1 HF TTS Arena, 82M params (CPU-friendly), 8 languages
+  - edge-tts (fallback): Free, no API key, 300+ voices, async API
+
+  Voice Recognition (STT):
+  - Phase 1 MVP: Web Speech API (browser-native, zero cost)
+  - Phase 2: faster-whisper (turbo model, MIT, 4-6x faster than Whisper)
+
+  Audio Degradation Testing:
+  - audiomentations (MIT): AddBackgroundNoise, AddGaussianNoise,
+    Mp3Compression, RoomSimulator
+  - pedalboard (Spotify, GPL 3.0): HighpassFilter, LowpassFilter
+
+  WebMCP (Chrome 146+, W3C draft):
+  - navigator.modelContext.registerTool({ name, description, inputSchema, execute })
+  - navigator.modelContext.provideContext({ tools: [...] }) — DESTRUCTIVE, clears all tools
+  - API is PURELY IMPERATIVE JavaScript — no declarative HTML attributes, no CSS pseudo-classes
+  - CORRECTION: toolname/tooldescription HTML attributes, :tool-form-active/:tool-submit-active
+    CSS pseudo-classes, and SubmitEvent.agentInvoked do NOT exist in the W3C spec
+  - Use registerTool() (additive) not provideContext() (destructive) for multi-source registrations
+
+  DESIGN RULES
+  ────────────
+  - Voice is Pro tier — Free tier shows aspirational UI only
+  - Backend TTS runs as a separate service (not blocking the API)
+  - encoding='utf-8', pathlib.Path(), datetime.now(timezone.utc)
+  - AST-only for Python code analysis
+  - Respect prefers-reduced-motion in all animations
+  - Zero hardcoded hex in .tsx — use CSS custom property tokens
+-->
+<plan version="2.0" project="music-attribution-scaffold">
+  <metadata>
+    <title>v1.1 Feature 3: Voice Interface, WebMCP Integration, and Agentic Testing</title>
+    <branch>feat/v1.1-voice-webmcp</branch>
+    <estimated_tasks>18</estimated_tasks>
+    <mode>creation</mode>
+    <!-- NOTE: This plan requires `creation` mode. The executing agent must acknowledge mode override. -->
+  </metadata>
+
+  <!-- ═══════════════════════════════════════════════════════════════════
+       PHASE 1: Backend Voice Infrastructure (Tasks 1.1–1.5)
+       ═══════════════════════════════════════════════════════════════════ -->
+
+  <task id="1.1" status="PENDING">
+    <title>Kokoro TTS integration service with edge-tts fallback</title>
+    <priority>P0</priority>
+    <phase>1</phase>
+    <files>
+      <create>src/music_attribution/voice/tts_kokoro.py</create>
+      <modify>src/music_attribution/voice/config.py</modify>
+      <modify>src/music_attribution/voice/protocols.py</modify>
+      <modify>pyproject.toml</modify>
+    </files>
+    <tdd_spec>
+      <test_file>tests/unit/test_tts_kokoro.py</test_file>
+      <test_cases>
+        <case>test_kokoro_service_satisfies_tts_protocol — assert isinstance(KokoroTTSService(), TTSServiceProtocol)</case>
+        <case>test_kokoro_synthesize_returns_bytes — mock kokoro.KPipeline, call synthesize("hello"), assert isinstance(result, bytes) and len(result) > 0</case>
+        <case>test_kokoro_synthesize_returns_wav_header — check first 4 bytes are b"RIFF" (WAV format)</case>
+        <case>test_kokoro_synthesize_respects_voice_config — pass voice="af_bella", verify KPipeline called with correct voice parameter</case>
+        <case>test_kokoro_synthesize_respects_sample_rate — default 24000 Hz, verify WAV header sample rate</case>
+        <case>test_kokoro_close_is_idempotent — call close() twice, no exception</case>
+        <case>test_kokoro_synthesize_empty_text_raises_value_error — synthesize("") raises ValueError</case>
+        <case>test_kokoro_synthesize_long_text_succeeds — synthesize 500-char text, returns bytes</case>
+        <case>test_edge_tts_fallback_service_satisfies_tts_protocol — assert isinstance(EdgeTTSFallback(), TTSServiceProtocol)</case>
+        <case>test_edge_tts_fallback_synthesize_returns_bytes — mock edge_tts.Communicate, assert bytes returned</case>
+        <case>test_edge_tts_fallback_voice_selection — pass voice="en-US-AriaNeural", verify Communicate called correctly</case>
+        <case>test_create_kokoro_tts_service_returns_kokoro_when_available — factory function returns KokoroTTSService when kokoro importable</case>
+        <case>test_create_kokoro_tts_service_falls_back_to_edge_tts — when kokoro import fails, returns EdgeTTSFallback</case>
+        <case>test_create_kokoro_tts_service_raises_when_neither_available — ImportError when both kokoro and edge_tts missing</case>
+      </test_cases>
+      <description>
+        Create src/music_attribution/voice/tts_kokoro.py implementing two TTS services:
+
+        1. KokoroTTSService:
+           - __init__(voice: str = "af_bella", sample_rate: int = 24000, lang: str = "en-us")
+           - async synthesize(text: str) -> bytes: Use kokoro.KPipeline to generate audio,
+             convert numpy array to WAV bytes using io.BytesIO + wave module.
+             Raise ValueError for empty text.
+           - async close() -> None: Release any held resources (idempotent).
+           - Lazy-load the KPipeline on first synthesize() call (model download on first use).
+
+        2. EdgeTTSFallback:
+           - __init__(voice: str = "en-US-AriaNeural")
+           - async synthesize(text: str) -> bytes: Use edge_tts.Communicate to stream
+             audio chunks, concatenate into single bytes object. Raise ValueError for empty text.
+           - async close() -> None: No-op (edge-tts has no persistent state).
+
+        3. Factory function create_kokoro_tts_service(config: VoiceConfig) -> TTSServiceProtocol:
+           - Try importing kokoro; if available and config.tts_provider == KOKORO, return KokoroTTSService.
+           - Fall back to EdgeTTSFallback if kokoro not installed.
+           - Raise ImportError if neither package is available.
+           NOTE: Named create_kokoro_tts_service (not create_tts_service) to avoid
+           collision with the existing create_tts_service(config: VoiceConfig) factory
+           already defined in src/music_attribution/voice/pipeline.py.
+
+        Update config.py: Add KOKORO_VOICE (default "af_bella"), KOKORO_SAMPLE_RATE (default 24000),
+        EDGE_TTS_VOICE (default "en-US-AriaNeural") fields to VoiceConfig.
+
+        Update protocols.py: No changes needed — TTSServiceProtocol already covers synthesize/close.
+
+        Update pyproject.toml: Add kokoro and edge-tts to [project.optional-dependencies.voice].
+      </description>
+    </tdd_spec>
+    <implementation>
+      The KokoroTTSService wraps kokoro's KPipeline with lazy initialization to avoid
+      downloading the 82M model at import time. Audio is generated as a numpy float32
+      array (kokoro output), then converted to 16-bit PCM WAV using the standard library
+      wave module. The EdgeTTSFallback uses Microsoft's free edge-tts which requires no
+      API key and provides 300+ voices. The factory function create_kokoro_tts_service()
+      implements the same pattern as the existing create_stt_service() in pipeline.py —
+      try the preferred provider, fall back gracefully. The name avoids collision with the
+      existing create_tts_service() in pipeline.py.
+    </implementation>
+  </task>
+
+  <task id="1.2" status="PENDING">
+    <title>TTS API endpoint — POST /api/v1/voice/synthesize</title>
+    <priority>P0</priority>
+    <phase>1</phase>
+    <files>
+      <create>src/music_attribution/voice/routes_tts.py</create>
+      <modify>src/music_attribution/voice/server.py</modify>
+    </files>
+    <tdd_spec>
+      <test_file>tests/unit/test_routes_tts.py</test_file>
+      <test_cases>
+        <case>test_synthesize_endpoint_returns_audio_wav — POST with {"text": "hello"}, assert response.headers["content-type"] == "audio/wav" and status 200</case>
+        <case>test_synthesize_endpoint_returns_streaming_response — verify response is StreamingResponse (chunked transfer)</case>
+        <case>test_synthesize_endpoint_empty_text_returns_422 — POST with {"text": ""}, assert 422 validation error</case>
+        <case>test_synthesize_endpoint_missing_text_returns_422 — POST with {}, assert 422</case>
+        <case>test_synthesize_endpoint_text_too_long_returns_422 — POST with 10001-char text, assert 422 (max 10000 chars)</case>
+        <case>test_synthesize_endpoint_accepts_voice_param — POST with {"text": "hi", "voice": "af_sky"}, assert 200</case>
+        <case>test_synthesize_endpoint_requires_pro_tier — mock tier check, assert 403 when user is Free tier</case>
+        <case>test_synthesize_endpoint_rate_limited — mock rate limiter, assert 429 after exceeding limit</case>
+        <case>test_synthesize_endpoint_tts_failure_returns_500 — mock TTS service to raise, assert 500 with error body</case>
+        <case>test_synthesize_router_mounts_on_voice_prefix — verify route is /api/v1/voice/synthesize</case>
+      </test_cases>
+      <description>
+        Create src/music_attribution/voice/routes_tts.py with a FastAPI router providing:
+
+        POST /api/v1/voice/synthesize
+          Request body (JSON):
+            - text: str (1–10000 chars, required)
+            - voice: str (optional, default from config)
+            - format: Literal["wav", "pcm"] (optional, default "wav")
+
+          Response: StreamingResponse with media_type="audio/wav"
+
+          Middleware/guards:
+            - Pro tier check: read X-User-Tier header or app.state.tier_checker callable.
+              Return 403 {"detail": "Voice synthesis requires Pro tier"} for Free users.
+            - Rate limiting: max 60 requests/minute per user (read X-User-ID header).
+              Return 429 {"detail": "Rate limit exceeded"} when over.
+            - Text length validation: max 10000 chars (Pydantic Field with max_length).
+
+          Implementation:
+            - Lazy-init a module-level TTS service via create_kokoro_tts_service(VoiceConfig()).
+            - Call await tts_service.synthesize(request.text) to get WAV bytes.
+            - Return as StreamingResponse(io.BytesIO(wav_bytes), media_type="audio/wav").
+            - On TTS failure, return 500 {"detail": "Voice synthesis failed"}.
+
+        Modify server.py: import and include the TTS router in create_voice_router().
+      </description>
+    </tdd_spec>
+    <implementation>
+      Use FastAPI's dependency injection for tier checking and rate limiting. The TTS
+      service is a lazy singleton (same pattern as _get_agent in agui_endpoint.py) to
+      avoid loading the 82M Kokoro model on every request. The StreamingResponse allows
+      the frontend to start playback before the full audio is generated for long texts.
+      Rate limiting uses a simple in-memory token bucket (production would use Redis).
+    </implementation>
+  </task>
+
+  <task id="1.3" status="PENDING">
+    <title>faster-whisper STT service with VAD</title>
+    <priority>P0</priority>
+    <phase>1</phase>
+    <files>
+      <create>src/music_attribution/voice/stt_whisper.py</create>
+      <modify>src/music_attribution/voice/config.py</modify>
+      <modify>pyproject.toml</modify>
+    </files>
+    <tdd_spec>
+      <test_file>tests/unit/test_stt_whisper.py</test_file>
+      <test_cases>
+        <case>test_whisper_service_satisfies_stt_protocol — assert isinstance(FasterWhisperSTT(), STTServiceProtocol)</case>
+        <case>test_whisper_transcribe_returns_string — mock WhisperModel.transcribe, return segments with text, assert isinstance(result, str) (protocol compliance: transcribe() returns plain str)</case>
+        <case>test_whisper_transcribe_detailed_returns_result_with_confidence — call transcribe_detailed(), assert isinstance(result, TranscriptionResult) and 0.0 &lt;= result.confidence &lt;= 1.0</case>
+        <case>test_whisper_transcribe_returns_language — assert transcribe_detailed().language == "en"</case>
+        <case>test_whisper_transcribe_empty_audio_returns_empty — 0-length bytes returns empty transcript</case>
+        <case>test_whisper_transcribe_short_audio_returns_transcript — 1-second audio chunk transcribes successfully</case>
+        <case>test_whisper_model_loaded_lazily — model not loaded until first transcribe() call</case>
+        <case>test_whisper_model_size_configurable — pass model_size="tiny", verify WhisperModel instantiated with "tiny"</case>
+        <case>test_whisper_vad_filter_enabled_by_default — verify transcribe called with vad_filter=True</case>
+        <case>test_whisper_vad_filter_can_be_disabled — pass vad_filter=False, verify transcribe called without VAD</case>
+        <case>test_whisper_close_releases_model — after close(), internal _model is None</case>
+        <case>test_whisper_close_is_idempotent — close() twice without error</case>
+        <case>test_transcription_result_dataclass — TranscriptionResult has text, confidence, language, segments fields</case>
+        <case>test_whisper_handles_transcription_error_gracefully — mock transcribe to raise, returns TranscriptionResult with empty text and 0.0 confidence</case>
+      </test_cases>
+      <description>
+        Create src/music_attribution/voice/stt_whisper.py implementing:
+
+        1. TranscriptionResult dataclass:
+           - text: str (full transcript)
+           - confidence: float (average log probability, normalized to 0–1)
+           - language: str (detected language code)
+           - segments: list[TranscriptionSegment] (individual segments with start/end/text)
+
+        2. TranscriptionSegment dataclass:
+           - start: float (seconds)
+           - end: float (seconds)
+           - text: str
+           - confidence: float
+
+        3. FasterWhisperSTT class:
+           - __init__(model_size: str = "turbo", device: str = "cpu",
+                      compute_type: str = "int8", vad_filter: bool = True)
+           - async transcribe(audio: bytes) -> str:
+             * Protocol-compliant method: returns plain transcript text (str) to
+               satisfy STTServiceProtocol, which specifies `async def transcribe(self, audio: bytes) -> str`.
+             * Internally delegates to _run_transcription() and returns result.text.
+             * Tests for transcribe() MUST assert string return type (isinstance(result, str)).
+           - async transcribe_detailed(audio: bytes) -> TranscriptionResult:
+             * Extended method for callers that need confidence, segments, language,
+               and duration. Returns full TranscriptionResult dataclass.
+             * Lazy-load faster_whisper.WhisperModel on first call.
+             * Convert raw PCM bytes to numpy float32 array (16kHz, mono).
+             * Call model.transcribe() with vad_filter, beam_size=5.
+             * Aggregate segments into TranscriptionResult.
+             * Normalize avg_log_prob to 0–1 confidence via sigmoid.
+             * Tests for confidence/segments MUST use transcribe_detailed().
+           - async close() -> None: Set _model = None, release memory.
+           NOTE: The two-method design preserves STTServiceProtocol compliance
+           (transcribe -> str) while exposing richer data via transcribe_detailed().
+
+        Update config.py: Add FASTER_WHISPER_MODEL (default "turbo"),
+        FASTER_WHISPER_DEVICE (default "cpu"), FASTER_WHISPER_COMPUTE_TYPE
+        (default "int8"), FASTER_WHISPER_VAD (default True) to VoiceConfig.
+
+        Update pyproject.toml: Add faster-whisper to [project.optional-dependencies.voice].
+      </description>
+    </tdd_spec>
+    <implementation>
+      faster-whisper uses CTranslate2 for 4-6x speedup over OpenAI Whisper. The "turbo"
+      model provides the best latency for command-length utterances (under 10 seconds). VAD filtering
+      is enabled by default to skip silence and reduce hallucination on quiet audio. The
+      lazy-load pattern avoids downloading the model at import time. The TranscriptionResult
+      dataclass provides structured output beyond the simple string required by the protocol,
+      enabling confidence-based retry logic in the command router.
+    </implementation>
+  </task>
+
+  <task id="1.4" status="PENDING">
+    <title>STT API endpoint — POST /api/v1/voice/transcribe</title>
+    <priority>P0</priority>
+    <phase>1</phase>
+    <files>
+      <create>src/music_attribution/voice/routes_stt.py</create>
+      <modify>src/music_attribution/voice/server.py</modify>
+    </files>
+    <tdd_spec>
+      <test_file>tests/unit/test_routes_stt.py</test_file>
+      <test_cases>
+        <case>test_transcribe_endpoint_returns_json — POST audio/wav file, assert response.json() has "text" and "confidence" keys</case>
+        <case>test_transcribe_endpoint_returns_200 — POST valid audio, assert status 200</case>
+        <case>test_transcribe_endpoint_empty_audio_returns_422 — POST empty file, assert 422</case>
+        <case>test_transcribe_endpoint_too_large_returns_413 — POST >10MB file, assert 413 payload too large</case>
+        <case>test_transcribe_endpoint_invalid_content_type_returns_415 — POST with text/plain, assert 415</case>
+        <case>test_transcribe_endpoint_requires_pro_tier — mock tier check, assert 403 for Free users</case>
+        <case>test_transcribe_endpoint_rate_limited — mock rate limiter, assert 429 after limit</case>
+        <case>test_transcribe_endpoint_stt_failure_returns_500 — mock STT to raise, assert 500</case>
+        <case>test_transcribe_endpoint_returns_language — assert response.json()["language"] is string</case>
+        <case>test_transcribe_endpoint_returns_segments — assert response.json()["segments"] is list</case>
+        <case>test_transcribe_router_mounts_on_voice_prefix — verify route is /api/v1/voice/transcribe</case>
+      </test_cases>
+      <description>
+        Create src/music_attribution/voice/routes_stt.py with a FastAPI router providing:
+
+        POST /api/v1/voice/transcribe
+          Request: multipart/form-data with file field "audio" (audio/wav or audio/webm)
+          Max upload size: 10MB (configurable)
+
+          Response (JSON):
+            {
+              "text": "search imogen heap",
+              "confidence": 0.94,
+              "language": "en",
+              "segments": [{"start": 0.0, "end": 1.2, "text": "search imogen heap", "confidence": 0.94}]
+            }
+
+          Middleware/guards:
+            - Pro tier check (same as TTS endpoint).
+            - Rate limiting: max 30 requests/minute per user.
+            - File size validation: max 10MB.
+            - Content type validation: audio/wav, audio/webm, audio/ogg, application/octet-stream.
+
+          Implementation:
+            - Lazy-init FasterWhisperSTT via module-level singleton.
+            - Read uploaded file bytes.
+            - Call await stt_service.transcribe_detailed(audio_bytes).
+            - Return TranscriptionResult serialized as JSON.
+            - On STT failure, return 500 {"detail": "Transcription failed"}.
+
+        Modify server.py: include the STT router in create_voice_router().
+      </description>
+    </tdd_spec>
+    <implementation>
+      The endpoint accepts multipart file upload (not JSON) because audio data is binary.
+      Content type validation prevents processing non-audio files. The 10MB limit prevents
+      abuse while allowing up to ~5 minutes of audio at typical bitrates. Response includes
+      the full TranscriptionResult with segments for frontend display of word-level timing.
+    </implementation>
+  </task>
+
+  <task id="1.5" status="PENDING">
+    <title>Voice command router — intent parsing and tool dispatch</title>
+    <priority>P0</priority>
+    <phase>1</phase>
+    <files>
+      <create>src/music_attribution/voice/command_router.py</create>
+    </files>
+    <tdd_spec>
+      <test_file>tests/unit/test_voice_command_router.py</test_file>
+      <test_cases>
+        <case>test_parse_search_command — "search Imogen Heap" -> VoiceCommand(intent="search", entities={"query": "Imogen Heap"})</case>
+        <case>test_parse_explain_command — "explain confidence for abc-123" -> VoiceCommand(intent="explain_confidence", entities={"work_id": "abc-123"})</case>
+        <case>test_parse_approve_command — "approve all" -> VoiceCommand(intent="approve_all", entities={})</case>
+        <case>test_parse_show_command — "show confidence" -> VoiceCommand(intent="show_confidence", entities={})</case>
+        <case>test_parse_feedback_command — "rate this 4 out of 5" -> VoiceCommand(intent="submit_feedback", entities={"assessment": 0.8})</case>
+        <case>test_parse_navigate_command — "go to Hide and Seek" -> VoiceCommand(intent="navigate", entities={"query": "Hide and Seek"})</case>
+        <case>test_parse_unknown_command — "what is the weather" -> VoiceCommand(intent="general_query", entities={"text": "what is the weather"})</case>
+        <case>test_parse_empty_transcript — "" -> VoiceCommand(intent="empty", entities={})</case>
+        <case>test_parse_low_confidence_transcript — confidence below threshold returns VoiceCommand with low_confidence=True</case>
+        <case>test_dispatch_search_calls_agent — dispatch(search_command) calls agent.run with correct prompt</case>
+        <case>test_dispatch_explain_calls_agent — dispatch(explain_command) includes work_id in prompt</case>
+        <case>test_dispatch_general_query_passes_through — dispatch(general_query) sends raw text to agent</case>
+        <case>test_command_dataclass_fields — VoiceCommand has intent, entities, raw_text, confidence, low_confidence fields</case>
+        <case>test_confidence_threshold_configurable — VoiceCommandRouter(min_confidence=0.5) uses custom threshold</case>
+        <case>test_router_logs_parsed_commands — verify logger.info called with intent and entities</case>
+      </test_cases>
+      <description>
+        Create src/music_attribution/voice/command_router.py implementing:
+
+        1. VoiceCommand dataclass:
+           - intent: str (one of: "search", "explain_confidence", "approve_all",
+             "show_confidence", "submit_feedback", "navigate", "correct",
+             "general_query", "empty")
+           - entities: dict[str, Any] (extracted parameters)
+           - raw_text: str (original transcript)
+           - confidence: float (STT confidence)
+           - low_confidence: bool (below threshold flag)
+
+        2. VoiceCommandRouter class:
+           - __init__(min_confidence: float = 0.6)
+           - parse(text: str, confidence: float = 1.0) -> VoiceCommand:
+             * Pattern-match transcript against known command patterns using
+               keyword prefix detection (NOT regex on Python source — this is
+               NLP intent classification on user speech text, which is allowed).
+             * Commands: "search {query}", "explain {work_id}", "approve all",
+               "show confidence", "rate {N} out of {M}", "go to {query}",
+               "correct {field} to {value}".
+             * Anything not matching a known pattern -> intent="general_query".
+             * Empty text -> intent="empty".
+             * Below min_confidence -> low_confidence=True.
+           - async dispatch(command: VoiceCommand, agent: Agent) -> str:
+             * Convert VoiceCommand into an agent prompt string.
+             * For "search": "Search for attributions matching: {query}"
+             * For "explain_confidence": "Explain the confidence for work ID {work_id}"
+             * For "general_query": pass raw_text directly.
+             * Call agent.run(prompt) and return result text.
+
+        Note: The keyword matching here operates on user speech transcripts (natural
+        language), NOT Python source code. This is NLP intent classification, not code
+        analysis, so string matching is appropriate and does not violate the AST-only rule.
+      </description>
+    </tdd_spec>
+    <implementation>
+      The command router bridges the gap between raw STT transcript and the PydanticAI
+      agent's tool-calling interface. Simple keyword-prefix matching handles the MVP
+      command vocabulary. For v1.2, this could be replaced with an LLM-based intent
+      classifier for more flexible natural language understanding. The dispatch method
+      constructs prompts that guide the agent toward the appropriate tool call without
+      requiring the voice user to know exact tool names.
+    </implementation>
+  </task>
+
+  <!-- ═══════════════════════════════════════════════════════════════════
+       PHASE 2: Audio Degradation Testing Module (Tasks 2.1–2.3)
+       ═══════════════════════════════════════════════════════════════════ -->
+
+  <task id="2.1" status="PENDING">
+    <title>Audio degradation pipeline with audiomentations</title>
+    <priority>P1</priority>
+    <phase>2</phase>
+    <files>
+      <create>src/music_attribution/voice/degradation.py</create>
+      <modify>pyproject.toml</modify>
+    </files>
+    <tdd_spec>
+      <test_file>tests/unit/test_audio_degradation.py</test_file>
+      <test_cases>
+        <case>test_degradation_pipeline_returns_numpy_array — apply pipeline to clean audio, assert output is ndarray with same length</case>
+        <case>test_clean_preset_is_identity — "clean" preset returns audio unchanged (or within epsilon)</case>
+        <case>test_office_preset_adds_noise — "office" preset output differs from input by at least 1% RMS</case>
+        <case>test_noisy_preset_adds_more_noise — "noisy" preset RMS delta > "office" preset RMS delta</case>
+        <case>test_extreme_preset_most_degraded — "extreme" preset has highest RMS delta</case>
+        <case>test_background_music_augmentation — BackgroundMusicDegradation at SNR=10dB changes signal</case>
+        <case>test_codec_compression_augmentation — Mp3Compression at 64kbps reduces audio quality</case>
+        <case>test_room_reverb_augmentation — RoomSimulator changes signal characteristics</case>
+        <case>test_gaussian_noise_augmentation — AddGaussianNoise at 0.01 amplitude adds noise</case>
+        <case>test_pipeline_preserves_sample_rate — output sample rate matches input (16000 Hz)</case>
+        <case>test_pipeline_preserves_duration — output duration within 1% of input duration</case>
+        <case>test_preset_names_are_valid — DegradationPreset enum has clean, office, noisy, extreme</case>
+        <case>test_create_pipeline_from_preset — create_degradation_pipeline("office") returns Compose object</case>
+        <case>test_custom_pipeline_from_transforms — create_degradation_pipeline(transforms=[...]) accepts custom list</case>
+      </test_cases>
+      <description>
+        Create src/music_attribution/voice/degradation.py implementing:
+
+        1. DegradationPreset enum: CLEAN, OFFICE, NOISY, EXTREME
+
+        2. create_degradation_pipeline(preset: DegradationPreset | str = "clean",
+                                        transforms: list | None = None,
+                                        sample_rate: int = 16000) -> Compose:
+           Returns an audiomentations.Compose pipeline with transforms for the given preset.
+
+           Presets:
+           - CLEAN: OneOf([]) — no transforms, identity pipeline
+           - OFFICE: Compose([
+               AddGaussianSNR(min_snr_db=15, max_snr_db=25, p=0.5),
+               RoomSimulator(min_size_x=3, max_size_x=6, p=0.3),
+             ])
+             NOTE: Uses AddGaussianSNR instead of AddBackgroundNoise because
+             AddBackgroundNoise requires actual audio files at sounds_path. The OFFICE
+             preset has no fixture audio, so AddGaussianSNR provides equivalent SNR-based
+             noise without needing external files.
+           - NOISY: Compose([
+               AddGaussianNoise(min_amplitude=0.005, max_amplitude=0.02, p=1.0),
+               AddGaussianSNR(min_snr_db=5, max_snr_db=15, p=0.8),
+               Mp3Compression(min_bitrate=64, max_bitrate=128, p=0.5),
+               RoomSimulator(min_size_x=5, max_size_x=12, p=0.5),
+             ])
+             NOTE: Uses AddGaussianSNR instead of AddBackgroundNoise (same reason as OFFICE).
+           - EXTREME: Compose([
+               AddGaussianNoise(min_amplitude=0.02, max_amplitude=0.05, p=1.0),
+               AddGaussianSNR(min_snr_db=0, max_snr_db=10, p=1.0),
+               Mp3Compression(min_bitrate=32, max_bitrate=64, p=0.8),
+               RoomSimulator(min_size_x=8, max_size_x=20, p=0.7),
+             ])
+             NOTE: Uses AddGaussianSNR instead of AddBackgroundNoise (same reason as OFFICE).
+
+           IMPORTANT: AddBackgroundNoise requires actual audio files at sounds_path.
+           The task 2.3 fixture generator MUST generate background noise WAV samples
+           before any preset can use AddBackgroundNoise. Until those fixtures are
+           available, use AddGaussianSNR for SNR-based noise simulation instead.
+           If sounds_path fixture audio is available (from task 2.3), AddBackgroundNoise
+           can be substituted in for more realistic background noise simulation.
+
+        3. apply_degradation(audio: ndarray, pipeline: Compose,
+                             sample_rate: int = 16000) -> ndarray:
+           Convenience wrapper: pipeline(samples=audio, sample_rate=sample_rate).
+
+        Update pyproject.toml: Add audiomentations to [project.optional-dependencies.voice-test].
+      </description>
+    </tdd_spec>
+    <implementation>
+      audiomentations is a mature (MIT-licensed) audio augmentation library modeled after
+      albumentations for images. It operates on numpy arrays and supports all the
+      degradation types we need. The preset system provides reproducible test conditions:
+      "office" simulates a quiet office, "noisy" simulates a coffee shop or public space,
+      "extreme" simulates worst-case conditions (loud music, poor codec, reverberant room).
+      Tests use synthetic noise (no external audio files needed) for reproducibility.
+    </implementation>
+  </task>
+
+  <task id="2.2" status="PENDING">
+    <title>Degradation test matrix — parameterized STT accuracy tests</title>
+    <priority>P1</priority>
+    <phase>2</phase>
+    <files>
+      <create>tests/integration/test_voice_degradation_matrix.py</create>
+    </files>
+    <tdd_spec>
+      <test_file>tests/integration/test_voice_degradation_matrix.py</test_file>
+      <test_cases>
+        <case>test_clean_transcription_accuracy_above_95 — clean audio through STT achieves WER &lt; 0.05</case>
+        <case>test_office_transcription_accuracy_above_85 — office-degraded audio achieves WER &lt; 0.15</case>
+        <case>test_noisy_transcription_accuracy_above_70 — noisy-degraded audio achieves WER &lt; 0.30</case>
+        <case>test_extreme_transcription_accuracy_above_50 — extreme-degraded audio achieves WER &lt; 0.50</case>
+        <case>test_domain_keywords_preserved_clean — "confidence", "attribution", "assurance" survive clean pipeline</case>
+        <case>test_domain_keywords_preserved_office — domain keywords survive office degradation at 80%+ rate</case>
+        <case>test_command_intent_preserved_clean — command "search Imogen Heap" parsed to correct intent after clean TTS-STT round-trip</case>
+        <case>test_command_intent_preserved_office — command intent correct after office degradation round-trip</case>
+        <case>test_command_intent_preserved_noisy — command intent correct after noisy degradation at 60%+ rate</case>
+        <case>test_parametrized_commands_across_presets — pytest.mark.parametrize over 6 commands x 4 presets, log WER for each</case>
+      </test_cases>
+      <description>
+        Create tests/integration/test_voice_degradation_matrix.py implementing a
+        comprehensive test matrix that validates STT accuracy under degraded conditions.
+
+        Test flow per case:
+        1. Generate reference audio from text using KokoroTTSService (or fixture WAV).
+        2. Apply degradation pipeline (clean/office/noisy/extreme).
+        3. Transcribe degraded audio via FasterWhisperSTT.
+        4. Compute WER between reference text and transcript.
+        5. Parse transcript through VoiceCommandRouter.
+        6. Assert WER below threshold and intent matches expected.
+
+        Test commands corpus (6 commands):
+        - "search Imogen Heap" (search intent)
+        - "explain confidence for record alpha" (explain_confidence intent)
+        - "approve all pending attributions" (approve_all intent)
+        - "show confidence scores" (show_confidence intent)
+        - "rate this four out of five" (submit_feedback intent)
+        - "go to Hide and Seek" (navigate intent)
+
+        Use pytest.mark.parametrize for the full matrix (6 commands x 4 presets = 24 cases).
+        Mark all tests with @pytest.mark.integration and @pytest.mark.slow.
+        Skip if faster-whisper or audiomentations not installed (pytest.importorskip).
+
+        WER computation: reuse compute_wer() from scripts/benchmark_voice.py or
+        inline a minimal Levenshtein-based WER function.
+      </description>
+    </tdd_spec>
+    <implementation>
+      This test matrix is the quality gate for voice reliability. Each preset has a
+      defined WER threshold: clean (under 5%), office (under 15%), noisy (under 30%), extreme (under 50%).
+      The thresholds are intentionally generous for the initial implementation and can
+      be tightened as the STT model and command parser improve. Integration tests are
+      marked @slow to exclude from quick test runs. The parametrized approach generates
+      a clear matrix report showing exactly which command/degradation combinations fail.
+    </implementation>
+  </task>
+
+  <task id="2.3" status="PENDING">
+    <title>Audio test fixtures — TTS-generated sample commands</title>
+    <priority>P1</priority>
+    <phase>2</phase>
+    <files>
+      <create>tests/fixtures/audio/README.md</create>
+      <create>scripts/generate_voice_fixtures.py</create>
+    </files>
+    <tdd_spec>
+      <test_file>tests/unit/test_generate_voice_fixtures.py</test_file>
+      <test_cases>
+        <case>test_fixture_generator_creates_wav_files — run generator, assert .wav files created in output dir</case>
+        <case>test_fixture_generator_creates_manifest — assert manifest.json created with command metadata</case>
+        <case>test_fixture_wav_is_valid — read generated WAV, assert valid header and non-zero duration</case>
+        <case>test_fixture_wav_sample_rate_16k — generated WAVs are 16kHz (STT expected input)</case>
+        <case>test_fixture_manifest_has_required_fields — each entry has id, text, category, wav_path, duration_ms</case>
+        <case>test_fixture_generator_idempotent — running twice produces same manifest (deterministic voices)</case>
+        <case>test_fixture_covers_all_command_categories — manifest includes search, explain, approve, show, rate, navigate commands</case>
+      </test_cases>
+      <description>
+        Create scripts/generate_voice_fixtures.py that generates WAV audio fixtures
+        for the voice test suite using KokoroTTSService (or edge-tts fallback).
+
+        The script:
+        1. Defines FIXTURE_COMMANDS list (same 6 commands as task 2.2 + 4 more for variety).
+        2. For each command, synthesizes audio via create_kokoro_tts_service().
+        3. Resamples to 16kHz mono PCM (STT input format).
+        4. Saves to tests/fixtures/audio/{command_id}.wav.
+        5. Writes tests/fixtures/audio/manifest.json with metadata:
+           [{id, text, category, wav_path, duration_ms, sample_rate, voice}, ...]
+
+        The fixtures are gitignored (WAV files are large) but the manifest.json and
+        README.md are committed. CI generates fixtures on-the-fly before running
+        integration tests.
+
+        tests/fixtures/audio/README.md documents the fixture generation process and
+        explains that WAV files are generated, not committed.
+
+        Use pathlib.Path throughout. Use encoding='utf-8' for JSON writes.
+      </description>
+    </tdd_spec>
+    <implementation>
+      Pre-generated fixtures ensure deterministic test inputs and avoid TTS latency
+      during test execution. The manifest.json provides metadata for test parametrization
+      without reading the WAV files. The gitignore pattern keeps binary files out of the
+      repo while the generation script ensures reproducibility. CI runs the script as a
+      pre-test step. The 10 commands cover all intent categories plus edge cases like
+      multi-word artist names and numeric ratings.
+    </implementation>
+  </task>
+
+  <!-- ═══════════════════════════════════════════════════════════════════
+       PHASE 3: Frontend Voice Integration (Tasks 3.1–3.4)
+       ═══════════════════════════════════════════════════════════════════ -->
+
+  <task id="3.1" status="PENDING">
+    <title>Web Speech API STT hook — useVoiceRecognition</title>
+    <priority>P0</priority>
+    <phase>3</phase>
+    <files>
+      <create>frontend/src/hooks/use-voice-recognition.ts</create>
+    </files>
+    <tdd_spec>
+      <test_file>frontend/src/__tests__/hooks/use-voice-recognition.test.ts</test_file>
+      <test_cases>
+        <case>test_hook_returns_expected_interface — result has start, stop, isListening, transcript, interimTranscript, error, isSupported</case>
+        <case>test_hook_detects_speech_recognition_support — when window.SpeechRecognition exists, isSupported is true</case>
+        <case>test_hook_detects_no_support — when SpeechRecognition undefined, isSupported is false</case>
+        <case>test_start_sets_is_listening_true — call start(), assert isListening becomes true</case>
+        <case>test_stop_sets_is_listening_false — call stop(), assert isListening becomes false</case>
+        <case>test_transcript_updates_on_result — simulate SpeechRecognition result event, assert transcript updated</case>
+        <case>test_interim_results_update_separately — simulate interim result, assert interimTranscript updated but transcript unchanged</case>
+        <case>test_error_state_on_recognition_error — simulate error event, assert error is set</case>
+        <case>test_auto_stop_on_silence — after silence_timeout_ms of no results, isListening becomes false</case>
+        <case>test_cleanup_on_unmount — unmount component, assert recognition.stop() called</case>
+        <case>test_respects_prefers_reduced_motion — when prefers-reduced-motion, no visual feedback animations (hook returns reducedMotion flag)</case>
+        <case>test_language_configurable — pass lang="en-US", verify recognition.lang set correctly</case>
+        <case>test_continuous_mode_default — recognition.continuous is true by default</case>
+      </test_cases>
+      <description>
+        Create frontend/src/hooks/use-voice-recognition.ts implementing a React hook
+        that wraps the Web Speech API SpeechRecognition interface.
+
+        Hook signature:
+          useVoiceRecognition(options?: {
+            lang?: string;           // default "en-US"
+            continuous?: boolean;    // default true
+            interimResults?: boolean; // default true
+            silenceTimeoutMs?: number; // default 3000, auto-stop after silence
+          }) => {
+            start: () => void;
+            stop: () => void;
+            isListening: boolean;
+            transcript: string;        // final recognized text
+            interimTranscript: string;  // in-progress text
+            error: string | null;
+            isSupported: boolean;       // browser supports SpeechRecognition
+            reducedMotion: boolean;     // user prefers reduced motion
+          }
+
+        Implementation:
+        - Feature-detect window.SpeechRecognition || window.webkitSpeechRecognition.
+        - Create SpeechRecognition instance on mount (if supported).
+        - Handle onresult: distinguish isFinal from interim results.
+        - Handle onerror: map error codes to user-friendly messages.
+        - Handle onend: reset isListening.
+        - Silence detection: setTimeout on each result, clear on next result,
+          call stop() if no result within silenceTimeoutMs.
+        - Cleanup: stop recognition on unmount via useEffect cleanup.
+        - Check prefers-reduced-motion via window.matchMedia.
+
+        Note: Web Speech API is browser-native (Chrome, Edge, Safari) — no npm packages.
+        For Firefox/unsupported browsers, isSupported returns false and the Pro tier
+        server-side STT (task 1.4) would be used instead.
+      </description>
+    </tdd_spec>
+    <implementation>
+      The Web Speech API provides zero-cost, zero-latency STT for Phase 1 MVP. It runs
+      entirely in the browser with no server round-trip, making it ideal for command
+      recognition. The hook abstracts away vendor prefixes (webkit) and provides a clean
+      React-friendly interface. Silence detection auto-stops recording to prevent
+      indefinite listening. The interimTranscript provides real-time feedback while the
+      user is still speaking.
+    </implementation>
+  </task>
+
+  <task id="3.2" status="PENDING">
+    <title>Upgrade VoiceButton — from aspirational to functional (Pro tier)</title>
+    <priority>P0</priority>
+    <phase>3</phase>
+    <files>
+      <modify>frontend/src/components/voice/VoiceButton.tsx</modify>
+      <modify>frontend/src/lib/stores/voice.ts</modify>
+      <modify>frontend/src/components/pro/voice-agent-banner.tsx</modify>
+    </files>
+    <tdd_spec>
+      <test_file>frontend/src/components/voice/__tests__/VoiceButton.test.tsx</test_file>
+      <test_cases>
+        <case>test_voice_button_uses_speech_recognition_when_pro — Pro tier uses useVoiceRecognition hook</case>
+        <case>test_voice_button_shows_upsell_when_free — Free tier click shows VoiceAgentBanner/upgrade prompt</case>
+        <case>test_voice_button_sends_transcript_to_copilotkit — after recognition completes, transcript sent via CopilotKit submitMessage</case>
+        <case>test_voice_button_shows_interim_text — during recording, interimTranscript displayed below button</case>
+        <case>test_voice_button_shows_final_text — after recognition, final transcript displayed</case>
+        <case>test_voice_button_transitions_to_processing — after stop, state transitions idle->recording->processing->idle</case>
+        <case>test_voice_button_shows_audio_visualizer_when_recording — AudioVisualizer component renders during recording state</case>
+        <case>test_voice_button_disabled_when_not_supported — when isSupported is false, button shows "Not supported" tooltip</case>
+        <case>test_voice_button_error_state_shown — when recognition error occurs, error message displayed</case>
+        <case>test_voice_button_reduced_motion_no_animation — when prefers-reduced-motion, no pulse animation on mic icon</case>
+        <case>test_voice_state_atom_updated_throughout_flow — voiceStateAtom transitions: idle -> recording -> processing -> idle</case>
+      </test_cases>
+      <description>
+        Upgrade the existing VoiceButton component from a simple mic toggle to a
+        fully functional voice input control with tier gating.
+
+        Changes to VoiceButton.tsx:
+        - Accept new props: isPro: boolean, onTranscript?: (text: string) => void
+        - When isPro is false: clicking opens the VoiceAgentBanner upsell (no mic access).
+        - When isPro is true:
+          * Use useVoiceRecognition hook for STT.
+          * On click: toggle recording via hook's start/stop.
+          * While recording: show AudioVisualizer component, display interimTranscript.
+          * On final transcript: call onTranscript(text), transition to "processing".
+          * Integrate with CopilotKit: send transcript as a chat message via submitMessage.
+        - Animate mic icon with pulse CSS animation when recording (respect reduced-motion).
+        - Show error toast on recognition failure.
+
+        Changes to voice.ts:
+        - Add voiceTranscriptAtom: atom(string) for current transcript.
+        - Add voiceErrorAtom: atom(string | null) for error state.
+        - Add userTierAtom: atom&lt;"free" | "pro"&gt;("free") — defaults to "free".
+          The VoiceButton reads isPro from this atom via useAtomValue(userTierAtom) === "pro".
+          Until the auth system is implemented, this atom defaults to "free".
+          If a stores/billing.ts is created by a parallel auth plan, move userTierAtom
+          there and re-export from voice.ts for backwards compatibility.
+
+        Changes to voice-agent-banner.tsx:
+        - Make dismissal persistent via localStorage.
+        - Add "Try Voice" button that opens a demo modal (aspirational, no real voice).
+      </description>
+    </tdd_spec>
+    <implementation>
+      The upgrade path preserves the existing VoiceButton interface while adding Pro tier
+      functionality. The isPro prop is sourced from the Jotai subscription tier atom
+      (set by the auth system). Free users see the aspirational banner, Pro users get
+      functional voice input. The CopilotKit integration sends transcripts through the
+      same AG-UI channel as typed messages, so the PydanticAI agent handles voice and
+      text identically. The AudioVisualizer provides visual feedback during recording.
+    </implementation>
+  </task>
+
+  <task id="3.3" status="PENDING">
+    <title>TTS playback hook — useVoiceSynthesis</title>
+    <priority>P1</priority>
+    <phase>3</phase>
+    <files>
+      <create>frontend/src/hooks/use-voice-synthesis.ts</create>
+    </files>
+    <tdd_spec>
+      <test_file>frontend/src/__tests__/hooks/use-voice-synthesis.test.ts</test_file>
+      <test_cases>
+        <case>test_hook_returns_expected_interface — result has speak, stop, isPlaying, queue, error</case>
+        <case>test_speak_fetches_audio_from_api — call speak("hello"), assert fetch called with /api/v1/voice/synthesize</case>
+        <case>test_speak_plays_audio_via_audio_context — mock AudioContext, assert decodeAudioData and play called</case>
+        <case>test_speak_queues_multiple_messages — call speak("a") then speak("b"), second waits for first to finish</case>
+        <case>test_stop_clears_queue_and_stops_playback — call stop(), assert queue emptied and current playback stopped</case>
+        <case>test_is_playing_true_during_playback — during audio playback, isPlaying is true</case>
+        <case>test_is_playing_false_after_completion — after audio finishes, isPlaying is false</case>
+        <case>test_error_on_fetch_failure — mock fetch to fail, assert error is set</case>
+        <case>test_error_on_decode_failure — mock decodeAudioData to fail, assert error is set</case>
+        <case>test_queue_length_reflects_pending — after queueing 3 messages, queue.length is 3</case>
+        <case>test_respects_prefers_reduced_motion — no visual animations during playback when reduced motion</case>
+        <case>test_cleanup_on_unmount — unmount, assert AudioContext closed</case>
+      </test_cases>
+      <description>
+        Create frontend/src/hooks/use-voice-synthesis.ts implementing a React hook
+        for TTS audio playback via the backend /api/v1/voice/synthesize endpoint.
+
+        Hook signature:
+          useVoiceSynthesis(options?: {
+            apiUrl?: string;    // default "/api/v1/voice/synthesize"
+            autoPlay?: boolean; // default true
+          }) => {
+            speak: (text: string) => Promise&lt;void&gt;;
+            stop: () => void;
+            isPlaying: boolean;
+            queue: string[];       // texts waiting to be spoken
+            error: string | null;
+          }
+
+        Implementation:
+        - Maintain an internal queue of text strings to synthesize.
+        - On speak(text): add to queue, if not currently playing, start processing.
+        - Processing loop:
+          1. Dequeue next text.
+          2. POST to apiUrl with {text} body.
+          3. Receive audio/wav response as ArrayBuffer.
+          4. Create AudioContext (lazy, reuse across calls).
+          5. Call audioContext.decodeAudioData(buffer).
+          6. Create AudioBufferSourceNode, connect to destination, start playback.
+          7. On ended: process next queue item or set isPlaying=false.
+        - On stop(): disconnect current source, clear queue, set isPlaying=false.
+        - On unmount: close AudioContext.
+        - Error handling: set error state, skip to next queue item.
+      </description>
+    </tdd_spec>
+    <implementation>
+      The AudioContext Web API provides low-latency audio playback directly in the browser.
+      The queue system ensures sequential playback of agent responses (e.g., multi-sentence
+      explanations). The lazy AudioContext creation avoids browser autoplay policy issues —
+      the context is created on the first user-initiated speak() call. The hook pairs with
+      useVoiceRecognition to form the complete voice I/O loop: Mic -> STT -> Agent -> TTS -> Speaker.
+    </implementation>
+  </task>
+
+  <task id="3.4" status="PENDING">
+    <title>Voice command feedback UI — transcript and flow state display</title>
+    <priority>P1</priority>
+    <phase>3</phase>
+    <files>
+      <create>frontend/src/components/voice/VoiceTranscript.tsx</create>
+      <create>frontend/src/components/voice/VoiceFlowIndicator.tsx</create>
+      <modify>frontend/src/components/voice/VoiceButton.tsx</modify>
+    </files>
+    <tdd_spec>
+      <test_file>frontend/src/components/voice/__tests__/VoiceTranscript.test.tsx</test_file>
+      <test_cases>
+        <case>test_transcript_shows_interim_text — renders interim transcript in muted style</case>
+        <case>test_transcript_shows_final_text — renders final transcript in normal style</case>
+        <case>test_transcript_empty_when_no_text — renders nothing when both transcripts empty</case>
+        <case>test_transcript_accessible_live_region — has aria-live="polite" for screen readers</case>
+        <case>test_transcript_uses_mono_font — transcript text uses data-mono class</case>
+        <case>test_flow_indicator_listening — shows "Listening..." with mic icon in recording state</case>
+        <case>test_flow_indicator_processing — shows "Processing..." with skeleton shimmer loader (not spinner) in processing state</case>
+        <case>test_flow_indicator_responding — shows "Responding..." with speaker icon in playing state</case>
+        <case>test_flow_indicator_idle — renders nothing in idle state</case>
+        <case>test_flow_indicator_reduced_motion — skeleton shimmer replaced with static "..." text when prefers-reduced-motion</case>
+        <case>test_flow_indicator_uses_design_tokens — colors use CSS custom properties, no hardcoded hex</case>
+        <case>test_voice_button_includes_transcript — VoiceButton renders VoiceTranscript below button</case>
+        <case>test_voice_button_includes_flow_indicator — VoiceButton renders VoiceFlowIndicator</case>
+      </test_cases>
+      <description>
+        Create two new components for voice interaction feedback:
+
+        1. VoiceTranscript (frontend/src/components/voice/VoiceTranscript.tsx):
+           Props: { interimTranscript: string; finalTranscript: string; className?: string }
+           - Shows interim text in muted/italic style (data-mono font).
+           - Shows final text in normal style.
+           - aria-live="polite" for screen reader announcements.
+           - Renders nothing when both strings are empty.
+           - Max height with overflow-auto for long transcripts.
+           - Uses design tokens: var(--color-muted), var(--color-body), var(--font-mono).
+
+        2. VoiceFlowIndicator (frontend/src/components/voice/VoiceFlowIndicator.tsx):
+           Props: { state: VoiceState; className?: string }
+           - Renders a small inline indicator showing the current voice flow phase:
+             * idle: nothing
+             * recording: mic icon + "Listening..." in accent color
+             * processing: skeleton shimmer loader with editorial-caps label "Processing..." in muted color
+               (UX-first rule: no spinners — use skeleton shimmer loaders. Shimmer uses CSS animation
+               respecting prefers-reduced-motion. When reduced-motion: static "..." text instead.)
+             * playing: speaker icon + "Responding..." in accent color
+           - Respects prefers-reduced-motion: replace spinner with static "..." text.
+           - Uses editorial-caps class for label text.
+           - All colors via CSS custom properties.
+
+        Modify VoiceButton.tsx: Compose VoiceTranscript and VoiceFlowIndicator
+        below the mic button, passing the relevant state from hooks.
+      </description>
+    </tdd_spec>
+    <implementation>
+      These components provide real-time visual feedback during the voice interaction
+      flow: the user sees their words being transcribed, knows when the agent is thinking,
+      and sees when the response is being spoken. The editorial design system is maintained
+      with data-mono for transcript text, editorial-caps for labels, and accent color for
+      active states. The VoiceFlowIndicator doubles as a state machine visualization,
+      making the voice pipeline debuggable during development.
+    </implementation>
+  </task>
+
+  <!-- ═══════════════════════════════════════════════════════════════════
+       PHASE 4: WebMCP Integration (Tasks 4.1–4.4)
+       ═══════════════════════════════════════════════════════════════════ -->
+
+  <task id="4.1" status="PENDING">
+    <title>WebMCP tool registration — register attribution tools</title>
+    <priority>P1</priority>
+    <phase>4</phase>
+    <files>
+      <create>frontend/src/lib/webmcp/register-tools.ts</create>
+      <create>frontend/src/lib/webmcp/types.ts</create>
+    </files>
+    <tdd_spec>
+      <test_file>frontend/src/__tests__/webmcp/register-tools.test.ts</test_file>
+      <test_cases>
+        <case>test_register_tools_calls_navigator_model_context — mock navigator.modelContext, assert registerTool called 5 times</case>
+        <case>test_search_attribution_tool_registered — verify tool with name "searchAttribution" registered with correct schema</case>
+        <case>test_explain_confidence_tool_registered — verify "explainConfidence" tool registered</case>
+        <case>test_approve_attribution_tool_registered — verify "approveAttribution" tool registered</case>
+        <case>test_set_confidence_filter_tool_registered — verify "setConfidenceFilter" tool registered</case>
+        <case>test_navigate_to_work_tool_registered — verify "navigateToWork" tool registered</case>
+        <case>test_tool_schemas_have_input_schema — each tool has inputSchema with type "object" and properties</case>
+        <case>test_tool_execute_functions_are_callable — each tool's execute function is a function</case>
+        <case>test_search_tool_execute_returns_results — call searchAttribution execute with query, assert structured results</case>
+        <case>test_graceful_noop_when_webmcp_unavailable — when navigator.modelContext undefined, registerTools() returns false without error</case>
+        <case>test_register_tools_returns_true_on_success — when navigator.modelContext exists, returns true</case>
+      </test_cases>
+      <description>
+        Create frontend/src/lib/webmcp/types.ts defining TypeScript interfaces for
+        the WebMCP API (Chrome 146+):
+
+        interface ModelContextTool {
+          name: string;
+          description: string;
+          inputSchema: {
+            type: "object";
+            properties: Record&lt;string, { type: string; description: string }&gt;;
+            required?: string[];
+          };
+          execute: (params: Record&lt;string, unknown&gt;) => Promise&lt;unknown&gt;;
+        }
+
+        interface ModelContextOptions {
+          tools: ModelContextTool[];
+        }
+
+        interface ModelContext {
+          registerTool(tool: ModelContextTool): void;
+          provideContext(context: ModelContextOptions): void;
+          // NOTE: provideContext() REPLACES all registered tools (clears then sets).
+          // Use registerTool() in a loop for additive registration.
+          // Do NOT use provideContext() to add tools alongside those from other sources
+          // — it will clobber previously registered tools.
+        }
+
+        // Augment Navigator
+        declare global {
+          interface Navigator {
+            modelContext?: ModelContext;
+          }
+        }
+
+        Create frontend/src/lib/webmcp/register-tools.ts implementing:
+
+        registerAttributionTools(handlers: {
+          onSearch: (query: string) => Promise&lt;unknown&gt;;
+          onExplainConfidence: (workId: string) => Promise&lt;unknown&gt;;
+          onApproveAttribution: (workId: string) => Promise&lt;unknown&gt;;
+          onSetConfidenceFilter: (min: number, max: number) => Promise&lt;unknown&gt;;
+          onNavigateToWork: (workId: string) => Promise&lt;unknown&gt;;
+        }): boolean
+
+        The function:
+        1. Check navigator.modelContext exists; return false if not.
+        2. Register 5 tools using registerTool() in a loop (additive, not destructive):
+           - searchAttribution: { query: string } -> search results
+           - explainConfidence: { workId: string } -> confidence explanation
+           - approveAttribution: { workId: string } -> approval confirmation
+           - setConfidenceFilter: { min: number, max: number } -> filter applied
+           - navigateToWork: { workId: string } -> navigation confirmation
+           NOTE: Use registerTool() (called 5 times) NOT provideContext().
+           provideContext() is destructive — it clears all previously registered tools.
+           registerTool() is additive and safe to call alongside other tool sources.
+        3. Each tool's execute() delegates to the corresponding handler callback.
+        4. Return true on successful registration.
+      </description>
+    </tdd_spec>
+    <implementation>
+      WebMCP (Chrome 146+) allows any AI agent (Claude Desktop, Gemini, etc.) to discover
+      and invoke tools registered by the web page. By registering our 5 attribution tools,
+      external agents can search attributions, explain confidence scores, and navigate the
+      UI without going through our CopilotKit integration. The handler callbacks delegate
+      to the same underlying logic used by CopilotKit actions, ensuring consistency. The
+      type definitions use global interface augmentation to add modelContext to Navigator.
+    </implementation>
+  </task>
+
+  <task id="4.2" status="PENDING">
+    <title>Imperative form bridge — wrap existing HTML forms as WebMCP tools</title>
+    <priority>P2</priority>
+    <phase>4</phase>
+    <files>
+      <create>frontend/src/lib/webmcp/form-bridge.ts</create>
+      <create>frontend/src/hooks/use-form-webmcp-bridge.ts</create>
+    </files>
+    <tdd_spec>
+      <test_file>frontend/src/__tests__/webmcp/form-bridge.test.ts</test_file>
+      <test_cases>
+        <case>test_register_form_as_tool_calls_register_tool — registerFormAsTool("searchForm", ...) calls navigator.modelContext.registerTool once</case>
+        <case>test_registered_tool_has_correct_name — tool name matches provided toolName argument</case>
+        <case>test_registered_tool_has_input_schema — tool inputSchema reflects provided parameter definitions</case>
+        <case>test_execute_fills_form_fields — calling execute({ query: "test" }) programmatically sets input values in the form</case>
+        <case>test_execute_submits_form — calling execute() calls form.requestSubmit() or form.submit()</case>
+        <case>test_register_search_form — registerSearchFormAsTool() creates tool with name "searchAttribution" and query param</case>
+        <case>test_register_feedback_form — registerFeedbackFormAsTool() creates tool with name "submitFeedback" and assessment param</case>
+        <case>test_register_permission_query_form — registerPermissionQueryFormAsTool() creates tool with name "queryPermissions" and workId param</case>
+        <case>test_graceful_noop_when_webmcp_unavailable — when navigator.modelContext undefined, registerFormAsTool returns false without error</case>
+        <case>test_use_form_webmcp_bridge_hook_registers_on_mount — hook calls registerFormAsTool for all 3 forms on mount</case>
+        <case>test_use_form_webmcp_bridge_hook_returns_status — hook returns { registeredCount: number, isRegistered: boolean }</case>
+        <case>test_execute_callback_returns_confirmation — execute() returns { success: true, formId: string } on successful submit</case>
+      </test_cases>
+      <description>
+        Create frontend/src/lib/webmcp/form-bridge.ts implementing an imperative bridge
+        that registers existing HTML forms as WebMCP tools.
+
+        IMPORTANT: The W3C WebMCP spec is purely imperative JavaScript. There are NO
+        declarative HTML attributes (toolname, tooldescription, toolparamtitle) and NO
+        CSS pseudo-classes (:tool-form-active, :tool-submit-active) in the spec. Do NOT
+        use these non-existent APIs. All tool registration MUST use the imperative
+        navigator.modelContext.registerTool() API.
+
+        Core function:
+          registerFormAsTool(
+            toolName: string,
+            toolDescription: string,
+            formRef: React.RefObject&lt;HTMLFormElement&gt;,
+            parameterDefs: Array&lt;{
+              name: string;
+              description: string;
+              type: "string" | "number" | "boolean";
+              inputSelector: string;  // CSS selector for the input within the form
+              required?: boolean;
+            }&gt;
+          ): boolean
+
+        The function:
+        1. Checks navigator.modelContext exists; returns false if not.
+        2. Builds inputSchema from parameterDefs.
+        3. Calls navigator.modelContext.registerTool({
+             name: toolName,
+             description: toolDescription,
+             inputSchema: { type: "object", properties: ..., required: [...] },
+             execute: async (params) => {
+               // Programmatically fill form fields
+               for each param, find input via inputSelector, set its value
+               // Submit the form
+               formRef.current?.requestSubmit()
+               return { success: true, formId: toolName }
+             }
+           })
+        4. Returns true on success.
+
+        Convenience wrappers for the three existing editorial forms:
+          registerSearchFormAsTool(formRef) — registers "searchAttribution" tool
+          registerFeedbackFormAsTool(formRef) — registers "submitFeedback" tool
+          registerPermissionQueryFormAsTool(formRef) — registers "queryPermissions" tool
+
+        Create frontend/src/hooks/use-form-webmcp-bridge.ts:
+          useFormWebMCPBridge(refs: {
+            searchFormRef: React.RefObject&lt;HTMLFormElement&gt;;
+            feedbackFormRef: React.RefObject&lt;HTMLFormElement&gt;;
+            permissionQueryFormRef: React.RefObject&lt;HTMLFormElement&gt;;
+          }) => { isRegistered: boolean; registeredCount: number }
+
+        The hook calls all three registerXxxFormAsTool() functions on mount and
+        returns the aggregate registration status.
+
+        This bridges the gap between the editorial form UI (designed for human users)
+        and the WebMCP tool API (designed for external agents). Human users interact
+        with the form normally. External agents call the registered tool and the execute
+        callback programmatically fills and submits the form on their behalf.
+      </description>
+    </tdd_spec>
+    <implementation>
+      The W3C WebMCP spec (as implemented in Chrome 146+) provides only the imperative
+      JavaScript API: navigator.modelContext.registerTool() and navigator.modelContext
+      .provideContext(). There are no declarative HTML attributes, no CSS pseudo-classes,
+      and no SubmitEvent.agentInvoked in the spec. The imperative bridge pattern is the
+      correct approach: for each existing HTML form, we create a registerTool() call whose
+      execute() callback programmatically fills and submits the form. This is a one-time
+      registration on mount (via useFormWebMCPBridge hook) and requires no changes to the
+      form components themselves. The three target forms are: search/attribution search,
+      user feedback, and permission query — all existing editorial forms in the UI.
+    </implementation>
+  </task>
+
+  <task id="4.3" status="PENDING">
+    <title>WebMCP + CopilotKit bridge — unified tool discovery</title>
+    <priority>P1</priority>
+    <phase>4</phase>
+    <files>
+      <create>frontend/src/lib/webmcp/copilotkit-bridge.ts</create>
+      <create>frontend/src/hooks/use-webmcp-tools.ts</create>
+    </files>
+    <tdd_spec>
+      <test_file>frontend/src/__tests__/webmcp/copilotkit-bridge.test.ts</test_file>
+      <test_cases>
+        <case>test_bridge_registers_copilotkit_actions_as_webmcp_tools — mock both APIs, assert WebMCP tools match CopilotKit actions</case>
+        <case>test_bridge_webmcp_tool_call_triggers_copilotkit_action — simulate WebMCP tool execute, assert CopilotKit action handler called</case>
+        <case>test_bridge_copilotkit_action_result_returned_to_webmcp — CopilotKit handler returns value, WebMCP execute() resolves with same value</case>
+        <case>test_bridge_handles_missing_webmcp — when navigator.modelContext undefined, bridge only sets up CopilotKit actions</case>
+        <case>test_bridge_handles_missing_copilotkit — when CopilotKit not initialized, bridge only registers WebMCP tools</case>
+        <case>test_use_webmcp_tools_hook_registers_on_mount — hook calls registerAttributionTools on component mount</case>
+        <case>test_use_webmcp_tools_hook_returns_registration_status — hook returns { isRegistered: boolean, toolCount: number }</case>
+        <case>test_bridge_tool_names_mapped — WebMCP camelCase names (searchAttribution) map correctly to CopilotKit snake_case counterparts (navigate_to_work). Four tools (searchAttribution, explainConfidence, approveAttribution, setConfidenceFilter) are new WebMCP-only tools with no existing CopilotKit action — bridge creates stubs for them.</case>
+      </test_cases>
+      <description>
+        Create frontend/src/lib/webmcp/copilotkit-bridge.ts implementing a bridge
+        that ensures both CopilotKit (internal agent) and WebMCP (external agents)
+        can invoke the same set of attribution tools.
+
+        Bridge function:
+          createCopilotWebMCPBridge(copilotActions: CopilotAction[]) => {
+            registerAll: () => boolean;
+            tools: ModelContextTool[];
+          }
+
+        The bridge:
+        1. Takes the CopilotKit actions (from use-agent-actions.ts) as input.
+        2. For each CopilotKit action, creates a corresponding WebMCP ModelContextTool.
+        3. The WebMCP tool's execute() delegates to the CopilotKit action handler.
+        4. Registers all tools via navigator.modelContext.registerTool() in a loop (additive).
+           NOTE: Use registerTool() (not provideContext()) — provideContext() is destructive
+           and would clobber tools registered by other sources. The bridge uses additive
+           registerTool() calls to safely co-exist with other tool registrations.
+        5. Returns the registration status and tool list.
+        NOTE: WebMCP uses camelCase tool names (searchAttribution), CopilotKit uses
+        snake_case (navigate_to_work). The bridge must map between naming conventions.
+        Four of the five WebMCP tools (searchAttribution, explainConfidence,
+        approveAttribution, setConfidenceFilter) are NEW — they do not have existing
+        CopilotKit counterparts. These MUST be created as useCopilotAction hooks first
+        (in use-agent-actions.ts or a new use-attribution-actions.ts), then registered
+        as WebMCP tools via the bridge. Only navigateToWork has a direct CopilotKit
+        counterpart (navigate_to_work).
+
+        Create frontend/src/hooks/use-webmcp-tools.ts:
+          useWebMCPTools() => { isRegistered: boolean; toolCount: number }
+
+        The hook:
+        1. On mount, calls createCopilotWebMCPBridge with the current CopilotKit actions.
+        2. Calls registerAll().
+        3. Returns status.
+        4. Re-registers if actions change (dependency array).
+
+        This ensures tool consistency: whether a tool call comes from the CopilotKit
+        sidebar chat, a voice command, or an external Chrome agent via WebMCP, the
+        same handler executes and the same UI updates occur.
+      </description>
+    </tdd_spec>
+    <implementation>
+      The bridge pattern ensures a single source of truth for tool definitions. Rather
+      than maintaining separate tool lists for CopilotKit and WebMCP, the bridge derives
+      WebMCP tools from CopilotKit actions. This guarantees that any new CopilotKit action
+      automatically becomes available to external agents via WebMCP. The hook provides
+      React-lifecycle-aware registration with automatic cleanup.
+    </implementation>
+  </task>
+
+  <task id="4.4" status="PENDING">
+    <title>WebMCP feature detection and graceful degradation</title>
+    <priority>P1</priority>
+    <phase>4</phase>
+    <files>
+      <create>frontend/src/lib/webmcp/feature-detect.ts</create>
+      <create>frontend/src/components/webmcp/WebMCPStatus.tsx</create>
+    </files>
+    <tdd_spec>
+      <test_file>frontend/src/__tests__/webmcp/feature-detect.test.ts</test_file>
+      <test_cases>
+        <case>test_detect_webmcp_supported — when navigator.modelContext exists, returns { supported: true, version: "1.0" }</case>
+        <case>test_detect_webmcp_not_supported — when navigator.modelContext undefined, returns { supported: false }</case>
+        <case>test_detect_webmcp_partial_support — when modelContext exists but registerTool missing, returns { supported: false, reason: "incomplete API" }</case>
+        <case>test_detect_webmcp_chrome_version — utility to parse Chrome version, returns true for >= 146</case>
+        <case>test_webmcp_status_shows_badge_when_supported — WebMCPStatus renders green badge "WebMCP Active"</case>
+        <case>test_webmcp_status_shows_nothing_when_not_supported — WebMCPStatus renders null when unsupported</case>
+        <case>test_webmcp_status_shows_tool_count — when supported, shows "5 tools registered"</case>
+        <case>test_webmcp_status_accessible — badge has aria-label describing status</case>
+        <case>test_webmcp_status_uses_design_tokens — colors from CSS custom properties</case>
+        <case>test_graceful_degradation_no_errors — when WebMCP unsupported, no console errors thrown</case>
+      </test_cases>
+      <description>
+        Create frontend/src/lib/webmcp/feature-detect.ts implementing:
+
+        detectWebMCPSupport(): {
+          supported: boolean;
+          version?: string;
+          reason?: string;
+          chromeVersion?: number;
+        }
+
+        Detection logic:
+        1. Check navigator.modelContext exists and is an object.
+        2. Check navigator.modelContext.registerTool is a function.
+        3. Check navigator.modelContext.provideContext is a function.
+        4. Parse Chrome version from navigator.userAgent (>= 146 required).
+        5. Return structured result.
+
+        Create frontend/src/components/webmcp/WebMCPStatus.tsx:
+        A small status badge component that shows WebMCP availability in the sidebar.
+
+        Props: { className?: string; toolCount?: number }
+
+        Rendering:
+        - When supported and tools registered: small green dot + "WebMCP" text
+          with tooltip "5 tools available for external agents".
+        - When supported but no tools: amber dot + "WebMCP" with tooltip "Initializing...".
+        - When not supported: render nothing (no error, no badge).
+        - Uses editorial-caps class for label.
+        - Colors via var(--color-confidence-high) for green, var(--color-confidence-medium) for amber.
+        - Accessible: aria-label on the badge.
+
+        This component mounts in the sidebar (below the role toggle) to give users
+        visibility into whether external agents can interact with the page.
+      </description>
+    </tdd_spec>
+    <implementation>
+      WebMCP is Chrome 146+ only (shipping mid-2025). Graceful degradation is critical —
+      the app must work identically on Firefox, Safari, and older Chrome. The feature
+      detection is thorough: checking not just the presence of navigator.modelContext but
+      also that the required methods exist (guards against partial implementations in
+      beta builds). The status badge provides transparency: users know when external
+      agents can interact with their attribution data. The badge is deliberately subtle
+      (small dot + text) per the editorial design philosophy.
+    </implementation>
+  </task>
+
+  <!-- ═══════════════════════════════════════════════════════════════════
+       PHASE 5: Agentic Testing and A2UI Placeholder (Tasks 5.1–5.3)
+       ═══════════════════════════════════════════════════════════════════ -->
+
+  <task id="5.1" status="PENDING">
+    <title>Playwright WebMCP test utilities</title>
+    <priority>P1</priority>
+    <phase>5</phase>
+    <files>
+      <create>frontend/e2e/utils/webmcp-helpers.ts</create>
+      <create>frontend/e2e/webmcp-tools.spec.ts</create>
+    </files>
+    <tdd_spec>
+      <test_file>frontend/e2e/webmcp-tools.spec.ts</test_file>
+      <test_cases>
+        <case>test_webmcp_tools_registered_on_page_load — navigate to app, assert navigator.modelContext has registered tools</case>
+        <case>test_search_tool_discoverable — evaluate navigator.modelContext to find searchAttribution tool</case>
+        <case>test_explain_confidence_tool_discoverable — find explainConfidence tool in registered tools</case>
+        <case>test_tool_execution_returns_result — call searchAttribution.execute({query: "test"}), assert result structure</case>
+        <case>test_tool_execution_updates_ui — call navigateToWork.execute({workId: "..."}), assert UI navigation occurred</case>
+        <case>test_webmcp_status_badge_visible — when Chrome >= 146 (mocked), WebMCPStatus badge is visible</case>
+        <case>test_graceful_degradation_firefox — set Firefox UA, assert no WebMCP errors, app works normally</case>
+        <case>test_form_bridge_registers_tools — after page load, navigator.modelContext has searchAttribution, submitFeedback, queryPermissions tools registered via the imperative form bridge</case>
+      </test_cases>
+      <description>
+        Create frontend/e2e/utils/webmcp-helpers.ts with Playwright helper functions:
+
+        1. mockWebMCPSupport(page: Page):
+           Inject a mock navigator.modelContext into the page via page.addInitScript().
+           The mock records all registerTool calls and provides getRegisteredTools().
+
+        2. simulateToolCall(page: Page, toolName: string, params: Record):
+           Find the registered tool by name, call its execute() function with params,
+           return the result.
+
+        3. getRegisteredToolNames(page: Page) -> string[]:
+           Return all tool names registered via navigator.modelContext.registerTool().
+
+        4. assertToolSchema(page: Page, toolName: string, expectedSchema: object):
+           Assert that a tool's inputSchema matches the expected structure.
+
+        Create frontend/e2e/webmcp-tools.spec.ts with Playwright tests that:
+        - Navigate to the app with mocked WebMCP support.
+        - Verify tools are registered on page load (imperative registerTool() calls).
+        - Simulate tool calls and verify UI responses.
+        - Test graceful degradation without WebMCP.
+        - Verify form bridge tools (searchAttribution, submitFeedback, queryPermissions)
+          are registered and their execute() callbacks correctly fill and submit the forms.
+
+        All tests use the mock helpers — no real Chrome 146+ required.
+      </description>
+    </tdd_spec>
+    <implementation>
+      Playwright's addInitScript allows injecting a mock navigator.modelContext before
+      the app code runs, enabling WebMCP testing on any browser engine. The mock records
+      all tool registrations and provides introspection APIs for assertions. This test
+      infrastructure will also be reusable when testing with real Chrome 146+ in the future.
+      The helper functions provide a clean API for E2E tests to interact with WebMCP
+      without duplicating mock setup code.
+    </implementation>
+  </task>
+
+  <task id="5.2" status="PENDING">
+    <title>E2E voice command tests — Playwright voice simulation</title>
+    <priority>P1</priority>
+    <phase>5</phase>
+    <files>
+      <create>frontend/e2e/voice-commands.spec.ts</create>
+      <create>frontend/e2e/utils/voice-helpers.ts</create>
+    </files>
+    <tdd_spec>
+      <test_file>frontend/e2e/voice-commands.spec.ts</test_file>
+      <test_cases>
+        <case>test_voice_button_click_starts_recording — click VoiceButton, assert recording state visible</case>
+        <case>test_voice_transcript_displayed — inject SpeechRecognition result, assert transcript text appears</case>
+        <case>test_voice_command_sent_to_agent — simulate "search Imogen Heap" recognition, assert CopilotKit receives message</case>
+        <case>test_agent_response_triggers_tts — mock TTS endpoint, assert fetch to /api/v1/voice/synthesize after agent response</case>
+        <case>test_voice_flow_state_transitions — verify idle -> recording -> processing -> playing -> idle visible in UI</case>
+        <case>test_voice_error_displays_message — simulate SpeechRecognition error, assert error message visible</case>
+        <case>test_free_tier_shows_upsell — set tier to free, click VoiceButton, assert upsell banner visible</case>
+        <case>test_voice_button_keyboard_accessible — press Enter on focused VoiceButton, assert recording starts</case>
+        <case>test_voice_respects_reduced_motion — enable prefers-reduced-motion, assert no animations</case>
+      </test_cases>
+      <description>
+        Create frontend/e2e/utils/voice-helpers.ts with Playwright helpers:
+
+        1. mockSpeechRecognition(page: Page):
+           Inject a mock SpeechRecognition class that can be programmatically
+           triggered to emit result/error/end events.
+
+        2. simulateVoiceInput(page: Page, text: string, opts?: { interim?: boolean }):
+           Trigger a SpeechRecognition result event with the given text.
+           If interim=true, trigger as interim result.
+
+        3. mockTTSEndpoint(page: Page):
+           Use page.route to intercept /api/v1/voice/synthesize requests and
+           return a minimal valid WAV file (silence).
+
+        4. mockAudioContext(page: Page):
+           Inject a mock AudioContext that records play/stop calls.
+
+        Create frontend/e2e/voice-commands.spec.ts with end-to-end tests:
+        - Full voice input flow: button click -> recording -> STT result -> agent -> TTS playback.
+        - Error handling: recognition errors, TTS failures.
+        - Tier gating: Free tier upsell, Pro tier functionality.
+        - Accessibility: keyboard navigation, screen reader announcements, reduced motion.
+
+        Tests mock browser APIs (SpeechRecognition, AudioContext) and backend endpoints
+        (TTS, agent) to run without real hardware or services.
+      </description>
+    </tdd_spec>
+    <implementation>
+      E2E voice tests are inherently complex because they span browser APIs, network
+      requests, and UI state. The mock helpers encapsulate this complexity: tests read
+      as simple flows (simulate voice input -> assert UI response). The mock
+      SpeechRecognition class faithfully replicates the Web Speech API event model
+      (onresult, onerror, onend) so the application code runs identically. Network
+      mocking via page.route intercepts TTS/STT requests at the Playwright level,
+      avoiding any application-level test infrastructure.
+    </implementation>
+  </task>
+
+  <task id="5.3" status="PENDING">
+    <title>A2UI placeholder module — types and adapter stubs</title>
+    <priority>P2</priority>
+    <phase>5</phase>
+    <files>
+      <create>frontend/src/lib/a2ui/types.ts</create>
+      <create>frontend/src/lib/a2ui/adapter.ts</create>
+      <create>frontend/src/lib/a2ui/index.ts</create>
+    </files>
+    <tdd_spec>
+      <test_file>frontend/src/__tests__/a2ui/adapter.test.ts</test_file>
+      <test_cases>
+        <case>test_a2ui_types_exported — A2UISpec, A2UIComponent, A2UIAction types are importable</case>
+        <case>test_a2ui_adapter_parse_spec_returns_components — parseA2UISpec(validSpec) returns A2UIComponent array</case>
+        <case>test_a2ui_adapter_parse_empty_spec — parseA2UISpec({}) returns empty array</case>
+        <case>test_a2ui_adapter_parse_invalid_spec_throws — parseA2UISpec("not-json") throws A2UIParseError</case>
+        <case>test_a2ui_adapter_to_copilotkit_action — toCopilotKitAction(a2uiAction) returns CopilotAction-compatible object</case>
+        <case>test_a2ui_adapter_stub_warning — parseA2UISpec logs warning "A2UI adapter is a stub — not yet implemented"</case>
+        <case>test_a2ui_index_exports — index.ts re-exports types, parseA2UISpec, toCopilotKitAction</case>
+        <case>test_a2ui_version_constant — A2UI_SPEC_VERSION exported as "0.8"</case>
+      </test_cases>
+      <description>
+        Create frontend/src/lib/a2ui/ directory with placeholder types and adapter stubs
+        for future Google A2UI adoption.
+
+        1. types.ts:
+           - A2UISpec: the root JSON spec object (type alias for Record until spec stabilizes)
+           - A2UIComponent: { type: string; props: Record; children?: A2UIComponent[] }
+           - A2UIAction: { name: string; description: string; parameters: Record }
+           - A2UIParseError: extends Error
+           - A2UI_SPEC_VERSION = "0.8" (current Google A2UI version)
+
+        2. adapter.ts:
+           - parseA2UISpec(spec: unknown): A2UIComponent[]
+             Stub implementation: validates input is an object, logs warning
+             "A2UI adapter is a stub — full implementation deferred to v1.2",
+             returns empty array. Throws A2UIParseError for non-object input.
+
+           - toCopilotKitAction(action: A2UIAction): { name, description, parameters, handler }
+             Stub implementation: converts A2UI action schema to CopilotKit-compatible
+             action object. Handler is a no-op that logs "A2UI action invoked (stub)".
+
+        3. index.ts:
+           Re-exports all types and functions for clean imports:
+           export { type A2UISpec, type A2UIComponent, type A2UIAction, A2UIParseError,
+                    A2UI_SPEC_VERSION } from './types';
+           export { parseA2UISpec, toCopilotKitAction } from './adapter';
+
+        This placeholder ensures the A2UI integration point exists in the codebase,
+        making it trivial to implement when the spec matures. CopilotKit has
+        day-zero A2UI compatibility, so the adapter pattern is well-suited.
+      </description>
+    </tdd_spec>
+    <implementation>
+      Google's A2UI (v0.8) is a declarative JSON UI specification for agent-generated
+      interfaces. It is not needed for MVP because we have a fixed editorial design system,
+      but creating the placeholder now ensures: (1) the integration point is documented,
+      (2) future implementers know where A2UI fits in the architecture, (3) CopilotKit
+      compatibility is pre-wired. The stub logs warnings to make it obvious when code
+      paths reach the unimplemented adapter. The A2UIParseError type ensures error handling
+      is structured from the start.
+    </implementation>
+  </task>
+
+</plan>

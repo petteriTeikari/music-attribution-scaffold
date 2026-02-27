@@ -1,0 +1,1426 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  v1.1 Feature 1: Authentication, Identity, and Security-Native Architecture
+  ===========================================================================
+
+  SCOPE: Add full authentication, identity management, RBAC, and security
+  hardening to the music attribution scaffold. Currently the API is completely
+  open — no user model, no sessions, no JWT, no auth of any kind.
+
+  CODEBASE STATE (as of v1.0.0):
+  - Python 3.13, FastAPI backend (src/music_attribution/api/), Next.js 15 App Router frontend
+  - PostgreSQL + pgvector, SQLAlchemy 2.0 async ORM (src/music_attribution/db/models.py)
+  - Existing tables: normalized_records, resolved_entities, attribution_records,
+    permission_bundles, feedback_cards, edges, entity_embeddings, audit_log
+  - 4 Alembic migrations (001-004), Base declarative model in db/models.py
+  - Settings via pydantic-settings (src/music_attribution/config.py)
+  - API routes: attribution.py, permissions.py, health.py, metrics.py, agui_endpoint.py
+  - dependencies.py has get_session(request) returning AsyncSession from app.state
+  - Docker Compose dev stack: postgres (pgvector:pg17), pgbouncer, valkey, backend, frontend, prometheus, grafana
+  - Frontend: Jotai state, CopilotKit agent UI, ThemeProvider, PostHogProvider, JotaiProvider in layout.tsx
+  - Frontend config: frontend/src/lib/config.ts (API_URL, API_BASE, COPILOT_RUNTIME_URL)
+  - Package manager: uv ONLY (pyproject.toml, never pip/conda)
+  - Test framework: pytest (backend), Vitest (frontend)
+
+  ARCHITECTURE DECISIONS:
+  1. Auth stack: Auth.js v5 (frontend OAuth) + fastapi-users[sqlalchemy] (backend) + fastapi-nextauth-jwt (JWT bridge)
+  2. OAuth providers: Google, Apple, GitHub, Facebook
+  3. Identity model: Platform-native UUID v7 as anchor + user_identities for linked OAuth providers + federation_links for ORCID/ISNI/Auracles
+  4. Field-level encryption: cryptography.fernet for PII (email, display_name, provider_email) before DB write
+  5. Audit logging: structlog for structured JSON + immutable auth_audit_logs table with DB trigger preventing UPDATE/DELETE
+  6. Rate limiting: slowapi on auth endpoints
+  7. Session security: HttpOnly + Secure + SameSite=Strict cookies, short-lived access tokens (15min), refresh tokens (7d)
+  8. RBAC roles: admin, artist, label, query_user (default)
+  9. MFA: pyotp (TOTP) for admin accounts
+  10. Secrets management: pydantic-settings (MVP), migration path to Infisical
+
+  CONSTRAINTS:
+  - Always use encoding='utf-8' for file operations
+  - Always use pathlib.Path() for paths
+  - Always use datetime.now(timezone.utc) for timestamps
+  - Always use from __future__ import annotations at top of every Python file
+  - AST-only for any Python code analysis in tests (no grep/regex on source)
+  - uv ONLY for package management
+  - Backend auth tests in tests/unit/auth/ subdirectory
+  - Frontend auth tests in frontend/src/__tests__/auth/ subdirectory
+
+  CRITICAL IMPLEMENTATION NOTES (post-review fixes):
+  - UserModel PK must be `id` (not `user_id`) — SQLAlchemyBaseUserTable[uuid.UUID] convention
+  - UserModel MUST extend SQLAlchemyBaseUserTable[uuid.UUID] from fastapi_users.db
+  - NO plaintext email column — use email_hash (HMAC-SHA256 blind index) + encrypted_email (Fernet)
+  - Do NOT add python-jose — fastapi-nextauth-jwt handles JWE internally; python-jose causes conflicts
+  - Auth.js v5 cookie: __Secure-authjs.session-token (production) vs authjs.session-token (dev)
+  - next-auth must be pinned: next-auth@5.0.0-beta.25 + @auth/core@0.37.2
+  - AuditLoggingMiddleware and SecurityHeadersMiddleware: pure ASGI (not BaseHTTPMiddleware) to avoid SSE buffering
+  - Permissions-Policy: microphone=(self) not microphone=() — voice pipeline requires microphone access
+  - tests/unit/auth/__init__.py + conftest.py required for pytest discovery
+  - tests/conftest.py must add mock_current_user + authenticated_client fixtures for existing 351+ tests
+-->
+<plan version="2.0" project="music-attribution-scaffold">
+  <metadata>
+    <title>v1.1 Feature 1: Authentication, Identity, and Security-Native Architecture</title>
+    <branch>feat/auth-security</branch>
+    <estimated_tasks>21</estimated_tasks>
+    <mode>creation</mode>
+  </metadata>
+
+  <!-- ============================================================
+       PHASE 1: Database and Models (blocking everything else)
+       ============================================================ -->
+
+  <task id="1.1" status="PENDING">
+    <title>Alembic migration 005 — auth tables (users, user_identities, federation_links, user_tiers, auth_audit_logs)</title>
+    <priority>P0</priority>
+    <phase>1</phase>
+    <files>
+      <create>alembic/versions/005_auth_tables.py</create>
+      <create>tests/unit/auth/__init__.py</create>
+      <create>tests/unit/auth/conftest.py</create>
+    </files>
+    <tdd_spec>
+      <test_file>tests/unit/auth/test_migration_005.py</test_file>
+      <test_cases>
+        <case>test_upgrade_creates_users_table — Run upgrade(), inspect metadata, assert "users" table exists with columns: id (Uuid PK), email_hash (String 64, indexed UNIQUE), encrypted_email (LargeBinary), display_name (String 255), encrypted_display_name (LargeBinary), role (String 50, default "query_user"), is_active (Boolean, default True), is_verified (Boolean, default False), is_superuser (Boolean, default False), mfa_secret (String 255, nullable), hashed_password (String 1024, nullable), created_at (DateTime TZ), updated_at (DateTime TZ)</case>
+        <case>test_upgrade_creates_user_identities_table — Assert "user_identities" table exists with columns: identity_id (Uuid PK), user_id (Uuid FK -> users.id ON DELETE CASCADE), provider (String 50, e.g. "google", "github", "apple", "facebook"), provider_user_id (String 255), provider_email (LargeBinary, encrypted), provider_display_name (String 255, nullable), access_token (String 2048, nullable), refresh_token (String 2048, nullable), token_expires_at (DateTime TZ, nullable), linked_at (DateTime TZ). Unique constraint on (provider, provider_user_id).</case>
+        <case>test_upgrade_creates_federation_links_table — Assert "federation_links" table exists with columns: link_id (Uuid PK), user_id (Uuid FK -> users.id ON DELETE CASCADE), federation_type (String 50, e.g. "orcid", "isni", "auracles"), federation_id (String 255), verified (Boolean, default False), verified_at (DateTime TZ, nullable), verification_method (String 100, nullable), linked_at (DateTime TZ). Unique constraint on (federation_type, federation_id).</case>
+        <case>test_upgrade_creates_user_tiers_table — Assert "user_tiers" table exists with columns: tier_id (Uuid PK), user_id (Uuid FK -> users.id ON DELETE CASCADE, unique), tier_name (String 50, default "free"), api_rate_limit (Integer, default 100), max_works (Integer, default 50), features (JSONB, default {}), valid_from (DateTime TZ), valid_until (DateTime TZ, nullable)</case>
+        <case>test_upgrade_creates_auth_audit_logs_table — Assert "auth_audit_logs" table exists with columns: audit_id (Uuid PK), user_id (Uuid, nullable — nullable for failed login attempts), event_type (String 100), ip_address (String 45), user_agent (Text, nullable), details (JSONB, default {}), created_at (DateTime TZ). Index on (user_id, created_at).</case>
+        <case>test_upgrade_creates_immutability_trigger — Assert that a PostgreSQL trigger "prevent_auth_audit_update_delete" exists on auth_audit_logs that raises an exception on UPDATE or DELETE attempts</case>
+        <case>test_upgrade_creates_indexes — Assert indexes exist: ix_users_email_hash (UNIQUE on email_hash), ix_users_role, ix_user_identities_user_id, ix_user_identities_provider, ix_federation_links_user_id, ix_auth_audit_logs_user_id_created_at</case>
+        <case>test_downgrade_drops_all_auth_tables — Run downgrade(), assert all 5 new tables are removed and trigger is dropped</case>
+      </test_cases>
+      <description>
+        Create Alembic migration 005 that adds the entire auth schema.
+
+        Tables to create (in FK dependency order):
+
+        1. **users** — Core user table. The PK column is named `id` (UUID v4) — fastapi-users requires
+           this exact name (SQLAlchemyBaseUserTable[uuid.UUID] convention). There is NO plaintext email
+           column. Instead: `email_hash` (String 64, UNIQUE index) stores HMAC-SHA256(HMAC_KEY, email)
+           for lookups without exposing plaintext; `encrypted_email` (LargeBinary) stores Fernet-encrypted
+           email for read-back. This is the blind index pattern — the hash allows O(1) lookup by email
+           without storing plaintext, while Fernet ciphertext allows decryption for display. Similarly
+           `encrypted_display_name` stores PII at rest. The role column uses a CHECK constraint for
+           ('admin', 'artist', 'label', 'query_user'). hashed_password is nullable because OAuth-only
+           users have no password. mfa_secret stores the TOTP shared secret for admin MFA.
+
+        2. **user_identities** — OAuth provider link table. Each row links a user to an OAuth provider
+           (Google, GitHub, Apple, Facebook). provider_email is stored encrypted (LargeBinary) since
+           it contains PII. Unique constraint on (provider, provider_user_id) prevents duplicate links.
+           ON DELETE CASCADE from users.id ensures cleanup.
+
+        3. **federation_links** — External identity federation (ORCID, ISNI, Auracles). Separate from
+           OAuth because these are verified professional identities, not login providers. The verified
+           flag tracks whether the federation ID has been confirmed via out-of-band verification.
+
+        4. **user_tiers** — Subscription/access tier for rate limiting and feature gating. One-to-one
+           with users (unique constraint on user_id). Default tier is "free" with 100 req/hour and
+           50 max works.
+
+        5. **auth_audit_logs** — Immutable audit trail for auth events (login, logout, password_change,
+           mfa_enable, mfa_verify, role_change, identity_link, identity_unlink, federation_link,
+           federation_verify). A PostgreSQL trigger function prevents UPDATE and DELETE operations.
+           user_id is nullable to log failed login attempts where the user may not exist.
+
+        The migration must also create:
+        - A trigger function `prevent_auth_audit_mutation()` that raises EXCEPTION on UPDATE/DELETE
+        - A trigger `prevent_auth_audit_update_delete` on auth_audit_logs BEFORE UPDATE OR DELETE
+        - All listed indexes for query performance
+
+        The downgrade() function must drop everything in reverse order: trigger, trigger function,
+        indexes, tables.
+      </description>
+    </tdd_spec>
+    <implementation>
+      Create alembic/versions/005_auth_tables.py with revision="005", down_revision="004".
+      Use sa.Column, sa.ForeignKey, sa.UniqueConstraint for all table definitions.
+      Use op.execute() for the trigger function and trigger creation (raw SQL).
+      Trigger function body: RAISE EXCEPTION 'auth_audit_logs is immutable: % not allowed', TG_OP;
+      All DateTime columns must use timezone=True. All JSONB columns use postgresql.JSONB().
+
+      Also create tests/unit/auth/__init__.py (empty, for pytest discovery) and
+      tests/unit/auth/conftest.py with shared fixtures:
+      - mock_user_factory: callable that returns a UserModel with configurable role/id
+      - mock_session: AsyncMock of AsyncSession
+      - encryption_key: valid Fernet key bytes for use in encryption tests
+    </implementation>
+  </task>
+
+  <task id="1.2" status="PENDING">
+    <title>SQLAlchemy ORM models for auth tables</title>
+    <priority>P0</priority>
+    <phase>1</phase>
+    <files>
+      <create>src/music_attribution/db/auth_models.py</create>
+      <modify>src/music_attribution/db/__init__.py</modify>
+    </files>
+    <tdd_spec>
+      <test_file>tests/unit/auth/test_auth_models.py</test_file>
+      <test_cases>
+        <case>test_user_model_tablename — Assert UserModel.__tablename__ == "users"</case>
+        <case>test_user_model_extends_base_user_table — Assert UserModel extends SQLAlchemyBaseUserTable[uuid.UUID] from fastapi_users.db</case>
+        <case>test_user_model_pk_is_id — Assert UserModel has a mapped column named `id` (not `user_id`) as the primary key</case>
+        <case>test_user_model_columns — Assert UserModel has all expected mapped columns: id, email_hash, encrypted_email, display_name, encrypted_display_name, role, is_active, is_verified, is_superuser, mfa_secret, hashed_password, created_at, updated_at</case>
+        <case>test_user_model_no_plaintext_email — Assert UserModel does NOT have a plain String `email` column (email is stored as email_hash + encrypted_email only)</case>
+        <case>test_user_model_role_default — Instantiate UserModel with minimal fields, assert role defaults to "query_user"</case>
+        <case>test_user_identity_model_tablename — Assert UserIdentityModel.__tablename__ == "user_identities"</case>
+        <case>test_user_identity_model_fk — Assert user_id column has ForeignKey to "users.id"</case>
+        <case>test_user_identity_model_unique_constraint — Assert UniqueConstraint on (provider, provider_user_id)</case>
+        <case>test_federation_link_model_tablename — Assert FederationLinkModel.__tablename__ == "federation_links"</case>
+        <case>test_federation_link_model_unique_constraint — Assert UniqueConstraint on (federation_type, federation_id)</case>
+        <case>test_user_tier_model_tablename — Assert UserTierModel.__tablename__ == "user_tiers"</case>
+        <case>test_user_tier_model_unique_user_id — Assert unique constraint on user_id</case>
+        <case>test_auth_audit_log_model_tablename — Assert AuthAuditLogModel.__tablename__ == "auth_audit_logs"</case>
+        <case>test_auth_audit_log_model_user_id_nullable — Assert user_id column is nullable</case>
+        <case>test_all_auth_models_inherit_base — Assert all 5 new models inherit from the same Base as existing models</case>
+      </test_cases>
+      <description>
+        Create src/music_attribution/db/auth_models.py with 5 new SQLAlchemy models that mirror
+        the migration 005 schema.
+
+        CRITICAL: UserModel MUST extend SQLAlchemyBaseUserTable[uuid.UUID] from fastapi-users.db,
+        NOT just the plain Base class. fastapi-users requires this for its UserManager to work.
+        The PK column MUST be named `id` (not `user_id`) — this is fastapi-users convention and
+        is enforced by SQLAlchemyBaseUserTable. All other auth models inherit from the existing
+        Base class in db/models.py.
+
+        The UserModel uses the blind index pattern for email: no plaintext `email` column.
+        Instead: `email_hash` (String 64) stores HMAC-SHA256(HMAC_KEY, email.lower()) for O(1)
+        lookup; `encrypted_email` (LargeBinary / EncryptedString TypeDecorator) stores
+        Fernet-encrypted email for display. The HMAC key is a separate secret from ENCRYPTION_KEY.
+
+        The models must use the same patterns as existing models:
+        - Mapped[type] = mapped_column(...) syntax
+        - uuid.uuid4 as default for UUID PKs
+        - DateTime(timezone=True) for all timestamps
+        - JSONB for structured data columns
+        - LargeBinary for encrypted PII columns
+
+        Models to create:
+        1. UserModel — __tablename__ = "users", extends SQLAlchemyBaseUserTable[uuid.UUID]
+        2. UserIdentityModel — __tablename__ = "user_identities"
+        3. FederationLinkModel — __tablename__ = "federation_links"
+        4. UserTierModel — __tablename__ = "user_tiers"
+        5. AuthAuditLogModel — __tablename__ = "auth_audit_logs"
+
+        Each model must have a comprehensive docstring following the project's existing docstring
+        pattern (see NormalizedRecordModel for reference). Import and re-export all auth models
+        from db/__init__.py so they are discoverable.
+      </description>
+    </tdd_spec>
+    <implementation>
+      Create auth_models.py in src/music_attribution/db/.
+      Import SQLAlchemyBaseUserTable from fastapi_users.db (requires fastapi-users[sqlalchemy]).
+      Import Base from db.models (for non-user auth models).
+      Use from __future__ import annotations at top. Use Mapped[type] with mapped_column().
+      UserModel: class UserModel(SQLAlchemyBaseUserTable[uuid.UUID], Base) — the `id` PK and
+      standard fastapi-users fields (email, is_active, is_verified, is_superuser, hashed_password)
+      are inherited; add ONLY the app-specific columns (email_hash, encrypted_email,
+      display_name, encrypted_display_name, role, mfa_secret, created_at, updated_at).
+      For LargeBinary columns (encrypted_email, encrypted_display_name, provider_email),
+      use sa.LargeBinary since these store Fernet ciphertext bytes.
+      Update db/__init__.py to import and re-export all auth model classes.
+    </implementation>
+  </task>
+
+  <task id="1.3" status="PENDING">
+    <title>Pydantic schemas for User, UserIdentity, FederationLink, UserTier</title>
+    <priority>P0</priority>
+    <phase>1</phase>
+    <files>
+      <create>src/music_attribution/schemas/auth.py</create>
+      <modify>src/music_attribution/schemas/__init__.py</modify>
+      <modify>src/music_attribution/schemas/enums.py</modify>
+    </files>
+    <tdd_spec>
+      <test_file>tests/unit/auth/test_auth_schemas.py</test_file>
+      <test_cases>
+        <case>test_user_role_enum_values — Assert UserRoleEnum has exactly: admin, artist, label, query_user</case>
+        <case>test_federation_type_enum_values — Assert FederationTypeEnum has: orcid, isni, auracles</case>
+        <case>test_auth_event_type_enum_values — Assert AuthEventTypeEnum has: login, logout, password_change, mfa_enable, mfa_verify, role_change, identity_link, identity_unlink, federation_link, federation_verify, registration, password_reset, token_refresh</case>
+        <case>test_user_read_schema_fields — Assert UserRead has: user_id (UUID), email (str), display_name (str), role (UserRoleEnum), is_active (bool), is_verified (bool), created_at (datetime), updated_at (datetime)</case>
+        <case>test_user_read_schema_excludes_sensitive — Assert UserRead does NOT have: hashed_password, mfa_secret, encrypted_email, encrypted_display_name</case>
+        <case>test_user_create_schema_fields — Assert UserCreate has: email (EmailStr), display_name (str), password (SecretStr with min_length=8)</case>
+        <case>test_user_update_schema_fields — Assert UserUpdate has: display_name (str | None), password (SecretStr | None)</case>
+        <case>test_user_identity_read_schema_fields — Assert UserIdentityRead has: identity_id, provider (OAuthProviderEnum), provider_user_id, linked_at. Does NOT expose provider_email, access_token, refresh_token.</case>
+        <case>test_federation_link_read_schema_fields — Assert FederationLinkRead has: link_id, federation_type (FederationTypeEnum), federation_id, verified, verified_at, linked_at</case>
+        <case>test_federation_link_create_schema — Assert FederationLinkCreate has: federation_type (FederationTypeEnum), federation_id (str with constraints)</case>
+        <case>test_user_tier_read_schema_fields — Assert UserTierRead has: tier_name, api_rate_limit, max_works, features (dict), valid_from, valid_until</case>
+        <case>test_user_read_json_round_trip — Create UserRead, dump to JSON, reload, assert equality</case>
+        <case>test_user_create_password_min_length — Assert UserCreate rejects password shorter than 8 chars</case>
+        <case>test_oauth_provider_enum_values — Assert OAuthProviderEnum has: google, github, apple, facebook</case>
+      </test_cases>
+      <description>
+        Create Pydantic v2 schemas for the auth domain. These are the boundary objects (BOs) for
+        the auth system, following the same pattern as existing schemas (attribution.py, permissions.py).
+
+        Add new enums to schemas/enums.py:
+        - UserRoleEnum(StrEnum): admin, artist, label, query_user
+        - OAuthProviderEnum(StrEnum): google, github, apple, facebook
+        - FederationTypeEnum(StrEnum): orcid, isni, auracles
+        - AuthEventTypeEnum(StrEnum): login, logout, password_change, mfa_enable, mfa_verify,
+          role_change, identity_link, identity_unlink, federation_link, federation_verify,
+          registration, password_reset, token_refresh
+
+        Create schemas/auth.py with Pydantic models:
+        - UserCreate: email (EmailStr), display_name (str), password (SecretStr, min_length=8)
+        - UserRead: user_id (UUID), email, display_name, role, is_active, is_verified, created_at, updated_at
+          Explicitly EXCLUDE sensitive fields (hashed_password, mfa_secret, encrypted_*)
+        - UserUpdate: display_name (str | None = None), password (SecretStr | None = None)
+        - UserIdentityRead: identity_id, provider (OAuthProviderEnum), provider_user_id, linked_at
+        - FederationLinkRead: link_id, federation_type, federation_id, verified, verified_at, linked_at
+        - FederationLinkCreate: federation_type (FederationTypeEnum), federation_id (str)
+        - UserTierRead: tier_name, api_rate_limit, max_works, features (dict), valid_from, valid_until
+
+        All models use model_config = ConfigDict(from_attributes=True) for ORM compatibility.
+        All datetime fields use datetime with timezone awareness enforced.
+      </description>
+    </tdd_spec>
+    <implementation>
+      Add enums to schemas/enums.py (at the end, before commercial landscape section).
+      Create schemas/auth.py with all Pydantic models. Use from pydantic import BaseModel, ConfigDict, EmailStr, SecretStr, Field.
+      Update schemas/__init__.py to re-export the new schemas.
+      Use from __future__ import annotations at top of both files.
+    </implementation>
+  </task>
+
+  <task id="1.4" status="PENDING">
+    <title>Field-level Fernet encryption TypeDecorator for PII columns</title>
+    <priority>P0</priority>
+    <phase>1</phase>
+    <files>
+      <create>src/music_attribution/db/encryption.py</create>
+    </files>
+    <tdd_spec>
+      <test_file>tests/unit/auth/test_encryption.py</test_file>
+      <test_cases>
+        <case>test_fernet_encrypt_decrypt_roundtrip — Encrypt "test@example.com" with a known key, decrypt, assert matches original</case>
+        <case>test_hash_email_deterministic — Call hash_email("Test@Example.COM", key) twice, assert same hex digest both times</case>
+        <case>test_hash_email_case_insensitive — hash_email("Test@Example.com", key) == hash_email("test@example.com", key)</case>
+        <case>test_hash_email_different_keys_produce_different_hashes — hash_email(email, key_a) != hash_email(email, key_b)</case>
+        <case>test_no_plaintext_email_roundtrip — Assert there is no plaintext email path: only email_hash (lookup) + encrypted_email (read-back)</case>
+        <case>test_fernet_encrypt_produces_bytes — Assert encrypt("hello") returns bytes, not str</case>
+        <case>test_fernet_decrypt_returns_str — Assert decrypt(ciphertext) returns str</case>
+        <case>test_fernet_different_keys_fail — Encrypt with key A, try decrypt with key B, assert InvalidToken raised</case>
+        <case>test_fernet_none_value_passthrough — Assert encrypt(None) returns None, decrypt(None) returns None</case>
+        <case>test_fernet_empty_string — Assert encrypt("") returns bytes, decrypt(result) returns ""</case>
+        <case>test_encryption_type_decorator_process_bind_param — Create EncryptedString TypeDecorator, call process_bind_param with "secret", assert returns bytes</case>
+        <case>test_encryption_type_decorator_process_result_value — Call process_result_value with encrypted bytes, assert returns original string</case>
+        <case>test_encryption_key_from_settings — Assert get_encryption_key() reads ENCRYPTION_KEY from environment/settings and returns a valid Fernet key</case>
+        <case>test_encryption_key_generation — Assert generate_encryption_key() returns a valid base64-encoded 32-byte key</case>
+      </test_cases>
+      <description>
+        Create src/music_attribution/db/encryption.py providing:
+
+        1. **generate_encryption_key()** — Generates a new Fernet key using cryptography.fernet.Fernet.generate_key()
+
+        2. **get_encryption_key()** — Reads ENCRYPTION_KEY from pydantic-settings (added to config.py).
+           Falls back to a development-only key if environment is "development" and no key is set.
+           Raises RuntimeError in production if ENCRYPTION_KEY is not set.
+
+        3. **get_hmac_key()** — Reads EMAIL_HMAC_KEY from pydantic-settings. Used exclusively for
+           the email blind index. A separate key from ENCRYPTION_KEY prevents cross-purpose key usage.
+           Raises RuntimeError in production if EMAIL_HMAC_KEY is not set.
+
+        4. **hash_email(email: str, key: bytes) -> str** — Computes HMAC-SHA256(key, email.lower())
+           and returns the hex digest (64 chars). This is the blind index stored in email_hash.
+           Always lowercase the email before hashing to ensure case-insensitive lookup.
+           Usage: UserModel.email_hash = hash_email(email, get_hmac_key())
+           Lookup: SELECT * FROM users WHERE email_hash = hash_email(input_email, get_hmac_key())
+
+        5. **encrypt_value(plaintext: str | None, key: bytes) -> bytes | None** — Encrypts a string using Fernet.
+           Returns None if plaintext is None. Encodes string to UTF-8 before encryption.
+
+        6. **decrypt_value(ciphertext: bytes | None, key: bytes) -> str | None** — Decrypts Fernet ciphertext.
+           Returns None if ciphertext is None. Decodes result from UTF-8.
+
+        7. **EncryptedString(TypeDecorator)** — SQLAlchemy TypeDecorator wrapping LargeBinary.
+           impl = sa.LargeBinary. In process_bind_param, encrypts the string value before DB write.
+           In process_result_value, decrypts the bytes back to string after DB read.
+           The Fernet key is obtained from get_encryption_key() at first use (lazy, cached).
+
+        The blind index pattern for email:
+        - WRITE: email_hash = hash_email(email, hmac_key); encrypted_email = encrypt_value(email, fernet_key)
+        - LOOKUP: WHERE email_hash = hash_email(input, hmac_key)  — O(1), no plaintext in DB
+        - READ:   email = decrypt_value(row.encrypted_email, fernet_key)
+        Storing only a plaintext email column would defeat PII encryption entirely. The dual-column
+        approach (plaintext + encrypted) is explicitly BANNED — use only email_hash + encrypted_email.
+
+        Also add to Settings in config.py:
+        encryption_key: str = Field(default="", description="Fernet encryption key for PII at rest")
+        email_hmac_key: str = Field(default="", description="HMAC key for email blind index")
+        (Empty defaults for development; production requires real keys.)
+
+        Dependencies: cryptography (add to pyproject.toml dependencies).
+      </description>
+    </tdd_spec>
+    <implementation>
+      Create encryption.py with all functions and the TypeDecorator.
+      Add "cryptography>=44.0" to pyproject.toml dependencies.
+      Add encryption_key and email_hmac_key fields to Settings in config.py.
+      Use from __future__ import annotations. Use functools.lru_cache for key caching.
+      The TypeDecorator must handle None gracefully in both directions.
+      NEVER create a plaintext email column — all email lookup goes through hash_email(),
+      all email display goes through decrypt_value().
+    </implementation>
+  </task>
+
+  <!-- ============================================================
+       PHASE 2: Backend Auth Infrastructure
+       ============================================================ -->
+
+  <task id="2.1" status="PENDING">
+    <title>fastapi-users integration — UserManager, auth backend, JWT strategy</title>
+    <priority>P0</priority>
+    <phase>2</phase>
+    <files>
+      <create>src/music_attribution/auth/__init__.py</create>
+      <create>src/music_attribution/auth/manager.py</create>
+      <create>src/music_attribution/auth/backend.py</create>
+      <create>src/music_attribution/auth/db_adapter.py</create>
+      <modify>src/music_attribution/config.py</modify>
+    </files>
+    <tdd_spec>
+      <test_file>tests/unit/auth/test_user_manager.py</test_file>
+      <test_cases>
+        <case>test_user_manager_on_after_register — Mock UserManager, call on_after_register, assert audit log event "registration" is written</case>
+        <case>test_user_manager_on_after_login — Call on_after_login, assert audit log event "login" is written with IP address from request</case>
+        <case>test_user_manager_on_after_forgot_password — Call on_after_forgot_password, assert no exception (email sending is a future task)</case>
+        <case>test_jwt_strategy_lifetime — Assert JWT strategy has max_age=900 (15 minutes) for access tokens</case>
+        <case>test_auth_backend_name — Assert auth backend name is "jwt"</case>
+        <case>test_auth_backend_transport_cookie — Assert transport is CookieTransport with cookie_httponly=True, cookie_secure=True, cookie_samesite="strict"</case>
+        <case>test_user_db_adapter_instantiation — Assert SQLAlchemyUserDatabase can be instantiated with AsyncSession and UserModel</case>
+        <case>test_jwt_secret_from_settings — Assert JWT secret is read from Settings.jwt_secret, not hardcoded</case>
+      </test_cases>
+      <description>
+        Set up the fastapi-users[sqlalchemy] integration with a custom UserManager.
+
+        **auth/db_adapter.py**: SQLAlchemy user database adapter.
+        - get_user_db(session) async dependency that yields SQLAlchemyUserDatabase(session, UserModel)
+
+        **auth/manager.py**: Custom UserManager extending BaseUserManager.
+        - on_after_register: Write AuthAuditLogModel entry with event_type="registration"
+        - on_after_login: Write AuthAuditLogModel entry with event_type="login", extract IP from request
+        - on_after_forgot_password: Log event, no email sending yet (stub for future)
+        - on_after_request_verify: Log event (stub)
+        - get_user_manager(user_db) async dependency
+
+        **auth/backend.py**: Auth backend configuration.
+        - JWT strategy: secret from Settings.jwt_secret, max_age=900 (15min access token)
+        - Cookie transport: cookie_name="ma_auth", httponly=True, secure=True, samesite="strict", max_age=900
+        - Auth backend combining JWT strategy + cookie transport
+        - Also configure a refresh token strategy: max_age=604800 (7 days)
+
+        **config.py additions**:
+        - jwt_secret: SecretStr = Field(description="JWT signing secret")
+        - jwt_refresh_secret: SecretStr = Field(description="JWT refresh token signing secret")
+        - Default values only for environment="development"
+
+        **pyproject.toml additions**:
+        - "fastapi-users[sqlalchemy]>=14.0"
+      </description>
+    </tdd_spec>
+    <implementation>
+      Add "fastapi-users[sqlalchemy]>=14.0" to pyproject.toml dependencies.
+      Add jwt_secret and jwt_refresh_secret to config.py Settings.
+      Create auth/ package with __init__.py, manager.py, backend.py, db_adapter.py.
+      UserManager must write audit log entries asynchronously using the session.
+      All files use from __future__ import annotations.
+    </implementation>
+  </task>
+
+  <task id="2.2" status="PENDING">
+    <title>OAuth provider configuration (Google, GitHub, Apple, Facebook via httpx-oauth)</title>
+    <priority>P0</priority>
+    <phase>2</phase>
+    <files>
+      <create>src/music_attribution/auth/oauth.py</create>
+      <modify>src/music_attribution/config.py</modify>
+    </files>
+    <tdd_spec>
+      <test_file>tests/unit/auth/test_oauth_config.py</test_file>
+      <test_cases>
+        <case>test_google_oauth_client_created — Assert GoogleOAuth2 client is created with client_id and client_secret from settings</case>
+        <case>test_github_oauth_client_created — Assert GitHubOAuth2 client is created</case>
+        <case>test_apple_oauth_client_optional — Assert Apple OAuth client is None when apple_client_id is not set</case>
+        <case>test_facebook_oauth_client_optional — Assert Facebook OAuth client is None when facebook_client_id is not set</case>
+        <case>test_get_enabled_oauth_clients — Assert get_enabled_oauth_clients() returns only clients with non-empty credentials</case>
+        <case>test_oauth_redirect_url_configurable — Assert redirect URL reads from Settings.oauth_redirect_base_url</case>
+        <case>test_google_oauth_scopes — Assert Google client requests "openid", "email", "profile" scopes</case>
+      </test_cases>
+      <description>
+        Create src/music_attribution/auth/oauth.py with OAuth provider configuration.
+
+        Uses httpx-oauth (bundled with fastapi-users) to configure OAuth2 clients:
+        - GoogleOAuth2(client_id, client_secret) — required in production
+        - GitHubOAuth2(client_id, client_secret) — required in production
+        - Apple and Facebook — optional, only created if credentials are provided
+
+        Function get_enabled_oauth_clients(settings: Settings) -> list[tuple[OAuth2Client, str]]:
+        Returns a list of (client, provider_name) tuples for only those providers with non-empty credentials.
+
+        **config.py additions** (all Optional[str] defaulting to None):
+        - google_client_id, google_client_secret
+        - github_client_id, github_client_secret
+        - apple_client_id, apple_client_secret, apple_team_id, apple_key_id
+        - facebook_client_id, facebook_client_secret
+        - oauth_redirect_base_url: str = Field(default="http://localhost:3000")
+
+        **pyproject.toml**: httpx-oauth is a dependency of fastapi-users, no separate add needed.
+      </description>
+    </tdd_spec>
+    <implementation>
+      Create oauth.py with lazy client construction — clients are only instantiated when credentials exist.
+      All client_id/client_secret settings are Optional[str] = None in config.py.
+      Use from __future__ import annotations. The function must gracefully handle missing credentials
+      without raising, just skipping that provider.
+    </implementation>
+  </task>
+
+  <task id="2.3" status="PENDING">
+    <title>fastapi-nextauth-jwt middleware for decoding Auth.js v5 JWTs</title>
+    <priority>P1</priority>
+    <phase>2</phase>
+    <files>
+      <create>src/music_attribution/auth/nextauth_bridge.py</create>
+      <modify>src/music_attribution/config.py</modify>
+    </files>
+    <tdd_spec>
+      <test_file>tests/unit/auth/test_nextauth_bridge.py</test_file>
+      <test_cases>
+        <case>test_decode_valid_nextauth_jwt — Create a JWE token with NEXTAUTH_SECRET, decode with NextAuthJWTMiddleware, assert payload contains sub, email, name</case>
+        <case>test_decode_expired_jwt_raises — Create an expired JWE token, assert NextAuthTokenError raised</case>
+        <case>test_decode_invalid_secret_raises — Create JWE with different secret, assert NextAuthTokenError raised</case>
+        <case>test_middleware_extracts_from_secure_cookie — Mock request with __Secure-authjs.session-token cookie (production name), assert user payload is extracted</case>
+        <case>test_middleware_extracts_from_dev_cookie — Mock request with authjs.session-token cookie (development name), assert user payload is extracted</case>
+        <case>test_middleware_cookie_name_depends_on_environment — In Settings(environment="production"), assert __Secure- prefix cookie is checked first; in "development", assert unprefixed cookie is checked first</case>
+        <case>test_middleware_extracts_from_bearer_header — Mock request with Authorization: Bearer header, assert user payload is extracted</case>
+        <case>test_middleware_no_token_returns_none — Mock request with no cookie and no bearer, assert user is None (anonymous)</case>
+        <case>test_find_or_create_user_creates_new — Decode JWT for unknown email, assert new UserModel created in DB</case>
+        <case>test_find_or_create_user_finds_existing — Decode JWT for existing user email, assert existing UserModel returned</case>
+      </test_cases>
+      <description>
+        Create src/music_attribution/auth/nextauth_bridge.py that bridges Auth.js v5 (frontend)
+        sessions with the FastAPI backend.
+
+        Auth.js v5 uses JWE (JSON Web Encryption) tokens signed with NEXTAUTH_SECRET. The backend
+        must decode these tokens to identify the user for API requests.
+
+        Components:
+        1. **decode_nextauth_token(token: str, secret: str) -> dict** — Decodes a JWE token
+           created by Auth.js v5. Uses fastapi-nextauth-jwt directly (do NOT import python-jose
+           separately — fastapi-nextauth-jwt handles JWE decoding internally). Returns the JWT
+           payload dict. Raises NextAuthTokenError on invalid/expired tokens.
+
+        2. **NextAuthTokenError(Exception)** — Custom exception for invalid tokens.
+
+        3. **get_nextauth_user(request: Request) -> UserPayload | None** — FastAPI dependency that:
+           a. Checks for the Auth.js session cookie. IMPORTANT: Auth.js v5 uses TWO different cookie
+              names depending on the deployment environment:
+              - Production (HTTPS): `__Secure-authjs.session-token`
+              - Development (HTTP):  `authjs.session-token`
+              The middleware must check Settings.environment and try the appropriate cookie name
+              first, then fall back to the other. Both must be checked to handle misconfiguration.
+           b. Falls back to Authorization: Bearer header (for API clients / tests)
+           c. Decodes the token using NEXTAUTH_SECRET from settings
+           d. Returns a UserPayload dataclass with sub, email, name, image, provider
+           e. Returns None if no token is present (anonymous access)
+
+        4. **find_or_create_user(payload: UserPayload, session: AsyncSession) -> UserModel** —
+           Looks up user by email; creates a new UserModel if not found. Also creates/updates
+           UserIdentityModel for the OAuth provider.
+
+        **config.py addition**:
+        - nextauth_secret: SecretStr = Field(description="Auth.js NEXTAUTH_SECRET for JWE decoding")
+
+        **pyproject.toml**: Add "fastapi-nextauth-jwt>=2.0" dependency.
+      </description>
+    </tdd_spec>
+    <implementation>
+      Add ONLY "fastapi-nextauth-jwt>=2.0" to pyproject.toml. Do NOT add python-jose separately —
+      python-jose is a transitive dependency conflict risk and fastapi-nextauth-jwt already handles
+      JWE decoding internally. Using python-jose alongside fastapi-nextauth-jwt creates duplicate
+      JWT libraries with diverging versions.
+      Add nextauth_secret to Settings in config.py.
+      Create nextauth_bridge.py with all components. Use dataclass for UserPayload.
+      Use from __future__ import annotations. The middleware must be non-blocking — anonymous
+      access returns None, letting the RBAC layer decide whether to reject or allow.
+    </implementation>
+  </task>
+
+  <task id="2.4" status="PENDING">
+    <title>RBAC dependency — role-based access control middleware</title>
+    <priority>P0</priority>
+    <phase>2</phase>
+    <files>
+      <create>src/music_attribution/auth/rbac.py</create>
+    </files>
+    <tdd_spec>
+      <test_file>tests/unit/auth/test_rbac.py</test_file>
+      <test_cases>
+        <case>test_require_role_admin_allows_admin — Create mock user with role="admin", call require_role("admin"), assert no exception</case>
+        <case>test_require_role_admin_rejects_query_user — Create mock user with role="query_user", call require_role("admin"), assert HTTPException 403</case>
+        <case>test_require_role_artist_allows_artist — User role="artist", require_role("artist"), no exception</case>
+        <case>test_require_role_artist_allows_admin — Admin can access artist-level endpoints (role hierarchy)</case>
+        <case>test_require_role_rejects_anonymous — User is None, require_role("query_user"), assert HTTPException 401 (not 403)</case>
+        <case>test_require_authenticated_allows_any_role — Any non-None user passes require_authenticated</case>
+        <case>test_require_authenticated_rejects_none — None user raises HTTPException 401</case>
+        <case>test_require_active_user_rejects_inactive — User is_active=False, assert HTTPException 403 "Account deactivated"</case>
+        <case>test_role_hierarchy_order — Assert admin > artist > label > query_user in the hierarchy</case>
+        <case>test_get_current_user_dependency — FastAPI Depends(get_current_user) returns UserModel from request state</case>
+        <case>test_get_optional_user_dependency — FastAPI Depends(get_optional_user) returns None for anonymous, UserModel for authenticated</case>
+      </test_cases>
+      <description>
+        Create src/music_attribution/auth/rbac.py with role-based access control dependencies.
+
+        Role hierarchy (higher includes all lower):
+        admin > artist > label > query_user
+
+        Dependencies (all are FastAPI Depends-compatible):
+
+        1. **get_current_user(request: Request) -> UserModel** — Extracts current user from
+           request.state.user (set by auth middleware or NextAuth bridge). Raises 401 if not authenticated.
+
+        2. **get_optional_user(request: Request) -> UserModel | None** — Same but returns None instead
+           of raising for anonymous users.
+
+        3. **require_authenticated(user: UserModel = Depends(get_current_user)) -> UserModel** —
+           Ensures user is authenticated and active. Raises 401 if not authenticated, 403 if deactivated.
+
+        4. **require_role(*allowed_roles: str) -> Callable** — Returns a dependency that checks the
+           user's role against the allowed roles, respecting the hierarchy. Admin can access everything.
+           Usage: Depends(require_role("artist", "admin"))
+           Raises 401 for anonymous, 403 for insufficient role.
+
+        5. **require_admin** — Shorthand: Depends(require_role("admin"))
+
+        6. **ROLE_HIERARCHY: dict[str, int]** — Maps role names to numeric levels for comparison:
+           {"admin": 100, "artist": 75, "label": 50, "query_user": 25}
+
+        The hierarchy check works by comparing numeric levels: if the user's level >= the
+        minimum required level among allowed_roles, access is granted.
+      </description>
+    </tdd_spec>
+    <implementation>
+      Create rbac.py with all dependencies. Use FastAPI's Depends pattern.
+      HTTPException(status_code=401, detail="Not authenticated") for anonymous.
+      HTTPException(status_code=403, detail="Insufficient permissions") for wrong role.
+      HTTPException(status_code=403, detail="Account deactivated") for is_active=False.
+      Use from __future__ import annotations.
+    </implementation>
+  </task>
+
+  <task id="2.5" status="PENDING">
+    <title>Rate limiting on auth endpoints (slowapi)</title>
+    <priority>P1</priority>
+    <phase>2</phase>
+    <files>
+      <create>src/music_attribution/auth/rate_limit.py</create>
+      <modify>src/music_attribution/api/app.py</modify>
+    </files>
+    <tdd_spec>
+      <test_file>tests/unit/auth/test_rate_limit.py</test_file>
+      <test_cases>
+        <case>test_limiter_initialization — Assert Limiter is created with key_func extracting client IP</case>
+        <case>test_auth_rate_limit_value — Assert auth endpoints use "5/minute" rate limit</case>
+        <case>test_general_rate_limit_value — Assert general API endpoints use "100/minute" default</case>
+        <case>test_rate_limit_exceeded_returns_429 — Simulate 6 requests to login in 1 minute, assert 6th returns HTTP 429</case>
+        <case>test_rate_limit_key_func_uses_forwarded_for — Mock request with X-Forwarded-For header, assert IP is extracted from header (not socket peer)</case>
+        <case>test_rate_limit_handler_registered — Assert SlowAPIMiddleware is added to FastAPI app</case>
+      </test_cases>
+      <description>
+        Create src/music_attribution/auth/rate_limit.py with slowapi rate limiting.
+
+        Components:
+        1. **get_remote_address(request: Request) -> str** — Extract client IP from X-Forwarded-For
+           header (for reverse proxy), falling back to request.client.host.
+
+        2. **limiter** — slowapi.Limiter instance with key_func=get_remote_address
+
+        3. **AUTH_RATE_LIMIT = "5/minute"** — Aggressive rate limit for auth endpoints (login, register, forgot-password)
+
+        4. **API_RATE_LIMIT = "100/minute"** — General rate limit for API endpoints
+
+        Also modify app.py:
+        - Add SlowAPIMiddleware to the FastAPI app
+        - Add the limiter to app.state for route-level access
+        - Register the _rate_limit_exceeded_handler for HTTP 429 responses
+
+        **pyproject.toml**: Add "slowapi>=0.1.9" dependency.
+      </description>
+    </tdd_spec>
+    <implementation>
+      Add "slowapi>=0.1.9" to pyproject.toml dependencies.
+      Create rate_limit.py. In app.py create_app(), add:
+      app.state.limiter = limiter
+      app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+      app.add_middleware(SlowAPIMiddleware)
+      Use from __future__ import annotations.
+    </implementation>
+  </task>
+
+  <task id="2.6" status="PENDING">
+    <title>Audit logging middleware (structlog + immutable auth_audit_logs)</title>
+    <priority>P1</priority>
+    <phase>2</phase>
+    <files>
+      <create>src/music_attribution/auth/audit.py</create>
+      <modify>src/music_attribution/api/app.py</modify>
+    </files>
+    <tdd_spec>
+      <test_file>tests/unit/auth/test_audit.py</test_file>
+      <test_cases>
+        <case>test_log_auth_event_writes_to_db — Call log_auth_event(session, user_id, "login", ip="1.2.3.4"), assert AuthAuditLogModel row created</case>
+        <case>test_log_auth_event_with_details — Call with details={"provider": "google"}, assert details JSONB stored correctly</case>
+        <case>test_log_auth_event_nullable_user_id — Call with user_id=None (failed login), assert row created with null user_id</case>
+        <case>test_structlog_configured — Assert structlog.get_config() has json renderer for production, console renderer for development</case>
+        <case>test_auth_event_types_validated — Call with invalid event_type, assert ValueError raised</case>
+        <case>test_audit_middleware_logs_request — Make a test request through the middleware, assert structlog output contains method, path, status_code, duration_ms</case>
+        <case>test_audit_middleware_includes_user_id — Authenticated request, assert log entry includes user_id field</case>
+        <case>test_audit_middleware_masks_sensitive_headers — Assert Authorization header value is masked in logs</case>
+      </test_cases>
+      <description>
+        Create src/music_attribution/auth/audit.py with auth audit logging.
+
+        Components:
+
+        1. **configure_structlog(environment: str)** — Configures structlog with:
+           - JSON renderer for production (structured, parseable)
+           - Console renderer with colors for development (human-readable)
+           - Standard processors: add_log_level, TimeStamper(fmt="iso"), StackInfoRenderer
+           - Bind request_id (UUID) to each request for correlation
+
+        2. **log_auth_event(session, user_id, event_type, ip_address, user_agent, details)** —
+           Async function that writes an AuthAuditLogModel row.
+           Validates event_type against AuthEventTypeEnum.
+           Uses datetime.now(timezone.utc) for created_at.
+
+        3. **AuditLoggingMiddleware** — Middleware that:
+           - Assigns a request_id (UUID) to each request
+           - Logs request start: method, path, client_ip, user_id (if authenticated)
+           - Logs request end: status_code, duration_ms
+           - Masks sensitive headers (Authorization, Cookie) in log output
+           - Binds request_id to structlog context for the request duration
+
+           IMPORTANT: Implement as a pure ASGI middleware (a callable class with
+           `async def __call__(self, scope, receive, send)`) rather than extending
+           Starlette's BaseHTTPMiddleware. BaseHTTPMiddleware buffers the full response
+           body before calling the next middleware, which breaks SSE streaming on the
+           /api/v1/copilotkit endpoint. Pure ASGI middleware passes `receive`/`send`
+           directly without buffering.
+
+        Also modify app.py to:
+        - Call configure_structlog(settings.environment) in lifespan
+        - Add AuditLoggingMiddleware to the app
+
+        **pyproject.toml**: Add "structlog>=24.0" dependency.
+      </description>
+    </tdd_spec>
+    <implementation>
+      Add "structlog>=24.0" to pyproject.toml dependencies.
+      Create audit.py with all components. configure_structlog() should be idempotent (safe to call multiple times).
+      AuditLoggingMiddleware uses time.perf_counter() for duration measurement.
+      Mask Authorization header by replacing value with "***" in log output.
+      Use from __future__ import annotations, datetime.now(timezone.utc).
+    </implementation>
+  </task>
+
+  <!-- ============================================================
+       PHASE 3: Auth API Routes
+       ============================================================ -->
+
+  <task id="3.1" status="PENDING">
+    <title>Auth routes registration (login, register, verify, forgot-password, OAuth callbacks)</title>
+    <priority>P0</priority>
+    <phase>3</phase>
+    <files>
+      <create>src/music_attribution/api/routes/auth.py</create>
+      <modify>src/music_attribution/api/app.py</modify>
+    </files>
+    <tdd_spec>
+      <test_file>tests/unit/auth/test_auth_routes.py</test_file>
+      <test_cases>
+        <case>test_register_endpoint_exists — POST /api/v1/auth/register returns 201 with valid body</case>
+        <case>test_register_duplicate_email_returns_400 — Register same email twice, assert 400</case>
+        <case>test_register_weak_password_returns_422 — Register with 3-char password, assert 422</case>
+        <case>test_login_endpoint_exists — POST /api/v1/auth/login returns 200 with set-cookie header</case>
+        <case>test_login_wrong_password_returns_400 — Login with wrong password, assert 400</case>
+        <case>test_login_nonexistent_user_returns_400 — Login with unknown email, assert 400</case>
+        <case>test_logout_endpoint_exists — POST /api/v1/auth/logout clears the auth cookie</case>
+        <case>test_forgot_password_endpoint_exists — POST /api/v1/auth/forgot-password returns 202 (accepted, email async)</case>
+        <case>test_oauth_google_authorize_redirect — GET /api/v1/auth/google/authorize returns redirect URL</case>
+        <case>test_oauth_google_callback_endpoint — GET /api/v1/auth/google/callback endpoint is registered</case>
+        <case>test_oauth_github_authorize_redirect — GET /api/v1/auth/github/authorize returns redirect URL</case>
+        <case>test_auth_routes_have_rate_limit — Assert login and register endpoints have rate limit decorator</case>
+        <case>test_auth_routes_prefix — Assert all auth routes are under /api/v1/auth/</case>
+      </test_cases>
+      <description>
+        Create src/music_attribution/api/routes/auth.py with auth route registration.
+
+        This module uses fastapi-users router generators to create the standard auth routes:
+
+        1. **auth_router** — Login/logout routes from fastapi_users.get_auth_router(auth_backend)
+           - POST /login — email + password login, returns JWT in HttpOnly cookie
+           - POST /logout — clears the auth cookie
+
+        2. **register_router** — Registration from fastapi_users.get_register_router(UserRead, UserCreate)
+           - POST /register — creates new user, returns UserRead
+
+        3. **verify_router** — Email verification (stub, actual email sending is future)
+           - POST /request-verify-token
+           - POST /verify
+
+        4. **reset_password_router** — Password reset (stub)
+           - POST /forgot-password
+           - POST /reset-password
+
+        5. **OAuth routers** — One per enabled provider from fastapi_users.get_oauth_router()
+           - GET /{provider}/authorize — redirects to OAuth provider
+           - GET /{provider}/callback — handles OAuth callback, creates/links user
+
+        All auth routes are prefixed under /api/v1/auth/.
+        Login and register routes are decorated with @limiter.limit(AUTH_RATE_LIMIT).
+
+        Also update app.py to include the auth router:
+        app.include_router(auth_router, prefix="/api/v1/auth", tags=["auth"])
+      </description>
+    </tdd_spec>
+    <implementation>
+      Create routes/auth.py using fastapi_users router generators.
+      Import limiter from auth.rate_limit and apply to login/register.
+      Use APIRouter(tags=["auth"]) for OpenAPI grouping.
+      Register in app.py create_app() alongside existing routers.
+      Use from __future__ import annotations.
+    </implementation>
+  </task>
+
+  <task id="3.2" status="PENDING">
+    <title>User profile routes (GET /me, PATCH /me, link/unlink identity)</title>
+    <priority>P1</priority>
+    <phase>3</phase>
+    <files>
+      <create>src/music_attribution/api/routes/users.py</create>
+      <modify>src/music_attribution/api/app.py</modify>
+    </files>
+    <tdd_spec>
+      <test_file>tests/unit/auth/test_user_routes.py</test_file>
+      <test_cases>
+        <case>test_get_me_returns_current_user — Authenticated GET /api/v1/users/me returns UserRead with correct email, role</case>
+        <case>test_get_me_unauthenticated_returns_401 — Unauthenticated GET /api/v1/users/me returns 401</case>
+        <case>test_patch_me_updates_display_name — PATCH /api/v1/users/me with {"display_name": "New Name"} returns updated user</case>
+        <case>test_patch_me_cannot_change_role — PATCH /api/v1/users/me with {"role": "admin"} does NOT change role (ignored or 403)</case>
+        <case>test_get_me_identities — GET /api/v1/users/me/identities returns list of UserIdentityRead</case>
+        <case>test_unlink_identity — DELETE /api/v1/users/me/identities/{identity_id} removes the identity link</case>
+        <case>test_unlink_last_identity_with_no_password_fails — If user has no password and only 1 identity, unlink returns 400 "Cannot remove last login method"</case>
+        <case>test_get_me_tier — GET /api/v1/users/me/tier returns UserTierRead</case>
+      </test_cases>
+      <description>
+        Create src/music_attribution/api/routes/users.py with user profile management routes.
+
+        Routes:
+        1. **GET /api/v1/users/me** — Returns UserRead for the authenticated user.
+           Depends(require_authenticated).
+
+        2. **PATCH /api/v1/users/me** — Updates user profile (display_name, password).
+           Accepts UserUpdate body. Cannot change role (silently ignored).
+           Depends(require_authenticated).
+
+        3. **GET /api/v1/users/me/identities** — Lists linked OAuth identities.
+           Returns list[UserIdentityRead].
+
+        4. **DELETE /api/v1/users/me/identities/{identity_id}** — Unlinks an OAuth identity.
+           Prevents unlinking the last identity if user has no password (would lock them out).
+           Writes audit log event "identity_unlink".
+
+        5. **GET /api/v1/users/me/tier** — Returns current user's tier information.
+           Returns UserTierRead.
+
+        All routes require authentication via Depends(require_authenticated).
+        Register in app.py: app.include_router(users_router, prefix="/api/v1/users", tags=["users"])
+      </description>
+    </tdd_spec>
+    <implementation>
+      Create routes/users.py with APIRouter. All endpoints use Depends(require_authenticated)
+      from auth.rbac. Database access via get_session(request). Register in app.py.
+      Use from __future__ import annotations.
+    </implementation>
+  </task>
+
+  <task id="3.3" status="PENDING">
+    <title>Federation link routes (link ORCID/ISNI/Auracles ID, verify)</title>
+    <priority>P2</priority>
+    <phase>3</phase>
+    <files>
+      <create>src/music_attribution/api/routes/federation.py</create>
+      <modify>src/music_attribution/api/app.py</modify>
+    </files>
+    <tdd_spec>
+      <test_file>tests/unit/auth/test_federation_routes.py</test_file>
+      <test_cases>
+        <case>test_link_orcid — POST /api/v1/users/me/federation with {"federation_type": "orcid", "federation_id": "0000-0002-1234-5678"} creates FederationLinkModel with verified=False</case>
+        <case>test_link_isni — POST with federation_type="isni" and valid ISNI creates link</case>
+        <case>test_link_duplicate_federation_id_returns_409 — Linking an already-linked federation_id returns 409 Conflict</case>
+        <case>test_list_federation_links — GET /api/v1/users/me/federation returns list of FederationLinkRead</case>
+        <case>test_unlink_federation — DELETE /api/v1/users/me/federation/{link_id} removes the link</case>
+        <case>test_orcid_format_validation — Invalid ORCID format "not-an-orcid" returns 422</case>
+        <case>test_isni_format_validation — Invalid ISNI format returns 422</case>
+        <case>test_federation_link_audit_logged — Linking writes AuthAuditLogModel with event_type="federation_link"</case>
+      </test_cases>
+      <description>
+        Create src/music_attribution/api/routes/federation.py with federation identity management.
+
+        Routes:
+        1. **POST /api/v1/users/me/federation** — Link a federation identity (ORCID, ISNI, Auracles).
+           Accepts FederationLinkCreate body. Validates format of federation_id:
+           - ORCID: must match pattern NNNN-NNNN-NNNN-NNNN (with checksum digit)
+           - ISNI: must be 16 digits
+           - Auracles: free-form string (no validation yet)
+           Creates FederationLinkModel with verified=False. Returns FederationLinkRead.
+           Returns 409 if federation_id already linked to any user.
+
+        2. **GET /api/v1/users/me/federation** — List all federation links for current user.
+           Returns list[FederationLinkRead].
+
+        3. **DELETE /api/v1/users/me/federation/{link_id}** — Remove a federation link.
+           Only the owning user can remove their own links.
+
+        4. **POST /api/v1/users/me/federation/{link_id}/verify** — Mark a federation link as verified.
+           (MVP stub: admin-only endpoint that sets verified=True. Real verification via ORCID OAuth
+           or ISNI registry is a future task.)
+
+        All routes require Depends(require_authenticated). Verify route requires Depends(require_role("admin")).
+        Register in app.py: app.include_router(federation_router, prefix="/api/v1/users/me/federation", tags=["federation"])
+      </description>
+    </tdd_spec>
+    <implementation>
+      Create routes/federation.py with APIRouter. ORCID validation: regex r"^\d{4}-\d{4}-\d{4}-\d{3}[\dX]$".
+      ISNI validation: regex r"^\d{16}$". Use Depends(require_authenticated) and Depends(require_role("admin"))
+      appropriately. Write audit log entries for link/unlink/verify events.
+      Use from __future__ import annotations.
+    </implementation>
+  </task>
+
+  <task id="3.4" status="PENDING">
+    <title>Wire existing attribution/permission routes to require auth</title>
+    <priority>P0</priority>
+    <phase>3</phase>
+    <files>
+      <modify>src/music_attribution/api/routes/attribution.py</modify>
+      <modify>src/music_attribution/api/routes/permissions.py</modify>
+      <modify>src/music_attribution/api/dependencies.py</modify>
+    </files>
+    <tdd_spec>
+      <test_file>tests/unit/auth/test_routes_require_auth.py</test_file>
+      <test_cases>
+        <case>test_get_attribution_unauthenticated_returns_401 — GET /api/v1/attributions/ without auth returns 401</case>
+        <case>test_get_attribution_authenticated_returns_200 — GET /api/v1/attributions/ with valid auth returns 200</case>
+        <case>test_search_attributions_allows_query_user — User with role="query_user" can access search endpoint</case>
+        <case>test_check_permission_requires_auth — POST /api/v1/permissions/check without auth returns 401</case>
+        <case>test_check_permission_authenticated_works — POST /api/v1/permissions/check with auth returns permission result</case>
+        <case>test_list_permissions_requires_auth — GET /api/v1/permissions/{entity_id} without auth returns 401</case>
+        <case>test_health_endpoint_no_auth_required — GET /health returns 200 without auth (health check must be public)</case>
+        <case>test_metrics_endpoint_no_auth_required — GET /metrics returns 200 without auth</case>
+        <case>test_permission_check_records_user_id — POST /api/v1/permissions/check uses authenticated user_id as requester_id in audit log</case>
+      </test_cases>
+      <description>
+        Wire the existing API routes to require authentication. This is the critical integration
+        point where the currently-open API becomes auth-protected.
+
+        Changes to attribution.py:
+        - All 4 endpoints (get_attribution_by_work_id, list_attributions, get_provenance,
+          search_attributions) add parameter: user: UserModel = Depends(require_authenticated)
+        - The user parameter is available for audit logging but not used to filter results yet
+          (all authenticated users can see all attributions in MVP)
+
+        Changes to permissions.py:
+        - check_permission adds: user: UserModel = Depends(require_authenticated)
+        - Uses user.user_id as requester_id instead of body.requester_id for audit integrity
+        - list_permissions adds: user: UserModel = Depends(require_authenticated)
+
+        Changes to dependencies.py:
+        - Add get_current_user dependency that wraps the auth chain
+        - Add get_optional_user dependency for future mixed-auth endpoints
+
+        IMPORTANT: Health and metrics endpoints must remain public (no auth required).
+        The CopilotKit endpoint needs auth too but uses its own auth flow (future task).
+
+        CRITICAL: Create or update tests/conftest.py with auth fixtures so that all 351+ existing
+        tests continue passing after auth is wired in. Add:
+        - `mock_current_user` fixture: returns a UserModel with role="query_user", is_active=True,
+          id=uuid4(). Override the `get_current_user` dependency in the test app.
+        - `authenticated_client` fixture: TestClient (or AsyncClient) with the `get_current_user`
+          dependency overridden to return mock_current_user. Use FastAPI dependency_overrides.
+        Endpoints must accept BOTH cookie-based auth (Auth.js, for browser clients) AND Bearer
+        token auth (Authorization header, for API clients and test fixtures). The test fixtures
+        use Bearer token auth via dependency_overrides — no actual token is needed since the
+        dependency is fully overridden. Do NOT break existing tests that use the raw test client.
+      </description>
+    </tdd_spec>
+    <implementation>
+      Import require_authenticated from auth.rbac. Add as Depends() parameter to each route function.
+      In permissions.py check_permission, replace body.requester_id with str(user.user_id).
+      Do NOT modify health.py or metrics.py. The copilotkit_router auth is a separate concern.
+      Use from __future__ import annotations.
+    </implementation>
+  </task>
+
+  <!-- ============================================================
+       PHASE 4: Frontend Auth
+       ============================================================ -->
+
+  <task id="4.1" status="PENDING">
+    <title>Auth.js v5 configuration (next-auth, providers, callbacks)</title>
+    <priority>P0</priority>
+    <phase>4</phase>
+    <files>
+      <create>frontend/src/lib/auth/auth-config.ts</create>
+      <create>frontend/src/app/api/auth/[...nextauth]/route.ts</create>
+      <create>frontend/.env.example</create>
+      <modify>frontend/src/lib/config.ts</modify>
+    </files>
+    <tdd_spec>
+      <test_file>frontend/src/__tests__/auth/auth-config.test.ts</test_file>
+      <test_cases>
+        <case>test_auth_config_has_google_provider — Assert authConfig.providers includes Google provider</case>
+        <case>test_auth_config_has_github_provider — Assert authConfig.providers includes GitHub provider</case>
+        <case>test_auth_config_jwt_callback_includes_role — Mock JWT callback, assert token includes role field</case>
+        <case>test_auth_config_session_callback_includes_role — Mock session callback, assert session.user includes role</case>
+        <case>test_auth_config_secret_from_env — Assert authConfig reads AUTH_SECRET from environment</case>
+        <case>test_nextauth_route_exports_handlers — Assert route.ts exports GET and POST handlers</case>
+        <case>test_auth_config_session_strategy_jwt — Assert authConfig uses JWT strategy (not database sessions)</case>
+        <case>test_auth_config_pages_custom_signin — Assert authConfig.pages.signIn = "/auth/signin"</case>
+      </test_cases>
+      <description>
+        Set up Auth.js v5 (next-auth@5) in the Next.js 15 App Router frontend.
+
+        **frontend/src/lib/auth/auth-config.ts**:
+        - Export authConfig object with:
+          - providers: [Google({...}), GitHub({...}), Apple({...optional}), Facebook({...optional})]
+          - session: { strategy: "jwt", maxAge: 15 * 60 } (15 min access, matches backend)
+          - pages: { signIn: "/auth/signin", error: "/auth/error" }
+          - callbacks:
+            - jwt: Enriches token with user role from backend API call on first sign-in
+            - session: Copies role from token to session.user for client access
+            - signIn: Validates user is active (calls backend /api/v1/users/me)
+          - secret: process.env.AUTH_SECRET
+
+        **frontend/src/app/api/auth/[...nextauth]/route.ts**:
+        - Exports { GET, POST } from NextAuth(authConfig)
+
+        **frontend/.env.example**:
+        - AUTH_SECRET, AUTH_GOOGLE_ID, AUTH_GOOGLE_SECRET, AUTH_GITHUB_ID, AUTH_GITHUB_SECRET
+        - NEXT_PUBLIC_API_URL
+
+        **frontend/src/lib/config.ts** additions:
+        - AUTH_PROVIDERS_ENABLED: string[] from NEXT_PUBLIC_AUTH_PROVIDERS env var
+
+        **package.json**: Add "next-auth@5.0.0-beta.25" (pinned, NOT ^5.0.0-beta — the beta range
+        is unstable and minor bumps have broken APIs). Also add "@auth/core@0.37.2" as an explicit
+        dependency (next-auth v5 beta relies on @auth/core but does not always pin it, causing
+        version drift). Check https://github.com/nextauthjs/next-auth/releases for the latest
+        stable beta before implementing — update the pin if a newer stable beta exists.
+      </description>
+    </tdd_spec>
+    <implementation>
+      Install next-auth@5.0.0-beta.25 and @auth/core@0.37.2 (both pinned) in frontend.
+      Use: cd frontend; npm install next-auth@5.0.0-beta.25 @auth/core@0.37.2
+      Create the auth config with JWT strategy.
+      The [...nextauth] catch-all route handles all Auth.js endpoints.
+      Provider credentials come from server-side env vars (not NEXT_PUBLIC_).
+      Use TypeScript strict mode throughout.
+    </implementation>
+  </task>
+
+  <task id="4.2" status="PENDING">
+    <title>Auth context provider + protected route wrapper</title>
+    <priority>P0</priority>
+    <phase>4</phase>
+    <files>
+      <create>frontend/src/lib/auth/auth-provider.tsx</create>
+      <create>frontend/src/lib/auth/use-session.ts</create>
+      <create>frontend/src/components/auth/protected-route.tsx</create>
+      <modify>frontend/src/app/layout.tsx</modify>
+    </files>
+    <tdd_spec>
+      <test_file>frontend/src/__tests__/auth/auth-provider.test.tsx</test_file>
+      <test_cases>
+        <case>test_auth_provider_renders_children — AuthProvider renders children without error</case>
+        <case>test_use_session_returns_session_data — Mock SessionProvider, assert useSession() returns user data</case>
+        <case>test_use_session_returns_null_unauthenticated — No session, assert useSession() returns null</case>
+        <case>test_protected_route_redirects_unauthenticated — Render ProtectedRoute with no session, assert redirect to /auth/signin</case>
+        <case>test_protected_route_renders_authenticated — Render ProtectedRoute with valid session, assert children rendered</case>
+        <case>test_protected_route_role_check — ProtectedRoute with requiredRole="artist", user role="query_user", assert redirect to /unauthorized</case>
+        <case>test_protected_route_loading_state — During session loading, assert skeleton/loading UI is shown</case>
+        <case>test_auth_provider_in_layout — Assert layout.tsx renders AuthProvider wrapping children</case>
+      </test_cases>
+      <description>
+        Create the frontend auth context and route protection.
+
+        **frontend/src/lib/auth/auth-provider.tsx**:
+        - Wraps Next-Auth SessionProvider with app-specific context
+        - Provides session state to all child components via React context
+        - Must be added to layout.tsx wrapping order: JotaiProvider > PostHogProvider > AuthProvider > CopilotProvider > ThemeProvider
+
+        **frontend/src/lib/auth/use-session.ts**:
+        - Custom hook wrapping next-auth/react useSession()
+        - Returns typed session with user role, email, name, image
+        - Returns null for unauthenticated users
+        - Provides isLoading boolean for loading states
+
+        **frontend/src/components/auth/protected-route.tsx**:
+        - Client component wrapping pages that require authentication
+        - Props: children, requiredRole? (optional minimum role)
+        - If not authenticated: redirect to /auth/signin with callbackUrl
+        - If authenticated but wrong role: redirect to /unauthorized
+        - If loading: show skeleton loader matching editorial design system
+        - If authenticated with sufficient role: render children
+
+        **layout.tsx modification**:
+        - Add AuthProvider in the provider nesting order
+      </description>
+    </tdd_spec>
+    <implementation>
+      Use "use client" directive for auth-provider.tsx and protected-route.tsx.
+      Use next/navigation useRouter and usePathname for redirects.
+      Skeleton loader follows editorial design: cream background, shimmer animation.
+      Auth provider must NOT block server-side rendering of public pages.
+    </implementation>
+  </task>
+
+  <task id="4.3" status="PENDING">
+    <title>Sign-in / Sign-up page components</title>
+    <priority>P1</priority>
+    <phase>4</phase>
+    <files>
+      <create>frontend/src/app/auth/signin/page.tsx</create>
+      <create>frontend/src/app/auth/error/page.tsx</create>
+      <create>frontend/src/components/auth/oauth-button.tsx</create>
+      <create>frontend/src/components/auth/auth-form.tsx</create>
+    </files>
+    <tdd_spec>
+      <test_file>frontend/src/__tests__/auth/signin-page.test.tsx</test_file>
+      <test_cases>
+        <case>test_signin_page_renders — SignIn page renders without error</case>
+        <case>test_signin_page_has_google_button — Assert "Continue with Google" button present</case>
+        <case>test_signin_page_has_github_button — Assert "Continue with GitHub" button present</case>
+        <case>test_signin_page_has_email_form — Assert email + password form fields present</case>
+        <case>test_signin_page_editorial_typography — Assert Instrument Serif heading "Sign In" with editorial-display class</case>
+        <case>test_signin_page_no_hardcoded_hex — Assert zero hardcoded hex values in component</case>
+        <case>test_oauth_button_accessible — Assert OAuth button has role="button", accessible name</case>
+        <case>test_error_page_renders — Auth error page renders with friendly message</case>
+        <case>test_error_page_has_retry — Error page has "Try again" link back to signin</case>
+        <case>test_signin_form_password_min_length — Client-side validation rejects password under 8 chars</case>
+      </test_cases>
+      <description>
+        Create sign-in and error pages following the editorial design system.
+
+        **frontend/src/app/auth/signin/page.tsx**:
+        - Full-page sign-in with editorial layout (NOT centered card)
+        - Asymmetric two-column layout: left side has Instrument Serif "Sign In" heading + accent line,
+          right side has form
+        - OAuth buttons: "Continue with Google", "Continue with GitHub" (+ Apple, Facebook if enabled)
+        - Email/password form below OAuth buttons, separated by "or" divider line
+        - "Create account" link below for new users
+        - All colors from CSS custom properties (zero hardcoded hex)
+        - Cream background (var(--color-surface)), coral accent line
+
+        **frontend/src/app/auth/error/page.tsx**:
+        - Friendly error page (not technical jargon)
+        - Shows error message from URL params
+        - "Try again" link back to signin
+        - "Contact support" link (mailto: stub)
+
+        **frontend/src/components/auth/oauth-button.tsx**:
+        - Reusable OAuth provider button with provider icon + text
+        - Uses CSS custom properties for colors
+        - Accessible: proper button role, label, focus ring
+
+        **frontend/src/components/auth/auth-form.tsx**:
+        - Email + password form for non-OAuth login
+        - Client-side validation: email format, password min length (8)
+        - Submits via next-auth signIn("credentials") or register API call
+        - Loading state with editorial skeleton
+
+        BANNED: rounded-lg, shadow-sm cards, centered containers, generic SaaS aesthetic.
+        REQUIRED: Instrument Serif headings, accent lines, asymmetric layout, warm cream tones.
+      </description>
+    </tdd_spec>
+    <implementation>
+      Use "use client" for interactive components. Use signIn() from next-auth/react for OAuth.
+      Email/password login calls signIn("credentials", { email, password }).
+      Follow design system rules from .claude/rules/10-frontend-design-system.md and 11-ux-first-philosophy.md.
+      No hardcoded hex values. All typography via editorial CSS classes.
+    </implementation>
+  </task>
+
+  <task id="4.4" status="PENDING">
+    <title>User profile panel (linked accounts, federation IDs)</title>
+    <priority>P2</priority>
+    <phase>4</phase>
+    <files>
+      <create>frontend/src/app/profile/page.tsx</create>
+      <create>frontend/src/components/auth/linked-accounts.tsx</create>
+      <create>frontend/src/components/auth/federation-links.tsx</create>
+      <create>frontend/src/components/auth/user-tier-badge.tsx</create>
+    </files>
+    <tdd_spec>
+      <test_file>frontend/src/__tests__/auth/profile-page.test.tsx</test_file>
+      <test_cases>
+        <case>test_profile_page_renders — Profile page renders for authenticated user</case>
+        <case>test_profile_page_shows_display_name — Assert user's display name shown in Instrument Serif heading</case>
+        <case>test_profile_page_shows_email — Assert user's email displayed</case>
+        <case>test_profile_page_shows_role_badge — Assert role badge with correct role name</case>
+        <case>test_linked_accounts_shows_providers — Assert linked OAuth providers listed with provider icons</case>
+        <case>test_linked_accounts_unlink_button — Assert "Unlink" text link (not button) for each linked provider</case>
+        <case>test_federation_links_shows_orcid — If ORCID linked, shows ORCID ID with verified/unverified badge</case>
+        <case>test_federation_links_add_form — "Link ORCID" form with federation ID input field</case>
+        <case>test_user_tier_badge_shows_tier — Assert tier badge shows current tier name</case>
+        <case>test_profile_page_no_hardcoded_hex — Assert zero hardcoded hex values</case>
+        <case>test_profile_page_protected — Unauthenticated access redirects to signin</case>
+      </test_cases>
+      <description>
+        Create user profile page with linked accounts and federation identity management.
+
+        **frontend/src/app/profile/page.tsx**:
+        - Protected page (requires authentication)
+        - Editorial layout with Instrument Serif "Profile" heading + accent line
+        - Sections: Account Info, Linked Accounts, Federation IDs, Subscription Tier
+        - Horizontal row layout with divider lines (not card boxes)
+        - "Edit" text links (not buttons) for editable fields
+
+        **frontend/src/components/auth/linked-accounts.tsx**:
+        - Lists linked OAuth providers (Google, GitHub, etc.) with provider icons
+        - "Unlink" text link per provider (calls DELETE /api/v1/users/me/identities/{id})
+        - "Link Google Account" / "Link GitHub Account" actions for unlinked providers
+        - Prevents unlinking last account if no password set (shows warning)
+
+        **frontend/src/components/auth/federation-links.tsx**:
+        - Lists federation identities (ORCID, ISNI, Auracles) with verified/unverified status
+        - Verified: green check + "Verified" text. Unverified: amber circle + "Pending verification"
+        - "Link ORCID" / "Link ISNI" forms with proper format validation
+        - "Unlink" action per federation link
+
+        **frontend/src/components/auth/user-tier-badge.tsx**:
+        - Small badge showing current tier (Free, Pro, Enterprise)
+        - Uses editorial-caps class styling
+        - Shows rate limit info on hover/focus (progressive disclosure)
+
+        All data fetched from /api/v1/users/me, /api/v1/users/me/identities, /api/v1/users/me/federation.
+        Follow design system: no hardcoded hex, accent lines, editorial typography.
+      </description>
+    </tdd_spec>
+    <implementation>
+      Use "use client" for interactive components. Fetch data with SWR or useEffect + fetch.
+      Wrap page in ProtectedRoute. Follow editorial design system.
+      API calls use API_BASE from config.ts with Authorization header from session.
+    </implementation>
+  </task>
+
+  <!-- ============================================================
+       PHASE 5: Security Hardening
+       ============================================================ -->
+
+  <task id="5.1" status="PENDING">
+    <title>Session management (token rotation, idle timeout, absolute timeout)</title>
+    <priority>P1</priority>
+    <phase>5</phase>
+    <files>
+      <create>src/music_attribution/auth/session.py</create>
+      <modify>src/music_attribution/auth/backend.py</modify>
+      <modify>src/music_attribution/config.py</modify>
+    </files>
+    <tdd_spec>
+      <test_file>tests/unit/auth/test_session.py</test_file>
+      <test_cases>
+        <case>test_access_token_max_age — Assert access token max_age = 900 seconds (15 minutes)</case>
+        <case>test_refresh_token_max_age — Assert refresh token max_age = 604800 seconds (7 days)</case>
+        <case>test_refresh_token_rotation — Call refresh endpoint, assert new access token AND new refresh token returned (old refresh token invalidated)</case>
+        <case>test_refresh_token_reuse_detection — Use same refresh token twice, assert second use returns 401 and all user sessions are invalidated</case>
+        <case>test_idle_timeout — Mock session with last_activity > 30 minutes ago, assert session rejected</case>
+        <case>test_absolute_timeout — Mock session created > 24 hours ago, assert session rejected regardless of activity</case>
+        <case>test_session_config_from_settings — Assert timeouts read from Settings, not hardcoded</case>
+        <case>test_token_refresh_endpoint — POST /api/v1/auth/refresh returns new token pair</case>
+      </test_cases>
+      <description>
+        Create src/music_attribution/auth/session.py with advanced session management.
+
+        Features:
+
+        1. **Token rotation** — When a refresh token is used, both the access token AND the
+           refresh token are rotated. The old refresh token is invalidated immediately.
+           This prevents refresh token theft from granting indefinite access.
+
+        2. **Refresh token reuse detection** — If a refresh token is used after it has already
+           been rotated (indicating potential token theft), ALL of the user's sessions are
+           invalidated. Uses a token family tracking approach:
+           - Each refresh token belongs to a "family" (stored in Valkey/Redis)
+           - On rotation, old token is marked as used
+           - If a used token appears again, entire family is invalidated
+
+        3. **Idle timeout** — Sessions are rejected if the last activity was more than
+           SESSION_IDLE_TIMEOUT_MINUTES (default: 30) minutes ago. Last activity is tracked
+           via the AuditLoggingMiddleware (updated on each authenticated request).
+
+        4. **Absolute timeout** — Sessions are rejected if they were created more than
+           SESSION_ABSOLUTE_TIMEOUT_HOURS (default: 24) hours ago, regardless of activity.
+           Forces periodic re-authentication.
+
+        **Config.py additions**:
+        - access_token_max_age: int = 900 (15 minutes)
+        - refresh_token_max_age: int = 604800 (7 days)
+        - session_idle_timeout_minutes: int = 30
+        - session_absolute_timeout_hours: int = 24
+
+        **Valkey/Redis usage**: Refresh token families are stored in Valkey with TTL = refresh_token_max_age.
+        Key pattern: "refresh_family:{family_id}" -> set of issued token hashes.
+      </description>
+    </tdd_spec>
+    <implementation>
+      Create session.py with RefreshTokenFamily dataclass and SessionValidator class.
+      Uses valkey_url from Settings for Redis/Valkey connection.
+      Token families stored as Redis sets with TTL.
+      Modify backend.py to use the custom JWT strategy that checks idle/absolute timeouts.
+      Use from __future__ import annotations, datetime.now(timezone.utc).
+    </implementation>
+  </task>
+
+  <task id="5.2" status="PENDING">
+    <title>MFA setup for admin role (pyotp TOTP)</title>
+    <priority>P2</priority>
+    <phase>5</phase>
+    <files>
+      <create>src/music_attribution/auth/mfa.py</create>
+      <create>src/music_attribution/api/routes/mfa.py</create>
+      <modify>src/music_attribution/api/app.py</modify>
+    </files>
+    <tdd_spec>
+      <test_file>tests/unit/auth/test_mfa.py</test_file>
+      <test_cases>
+        <case>test_generate_totp_secret — Assert generate_totp_secret() returns a base32-encoded string of length 32</case>
+        <case>test_generate_provisioning_uri — Assert provisioning URI starts with "otpauth://totp/" and contains issuer "MusicAttribution"</case>
+        <case>test_verify_totp_valid_code — Generate secret, compute current TOTP, verify returns True</case>
+        <case>test_verify_totp_invalid_code — Verify with wrong code returns False</case>
+        <case>test_verify_totp_expired_code — Verify with code from 5 intervals ago returns False</case>
+        <case>test_mfa_setup_endpoint — POST /api/v1/auth/mfa/setup returns secret + provisioning URI + QR code data URL</case>
+        <case>test_mfa_setup_requires_admin — Non-admin user calling MFA setup returns 403</case>
+        <case>test_mfa_verify_endpoint — POST /api/v1/auth/mfa/verify with valid TOTP code enables MFA on user</case>
+        <case>test_mfa_verify_invalid_code_returns_400 — POST with invalid code returns 400</case>
+        <case>test_mfa_disable_endpoint — POST /api/v1/auth/mfa/disable requires current TOTP code + password</case>
+        <case>test_mfa_login_flow — After MFA enabled, login returns "mfa_required" status, second request with TOTP completes login</case>
+      </test_cases>
+      <description>
+        Create MFA (Multi-Factor Authentication) for admin accounts using TOTP.
+
+        **auth/mfa.py**:
+        - generate_totp_secret() -> str: Generates a new TOTP shared secret using pyotp.random_base32()
+        - get_provisioning_uri(secret, email) -> str: Returns otpauth:// URI for QR code scanning.
+          Issuer: "MusicAttribution"
+        - verify_totp(secret, code) -> bool: Verifies a 6-digit TOTP code. Uses pyotp.TOTP(secret).verify(code, valid_window=1)
+          to allow 1 interval of clock drift.
+        - generate_qr_data_url(uri) -> str: Generates a base64 PNG data URL of the QR code
+          using qrcode library (for displaying in API response, not just URI).
+
+        **api/routes/mfa.py**:
+        - POST /api/v1/auth/mfa/setup: Requires admin role. Generates secret, stores encrypted in
+          user.mfa_secret (not yet activated). Returns: { secret, provisioning_uri, qr_data_url }
+        - POST /api/v1/auth/mfa/verify: Accepts { code: str }. Verifies the TOTP code against
+          stored secret. On success, marks MFA as active. Writes audit event "mfa_enable".
+        - POST /api/v1/auth/mfa/disable: Requires current TOTP code + password. Removes mfa_secret.
+          Writes audit event "mfa_disable".
+        - POST /api/v1/auth/mfa/challenge: During login flow when MFA is required, accepts
+          { code: str } and completes the authentication.
+
+        **Login flow with MFA**:
+        1. User submits email + password
+        2. Backend validates credentials, sees mfa_secret is set
+        3. Returns 202 with { status: "mfa_required", mfa_challenge_token: "..." }
+        4. Frontend shows TOTP code entry form
+        5. User submits code via POST /api/v1/auth/mfa/challenge
+        6. Backend verifies TOTP, issues full JWT
+
+        **pyproject.toml**: Add "pyotp>=2.9" and "qrcode[pil]>=8.0" dependencies.
+        Register in app.py: app.include_router(mfa_router, prefix="/api/v1/auth/mfa", tags=["mfa"])
+      </description>
+    </tdd_spec>
+    <implementation>
+      Add "pyotp>=2.9" and "qrcode[pil]>=8.0" to pyproject.toml.
+      Create auth/mfa.py and api/routes/mfa.py.
+      MFA secret stored encrypted using EncryptedString TypeDecorator.
+      The mfa_challenge_token is a short-lived JWT (5 minutes) with limited scope.
+      Use from __future__ import annotations, datetime.now(timezone.utc).
+    </implementation>
+  </task>
+
+  <task id="5.3" status="PENDING">
+    <title>Security headers middleware (HSTS, CSP, X-Frame-Options, etc.)</title>
+    <priority>P1</priority>
+    <phase>5</phase>
+    <files>
+      <create>src/music_attribution/auth/security_headers.py</create>
+      <modify>src/music_attribution/api/app.py</modify>
+    </files>
+    <tdd_spec>
+      <test_file>tests/unit/auth/test_security_headers.py</test_file>
+      <test_cases>
+        <case>test_hsts_header_present — Assert response contains Strict-Transport-Security header with max-age=31536000; includeSubDomains</case>
+        <case>test_x_frame_options_deny — Assert response contains X-Frame-Options: DENY</case>
+        <case>test_x_content_type_options — Assert response contains X-Content-Type-Options: nosniff</case>
+        <case>test_referrer_policy — Assert response contains Referrer-Policy: strict-origin-when-cross-origin</case>
+        <case>test_csp_header_present — Assert response contains Content-Security-Policy header</case>
+        <case>test_csp_default_src_self — Assert CSP includes default-src 'self'</case>
+        <case>test_csp_script_src_self — Assert CSP includes script-src 'self' (no unsafe-inline in production)</case>
+        <case>test_permissions_policy — Assert response contains Permissions-Policy with camera=(), microphone=(self), geolocation=() — microphone must be (self) not () to allow voice pipeline on Pro tier</case>
+        <case>test_x_request_id_header — Assert response contains X-Request-ID with UUID format</case>
+        <case>test_hsts_skipped_in_development — In development environment, HSTS header is NOT sent (avoid HSTS on localhost)</case>
+        <case>test_csp_relaxed_in_development — In development, CSP allows unsafe-inline for hot reload</case>
+      </test_cases>
+      <description>
+        Create src/music_attribution/auth/security_headers.py with security header middleware.
+
+        **SecurityHeadersMiddleware** (pure ASGI middleware — NOT BaseHTTPMiddleware):
+        Use `async def __call__(self, scope, receive, send)` pattern to avoid buffering SSE
+        responses on the /api/v1/copilotkit endpoint. Adds the following headers to every response:
+
+        Production headers:
+        - Strict-Transport-Security: max-age=31536000; includeSubDomains; preload
+        - X-Frame-Options: DENY
+        - X-Content-Type-Options: nosniff
+        - Referrer-Policy: strict-origin-when-cross-origin
+        - Permissions-Policy: camera=(), microphone=(self), geolocation=(), payment=()
+          NOTE: microphone=(self) allows the current origin to use the microphone — required
+          for the voice pipeline feature (Pro tier). Using microphone=() would block voice
+          entirely even in the same-origin app.
+        - X-Request-ID: {uuid} (correlates with audit logging request_id)
+        - Content-Security-Policy:
+          default-src 'self';
+          script-src 'self';
+          style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
+          font-src 'self' https://fonts.gstatic.com;
+          img-src 'self' data: https:;
+          connect-src 'self' {cors_origins};
+          frame-ancestors 'none';
+          base-uri 'self';
+          form-action 'self'
+
+        Development overrides:
+        - HSTS is skipped (prevents localhost HSTS pinning)
+        - CSP allows 'unsafe-inline' and 'unsafe-eval' for hot reload/dev tools
+        - connect-src includes ws://localhost:* for WebSocket dev server
+
+        The middleware reads environment from app.state.settings.environment.
+
+        Also modify app.py to add SecurityHeadersMiddleware AFTER CORSMiddleware
+        (middleware execution order matters — CORS must run first).
+      </description>
+    </tdd_spec>
+    <implementation>
+      Create security_headers.py with SecurityHeadersMiddleware.
+      The middleware constructor accepts environment: str parameter.
+      In app.py, add after CORSMiddleware: app.add_middleware(SecurityHeadersMiddleware, environment=cors_settings.environment)
+      Use from __future__ import annotations.
+      The X-Request-ID should be taken from the audit middleware's request_id if available,
+      or generated fresh if not.
+    </implementation>
+  </task>
+
+</plan>

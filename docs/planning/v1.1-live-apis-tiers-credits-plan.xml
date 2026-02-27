@@ -1,0 +1,1277 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  v1.1 Feature 2: Live Music API Integration, SaaS Tiers, and Credit System
+  ==========================================================================
+
+  SCOPE
+  =====
+  This plan implements the commercial monetisation layer for the music attribution
+  scaffold: live music API clients (MusicBrainz, Discogs, AcoustID, Last.fm,
+  Cover Art Archive), a SaaS tier system (Free/Pro/Enterprise), a double-entry
+  credit ledger, Stripe checkout integration, Valkey caching, and corresponding
+  frontend billing/source-selection UI.
+
+  CURRENT CODEBASE CONTEXT
+  ========================
+  - Python 3.13, FastAPI, Next.js 15 App Router, SQLAlchemy 2.0 async, Alembic
+  - PostgreSQL + pgvector, 4 existing migrations (001-004)
+  - Package manager: uv ONLY (pip/conda BANNED)
+  - Existing ETL modules: etl/musicbrainz.py, etl/discogs.py, etl/acoustid.py,
+    etl/file_metadata.py, etl/rate_limiter.py (in-memory TokenBucketRateLimiter)
+  - Config (config.py) has: musicbrainz_user_agent, discogs_token, valkey_url fields
+  - Existing schemas/enums.py has: SourceEnum (MUSICBRAINZ, DISCOGS, ACOUSTID,
+    ARTIST_INPUT, FILE_METADATA)
+  - Existing libraries in pyproject.toml: musicbrainzngs>=0.7, python3-discogs-client>=2.8,
+    pyacoustid>=1.3
+  - Docker compose has valkey (Redis-compatible) at port 6379 but NOT yet integrated in code
+  - Frontend has apiClient with mock fallback pattern
+  - Frontend uses Jotai atoms for state
+  - No users/auth table yet (migration 005 from auth plan must create it first)
+
+  ARCHITECTURE DECISIONS
+  ======================
+  Music APIs (all free with rate limits):
+    1. MusicBrainz: Free, 1 req/sec, custom User-Agent mandatory. musicbrainzngs>=0.7
+    2. Discogs: Free, 60 req/min (auth'd), OAuth 1.0a. python3-discogs-client>=2.8
+    3. AcoustID: Free, 3 req/sec, API key. pyacoustid>=1.3
+    4. Last.fm: Free, 5 req/sec, API key. pylast>=5.3.0 (NEW dependency)
+    5. Cover Art Archive: Free, no auth. httpx (already in deps)
+
+  SaaS Tiers:
+    - Free: 50 attributions/mo, 500 API req/mo, MusicBrainz only, A0-A1, 1 API key
+    - Pro ($29/mo): 2000 attributions/mo, 25K API req/mo, all sources, A0-A3, 5 keys
+    - Enterprise (custom): unlimited, all sources, SSO/SAML, audit, teams
+
+  Credit System (double-entry ledger):
+    - Tables: credit_accounts, credit_transactions, credit_packages, credit_expirations
+    - Millicredits for precision (1 credit = 1000 millicredits)
+    - Costs: 1 credit MusicBrainz, 3 multi-source, 5 AcoustID fingerprint, 10 voice
+    - Idempotency keys on all transactions
+    - Stripe: checkout sessions, webhook handler for fulfillment
+
+  CRITICAL DEPENDENCY
+  ===================
+  Task 1.1 (migration 006) depends on migration 005 from the v1.1 auth plan creating
+  the users table. This is documented in the task but does NOT block TDD — tests use
+  in-memory SQLite or testcontainers with both migrations applied.
+
+  RULES APPLIED
+  =============
+  - encoding='utf-8' for all file operations
+  - pathlib.Path() for all paths
+  - datetime.now(timezone.utc) for all timestamps
+  - from __future__ import annotations in every Python file
+  - AST-only for Python code analysis in tests
+  - Valkey/Redis for rate limiting state and API response caching
+  - uv ONLY for package management
+
+  MODE OVERRIDE (W10)
+  ===================
+  NOTE: This plan requires `creation` mode (up to 20 files, 1000 lines). The project
+  default is `maintenance` mode. The executing agent must acknowledge mode override
+  before starting.
+-->
+<plan version="2.0" project="music-attribution-scaffold">
+  <metadata>
+    <title>v1.1 Feature 2: Live Music API Integration, SaaS Tiers, and Credit System</title>
+    <branch>feat/live-apis-tiers-credits</branch>
+    <estimated_tasks>18</estimated_tasks>
+    <mode>creation</mode>
+  </metadata>
+
+  <!-- ============================================================
+       PHASE 1: Database Schema and Models (tasks 1.1 - 1.3)
+       Foundation tables for tiers, credits, and user API configs.
+       ============================================================ -->
+
+  <task id="1.1" status="PENDING">
+    <title>Alembic migration 006 — tier, credit, and user API config tables</title>
+    <priority>P0</priority>
+    <phase>1</phase>
+    <files>
+      <create>alembic/versions/006_tiers_credits_api_configs.py</create>
+    </files>
+    <tdd_spec>
+      <test_file>tests/integration/test_migration_006.py</test_file>
+      <test_cases>
+        <case>test_migration_006_upgrade_creates_user_tiers_table — apply migration 006, verify user_tiers table exists with columns: tier_id (UUID PK), name (VARCHAR UNIQUE), display_name, monthly_price_cents (INTEGER), max_attributions_per_month, max_api_requests_per_month, allowed_sources (JSONB), max_assurance_level (VARCHAR), max_api_keys (INTEGER), features (JSONB), created_at (TIMESTAMPTZ)</case>
+        <case>test_migration_006_upgrade_creates_credit_accounts_table — verify credit_accounts has: account_id (UUID PK), user_id (UUID FK to users, UNIQUE), balance_millicredits (BIGINT DEFAULT 0), lifetime_earned_millicredits (BIGINT DEFAULT 0), lifetime_spent_millicredits (BIGINT DEFAULT 0), created_at (TIMESTAMPTZ), updated_at (TIMESTAMPTZ)</case>
+        <case>test_migration_006_upgrade_creates_credit_transactions_table — verify credit_transactions has: transaction_id (UUID PK), account_id (UUID FK), amount_millicredits (BIGINT NOT NULL), balance_after_millicredits (BIGINT NOT NULL), transaction_type (VARCHAR NOT NULL), description (TEXT), idempotency_key (VARCHAR UNIQUE), source_action (VARCHAR), metadata (JSONB), created_at (TIMESTAMPTZ). Verify CHECK constraint: amount_millicredits != 0</case>
+        <case>test_migration_006_upgrade_creates_credit_packages_table — verify credit_packages has: package_id (UUID PK), name (VARCHAR), credits (INTEGER NOT NULL), price_cents (INTEGER NOT NULL), stripe_price_id (VARCHAR UNIQUE), is_active (BOOLEAN DEFAULT TRUE), created_at (TIMESTAMPTZ)</case>
+        <case>test_migration_006_upgrade_creates_credit_expirations_table — verify credit_expirations has: expiration_id (UUID PK), account_id (UUID FK), amount_millicredits (BIGINT NOT NULL), granted_at (TIMESTAMPTZ NOT NULL), expires_at (TIMESTAMPTZ NOT NULL), expired (BOOLEAN DEFAULT FALSE)</case>
+        <case>test_migration_006_upgrade_creates_user_api_configs_table — verify user_api_configs has: config_id (UUID PK), user_id (UUID FK to users), source (VARCHAR NOT NULL), encrypted_credentials (TEXT NOT NULL), config_metadata (JSONB), created_at (TIMESTAMPTZ), updated_at (TIMESTAMPTZ). Verify UNIQUE constraint on (user_id, source)</case>
+        <case>test_migration_006_upgrade_adds_tier_id_to_users — verify users table has tier_id (UUID FK to user_tiers, NULLABLE) column</case>
+        <case>test_migration_006_seeds_default_tiers — verify 3 rows in user_tiers: free, pro, enterprise with correct limits</case>
+        <case>test_migration_006_downgrade_removes_all_tables — downgrade migration 006, verify all 5 new tables are dropped and tier_id column removed from users</case>
+        <case>test_credit_transactions_idempotency_key_unique — insert two transactions with same idempotency_key, verify IntegrityError on second insert</case>
+      </test_cases>
+      <description>
+        Create Alembic migration 006 that adds all tables required for the tier/credit/billing system.
+
+        CRITICAL DEPENDENCY (C2 — Self-Contained Migration): If the `users` table does not exist
+        yet (i.e., the auth plan's migration 005 has not been applied), this migration creates a
+        minimal stub `users` table with just `id UUID PK, email VARCHAR(320), created_at TIMESTAMPTZ`.
+        The auth plan's migration 005 will later ALTER this table to add the full auth columns. This
+        makes migration 006 self-contained and independently testable. Use
+        `op.execute('SELECT 1 FROM information_schema.tables WHERE table_name = %s', ('users',))` or
+        Alembic's `has_table()` check to determine whether the stub is needed. The migration file
+        must declare `down_revision = "005_..."` pointing to the auth migration once it exists; if
+        migration 005 does not yet exist, use a placeholder revision ID and add a stub comment.
+
+        Tables to create:
+        1. user_tiers — tier definitions (Free/Pro/Enterprise) with limits and feature flags.
+           Seed 3 default rows: free (50 attr/mo, 500 req/mo, ["MUSICBRAINZ"] sources, A1 max),
+           pro (2000 attr/mo, 25000 req/mo, all sources, A3 max, $29/mo = 2900 cents),
+           enterprise (unlimited = -1 sentinel, all sources, A3 max, custom pricing = 0 cents).
+        2. credit_accounts — one per user, tracks millicredit balance (1 credit = 1000 millicredits).
+           Use BIGINT for all millicredit columns to avoid overflow. balance_millicredits must never
+           go negative (enforced at application layer with SELECT FOR UPDATE, not DB constraint, to
+           allow overdraft-then-refund patterns).
+        3. credit_transactions — append-only ledger. Every credit change (consume, grant, refund,
+           purchase, expiration) is a row. idempotency_key prevents duplicate transactions from
+           retried Stripe webhooks or network issues. CHECK(amount_millicredits != 0) prevents
+           no-op transactions.
+        4. credit_packages — purchasable credit bundles with Stripe price IDs.
+        5. credit_expirations — tracks expiry of granted credits (e.g., monthly free tier grant
+           expires at month end). A background job marks expired=TRUE and creates a negative
+           transaction to claw back unused credits.
+        6. user_api_configs — per-user encrypted API credentials for third-party sources (e.g.,
+           Discogs OAuth token). UNIQUE(user_id, source) ensures one config per source per user.
+        7. Add tier_id FK column to users table (nullable, defaults to free tier on application layer).
+
+        All TIMESTAMPTZ columns use server_default=func.now(). All UUID PKs use uuid_generate_v4()
+        or Python uuid.uuid4 default.
+      </description>
+    </tdd_spec>
+    <implementation>
+      Use `alembic revision --autogenerate -m "006_tiers_credits_api_configs"` as starting point,
+      then hand-edit to add CHECK constraints, UNIQUE constraints, JSONB defaults, and seed data
+      INSERT for the 3 default tiers. Use op.execute() for seed data. Ensure down_revision chains
+      correctly from migration 005.
+    </implementation>
+  </task>
+
+  <task id="1.2" status="PENDING">
+    <title>SQLAlchemy ORM models for tier, credit, and API config tables</title>
+    <priority>P0</priority>
+    <phase>1</phase>
+    <files>
+      <create>src/music_attribution/billing/__init__.py</create>
+      <create>src/music_attribution/billing/models.py</create>
+      <modify>src/music_attribution/db/models.py</modify>
+    </files>
+    <tdd_spec>
+      <test_file>tests/unit/billing/test_billing_models.py</test_file>
+      <test_cases>
+        <case>test_user_tier_model_has_all_columns — instantiate UserTierModel, verify all column names match migration: tier_id, name, display_name, monthly_price_cents, max_attributions_per_month, max_api_requests_per_month, allowed_sources, max_assurance_level, max_api_keys, features, created_at</case>
+        <case>test_user_tier_model_tablename — verify __tablename__ == "user_tiers"</case>
+        <case>test_credit_account_model_has_all_columns — verify account_id, user_id, balance_millicredits, lifetime_earned_millicredits, lifetime_spent_millicredits, created_at, updated_at</case>
+        <case>test_credit_account_model_tablename — verify __tablename__ == "credit_accounts"</case>
+        <case>test_credit_transaction_model_has_all_columns — verify transaction_id, account_id, amount_millicredits, balance_after_millicredits, transaction_type, description, idempotency_key, source_action, metadata_, created_at</case>
+        <case>test_credit_transaction_model_tablename — verify __tablename__ == "credit_transactions"</case>
+        <case>test_credit_package_model_has_all_columns — verify package_id, name, credits, price_cents, stripe_price_id, is_active, created_at</case>
+        <case>test_credit_expirations_model_has_all_columns — verify expiration_id, account_id, amount_millicredits, granted_at, expires_at, expired</case>
+        <case>test_user_api_config_model_has_all_columns — verify config_id, user_id, source, encrypted_credentials, config_metadata, created_at, updated_at</case>
+        <case>test_user_api_config_unique_constraint — verify unique constraint on (user_id, source)</case>
+        <case>test_all_billing_models_inherit_from_base — verify all 5 models inherit from the shared Base class in db/models.py</case>
+      </test_cases>
+      <description>
+        Create SQLAlchemy ORM model classes mirroring the tables from migration 006.
+
+        New module: src/music_attribution/billing/models.py containing:
+        - UserTierModel: tier definitions with JSONB allowed_sources and features
+        - CreditAccountModel: per-user balance tracking (BIGINT millicredits)
+        - CreditTransactionModel: append-only ledger with idempotency_key
+        - CreditPackageModel: purchasable credit bundles
+        - CreditExpirationModel: expiry tracking for granted credits
+        - UserApiConfigModel: encrypted per-user API credentials
+
+        All models import Base from db/models.py and follow existing patterns:
+        - Mapped[type] = mapped_column(...) style
+        - uuid.uuid4 defaults for PKs
+        - JSONB for flexible metadata
+        - DateTime(timezone=True) for all timestamps
+        - String lengths matching migration constraints
+
+        Also update db/models.py to re-export Base (if not already global) so billing
+        models participate in create_all() and Alembic autogenerate.
+
+        IMPORTANT (W7 — Alembic env.py import): After creating billing/models.py, update
+        alembic/env.py to import music_attribution.billing.models so Alembic autogenerate
+        discovers the new tables. The import must happen before target_metadata is set.
+      </description>
+    </tdd_spec>
+    <implementation>
+      Follow the exact pattern from db/models.py: `from __future__ import annotations`, import
+      uuid, use Mapped[] type hints, mapped_column() with explicit types. Create billing/__init__.py
+      that imports all models for Alembic discovery. Ensure Base is imported from db.models, not
+      redeclared.
+    </implementation>
+  </task>
+
+  <task id="1.3" status="PENDING">
+    <title>Pydantic schemas for billing domain objects</title>
+    <priority>P0</priority>
+    <phase>1</phase>
+    <files>
+      <create>src/music_attribution/schemas/billing.py</create>
+      <modify>src/music_attribution/schemas/enums.py</modify>
+    </files>
+    <tdd_spec>
+      <test_file>tests/unit/schemas/test_billing_schemas.py</test_file>
+      <test_cases>
+        <case>test_tier_enum_has_three_values — verify TierEnum has FREE, PRO, ENTERPRISE</case>
+        <case>test_transaction_type_enum_values — verify CreditTransactionTypeEnum has CONSUME, GRANT, REFUND, PURCHASE, EXPIRATION, MONTHLY_GRANT</case>
+        <case>test_credit_action_enum_values — verify CreditActionEnum (StrEnum) has string values: MUSICBRAINZ_LOOKUP='musicbrainz_lookup', DISCOGS_LOOKUP='discogs_lookup', ACOUSTID_FINGERPRINT='acoustid_fingerprint', MULTI_SOURCE_LOOKUP='multi_source_lookup', LASTFM_LOOKUP='lastfm_lookup', VOICE_AGENT_QUERY='voice_agent_query'</case>
+        <case>test_credit_costs_mapping — verify CREDIT_COSTS dict maps CreditActionEnum members to integer millicredit costs: MUSICBRAINZ_LOOKUP=1000, DISCOGS_LOOKUP=1000, ACOUSTID_FINGERPRINT=5000, MULTI_SOURCE_LOOKUP=3000, LASTFM_LOOKUP=500, VOICE_AGENT_QUERY=10000</case>
+        <case>test_tier_schema_serialization — create Tier(name=TierEnum.FREE, ...), verify model_dump(mode="json") round-trips correctly</case>
+        <case>test_tier_schema_limits_validation — verify Tier rejects negative max_attributions_per_month (except -1 sentinel for unlimited)</case>
+        <case>test_credit_account_schema_balance_non_negative — verify CreditAccount rejects negative balance_millicredits via validator</case>
+        <case>test_credit_transaction_schema_nonzero_amount — verify CreditTransaction rejects amount_millicredits=0</case>
+        <case>test_credit_transaction_idempotency_key_format — verify idempotency_key is optional str, accepts UUID strings</case>
+        <case>test_credit_package_schema_validation — verify CreditPackage requires positive credits and positive price_cents</case>
+        <case>test_credit_balance_response_schema — verify CreditBalanceResponse has balance_millicredits, balance_credits (computed float), monthly_used, monthly_limit</case>
+        <case>test_user_api_config_schema_redacts_credentials — verify UserApiConfig.model_dump() replaces encrypted_credentials with "***REDACTED***"</case>
+        <case>test_tier_allowed_sources_is_list_of_source_enum — verify Tier.allowed_sources is list[SourceEnum]</case>
+      </test_cases>
+      <description>
+        Create Pydantic v2 schemas for the billing domain.
+
+        New enums in schemas/enums.py:
+        - TierEnum(StrEnum): FREE, PRO, ENTERPRISE
+        - CreditTransactionTypeEnum(StrEnum): CONSUME, GRANT, REFUND, PURCHASE, EXPIRATION, MONTHLY_GRANT
+        - CreditActionEnum(StrEnum): MUSICBRAINZ_LOOKUP, DISCOGS_LOOKUP, ACOUSTID_FINGERPRINT,
+          MULTI_SOURCE_LOOKUP, LASTFM_LOOKUP, VOICE_AGENT_QUERY
+
+        New schemas in schemas/billing.py:
+        - Tier: name, display_name, monthly_price_cents, max_attributions_per_month,
+          max_api_requests_per_month, allowed_sources (list[SourceEnum]),
+          max_assurance_level (AssuranceLevelEnum), max_api_keys, features (dict[str, bool])
+        - CreditAccount: account_id, user_id, balance_millicredits (int >= 0),
+          lifetime_earned_millicredits, lifetime_spent_millicredits, created_at, updated_at.
+          Computed property: balance_credits -> float (balance_millicredits / 1000)
+        - CreditTransaction: transaction_id, account_id, amount_millicredits (int != 0),
+          balance_after_millicredits, transaction_type (CreditTransactionTypeEnum),
+          description, idempotency_key (optional), source_action (optional), metadata (dict),
+          created_at
+        - CreditPackage: package_id, name, credits (int > 0), price_cents (int > 0),
+          stripe_price_id, is_active, created_at
+        - CreditBalanceResponse: balance_millicredits, balance_credits (float), monthly_used,
+          monthly_limit, tier_name
+        - UserApiConfig: config_id, user_id, source (SourceEnum), encrypted_credentials (str,
+          excluded from model_dump via field(exclude=True) or custom serializer that redacts),
+          config_metadata, created_at, updated_at
+
+        CREDIT COSTS (C5 — StrEnum + separate cost dict):
+        CreditActionEnum is a StrEnum with string values (the action names, e.g.
+        'musicbrainz_lookup', 'discogs_lookup', 'acoustid_fingerprint'). Credit costs are in a
+        separate CREDIT_COSTS: dict[CreditActionEnum, int] mapping, NOT embedded in the enum
+        values. The test_credit_action_enum_values test should verify string values, and a
+        separate test_credit_costs_mapping test should verify the integer millicredit costs.
+
+        CREDIT_COSTS mapping (millicredits):
+        - CreditActionEnum.MUSICBRAINZ_LOOKUP: 1000 (1 credit)
+        - CreditActionEnum.DISCOGS_LOOKUP: 1000 (1 credit)
+        - CreditActionEnum.LASTFM_LOOKUP: 500 (0.5 credits)
+        - CreditActionEnum.MULTI_SOURCE_LOOKUP: 3000 (3 credits)
+        - CreditActionEnum.ACOUSTID_FINGERPRINT: 5000 (5 credits)
+        - CreditActionEnum.VOICE_AGENT_QUERY: 10000 (10 credits)
+      </description>
+    </tdd_spec>
+    <implementation>
+      Follow existing pattern in schemas/enums.py: StrEnum with docstrings. In billing.py use
+      Pydantic BaseModel with ConfigDict, field validators for constraints. Use
+      `@field_serializer` for credential redaction rather than exclude=True so that the field
+      is present but masked in API responses.
+    </implementation>
+  </task>
+
+  <!-- ============================================================
+       PHASE 2: Live Music API Clients (tasks 2.1 - 2.6)
+       Wrap existing ETL connectors with live-capable clients,
+       add Last.fm + Cover Art, build registry and Valkey cache.
+       ============================================================ -->
+
+  <task id="2.1" status="PENDING">
+    <title>MusicBrainz live client — enhanced wrapper with Valkey-backed rate limiter</title>
+    <priority>P0</priority>
+    <phase>2</phase>
+    <files>
+      <create>src/music_attribution/etl/clients/__init__.py</create>
+      <create>src/music_attribution/etl/clients/musicbrainz_client.py</create>
+    </files>
+    <tdd_spec>
+      <test_file>tests/unit/etl/clients/test_musicbrainz_client.py</test_file>
+      <test_cases>
+        <case>test_lookup_recording_by_isrc — mock musicbrainzngs.search_recordings, verify returns NormalizedRecord with correct ISRC in identifiers</case>
+        <case>test_lookup_recording_by_mbid — mock musicbrainzngs.get_recording_by_id, verify returns NormalizedRecord with source=MUSICBRAINZ</case>
+        <case>test_lookup_artist_by_name — mock musicbrainzngs.search_artists, verify returns list[NormalizedRecord] with entity_type=ARTIST</case>
+        <case>test_lookup_work_by_iswc — mock musicbrainzngs.search_works, verify returns NormalizedRecord with ISWC in identifiers</case>
+        <case>test_search_recordings — mock musicbrainzngs.search_recordings with pagination, verify all pages collected</case>
+        <case>test_get_recording_credits — mock get_recording_by_id with artist-rels, verify Relationship objects have correct types (PRODUCED, PERFORMED, etc.)</case>
+        <case>test_rate_limiter_called_before_each_request — mock rate limiter acquire, verify called exactly once per API call</case>
+        <case>test_retry_on_web_service_error — mock to raise WebServiceError twice then succeed, verify 3 attempts made with exponential backoff</case>
+        <case>test_user_agent_set_on_init — mock musicbrainzngs.set_useragent, verify called with parsed components from config</case>
+        <case>test_result_cached_in_valkey — mock valkey client get/set, verify second identical call reads from cache</case>
+        <case>test_cache_miss_fetches_from_api — mock valkey get returning None, verify API called and result stored with TTL</case>
+        <case>test_source_confidence_is_0_9 — verify all returned NormalizedRecords have source_confidence=0.9</case>
+      </test_cases>
+      <description>
+        Create an enhanced MusicBrainz client in a new `etl/clients/` subpackage that wraps the
+        existing MusicBrainzConnector with additional capabilities:
+
+        1. Valkey-backed rate limiting: Use a sliding window counter in Valkey instead of the
+           in-memory TokenBucketRateLimiter. Key: "ratelimit:musicbrainz:{window_ts}". This
+           ensures rate limits are shared across multiple worker processes.
+        2. Response caching: Cache API responses in Valkey with configurable TTL (default 1 hour).
+           Cache key: "cache:musicbrainz:{method}:{args_hash}". Use JSON serialization.
+        3. Extended query methods: lookup_recording_by_isrc(), lookup_work_by_iswc(),
+           search_recordings(query, limit), search_artists(query, limit), get_recording_credits(mbid).
+        4. All methods return NormalizedRecord or list[NormalizedRecord].
+        5. Constructor takes Settings object (or individual config fields) for user_agent and
+           optional valkey client (None = fallback to in-memory rate limiter).
+
+        The client delegates actual API calls to the existing MusicBrainzConnector (composition,
+        not inheritance) and adds the caching/rate-limiting layer on top.
+      </description>
+    </tdd_spec>
+    <implementation>
+      Create etl/clients/__init__.py with protocol class `MusicApiClient` (Protocol with
+      search/lookup methods). musicbrainz_client.py: class MusicBrainzLiveClient implementing
+      MusicApiClient. Use composition: holds a MusicBrainzConnector internally. The Valkey client
+      is optional (inject via constructor); when None, fall back to in-memory TokenBucketRateLimiter.
+      Cache serialization: NormalizedRecord.model_dump_json() -> valkey SET with EX=3600.
+    </implementation>
+  </task>
+
+  <task id="2.2" status="PENDING">
+    <title>Discogs live client — enhanced wrapper with OAuth and caching</title>
+    <priority>P0</priority>
+    <phase>2</phase>
+    <files>
+      <create>src/music_attribution/etl/clients/discogs_client.py</create>
+    </files>
+    <tdd_spec>
+      <test_file>tests/unit/etl/clients/test_discogs_client.py</test_file>
+      <test_cases>
+        <case>test_search_releases_by_query — mock discogs_client.Client.search, verify returns list[NormalizedRecord] with source=DISCOGS</case>
+        <case>test_fetch_release_credits — mock release fetch, verify credit extraction maps roles to RelationshipTypeEnum</case>
+        <case>test_fetch_artist_with_name_variations — mock artist fetch, verify alternative_names populated from namevariations</case>
+        <case>test_authenticated_rate_limit_60_per_min — verify rate limiter configured with rate=1.0 when token provided</case>
+        <case>test_unauthenticated_rate_limit_25_per_min — verify rate limiter configured with rate=0.42 when no token</case>
+        <case>test_result_cached_in_valkey — mock valkey, verify cache hit returns stored result without API call</case>
+        <case>test_source_confidence_is_0_85 — verify all returned NormalizedRecords have source_confidence=0.85</case>
+        <case>test_comma_separated_roles_split — provide credit with role "Producer, Engineer", verify two Relationship objects</case>
+        <case>test_retry_on_http_error — mock to raise HTTPError twice then succeed, verify exponential backoff</case>
+      </test_cases>
+      <description>
+        Create a Discogs live client wrapping the existing DiscogsConnector with Valkey caching
+        and the same MusicApiClient protocol interface.
+
+        Features:
+        1. Valkey-backed rate limiting (sliding window: "ratelimit:discogs:{window_ts}").
+        2. Response caching with TTL (default 2 hours — Discogs data changes less frequently).
+        3. Methods: search_releases(query), fetch_release(release_id), fetch_artist(artist_id),
+           search_artists(query).
+        4. OAuth credential handling: accepts token from Settings or from per-user UserApiConfig
+           (encrypted_credentials). The client is re-instantiable with different credentials.
+        5. All methods return NormalizedRecord or list[NormalizedRecord].
+      </description>
+    </tdd_spec>
+    <implementation>
+      Follow same pattern as musicbrainz_client.py. Class DiscogsLiveClient implementing
+      MusicApiClient. Composition over existing DiscogsConnector. Cache key format:
+      "cache:discogs:{method}:{args_hash}". Token can come from Settings.discogs_token or
+      be injected per-request for multi-tenant scenarios.
+    </implementation>
+  </task>
+
+  <task id="2.3" status="PENDING">
+    <title>AcoustID live client — fingerprint lookup with caching</title>
+    <priority>P0</priority>
+    <phase>2</phase>
+    <files>
+      <create>src/music_attribution/etl/clients/acoustid_client.py</create>
+      <modify>src/music_attribution/config.py</modify>
+    </files>
+    <tdd_spec>
+      <test_file>tests/unit/etl/clients/test_acoustid_client.py</test_file>
+      <test_cases>
+        <case>test_fingerprint_lookup — mock acoustid.lookup, verify returns list[NormalizedRecord] with source=ACOUSTID and mbid in identifiers</case>
+        <case>test_fingerprint_file_delegates_to_connector — mock AcoustIDConnector.fingerprint_file, verify returns (fingerprint, duration) tuple</case>
+        <case>test_lookup_and_enrich — mock lookup returning MBID, then mock MusicBrainz fetch for that MBID, verify enriched NormalizedRecord includes full metadata</case>
+        <case>test_rate_limit_3_per_sec — verify rate limiter configured with rate=3.0</case>
+        <case>test_fingerprint_result_cached_by_fingerprint_hash — mock valkey, verify cache key includes fingerprint hash</case>
+        <case>test_source_confidence_from_acoustid_score — verify source_confidence matches AcoustID score field</case>
+        <case>test_api_key_from_config — verify AcoustID API key read from Settings.acoustid_api_key</case>
+      </test_cases>
+      <description>
+        Create an AcoustID live client wrapping the existing AcoustIDConnector.
+
+        Features:
+        1. Valkey-backed rate limiting (3 req/sec).
+        2. Fingerprint result caching keyed on fingerprint hash (fingerprints are large strings,
+           so hash with SHA-256 for the cache key).
+        3. Cross-source enrichment: after AcoustID returns MusicBrainz recording IDs, optionally
+           call MusicBrainzLiveClient to fetch full metadata (opt-in, costs extra credits).
+        4. Methods: fingerprint_file(path) -> (fingerprint, duration),
+           lookup(fingerprint, duration) -> list[NormalizedRecord],
+           fingerprint_and_lookup(path) -> list[NormalizedRecord] (convenience method).
+
+        Also add `acoustid_api_key: SecretStr | None` to Settings in config.py.
+      </description>
+    </tdd_spec>
+    <implementation>
+      Class AcoustIDLiveClient implementing a subset of MusicApiClient (no generic search — only
+      fingerprint-based). Cache key: "cache:acoustid:{sha256(fingerprint)[:16]}:{duration}".
+      Add acoustid_api_key field to Settings with default=None and description.
+    </implementation>
+  </task>
+
+  <task id="2.4" status="PENDING">
+    <title>Last.fm client (NEW) — artist info, tags, similar artists</title>
+    <priority>P1</priority>
+    <phase>2</phase>
+    <files>
+      <create>src/music_attribution/etl/clients/lastfm_client.py</create>
+      <modify>src/music_attribution/config.py</modify>
+      <modify>src/music_attribution/schemas/enums.py</modify>
+    </files>
+    <tdd_spec>
+      <test_file>tests/unit/etl/clients/test_lastfm_client.py</test_file>
+      <test_cases>
+        <case>test_get_artist_info — mock pylast.Network.get_artist, verify returns NormalizedRecord with entity_type=ARTIST and source=LASTFM</case>
+        <case>test_get_artist_tags — mock get_top_tags, verify metadata.tags populated as list of tag name strings</case>
+        <case>test_get_similar_artists — mock get_similar, verify returns list[NormalizedRecord] with entity_type=ARTIST</case>
+        <case>test_get_track_info — mock get_track, verify returns NormalizedRecord with entity_type=RECORDING and play_count in metadata</case>
+        <case>test_rate_limit_5_per_sec — verify rate limiter configured with rate=5.0</case>
+        <case>test_result_cached_in_valkey — verify cache hit skips API call</case>
+        <case>test_source_confidence_is_0_7 — verify all returned records have source_confidence=0.7 (Last.fm is user-contributed, lower than MB)</case>
+        <case>test_lastfm_api_key_from_config — verify API key read from Settings.lastfm_api_key</case>
+        <case>test_source_enum_has_lastfm — verify SourceEnum.LASTFM exists</case>
+      </test_cases>
+      <description>
+        Create a new Last.fm client using the pylast library. This is a NEW data source not
+        previously integrated.
+
+        NEW dependency: `pylast>=5.3.0` — add to pyproject.toml dependencies via `uv add pylast`.
+
+        Add to schemas/enums.py: SourceEnum.LASTFM = "LASTFM"
+
+        Add to config.py: lastfm_api_key (SecretStr | None), lastfm_api_secret (SecretStr | None)
+
+        Client features:
+        1. get_artist_info(name) -> NormalizedRecord with tags, bio summary, play count in metadata
+        2. get_similar_artists(name, limit=10) -> list[NormalizedRecord]
+        3. get_track_info(artist, title) -> NormalizedRecord with play count, listener count
+        4. get_artist_tags(name) -> list[str] (tag names)
+        5. Valkey rate limiting (5 req/sec) and response caching (TTL 4 hours — Last.fm data
+           is statistical/aggregate and changes slowly).
+        6. source_confidence = 0.7 (lower than MB/Discogs because Last.fm is user-scrobble data)
+
+        The pylast library is synchronous, so wrap calls in asyncio.to_thread() following the
+        pattern established by MusicBrainz and Discogs connectors.
+      </description>
+    </tdd_spec>
+    <implementation>
+      `uv add pylast` to add dependency. Create LastFmClient class in lastfm_client.py.
+      Constructor: __init__(api_key, api_secret=None, valkey_client=None). Uses pylast.Network
+      internally. All methods are async, delegating sync pylast calls to asyncio.to_thread().
+      NormalizedRecord mapping: use SourceEnum.LASTFM, entity_type per method, canonical_name
+      from artist/track name, metadata includes tags/play_count/listener_count.
+    </implementation>
+  </task>
+
+  <task id="2.5" status="PENDING">
+    <title>API client registry — factory pattern with tier-based source selection</title>
+    <priority>P0</priority>
+    <phase>2</phase>
+    <files>
+      <create>src/music_attribution/etl/clients/registry.py</create>
+      <create>src/music_attribution/etl/clients/protocols.py</create>
+    </files>
+    <tdd_spec>
+      <test_file>tests/unit/etl/clients/test_client_registry.py</test_file>
+      <test_cases>
+        <case>test_registry_returns_musicbrainz_for_free_tier — create registry, get_clients_for_tier(TierEnum.FREE) returns only MusicBrainzLiveClient</case>
+        <case>test_registry_returns_all_sources_for_pro_tier — get_clients_for_tier(TierEnum.PRO) returns clients for MB, Discogs, AcoustID, LastFm</case>
+        <case>test_registry_get_client_by_source — get_client(SourceEnum.MUSICBRAINZ) returns MusicBrainzLiveClient instance</case>
+        <case>test_registry_raises_for_unavailable_source — get_client(SourceEnum.LASTFM) for free tier raises SourceNotAvailableError</case>
+        <case>test_registry_health_check — mock all clients, call health_check(), verify returns dict[SourceEnum, bool]</case>
+        <case>test_registry_multi_source_search — call search_all("query", tier=PRO), verify calls all available clients and merges results</case>
+        <case>test_registry_respects_allowed_sources — create registry with tier that allows only [MUSICBRAINZ, DISCOGS], verify only those clients returned</case>
+        <case>test_protocol_compliance — verify MusicBrainzLiveClient, DiscogsLiveClient conform to MusicApiClient protocol via isinstance or structural check</case>
+        <case>test_cover_art_client_registered — verify CoverArtArchive client available for artwork lookups (uses httpx, no auth)</case>
+      </test_cases>
+      <description>
+        Create a client registry (factory pattern) that manages all music API client instances
+        and provides tier-gated access.
+
+        New file: etl/clients/protocols.py defining:
+        - MusicApiClient (Protocol): abstract interface with search(), lookup_by_id(), health_check()
+        - SourceNotAvailableError: raised when requesting a source not in the user's tier
+
+        New file: etl/clients/registry.py containing:
+        - ClientRegistry class:
+          - __init__(settings: Settings, valkey_client=None): creates all client instances
+          - get_client(source: SourceEnum) -> MusicApiClient
+          - get_clients_for_tier(tier: TierEnum) -> dict[SourceEnum, MusicApiClient]
+          - get_allowed_clients(allowed_sources: list[SourceEnum]) -> dict[SourceEnum, MusicApiClient]
+          - search_all(query: str, allowed_sources: list[SourceEnum]) -> list[NormalizedRecord]:
+            parallel search across all allowed sources, merge and deduplicate results
+          - health_check() -> dict[SourceEnum, bool]: ping each API, return availability map
+
+        Also add a simple CoverArtArchive client (uses httpx GET to
+        https://coverartarchive.org/release/{mbid}/front-250) returning image URL. No auth needed.
+      </description>
+    </tdd_spec>
+    <implementation>
+      Use Protocol from typing for structural subtyping. Registry holds a dict[SourceEnum,
+      MusicApiClient]. Lazy initialization: clients are created on first access or at registry
+      init. search_all uses asyncio.gather for parallel queries with return_exceptions=True
+      to handle individual source failures gracefully.
+    </implementation>
+  </task>
+
+  <task id="2.6" status="PENDING">
+    <title>Valkey integration — distributed rate limiter, API response cache, session helper</title>
+    <priority>P0</priority>
+    <phase>2</phase>
+    <files>
+      <create>src/music_attribution/cache/__init__.py</create>
+      <create>src/music_attribution/cache/valkey_client.py</create>
+      <create>src/music_attribution/cache/rate_limiter.py</create>
+      <create>src/music_attribution/cache/response_cache.py</create>
+      <modify>src/music_attribution/api/app.py</modify>
+    </files>
+    <tdd_spec>
+      <test_file>tests/unit/cache/test_valkey_client.py</test_file>
+      <test_cases>
+        <case>test_valkey_client_factory_creates_async_connection — mock redis.asyncio.from_url, verify called with settings.valkey_url</case>
+        <case>test_valkey_client_factory_returns_none_on_connection_failure — mock connection to raise, verify returns None (graceful degradation)</case>
+        <case>test_sliding_window_rate_limiter_allows_within_limit — mock valkey INCR/EXPIRE, verify acquire() returns True when count below limit</case>
+        <case>test_sliding_window_rate_limiter_blocks_over_limit — mock valkey returning count above limit, verify acquire() returns False or raises RateLimitExceeded</case>
+        <case>test_sliding_window_rate_limiter_fallback_to_memory — create limiter with valkey_client=None, verify falls back to TokenBucketRateLimiter</case>
+        <case>test_response_cache_get_returns_none_on_miss — mock valkey GET returning None, verify cache.get() returns None</case>
+        <case>test_response_cache_set_stores_with_ttl — mock valkey SET, verify called with EX=ttl_seconds and serialized JSON value</case>
+        <case>test_response_cache_get_deserializes_normalized_record — store a NormalizedRecord JSON, verify cache.get() returns NormalizedRecord instance</case>
+        <case>test_response_cache_key_generation — verify cache key format is "{prefix}:{source}:{method}:{args_hash}"</case>
+        <case>test_response_cache_graceful_on_valkey_down — mock valkey raising ConnectionError, verify get/set return None without raising</case>
+        <case>test_lifespan_creates_valkey_client — mock redis.asyncio.from_url, verify app.state.valkey_client set during lifespan</case>
+        <case>test_lifespan_closes_valkey_on_shutdown — mock valkey close, verify called during lifespan cleanup</case>
+      </test_cases>
+      <description>
+        Create the Valkey integration layer providing distributed rate limiting and response caching.
+
+        New package: src/music_attribution/cache/
+
+        valkey_client.py:
+        - create_valkey_client(url: str) -> redis.asyncio.Redis | None: factory that creates
+          an async Redis/Valkey connection. Returns None on connection failure (graceful degradation).
+        - Uses redis.asyncio (from the `redis` package) which is Valkey-compatible.
+
+        rate_limiter.py:
+        - SlidingWindowRateLimiter: distributed rate limiter using Valkey INCR + EXPIRE.
+          Key pattern: "ratelimit:{source}:{window_start}". Window size configurable (default 1s).
+          Falls back to in-memory TokenBucketRateLimiter when valkey_client is None.
+        - RateLimitExceeded exception.
+
+        IMPORTANT (C1 — Rate Limiter Relationship): The new SlidingWindowRateLimiter replaces
+        the existing etl/rate_limiter.py TokenBucketRateLimiter for distributed rate limiting.
+        The etl/clients/* wrappers (tasks 2.1-2.4) should inject the new distributed limiter
+        into the underlying connector constructors, replacing the default in-process
+        TokenBucketRateLimiter. Do NOT stack both limiters — the Valkey-backed one is the
+        single source of truth. When Valkey is unavailable, fall back to the in-process
+        TokenBucketRateLimiter from etl/rate_limiter.py as a graceful degradation.
+
+        response_cache.py:
+        - ResponseCache: get/set for cached API responses.
+          Cache key: "{prefix}:{source}:{method}:{sha256(args_json)[:12]}".
+          TTL per source: MB=3600s, Discogs=7200s, AcoustID=86400s, LastFm=14400s.
+          Graceful degradation: all methods are no-ops when valkey_client is None.
+          Serialization: NormalizedRecord.model_dump_json() for storage, model_validate_json() for retrieval.
+
+        Modify api/app.py lifespan to:
+        - Create valkey client from settings.valkey_url
+        - Store on app.state.valkey_client
+        - Close on shutdown
+
+        NEW dependency: `redis>=5.0` — add via `uv add redis`.
+      </description>
+    </tdd_spec>
+    <implementation>
+      Use `redis.asyncio` (the async interface of the redis-py package, which is Valkey-compatible).
+      SlidingWindowRateLimiter: use MULTI/EXEC pipeline for atomic INCR + EXPIRE. The window
+      key includes epoch second so old windows auto-expire. ResponseCache: use SET with EX for
+      TTL, GET for reads. All Valkey operations wrapped in try/except to never crash on Valkey
+      downtime. Add `uv add redis` to install the redis package.
+    </implementation>
+  </task>
+
+  <!-- ============================================================
+       PHASE 3: Credit System (tasks 3.1 - 3.4)
+       Double-entry ledger, consumption middleware, Stripe integration.
+       ============================================================ -->
+
+  <task id="3.1" status="PENDING">
+    <title>Credit account repository — create, get balance, check funds</title>
+    <priority>P0</priority>
+    <phase>3</phase>
+    <files>
+      <create>src/music_attribution/billing/credit_repository.py</create>
+    </files>
+    <tdd_spec>
+      <test_file>tests/unit/billing/test_credit_repository.py</test_file>
+      <test_cases>
+        <case>test_create_account_for_user — call create_account(user_id), verify CreditAccount returned with balance_millicredits=0</case>
+        <case>test_create_account_idempotent — call create_account twice with same user_id, verify no error and same account_id returned</case>
+        <case>test_get_account_by_user_id — create account, then get_account(user_id), verify returns correct CreditAccount</case>
+        <case>test_get_account_returns_none_for_missing — get_account(random_uuid), verify returns None</case>
+        <case>test_get_balance — create account, grant 5000 millicredits, verify get_balance(user_id) returns 5000</case>
+        <case>test_has_sufficient_funds_true — account with 10000 millicredits, has_sufficient_funds(user_id, 5000) returns True</case>
+        <case>test_has_sufficient_funds_false — account with 1000 millicredits, has_sufficient_funds(user_id, 5000) returns False</case>
+        <case>test_has_sufficient_funds_exact — account with 5000 millicredits, has_sufficient_funds(user_id, 5000) returns True (equal is sufficient)</case>
+        <case>test_get_monthly_usage — create account, add consume transactions this month, verify get_monthly_usage(user_id) sums absolute values of negative transactions in current month</case>
+        <case>test_get_monthly_usage_excludes_previous_month — add transactions dated last month, verify get_monthly_usage returns 0 for current month</case>
+      </test_cases>
+      <description>
+        Create the credit account repository providing data access for credit accounts.
+
+        Class: CreditAccountRepository with async methods:
+        - create_account(user_id: UUID, session: AsyncSession) -> CreditAccount
+        - get_account(user_id: UUID, session: AsyncSession) -> CreditAccount | None
+        - get_balance(user_id: UUID, session: AsyncSession) -> int (millicredits)
+        - has_sufficient_funds(user_id: UUID, amount_millicredits: int, session: AsyncSession) -> bool
+        - get_monthly_usage(user_id: UUID, session: AsyncSession) -> int (millicredits consumed this calendar month)
+
+        Uses SQLAlchemy async session. get_balance reads from credit_accounts.balance_millicredits.
+        get_monthly_usage: SELECT SUM(ABS(amount_millicredits)) FROM credit_transactions
+        WHERE account_id = ? AND transaction_type = 'CONSUME' AND created_at >= first_day_of_month.
+
+        Tests use aiosqlite in-memory database (following existing test pattern in the codebase).
+      </description>
+    </tdd_spec>
+    <implementation>
+      Standard repository pattern matching AsyncAttributionRepository in attribution/persistence.py.
+      Use `select(CreditAccountModel).where(...)` with `await session.execute()`. For
+      create_account, handle UniqueConstraint on user_id gracefully (return existing if duplicate).
+      Monthly usage query: use `func.date_trunc('month', func.now())` for PostgreSQL or
+      manual date calculation for SQLite compatibility in tests.
+    </implementation>
+  </task>
+
+  <task id="3.2" status="PENDING">
+    <title>Credit transaction service — consume, refund, grant with locking and idempotency</title>
+    <priority>P0</priority>
+    <phase>3</phase>
+    <files>
+      <create>src/music_attribution/billing/credit_service.py</create>
+    </files>
+    <tdd_spec>
+      <test_file>tests/unit/billing/test_credit_service.py</test_file>
+      <test_cases>
+        <case>test_consume_credits_deducts_from_balance — account with 10000mc, consume 3000mc, verify balance=7000mc and transaction created with type=CONSUME</case>
+        <case>test_consume_credits_insufficient_raises — account with 1000mc, consume 5000mc, verify InsufficientCreditsError raised and balance unchanged</case>
+        <case>test_consume_credits_records_balance_after — verify transaction.balance_after_millicredits matches new balance</case>
+        <case>test_consume_credits_idempotency — call consume twice with same idempotency_key, verify only one transaction created and same result returned</case>
+        <case>test_grant_credits_adds_to_balance — account with 0mc, grant 50000mc, verify balance=50000mc and transaction type=GRANT</case>
+        <case>test_grant_credits_updates_lifetime_earned — grant 50000mc, verify lifetime_earned_millicredits incremented by 50000</case>
+        <case>test_refund_credits_adds_back — consume 3000mc, then refund 3000mc, verify balance restored and transaction type=REFUND</case>
+        <case>test_purchase_credits — call purchase(account_id, package_id, idempotency_key), verify balance increased by package.credits * 1000 and transaction type=PURCHASE</case>
+        <case>test_monthly_grant — call monthly_grant(account_id, amount), verify transaction type=MONTHLY_GRANT and expiration record created</case>
+        <case>test_expire_credits — create expiration record, call expire_credits(), verify negative EXPIRATION transaction created and expired=True set</case>
+        <case>test_concurrent_consume_serialized — simulate two concurrent consume calls for same account, verify SELECT FOR UPDATE prevents double-spend (use asyncio.gather with mock delays). CRITICAL (C3): This test MUST run against PostgreSQL (use testcontainers), not SQLite. SELECT FOR UPDATE is a no-op on SQLite, making the concurrency test meaningless on SQLite. Mark this test with @pytest.mark.integration and skip on SQLite.</case>
+        <case>test_consume_updates_lifetime_spent — consume 3000mc, verify lifetime_spent_millicredits incremented</case>
+        <case>test_consume_records_source_action — consume with source_action="MUSICBRAINZ_LOOKUP", verify stored in transaction</case>
+      </test_cases>
+      <description>
+        Create the credit transaction service implementing the double-entry ledger logic.
+
+        Class: CreditService with async methods:
+        - consume(user_id, amount_millicredits, source_action, description, idempotency_key, session)
+          -> CreditTransaction
+          Uses SELECT FOR UPDATE on credit_accounts row to serialize concurrent access.
+          Raises InsufficientCreditsError if balance insufficient.
+          Creates transaction, updates balance, updates lifetime_spent.
+        - grant(user_id, amount_millicredits, description, idempotency_key, session)
+          -> CreditTransaction
+          Adds to balance, creates GRANT transaction, updates lifetime_earned.
+        - refund(user_id, amount_millicredits, original_transaction_id, description, idempotency_key, session)
+          -> CreditTransaction
+          Adds back to balance, creates REFUND transaction.
+        - purchase(user_id, package_id, stripe_session_id, session) -> CreditTransaction
+          Looks up package, grants credits * 1000 millicredits, creates PURCHASE transaction.
+        - monthly_grant(user_id, amount_millicredits, expires_at, session) -> CreditTransaction
+          Grants credits with expiration record.
+        - expire_credits(session) -> int (count of expired)
+          Batch job: find all credit_expirations where expires_at is before now and expired=False,
+          create negative EXPIRATION transactions, mark expired=True.
+
+        Idempotency: before creating any transaction, check if idempotency_key already exists.
+        If so, return the existing transaction (no-op). Use INSERT ... ON CONFLICT DO NOTHING
+        or check-then-insert with the unique constraint.
+
+        Custom exceptions:
+        - InsufficientCreditsError(available: int, requested: int)
+        - DuplicateTransactionError(idempotency_key: str)
+      </description>
+    </tdd_spec>
+    <implementation>
+      For SELECT FOR UPDATE in tests with aiosqlite: use `with_for_update()` which is a no-op
+      on SQLite but works correctly on PostgreSQL. In the service method:
+      stmt = select(CreditAccountModel).where(...).with_for_update()
+      After updating balance, create CreditTransactionModel and add to session.
+      For idempotency: try inserting, catch IntegrityError on idempotency_key, then query
+      existing transaction and return it.
+    </implementation>
+  </task>
+
+  <task id="3.3" status="PENDING">
+    <title>Credit consumption middleware — FastAPI dependency for credit gating</title>
+    <priority>P0</priority>
+    <phase>3</phase>
+    <files>
+      <create>src/music_attribution/billing/middleware.py</create>
+    </files>
+    <tdd_spec>
+      <test_file>tests/unit/billing/test_credit_middleware.py</test_file>
+      <test_cases>
+        <case>test_require_credits_deducts_on_success — mock successful API call, verify credits consumed after endpoint returns</case>
+        <case>test_require_credits_blocks_insufficient — user with 0 credits, verify 402 Payment Required response</case>
+        <case>test_require_credits_no_deduction_on_failure — mock endpoint raising exception, verify credits NOT consumed (deduct-after pattern)</case>
+        <case>test_credit_cost_lookup_by_action — verify get_credit_cost(CreditActionEnum.MUSICBRAINZ_LOOKUP) returns 1000</case>
+        <case>test_credit_cost_lookup_multi_source — verify get_credit_cost(CreditActionEnum.MULTI_SOURCE_LOOKUP) returns 3000</case>
+        <case>test_free_tier_monthly_limit_enforced — user on free tier with 500 requests used, verify 429 Too Many Requests</case>
+        <case>test_pro_tier_monthly_limit_not_reached — user on pro tier with 100 requests, verify request proceeds</case>
+        <case>test_enterprise_tier_unlimited — user on enterprise tier, verify no limit check</case>
+        <case>test_idempotency_key_generated_from_request — verify unique idempotency_key generated per request using request ID or UUID</case>
+        <case>test_credit_headers_in_response — verify X-Credits-Remaining and X-Credits-Used headers in response</case>
+      </test_cases>
+      <description>
+        Create FastAPI middleware/dependency for credit-gated API endpoints.
+
+        This module provides:
+
+        1. CreditGate dependency (FastAPI Depends):
+           - Injected into route handlers that cost credits
+           - Before the handler: checks sufficient balance, checks monthly tier limits
+           - After the handler (on success): deducts credits via CreditService.consume()
+           - On insufficient credits: returns 402 Payment Required
+           - On monthly limit exceeded: returns 429 Too Many Requests
+           - Sets response headers: X-Credits-Remaining, X-Credits-Used, X-Monthly-Usage
+
+        2. get_credit_cost(action: CreditActionEnum) -> int:
+           Lookup function returning millicredit cost for each action.
+           Uses CREDIT_COSTS dict: {MUSICBRAINZ_LOOKUP: 1000, DISCOGS_LOOKUP: 1000,
+           ACOUSTID_FINGERPRINT: 5000, MULTI_SOURCE_LOOKUP: 3000, LASTFM_LOOKUP: 500,
+           VOICE_AGENT_QUERY: 10000}
+
+        3. require_credits(action: CreditActionEnum) -> Callable:
+           Decorator/dependency factory that wraps an endpoint with credit gating.
+           Usage: @router.get("/search", dependencies=[Depends(require_credits(CreditActionEnum.MULTI_SOURCE_LOOKUP))])
+
+        The middleware reads user_id from request.state.user (set by auth middleware from the auth plan).
+        For testing, user_id can be injected via a test fixture.
+
+        DESIGN DECISION (C4 — Credit Consumption Semantics): Credits are consumed on any
+        non-exception completion, including empty results. If the endpoint returns 200 with zero
+        results, credits are still deducted because the API call was made and external APIs were
+        queried. This is by design. The generator dependency yields after the pre-check, and
+        deducts after yield if no exception propagated. Document this in the API response as
+        `X-Credits-Consumed: N` header.
+      </description>
+    </tdd_spec>
+    <implementation>
+      Implement as a class-based FastAPI dependency using __call__ for the Depends pattern.
+      The CreditGate class holds a reference to CreditService and CreditAccountRepository.
+      Use FastAPI's Response object to set custom headers. The "deduct after success" pattern
+      means the dependency yields (using a generator dependency), checks credits before yield,
+      and deducts after yield if no exception was raised.
+    </implementation>
+  </task>
+
+  <task id="3.4" status="PENDING">
+    <title>Stripe integration — checkout session creation and webhook handler</title>
+    <priority>P1</priority>
+    <phase>3</phase>
+    <files>
+      <create>src/music_attribution/billing/stripe_service.py</create>
+      <create>src/music_attribution/api/routes/billing.py</create>
+      <modify>src/music_attribution/config.py</modify>
+      <modify>src/music_attribution/api/app.py</modify>
+    </files>
+    <tdd_spec>
+      <test_file>tests/unit/billing/test_stripe_service.py</test_file>
+      <test_cases>
+        <case>test_create_checkout_session — mock stripe.checkout.Session.create, verify called with correct price_id, success_url, cancel_url, metadata containing user_id and package_id</case>
+        <case>test_create_checkout_session_returns_url — verify returned dict has session_id and checkout_url</case>
+        <case>test_handle_checkout_completed — mock webhook event with type checkout.session.completed, verify CreditService.purchase called with correct user_id and package_id from metadata</case>
+        <case>test_handle_checkout_completed_idempotent — send same webhook event twice, verify credits granted only once (idempotency via session_id)</case>
+        <case>test_webhook_signature_verification — mock stripe.Webhook.construct_event, verify called with raw body, sig header, and webhook secret</case>
+        <case>test_webhook_invalid_signature_returns_400 — mock signature verification failure, verify 400 response</case>
+        <case>test_webhook_unknown_event_type_returns_200 — send event with type "invoice.paid", verify 200 OK (acknowledged but not processed)</case>
+        <case>test_billing_routes_registered — verify /api/v1/billing/checkout and /api/v1/billing/webhook routes exist</case>
+        <case>test_get_packages_returns_active — verify GET /api/v1/billing/packages returns only is_active=True packages</case>
+        <case>test_get_balance_returns_current — verify GET /api/v1/billing/balance returns CreditBalanceResponse for authenticated user</case>
+        <case>test_stripe_keys_from_config — verify Settings has stripe_secret_key, stripe_webhook_secret, stripe_publishable_key</case>
+      </test_cases>
+      <description>
+        Create Stripe integration for credit purchases and corresponding billing API routes.
+
+        New config fields in Settings:
+        - stripe_secret_key: SecretStr | None
+        - stripe_webhook_secret: SecretStr | None
+        - stripe_publishable_key: str | None (publishable key is not secret)
+
+        New file: billing/stripe_service.py containing:
+        - StripeService class:
+          - create_checkout_session(user_id, package_id, success_url, cancel_url, session) -> dict
+            Creates a Stripe Checkout Session for the given credit package. Stores user_id and
+            package_id in session metadata for webhook fulfillment.
+          - handle_webhook_event(event: dict, session) -> None
+            Processes Stripe webhook events. Currently handles:
+            - checkout.session.completed: calls CreditService.purchase() with idempotency_key=session_id
+            All other event types are acknowledged (200 OK) but not processed.
+          - verify_webhook_signature(raw_body: bytes, signature: str) -> dict
+            Verifies the Stripe-Signature header and returns the parsed event.
+
+        New file: api/routes/billing.py containing:
+        - POST /api/v1/billing/checkout — create checkout session (requires auth)
+        - POST /api/v1/billing/webhook — Stripe webhook endpoint (no auth, signature-verified)
+        - GET /api/v1/billing/packages — list active credit packages
+        - GET /api/v1/billing/balance — get current user's credit balance
+        - GET /api/v1/billing/transactions — paginated transaction history
+
+        Register billing router in api/app.py.
+
+        NEW dependency: `stripe>=11.0` — add via `uv add stripe`.
+      </description>
+    </tdd_spec>
+    <implementation>
+      Use the stripe Python library. For testing, mock stripe.checkout.Session.create and
+      stripe.Webhook.construct_event. The webhook endpoint reads raw body via
+      `await request.body()` (not JSON parsing) for signature verification. The billing
+      router requires auth for all endpoints except /webhook. Use `uv add stripe` to install.
+    </implementation>
+  </task>
+
+  <!-- ============================================================
+       PHASE 4: Tier Management and Gating (tasks 4.1 - 4.3)
+       Tier service, route gating, per-user API config.
+       ============================================================ -->
+
+  <task id="4.1" status="PENDING">
+    <title>Tier model and service — definitions, feature flags, checking dependency</title>
+    <priority>P0</priority>
+    <phase>4</phase>
+    <files>
+      <create>src/music_attribution/billing/tier_service.py</create>
+    </files>
+    <tdd_spec>
+      <test_file>tests/unit/billing/test_tier_service.py</test_file>
+      <test_cases>
+        <case>test_get_user_tier_returns_free_by_default — user with no tier_id, verify returns FREE tier</case>
+        <case>test_get_user_tier_returns_pro — user with tier_id pointing to pro, verify returns PRO tier</case>
+        <case>test_get_tier_by_name — get_tier(TierEnum.PRO), verify returns Tier schema with correct limits</case>
+        <case>test_is_source_allowed_free_only_musicbrainz — free tier, is_source_allowed(MUSICBRAINZ) True, is_source_allowed(DISCOGS) False</case>
+        <case>test_is_source_allowed_pro_all — pro tier, all sources return True</case>
+        <case>test_get_allowed_sources — free tier returns [MUSICBRAINZ], pro returns [MUSICBRAINZ, DISCOGS, ACOUSTID, LASTFM]</case>
+        <case>test_check_attribution_limit_within — free tier, 30 attributions this month, verify check_attribution_limit returns True</case>
+        <case>test_check_attribution_limit_exceeded — free tier, 50 attributions this month, verify returns False</case>
+        <case>test_check_api_request_limit — pro tier, 24000 requests, verify within limit (True); 25001 returns False</case>
+        <case>test_enterprise_unlimited — enterprise tier, any count returns True (-1 sentinel means unlimited)</case>
+        <case>test_get_max_assurance_level — free returns LEVEL_1, pro returns LEVEL_3</case>
+        <case>test_can_use_feature — pro tier with features={"batch_operations": True}, can_use_feature("batch_operations") True</case>
+        <case>test_tier_upgrade_path — verify upgrade_path(FREE) returns [PRO, ENTERPRISE]</case>
+      </test_cases>
+      <description>
+        Create the tier service that provides tier-based authorization checks.
+
+        Class: TierService with async methods:
+        - get_user_tier(user_id: UUID, session: AsyncSession) -> Tier
+          Looks up user's tier_id, returns Tier schema. Defaults to FREE if no tier set.
+        - get_tier(tier_name: TierEnum, session: AsyncSession) -> Tier
+          Returns tier definition by name.
+        - is_source_allowed(tier: Tier, source: SourceEnum) -> bool
+        - get_allowed_sources(tier: Tier) -> list[SourceEnum]
+        - check_attribution_limit(user_id: UUID, tier: Tier, session: AsyncSession) -> bool
+          Checks if user has not exceeded max_attributions_per_month.
+        - check_api_request_limit(user_id: UUID, tier: Tier, session: AsyncSession) -> bool
+          Checks if user has not exceeded max_api_requests_per_month.
+        - get_max_assurance_level(tier: Tier) -> AssuranceLevelEnum
+        - can_use_feature(tier: Tier, feature_name: str) -> bool
+          Checks tier.features dict for boolean feature flags.
+        - upgrade_path(current_tier: TierEnum) -> list[TierEnum]
+
+        Tier definitions (seeded in migration, queried from DB):
+        - FREE: 50 attr/mo, 500 req/mo, [MUSICBRAINZ], A1, 1 key, features: {}
+        - PRO: 2000 attr/mo, 25000 req/mo, [MB,DISCOGS,ACOUSTID,LASTFM], A3, 5 keys,
+          features: {batch_operations: true, audio_fingerprinting: true, priority_support: false}
+        - ENTERPRISE: -1/-1 (unlimited), all sources, A3, unlimited keys,
+          features: {batch_operations: true, audio_fingerprinting: true, sso_saml: true,
+          audit_logs: true, team_management: true, priority_support: true}
+      </description>
+    </tdd_spec>
+    <implementation>
+      TierService takes AsyncSession. Reads UserTierModel from DB. Caches tier definitions
+      in-memory (they rarely change) with a TTL of 5 minutes. For limit checks, queries
+      count of attribution_records or credit_transactions in the current calendar month.
+      -1 sentinel value means unlimited (skip limit check entirely).
+    </implementation>
+  </task>
+
+  <task id="4.2" status="PENDING">
+    <title>Tier-gated API endpoints — modify attribution routes for tier/credit enforcement</title>
+    <priority>P0</priority>
+    <phase>4</phase>
+    <files>
+      <modify>src/music_attribution/api/routes/attribution.py</modify>
+      <create>src/music_attribution/api/dependencies_billing.py</create>
+    </files>
+    <tdd_spec>
+      <test_file>tests/unit/api/test_attribution_routes_billing.py</test_file>
+      <test_cases>
+        <case>test_search_attributions_free_tier_only_musicbrainz — mock free tier user, search with sources=["MUSICBRAINZ","DISCOGS"], verify only MUSICBRAINZ results returned</case>
+        <case>test_search_attributions_pro_tier_all_sources — mock pro tier user, verify all source results returned</case>
+        <case>test_search_attributions_deducts_credits — mock pro user, search, verify credit consumption via CreditService.consume</case>
+        <case>test_search_attributions_insufficient_credits_402 — mock user with 0 credits, verify 402 Payment Required</case>
+        <case>test_list_attributions_free_tier_limited_assurance — mock free user, verify results filtered to max A1 assurance level</case>
+        <case>test_batch_search_pro_only — attempt batch search as free user, verify 403 Forbidden</case>
+        <case>test_batch_search_pro_succeeds — attempt batch search as pro user, verify 200 with results</case>
+        <case>test_fingerprint_search_pro_only — attempt fingerprint-based search as free user, verify 403</case>
+        <case>test_unauthenticated_request_uses_free_defaults — no auth header, verify request treated as anonymous free tier</case>
+        <case>test_credit_headers_present — verify X-Credits-Remaining header in successful response</case>
+      </test_cases>
+      <description>
+        Modify the existing attribution API routes to enforce tier-based access control and
+        credit consumption.
+
+        New file: api/dependencies_billing.py containing:
+        - get_current_user_tier(request: Request) -> Tier: dependency that extracts user from
+          request.state.user (set by auth middleware), looks up tier, returns Tier schema.
+          Falls back to FREE tier for unauthenticated requests.
+        - require_tier(min_tier: TierEnum) -> Callable: dependency factory that returns 403
+          if user's tier is below min_tier.
+        - require_source_access(source: SourceEnum) -> Callable: dependency factory that returns
+          403 if source not in user's tier allowed_sources.
+
+        Modifications to attribution.py:
+        - search_attributions: add credit consumption via require_credits(MULTI_SOURCE_LOOKUP)
+          for multi-source, or MUSICBRAINZ_LOOKUP for single source. Filter results by
+          user's allowed sources and max assurance level.
+        - New endpoint: POST /api/v1/attributions/batch-search — requires PRO tier or above.
+          Accepts list of queries, returns list of results. Max batch size: 50 for PRO, unlimited
+          for ENTERPRISE.
+        - New endpoint: POST /api/v1/attributions/fingerprint — requires PRO tier (audio_fingerprinting
+          feature flag). Accepts audio file upload, runs AcoustID fingerprint, returns matches.
+      </description>
+    </tdd_spec>
+    <implementation>
+      Use Depends() injection in route function signatures. The tier check dependency runs
+      before the handler. Credit consumption uses the generator-based Depends pattern from
+      task 3.3. For batch-search, accept a Pydantic model with list[str] queries and optional
+      list[SourceEnum] sources. For fingerprint, use UploadFile and stream to AcoustIDLiveClient.
+    </implementation>
+  </task>
+
+  <task id="4.3" status="PENDING">
+    <title>User API config management — per-user encrypted API keys storage</title>
+    <priority>P1</priority>
+    <phase>4</phase>
+    <files>
+      <create>src/music_attribution/billing/api_config_service.py</create>
+      <create>src/music_attribution/api/routes/api_configs.py</create>
+      <modify>src/music_attribution/config.py</modify>
+      <modify>src/music_attribution/api/app.py</modify>
+    </files>
+    <tdd_spec>
+      <test_file>tests/unit/billing/test_api_config_service.py</test_file>
+      <test_cases>
+        <case>test_store_api_config — call store_config(user_id, DISCOGS, {"token": "secret"}), verify encrypted_credentials is NOT plaintext</case>
+        <case>test_retrieve_api_config_decrypts — store config then retrieve, verify original credentials returned</case>
+        <case>test_store_config_upserts — store twice for same user/source, verify only one row and latest credentials returned</case>
+        <case>test_delete_config — store then delete, verify get_config returns None</case>
+        <case>test_list_user_configs — store configs for DISCOGS and LASTFM, verify list_configs returns both with redacted credentials</case>
+        <case>test_encryption_uses_fernet — verify encrypted_credentials is valid Fernet token format</case>
+        <case>test_encryption_key_from_settings — verify ENCRYPTION_KEY read from Settings</case>
+        <case>test_api_configs_route_store — POST /api/v1/api-configs with source and credentials, verify 201</case>
+        <case>test_api_configs_route_list — GET /api/v1/api-configs, verify returns configs with redacted credentials</case>
+        <case>test_api_configs_route_delete — DELETE /api/v1/api-configs/{source}, verify 204</case>
+        <case>test_config_scoped_to_user — user A stores config, user B cannot retrieve it</case>
+      </test_cases>
+      <description>
+        Create a service for managing per-user API credentials (e.g., Discogs OAuth tokens,
+        Last.fm API keys) with encryption at rest.
+
+        New config field: Settings.encryption_key (SecretStr) — Fernet key for encrypting
+        user API credentials. Generate with `Fernet.generate_key()` for local dev.
+
+        billing/api_config_service.py:
+        - ApiConfigService class:
+          - store_config(user_id, source, credentials_dict, session) -> UserApiConfig
+            Encrypts credentials_dict as JSON string using Fernet, stores in encrypted_credentials.
+            Upserts: if config exists for (user_id, source), update encrypted_credentials.
+          - get_config(user_id, source, session) -> dict | None
+            Retrieves and decrypts credentials. Returns original dict or None if not found.
+          - list_configs(user_id, session) -> list[UserApiConfig]
+            Returns all configs for user with credentials REDACTED.
+          - delete_config(user_id, source, session) -> bool
+            Deletes config, returns True if existed.
+
+        New routes in api/routes/api_configs.py:
+        - POST /api/v1/api-configs — store a new API config (requires auth)
+        - GET /api/v1/api-configs — list user's API configs (redacted)
+        - DELETE /api/v1/api-configs/{source} — delete a config
+
+        Register api_configs router in api/app.py.
+
+        Uses cryptography.fernet.Fernet for symmetric encryption. NEW dependency: `cryptography>=44.0`
+        — add via `uv add cryptography`.
+      </description>
+    </tdd_spec>
+    <implementation>
+      Fernet encryption: `fernet = Fernet(settings.encryption_key.get_secret_value().encode())`.
+      Encrypt: `fernet.encrypt(json.dumps(creds).encode('utf-8'))`. Decrypt: reverse.
+      Store the base64-encoded ciphertext in the TEXT column. For upsert, use
+      `INSERT ... ON CONFLICT (user_id, source) DO UPDATE SET encrypted_credentials = ?`.
+      Add `uv add cryptography` for the Fernet implementation.
+    </implementation>
+  </task>
+
+  <!-- ============================================================
+       PHASE 5: Frontend (tasks 5.1 - 5.4)
+       Billing page, source selector, credit display, Stripe checkout.
+       ============================================================ -->
+
+  <task id="5.1" status="PENDING">
+    <title>Tier/billing page — plan display, upgrade CTA, credit balance, purchase button</title>
+    <priority>P1</priority>
+    <phase>5</phase>
+    <files>
+      <create>frontend/src/app/billing/page.tsx</create>
+      <create>frontend/src/components/billing/PlanCard.tsx</create>
+      <create>frontend/src/components/billing/CreditBalance.tsx</create>
+      <create>frontend/src/components/billing/PlanComparison.tsx</create>
+      <create>frontend/src/lib/stores/billing.ts</create>
+      <create>frontend/src/lib/types/billing.ts</create>
+    </files>
+    <tdd_spec>
+      <test_file>frontend/src/__tests__/billing-page.test.tsx</test_file>
+      <test_cases>
+        <case>test_billing_page_renders_current_plan — render billing page with mock free tier, verify "Free" plan displayed with limits</case>
+        <case>test_billing_page_shows_upgrade_cta — render as free tier, verify "Upgrade to Pro" button visible</case>
+        <case>test_billing_page_shows_credit_balance — render with mock balance, verify credit count displayed</case>
+        <case>test_plan_card_displays_price — render PlanCard with Pro plan, verify "$29/mo" displayed</case>
+        <case>test_plan_card_shows_feature_list — verify plan card lists features: sources, attributions, API requests</case>
+        <case>test_plan_comparison_three_columns — render PlanComparison, verify Free/Pro/Enterprise columns</case>
+        <case>test_plan_comparison_highlights_current — render with current=FREE, verify Free column has active indicator</case>
+        <case>test_credit_balance_low_warning — render with balance below 10, verify low-balance warning shown</case>
+        <case>test_credit_balance_shows_monthly_usage — render with usage data, verify "X of Y credits used" displayed</case>
+        <case>test_billing_page_accessibility — vitest-axe check on billing page, verify no WCAG violations</case>
+      </test_cases>
+      <description>
+        Create the billing/subscription management page following the project's editorial design system.
+
+        New page: /billing (frontend/src/app/billing/page.tsx)
+        Layout: Full-width editorial grid with asymmetric layout. Three plan columns using
+        horizontal rows with divider lines (NOT shadow-box cards per design system rules).
+
+        Components:
+        - PlanCard: displays plan name (Instrument Serif heading), price, feature list, CTA button.
+          Current plan has accent-square indicator. Upgrade plans have text-link CTAs.
+        - CreditBalance: shows current credit balance with gauge visualization.
+          Low-balance warning (below 10 credits) with coral accent.
+          Monthly usage progress bar showing "X of Y credits used this month".
+        - PlanComparison: side-by-side comparison table with editorial typography.
+          Columns: Free | Pro | Enterprise. Rows: price, attributions/mo, API requests/mo,
+          sources, assurance levels, API keys, features.
+
+        State: Jotai atoms in billing.ts for:
+        - billingAtom: { currentTier, balance, monthlyUsage, packages }
+        - Fetches from GET /api/v1/billing/balance and GET /api/v1/billing/packages
+
+        Types in billing.ts:
+        - Tier, CreditBalance, CreditPackage, BillingState matching backend schemas
+
+        Design: Follow UX-first philosophy — warm cream backgrounds, Instrument Serif headings,
+        coral accent squares for current plan indicator, Plus Jakarta Sans for body text.
+        Zero hardcoded hex values — all CSS custom properties.
+      </description>
+    </tdd_spec>
+    <implementation>
+      Use Next.js App Router page.tsx with "use client" directive for Jotai state.
+      PlanCard uses CSS custom properties for all colors. CreditBalance uses the
+      ConfidenceGauge pattern for credit visualization. PlanComparison uses editorial
+      horizontal rows with accent-line dividers. Add billing nav item to sidebar.
+    </implementation>
+  </task>
+
+  <task id="5.2" status="PENDING">
+    <title>API source selector — multi-source selection in search UI gated by tier</title>
+    <priority>P1</priority>
+    <phase>5</phase>
+    <files>
+      <create>frontend/src/components/search/SourceSelector.tsx</create>
+      <modify>frontend/src/lib/stores/works.ts</modify>
+    </files>
+    <tdd_spec>
+      <test_file>frontend/src/__tests__/source-selector.test.tsx</test_file>
+      <test_cases>
+        <case>test_source_selector_shows_all_sources — render with pro tier, verify all 4 sources (MB, Discogs, AcoustID, Last.fm) displayed</case>
+        <case>test_source_selector_free_tier_locks_non_mb — render with free tier, verify Discogs/AcoustID/Last.fm show lock icon and "Pro" badge</case>
+        <case>test_source_selector_toggle_source — click Discogs checkbox (pro tier), verify source added to selected sources</case>
+        <case>test_source_selector_updates_atom — toggle sources, verify worksSearchSourcesAtom updated</case>
+        <case>test_source_selector_locked_source_shows_upgrade_tooltip — hover over locked source, verify "Upgrade to Pro" tooltip</case>
+        <case>test_source_selector_shows_credit_cost — verify each source shows credit cost badge (1, 1, 5, 0.5)</case>
+        <case>test_source_selector_multi_source_cost — select 3 sources, verify "3 credits" total displayed</case>
+        <case>test_source_selector_accessibility — vitest-axe check, verify checkboxes have labels and ARIA attributes</case>
+        <case>test_source_selector_color_coding — verify each source uses its data-source color token from design system</case>
+      </test_cases>
+      <description>
+        Create a source selection component for the search UI that respects tier-based access.
+
+        Component: SourceSelector
+        - Renders a row of toggleable source badges (MusicBrainz, Discogs, AcoustID, Last.fm)
+        - Each source badge uses its data-source color token (--color-source-musicbrainz, etc.)
+        - Sources not in user's tier are shown but locked (lock icon + "Pro" badge)
+        - Clicking a locked source shows "Upgrade to Pro" tooltip (not a modal, per UX philosophy)
+        - Selected sources stored in new Jotai atom: worksSearchSourcesAtom (list[SourceEnum])
+        - Credit cost displayed per source and total for selected combination
+        - MusicBrainz is always selected by default and cannot be deselected (base source)
+
+        Modify works.ts store:
+        - Add worksSearchSourcesAtom: atom holding SourceEnum array with default ["MUSICBRAINZ"]
+        - Modify search action to pass selected sources to API call
+
+        Design: horizontal row of badges with accent-line dividers, editorial typography.
+        Each badge is a pill-less toggle (underline style per design system, not pill buttons).
+      </description>
+    </tdd_spec>
+    <implementation>
+      SourceSelector uses Jotai useAtom for state. Each source rendered as a button with
+      data-source color. Locked sources have opacity reduction and lock icon overlay.
+      Tooltip uses a simple CSS hover tooltip (no external tooltip library needed).
+      Credit cost calculation: sum of individual source costs, or MULTI_SOURCE_LOOKUP cost
+      if 2+ sources selected.
+    </implementation>
+  </task>
+
+  <task id="5.3" status="PENDING">
+    <title>Credit balance display — header component with remaining credits and low-balance warning</title>
+    <priority>P1</priority>
+    <phase>5</phase>
+    <files>
+      <create>frontend/src/components/billing/CreditBadge.tsx</create>
+      <modify>frontend/src/components/layout/navigation.tsx</modify>
+    </files>
+    <tdd_spec>
+      <test_file>frontend/src/__tests__/credit-badge.test.tsx</test_file>
+      <test_cases>
+        <case>test_credit_badge_displays_balance — render with 42 credits, verify "42" displayed</case>
+        <case>test_credit_badge_formats_large_numbers — render with 1500 credits, verify "1.5K" displayed</case>
+        <case>test_credit_badge_low_balance_warning — render with 5 credits, verify warning state (coral accent color)</case>
+        <case>test_credit_badge_zero_balance — render with 0 credits, verify "0" with warning and "Buy credits" link</case>
+        <case>test_credit_badge_click_navigates_to_billing — click badge, verify navigation to /billing</case>
+        <case>test_credit_badge_tooltip_shows_details — hover badge, verify tooltip shows "X credits remaining / Y used this month"</case>
+        <case>test_credit_badge_in_sidebar — render navigation.tsx with auth, verify CreditBadge appears above role toggle</case>
+        <case>test_credit_badge_hidden_when_unauthenticated — render navigation.tsx without auth, verify CreditBadge not rendered</case>
+        <case>test_credit_badge_accessibility — vitest-axe check, verify ARIA label "Credit balance: X credits"</case>
+        <case>test_credit_badge_updates_on_atom_change — update billing atom, verify badge re-renders with new balance</case>
+      </test_cases>
+      <description>
+        Create a compact credit balance badge for the sidebar.
+
+        Component: CreditBadge
+        - Compact badge showing credit balance number (data-mono font for tabular numbers)
+        - Color states:
+          - Normal (>= 10 credits): --color-primary
+          - Low (1-9 credits): --color-confidence-medium (amber)
+          - Empty (0 credits): --color-confidence-low (red/coral)
+        - Click navigates to /billing page
+        - Hover tooltip shows: "X credits remaining / Y of Z used this month"
+        - Formats large numbers: 1500 -> "1.5K", 25000 -> "25K"
+        - ARIA: role="status", aria-label="Credit balance: X credits"
+
+        Sidebar integration (C6 — correct file path: navigation.tsx, not Sidebar.tsx):
+        - Add CreditBadge to frontend/src/components/layout/navigation.tsx, positioned between
+          the notification icon and role toggle
+        - Only shown when user is authenticated (check auth state atom)
+        - Uses the accent-square design pattern (small coral square + number)
+
+        Reads from billingAtom (created in task 5.1).
+      </description>
+    </tdd_spec>
+    <implementation>
+      CreditBadge is a small component (~50 lines). Uses useAtom(billingAtom) for state.
+      navigation.tsx: conditionally render CreditBadge based on auth state. Use CSS custom
+      properties for all colors. Number formatting: simple utility function in lib/utils/format.ts
+      (extend existing format utils).
+    </implementation>
+  </task>
+
+  <task id="5.4" status="PENDING">
+    <title>Stripe checkout integration — frontend credit purchase flow</title>
+    <priority>P1</priority>
+    <phase>5</phase>
+    <files>
+      <create>frontend/src/components/billing/CreditPurchase.tsx</create>
+      <create>frontend/src/components/billing/PackageCard.tsx</create>
+      <modify>frontend/src/lib/api/api-client.ts</modify>
+    </files>
+    <tdd_spec>
+      <test_file>frontend/src/__tests__/credit-purchase.test.tsx</test_file>
+      <test_cases>
+        <case>test_credit_purchase_renders_packages — render CreditPurchase, verify 3 package cards displayed</case>
+        <case>test_package_card_shows_price_and_credits — render PackageCard with 100 credits / $9.99, verify both displayed</case>
+        <case>test_package_card_shows_per_credit_price — verify "$0.10/credit" calculated and displayed</case>
+        <case>test_purchase_button_calls_checkout_api — click "Buy" on package, verify apiClient.createCheckoutSession called with package_id</case>
+        <case>test_purchase_button_redirects_to_stripe — mock checkout API returning URL, verify window.location.assign called with Stripe URL</case>
+        <case>test_purchase_button_loading_state — click buy, verify button shows loading skeleton during API call</case>
+        <case>test_purchase_button_error_state — mock API error, verify friendly error message displayed</case>
+        <case>test_success_return_page — render /billing?success=true, verify "Purchase successful!" confirmation message</case>
+        <case>test_cancel_return_page — render /billing?canceled=true, verify "Purchase canceled" message</case>
+        <case>test_api_client_has_billing_methods — verify apiClient has createCheckoutSession, getPackages, getBalance methods</case>
+      </test_cases>
+      <description>
+        Create the frontend credit purchase flow using Stripe Checkout (redirect mode).
+
+        Components:
+        - CreditPurchase: container showing available credit packages
+        - PackageCard: individual package card with:
+          - Credit amount (large Instrument Serif number)
+          - Price in USD
+          - Per-credit price calculation
+          - "Buy Credits" text-link CTA (not a pill button per design system)
+
+        Predefined packages (fetched from /api/v1/billing/packages):
+        - Starter: 50 credits / $4.99 ($0.10/credit)
+        - Standard: 200 credits / $14.99 ($0.075/credit)
+        - Bulk: 1000 credits / $49.99 ($0.05/credit)
+
+        Purchase flow:
+        1. User clicks "Buy" on a package card
+        2. Frontend calls POST /api/v1/billing/checkout with { package_id, success_url, cancel_url }
+        3. Backend creates Stripe Checkout Session, returns { session_id, checkout_url }
+        4. Frontend redirects to checkout_url (Stripe hosted checkout page)
+        5. After payment: Stripe redirects to success_url (/billing?success=true)
+        6. Webhook (handled server-side in task 3.4) fulfills the purchase
+
+        Add to apiClient in api-client.ts:
+        - createCheckoutSession(packageId: string) -> { session_id, checkout_url }
+        - getPackages() -> CreditPackage[]
+        - getBalance() -> CreditBalanceResponse
+
+        Design: editorial layout, cream background, horizontal rows with accent-line dividers
+        between packages. Best value badge on "Standard" package.
+      </description>
+    </tdd_spec>
+    <implementation>
+      Use window.location.assign(checkout_url) for redirect (not window.open — Stripe
+      requires same-tab navigation for Checkout). Success/cancel detection via URL query
+      params in the billing page. Add fetchJson-based methods to apiClient with mock fallbacks
+      returning empty arrays when API unavailable. PackageCard uses editorial typography:
+      credit count in Instrument Serif, price in Plus Jakarta Sans mono.
+    </implementation>
+  </task>
+
+</plan>
