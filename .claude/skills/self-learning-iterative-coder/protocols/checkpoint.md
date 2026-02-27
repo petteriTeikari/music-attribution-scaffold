@@ -81,6 +81,16 @@ wip({scope}): task {id} STUCK after {N} iterations
 git commit -m "{commit message}"
 ```
 
+### 4.5. Close GitHub Issue (On Task Completion)
+
+**MANDATORY**: Every plan task MUST have a corresponding GitHub issue created before work begins. When a task reaches DONE status (all tests pass, lint clean, types clean):
+
+```bash
+gh issue close {issue_number} --comment "Completed in {commit_hash}. Tests: {pass_count} passed."
+```
+
+This provides an audit trail of all changes. Issues are created at plan start (batch creation) and closed individually as each task converges.
+
 ### 5. Update State File (Session Boundaries Only)
 
 **v2.0 change:** The state file is updated at **session start** and **session end**, not after every checkpoint.

@@ -1,0 +1,997 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  v1.1 Voice Testing Suite: Golden Dataset, Audio Degradation & Codec Simulation
+  ================================================================================
+  VERSION: 2.1 (incorporates 4 review rounds: 2× TDD crash-resistance + 2× audio engineering)
+
+  SYNTHESIZED PROMPT (LLM-optimized)
+  ──────────────────────────────────
+  Build a fully reproducible voice command testing suite for the music-attribution
+  scaffold that:
+  1. Generates 20 synthetic voice command FLACs via Piper TTS (open-source, no API
+     keys), stored as pre-generated FLAC fixtures committed to the repo.
+  2. Applies 5 reproducible audio degradation presets (clean, office, codec, noisy-
+     cafe, extreme) to each command, producing 100 degraded FLAC fixtures with fixed
+     random seeds for deterministic output.
+  3. Codec compression simulation via audiomentations Mp3Compression — some presets
+     go through WAV → mp3 compress/decompress → FLAC (codec artifacts baked in),
+     while others are pure lossless WAV → augmentation → FLAC.
+  4. Validates STT accuracy (WER + domain keyword survival) against per-preset
+     thresholds using faster-whisper on CPU.
+  5. Runs entirely without a microphone or GPU — any developer can execute
+     `make test-voice-golden` on their laptop. GitHub Actions CI included.
+  6. All audio fixtures use FLAC (lossless compressed). Storage format is always
+     FLAC regardless of which codec compression was applied during degradation.
+  7. Degradation module is a standalone library usable beyond tests.
+
+  CROSS-REFERENCE TO PRIOR PLANNING
+  ──────────────────────────────────
+  This plan implements the MISSING pieces from:
+
+  - v1.1-voice-synthesis-comparison.md (Section 5): Designed DegradationPreset,
+    DegradationConfig, PRESETS dict, apply_degradation() function, 20-command
+    corpus, 4 degradation presets, WER thresholds — NEVER put into executable XML.
+    Section 5.2 codec values: wav, opus_64k, mp3_128k, mp3_64k — we implement
+    codec simulation via audiomentations Mp3Compression at matching bitrates.
+
+  - voice-agent-benchmarking-plan.md: Built Phases 1-4 (benchmark_voice.py with
+    WER, synthetic commands, microphone support) but used 7 commands generated
+    on-the-fly with Piper, NOT pre-generated golden fixtures with degradation.
+
+  - voice-benchmarking-tdd-plan.xml: All 12 tasks DONE — covers runtime
+    benchmarking only, not reproducible golden dataset fixtures.
+
+  - v1.1-voice-webmcp-plan.xml: 18 tasks all PENDING — covers Kokoro TTS
+    integration, WebMCP, A2UI. Audio degradation mentioned in scope header but
+    NO tasks for it in the plan.
+
+  WHAT THIS PLAN ADDS (5 phases, 13 tasks)
+  ─────────────────────────────────────────
+  Phase 1: Foundation — deps, enums, data (3 tasks)
+  Phase 2: Core module — degradation + I/O + metrics (3 tasks)
+  Phase 3: Golden dataset generation script (2 tasks)
+  Phase 4: STT regression test suite (3 tasks)
+  Phase 5: CI integration (2 tasks)
+
+  EXISTING CODEBASE CONTEXT
+  ─────────────────────────
+  Backend (Python 3.13, FastAPI):
+  - Voice config: src/music_attribution/voice/config.py (STTProvider, TTSProvider)
+  - Pipecat pipeline: src/music_attribution/voice/pipeline.py
+  - Benchmark script: scripts/benchmark_voice.py — has compute_wer(),
+    check_domain_keywords(), 7 SYNTHETIC_COMMANDS, generate_command_wavs()
+  - Tests: tests/unit/voice/ (13 test files, conftest.py with voice_config fixture)
+  - conftest.py (root): sets CUDA_VISIBLE_DEVICES="" and DATABASE_URL
+
+  Dependencies already available:
+  - pipecat-ai[piper] (voice-gpl group) — Piper TTS
+  - pipecat-ai[silero,whisper] (voice group) — faster-whisper STT, Silero VAD
+  - numpy (transitive)
+
+  Dependencies to add (NEW voice-test group):
+  - audiomentations>=0.36 (MIT) — noise, bandpass, Mp3Compression
+  - fast-mp3-augment>=0.2 — required backend for Mp3Compression transform
+  - soundfile>=0.13 (BSD) — FLAC read/write via libsndfile
+  - pyroomacoustics>=0.7 (MIT) — room impulse response simulation
+  - soxr>=0.4 (LGPLv2.1) — high-quality audio resampling (Piper 22050→16000 Hz)
+
+  Existing dependency groups (DO NOT MODIFY):
+  - voice: pipecat-ai[silero,whisper], pipecat-ai[smallwebrtc], deepeval
+  - voice-gpl: pipecat-ai[piper]
+  - voice-persona: letta, mem0ai, nemoguardrails
+
+  Existing Makefile targets (DO NOT OVERWRITE):
+  - test-voice: .venv/bin/python -m pytest tests/unit/voice/ -v --timeout=60
+  - benchmark-voice: uv run python scripts/benchmark_voice.py ...
+  - install-voice: uv sync --frozen --group voice
+
+  Existing pytest markers (DO NOT DUPLICATE):
+  - slow: "Tests that take > 30 seconds" (already registered)
+
+  DESIGN CONSTRAINTS
+  ──────────────────
+  - encoding='utf-8', pathlib.Path(), datetime.now(timezone.utc)
+  - AST-only for Python code analysis (no grep/sed/awk on .py files)
+  - All audio files: 16kHz mono float32 internally, FLAC storage
+  - Fixed random seed (42) via global random.seed(seed) + np.random.seed(seed)
+    immediately before each pipeline call. audiomentations does NOT support
+    per-call RandomState — it reads from global random + numpy.random internally.
+    This is a known limitation; we isolate calls and seed both RNGs each time.
+  - Tests marked @pytest.mark.voice (NEW marker) for dependency gating
+  - STT tests additionally marked @pytest.mark.slow for `make test` exclusion
+  - Total fixture size budget: <10 MB (20 commands × 5 presets × ~50-100KB FLAC ≈ 5-10MB;
+    noisy presets compress less efficiently). Git LFS fallback if needed.
+  - Pre-generated fixtures committed to repo (NOT generated at test time)
+  - Generation script targets idempotency; Piper VITS may vary by platform
+    so idempotency test uses np.allclose(atol=1e-4) not byte-identical
+  - pyroomacoustics reverb output >= input length (reverb tail); pad or trim
+    post-reverb to preserve natural tail within reasonable bounds
+  - Mp3Compression is deterministic (same input + same bitrate = same output)
+  - FLAC stores int16 internally; roundtrip tests use np.allclose(atol=1/32768)
+
+  CODEC COMPRESSION DESIGN
+  ────────────────────────
+  audiomentations.Mp3Compression simulates lossy codec artifacts by:
+    WAV → LAME MP3 encode at target bitrate → minimp3 decode → float PCM
+  This "encode then decode" cycle introduces quantization noise, spectral
+  smearing, and pre-echo — the same artifacts that real-world speech codecs
+  (Opus, G.711, WebRTC) produce. Low-bitrate MP3 (16-32 kbps) closely
+  approximates speech codec quality (IEEE: "Audio Codec Simulation based
+  Data Augmentation for Telephony Speech Recognition", 2020).
+
+  Pipeline order for each preset:
+    1. Additive noise via AddGaussianSNR (if snr_db != inf)
+    2. Frequency shaping via HighPassFilter + LowPassFilter (if non-default cutoffs)
+    3. Room reverb via pyroomacoustics ShoeBox (if rt60 > 0; uses rt60_tgt only,
+       NO materials param — they are mutually exclusive in pyroomacoustics)
+    4. Remove DC offset: audio -= np.mean(audio)
+    5. Clip to [-1.0, 1.0]
+    6. Mp3 compress/decompress via Mp3Compression (if mp3_bitrate_kbps is not None)
+    7. Final clip to [-1.0, 1.0], ensure float32
+
+  Codec step comes AFTER environmental degradation — matches real-world
+  signal chain: noise → room → microphone → codec → network → decode.
+
+  PRESET TABLE (5 presets — expanded from original 4)
+  ─────────────────────────────────────────────────────
+  | Preset     | SNR   | RT60 | BPF (Hz)     | Codec (Mp3 kbps) | Lossless? |
+  |------------|-------|------|--------------|-------------------|-----------|
+  | CLEAN      | inf   | 0.0  | 20-20000     | None              | Yes       |
+  | OFFICE     | 25 dB | 0.3s | 80-16000     | None              | Yes       |
+  | CODEC      | inf   | 0.0  | 20-20000     | 32 kbps           | No*       |
+  | NOISY_CAFE | 10 dB | 0.6s | 100-12000    | 64 kbps           | No*       |
+  | EXTREME    | 5 dB  | 1.2s | 200-8000     | 16 kbps           | No*       |
+
+  * "No" = WAV → degradation → Mp3 compress/decompress → FLAC. The FLAC
+    storage is lossless, but the audio content has codec artifacts baked in.
+
+  WER THRESHOLDS (relaxed per audio engineering review)
+  ─────────────────────────────────────────────────────
+  | Preset     | Max WER | Min Keyword Survival | Rationale                    |
+  |------------|---------|---------------------|------------------------------|
+  | CLEAN      | 10%     | 90%                 | Domain-specific short utts   |
+  | OFFICE     | 15%     | 85%                 | Typical desktop microphone   |
+  | CODEC      | 15%     | 85%                 | 32kbps MP3 artifacts notable |
+  | NOISY_CAFE | 25%     | 70%                 | Mobile in public space       |
+  | EXTREME    | 50%     | 50%                 | Stress test, graceful degrad |
+-->
+<plan version="2.1" project="music-attribution-scaffold">
+  <metadata>
+    <title>v1.1 Voice Testing Suite: Golden Dataset, Audio Degradation &amp; Codec Simulation</title>
+    <branch>feat/voice-golden-dataset</branch>
+    <estimated_tasks>13</estimated_tasks>
+    <mode>creation</mode>
+    <!-- NOTE: This plan requires `creation` mode (>3 files, >200 lines).
+         The executing agent must acknowledge mode override from maintenance→creation. -->
+  </metadata>
+
+  <!-- ═══════════════════════════════════════════════════════════════════
+       PHASE 1: Foundation (Tasks 1.1–1.3)
+       Dependencies, enums, data structures — no external imports needed
+       for 1.2/1.3, only 1.1 touches pyproject.toml.
+       ═══════════════════════════════════════════════════════════════════ -->
+
+  <task id="1.1" status="PENDING">
+    <title>Create voice-test dependency group, mypy overrides, and fixture directory</title>
+    <priority>P0</priority>
+    <phase>1</phase>
+    <files>
+      <modify>pyproject.toml</modify>
+      <create>tests/fixtures/voice/audio/.gitkeep</create>
+    </files>
+    <tdd_spec>
+      <test_file>tests/unit/voice/test_degradation.py</test_file>
+      <test_cases>
+        <case>test_voice_test_deps_importable — Try `import audiomentations; import soundfile; import pyroomacoustics; import soxr` and assert no ImportError. If ImportError, pytest.skip("voice-test deps not installed"). This test validates the dependency group works.</case>
+        <case>test_fixtures_directory_exists — Assert Path("tests/fixtures/voice/audio").is_dir(). Use a robust path: Path(__file__).resolve().parents[3] / "tests" / "fixtures" / "voice" / "audio"</case>
+      </test_cases>
+      <description>
+        1. Add NEW dependency group to pyproject.toml [dependency-groups]:
+
+           voice-test = [
+               "audiomentations>=0.36",
+               "fast-mp3-augment>=0.2",
+               "soundfile>=0.13",
+               "pyroomacoustics>=0.7",
+               "soxr>=0.4",
+           ]
+
+           DO NOT modify existing voice, voice-gpl, or voice-persona groups.
+
+        2. Add mypy overrides for untyped libraries. The existing pyproject.toml
+           ALREADY has a [[tool.mypy.overrides]] block with a `module` list and
+           both `ignore_missing_imports = true` and `follow_untyped_imports = true`.
+           APPEND these modules to the EXISTING module list — do NOT create a
+           second [[tool.mypy.overrides]] block:
+
+               "audiomentations",
+               "audiomentations.*",
+               "pyroomacoustics",
+               "pyroomacoustics.*",
+               "soundfile",
+               "soxr",
+               "fast_mp3_augment",
+
+        3. Create tests/fixtures/voice/audio/.gitkeep (empty file) so the
+           fixture directory is tracked by git even before audio files exist.
+
+        4. Run: uv sync --group voice-test
+           to install the new dependencies.
+
+        After this task: `uv run python -c "import audiomentations"` must succeed.
+      </description>
+    </tdd_spec>
+    <implementation>
+      Add voice-test dep group, mypy overrides, create fixture directory.
+    </implementation>
+  </task>
+
+  <task id="1.2" status="PENDING">
+    <title>DegradationPreset enum, DegradationConfig dataclass, PRESETS dict</title>
+    <priority>P0</priority>
+    <phase>1</phase>
+    <files>
+      <create>src/music_attribution/voice/degradation.py</create>
+    </files>
+    <tdd_spec>
+      <test_file>tests/unit/voice/test_degradation.py</test_file>
+      <test_cases>
+        <case>test_degradation_preset_has_five_members — Assert DegradationPreset has exactly CLEAN, OFFICE, CODEC, NOISY_CAFE, EXTREME</case>
+        <case>test_degradation_config_is_frozen — Assert DegradationConfig is a frozen dataclass (try to set attr, expect FrozenInstanceError)</case>
+        <case>test_presets_dict_has_all_five — Assert PRESETS dict has one entry per DegradationPreset member</case>
+        <case>test_clean_preset_values — Assert CLEAN: snr_db=inf, reverb_rt60=0.0, mp3_bitrate_kbps=None, low_cutoff_hz=20.0, high_cutoff_hz=20000.0</case>
+        <case>test_office_preset_values — Assert OFFICE: snr_db=25.0, reverb_rt60=0.3, mp3_bitrate_kbps=None, low=80.0, high=16000.0</case>
+        <case>test_codec_preset_values — Assert CODEC: snr_db=inf, reverb_rt60=0.0, mp3_bitrate_kbps=32, low=20.0, high=20000.0</case>
+        <case>test_noisy_cafe_preset_values — Assert NOISY_CAFE: snr_db=10.0, reverb_rt60=0.6, mp3_bitrate_kbps=64, low=100.0, high=12000.0</case>
+        <case>test_extreme_preset_values — Assert EXTREME: snr_db=5.0, reverb_rt60=1.2, mp3_bitrate_kbps=16, low=200.0, high=8000.0</case>
+        <case>test_lossless_presets — Assert CLEAN and OFFICE have mp3_bitrate_kbps=None (lossless pipeline)</case>
+        <case>test_lossy_presets — Assert CODEC, NOISY_CAFE, EXTREME have mp3_bitrate_kbps not None (codec pipeline)</case>
+      </test_cases>
+      <description>
+        Create src/music_attribution/voice/degradation.py with:
+
+        - DegradationPreset(Enum): CLEAN, OFFICE, CODEC, NOISY_CAFE, EXTREME
+          Values: "clean", "office", "codec", "noisy_cafe", "extreme"
+
+        - DegradationConfig(frozen dataclass):
+            snr_db: float           # Signal-to-noise ratio (inf = no noise)
+            reverb_rt60: float      # Reverberation time (0.0 = no reverb)
+            low_cutoff_hz: float    # Bandpass low cutoff (20.0 = full range)
+            high_cutoff_hz: float   # Bandpass high cutoff (20000.0 = full range)
+            mp3_bitrate_kbps: int | None  # Mp3 compression bitrate (None = lossless)
+
+        - PRESETS: dict[DegradationPreset, DegradationConfig] — 5 entries per
+          the preset table in the plan header.
+
+        This task uses ONLY stdlib (enum, dataclasses). No external imports.
+        Use from __future__ import annotations at top.
+      </description>
+    </tdd_spec>
+    <implementation>
+      Create degradation.py with DegradationPreset, DegradationConfig, PRESETS.
+    </implementation>
+  </task>
+
+  <task id="1.3" status="PENDING">
+    <title>GOLDEN_COMMANDS corpus in voice/golden_commands.py</title>
+    <priority>P0</priority>
+    <phase>1</phase>
+    <files>
+      <create>src/music_attribution/voice/golden_commands.py</create>
+    </files>
+    <tdd_spec>
+      <test_file>tests/unit/voice/test_golden_commands.py</test_file>
+      <test_cases>
+        <case>test_golden_commands_has_20_entries — Assert len(GOLDEN_COMMANDS) == 20</case>
+        <case>test_golden_command_ids_unique — Assert all command IDs are unique</case>
+        <case>test_golden_command_ids_sequential — Assert IDs are "cmd_01" through "cmd_20"</case>
+        <case>test_golden_commands_have_required_fields — Each entry has: id, text, category, domain_keywords, expected_action</case>
+        <case>test_golden_commands_categories — Assert all categories are "query" or "action"</case>
+        <case>test_golden_commands_domain_keywords_nonempty — Each command has at least 2 domain keywords</case>
+        <case>test_golden_commands_text_nonempty — Each command text is a non-empty string with len > 10</case>
+      </test_cases>
+      <description>
+        Create src/music_attribution/voice/golden_commands.py with GOLDEN_COMMANDS
+        constant. This is SEPARATE from degradation.py to avoid mixing test data
+        with library code (reviewer finding: module bloat).
+
+        GOLDEN_COMMANDS: list[dict[str, Any]] — 20 entries, each with:
+        - id: str (cmd_01 through cmd_20)
+        - text: str (the voice command utterance)
+        - category: str ("query" or "action")
+        - domain_keywords: list[str] (keywords that must survive STT)
+        - expected_action: str (parsed intent for future command parser)
+
+        The 20 commands from v1.1-voice-synthesis-comparison.md Section 5.4:
+        1. "Attribution saved for Headlock"
+        2. "Confidence updated to 0.87"
+        3. "Three tracks queued for review"
+        4. "Found 12 results for Imogen Heap"
+        5. "Permission denied, AI training requires artist consent"
+        6. "Search for tracks by Frou Frou"
+        7. "Assurance level upgraded to A2"
+        8. "MusicBrainz and Discogs sources agree"
+        9. "Low confidence warning for track seven"
+        10. "Batch review complete, 15 of 20 approved"
+        11. "What is the confidence score for Hide and Seek?"
+        12. "Show me low confidence attributions"
+        13. "The songwriter should be Imogen Heap"
+        14. "I rate this attribution nine out of ten"
+        15. "Correct the artist name to Frou Frou"
+        16. "What does assurance level A2 mean?"
+        17. "Export attribution report for this album"
+        18. "Compare confidence across all tracks"
+        19. "Flag this attribution for manual review"
+        20. "Cancel the last correction"
+
+        Use from __future__ import annotations. Only stdlib + typing imports.
+      </description>
+    </tdd_spec>
+    <implementation>
+      Create golden_commands.py with all 20 command entries.
+    </implementation>
+  </task>
+
+  <!-- ═══════════════════════════════════════════════════════════════════
+       PHASE 2: Core Module (Tasks 2.1–2.3)
+       Degradation function, FLAC I/O, WER metrics — all in src/.
+       ═══════════════════════════════════════════════════════════════════ -->
+
+  <task id="2.1" status="PENDING">
+    <title>apply_degradation() with seeded RNG and Mp3Compression codec simulation</title>
+    <priority>P0</priority>
+    <phase>2</phase>
+    <depends_on>1.1, 1.2</depends_on>
+    <files>
+      <modify>src/music_attribution/voice/degradation.py</modify>
+    </files>
+    <tdd_spec>
+      <test_file>tests/unit/voice/test_degradation.py</test_file>
+      <test_cases>
+        <case>test_apply_clean_is_passthrough — Apply CLEAN preset to 1s sine wave (440Hz, 16kHz), assert np.allclose(output, input, atol=1e-5). CLEAN has no noise/reverb/codec so output should be unchanged (may have tiny float rounding). Mark @pytest.mark.voice, use pytest.importorskip("audiomentations").</case>
+        <case>test_apply_office_changes_audio — Apply OFFICE preset to sine wave, assert NOT np.allclose(output, input) (noise + reverb applied)</case>
+        <case>test_apply_codec_has_compression_artifacts — Apply CODEC preset to sine wave, assert output differs from input (mp3 artifacts) but no env noise. Use np.corrcoef to verify high correlation (>0.8) — codec changes waveform but preserves structure.</case>
+        <case>test_apply_noisy_cafe_has_codec_and_noise — Apply NOISY_CAFE preset, assert output differs from input (both env + codec)</case>
+        <case>test_apply_extreme_changes_audio — Apply EXTREME preset, assert output differs from input</case>
+        <case>test_apply_degradation_deterministic — Apply OFFICE preset twice with seed=42 (seeding both random.seed and np.random.seed before each call), assert np.array_equal(output1, output2)</case>
+        <case>test_apply_degradation_different_seeds_differ — Apply OFFICE with seed=42 vs seed=99, assert NOT np.array_equal</case>
+        <case>test_codec_deterministic — Apply CODEC preset twice with seed=42, assert np.array_equal (Mp3Compression is deterministic for same input+bitrate, no random component)</case>
+        <case>test_output_dtype_is_float32 — Assert output.dtype == np.float32 for all presets</case>
+        <case>test_output_amplitude_bounded — Assert np.all(np.abs(output) &lt;= 1.0) for all presets</case>
+        <case>test_reverb_output_length — Apply OFFICE (has reverb), assert len(output) >= len(input). Reverb tail extends signal; function should NOT truncate to input length.</case>
+      </test_cases>
+      <description>
+        Add apply_degradation(audio, sample_rate, preset, seed=42) to degradation.py.
+
+        CRITICAL DETERMINISM APPROACH — audiomentations does NOT support per-call
+        RandomState. It reads from GLOBAL random.random() (for probability/parameter
+        selection) and GLOBAL np.random (for noise generation). The ONLY way to
+        achieve determinism is to seed BOTH global RNGs immediately before each call:
+
+            import random
+            import numpy as np
+
+            def apply_degradation(audio, sample_rate, preset, seed=42):
+                config = PRESETS[preset]
+
+                # Seed BOTH random sources for full determinism
+                random.seed(seed)
+                np.random.seed(seed)
+
+                # Step 1: Build audiomentations pipeline
+                transforms = []
+
+                # Additive noise — use AddGaussianSNR (NOT AddGaussianNoise!)
+                # AddGaussianNoise uses amplitude, AddGaussianSNR uses SNR in dB
+                if config.snr_db != float("inf"):
+                    from audiomentations import AddGaussianSNR
+                    transforms.append(
+                        AddGaussianSNR(
+                            min_snr_db=config.snr_db,
+                            max_snr_db=config.snr_db,
+                            p=1.0,
+                        )
+                    )
+
+                # Frequency shaping — use HighPassFilter + LowPassFilter combo
+                # (NOT BandPassFilter! BandPassFilter uses center_freq + bandwidth,
+                #  not direct low/high cutoff. HighPassFilter + LowPassFilter gives
+                #  us direct control over cutoff frequencies.)
+                if config.low_cutoff_hz > 20.0:
+                    from audiomentations import HighPassFilter
+                    transforms.append(
+                        HighPassFilter(
+                            min_cutoff_freq=config.low_cutoff_hz,
+                            max_cutoff_freq=config.low_cutoff_hz,
+                            p=1.0,
+                        )
+                    )
+                if config.high_cutoff_hz &lt; 20000.0:
+                    from audiomentations import LowPassFilter
+                    transforms.append(
+                        LowPassFilter(
+                            min_cutoff_freq=config.high_cutoff_hz,
+                            max_cutoff_freq=config.high_cutoff_hz,
+                            p=1.0,
+                        )
+                    )
+
+                # Step 2: Apply audiomentations pipeline
+                if transforms:
+                    from audiomentations import Compose
+                    pipeline = Compose(transforms)
+                    degraded = pipeline(samples=audio, sample_rate=sample_rate)
+                else:
+                    degraded = audio.copy()
+
+                # Step 3: Room reverb via pyroomacoustics (if RT60 > 0)
+                if config.reverb_rt60 > 0:
+                    import pyroomacoustics as pra
+                    room = pra.ShoeBox(
+                        [8.0, 6.0, 3.0],
+                        fs=sample_rate,
+                        rt60_tgt=config.reverb_rt60,
+                        # DO NOT pass materials= — mutually exclusive with rt60_tgt
+                    )
+                    room.add_source([2.0, 3.0, 1.7], signal=degraded)
+                    room.add_microphone([5.0, 3.0, 1.5])
+                    room.simulate()
+                    # Output is LONGER than input due to reverb tail — keep it
+                    degraded = room.mic_signals[0].astype(np.float32)
+
+                # Step 4: Remove DC offset
+                degraded -= np.mean(degraded)
+
+                # Step 5: Clip to [-1.0, 1.0]
+                degraded = np.clip(degraded, -1.0, 1.0)
+
+                # Step 6: Codec compression (if configured)
+                if config.mp3_bitrate_kbps is not None:
+                    from audiomentations import Mp3Compression
+                    codec = Mp3Compression(
+                        min_bitrate=config.mp3_bitrate_kbps,
+                        max_bitrate=config.mp3_bitrate_kbps,
+                        p=1.0,
+                        backend="fast-mp3-augment",
+                    )
+                    degraded = codec(samples=degraded, sample_rate=sample_rate)
+
+                # Step 7: Final clip + dtype
+                degraded = np.clip(degraded, -1.0, 1.0).astype(np.float32)
+                return degraded
+
+        KEY API CORRECTIONS (from review round 2):
+        - AddGaussianSNR, NOT AddGaussianNoise (different param names)
+        - HighPassFilter + LowPassFilter, NOT BandPassFilter (direct cutoff control)
+        - Compose(transforms).__call__(samples=audio, sample_rate=sr) — no random_state kwarg
+        - ShoeBox(rt60_tgt=X) WITHOUT materials= (mutually exclusive params)
+        - Mp3Compression applied as standalone transform AFTER reverb+clip
+
+        All tests are marked @pytest.mark.voice and use:
+            pytest.importorskip("audiomentations")
+        for graceful skip if voice-test deps not installed.
+
+        Determinism tests MUST seed both random.seed(seed) and np.random.seed(seed)
+        immediately before EACH call to apply_degradation().
+      </description>
+    </tdd_spec>
+    <implementation>
+      Add apply_degradation() with global RNG seeding, correct audiomentations API
+      (AddGaussianSNR, HighPassFilter+LowPassFilter, no BandPassFilter), reverb
+      without materials param, and Mp3Compression codec simulation.
+    </implementation>
+  </task>
+
+  <task id="2.2" status="PENDING">
+    <title>read_audio() and write_audio() FLAC I/O helpers</title>
+    <priority>P0</priority>
+    <phase>2</phase>
+    <depends_on>1.1</depends_on>
+    <files>
+      <modify>src/music_attribution/voice/degradation.py</modify>
+    </files>
+    <tdd_spec>
+      <test_file>tests/unit/voice/test_degradation.py</test_file>
+      <test_cases>
+        <case>test_write_then_read_flac_roundtrip — Write 1s sine wave (float32) to FLAC via write_audio(), read back with read_audio(), assert np.allclose(original, recovered, atol=1/32768). FLAC stores int16 internally so exact float32 equality is NOT expected. Use tmp_path fixture.</case>
+        <case>test_read_audio_returns_float32 — Assert read_audio() returns float32 numpy array</case>
+        <case>test_read_audio_returns_correct_sample_rate — Write a 16kHz file, assert read_audio() returns sample_rate=16000</case>
+        <case>test_write_audio_creates_flac_file — Write audio, assert file.exists() and file.suffix == ".flac"</case>
+        <case>test_write_audio_creates_parent_dirs — Write to nested path (tmp_path / "a" / "b" / "test.flac"), assert parent dirs created</case>
+        <case>test_write_audio_file_size_reasonable — Write 3s audio, assert 1KB &lt; size &lt; 100KB</case>
+      </test_cases>
+      <description>
+        Add to degradation.py:
+
+        - write_audio(path: Path, audio: np.ndarray, sample_rate: int = 16000) -> None
+          Writes float32 audio to FLAC using soundfile.write(subtype="PCM_16").
+          Creates parent dirs: path.parent.mkdir(parents=True, exist_ok=True).
+          IMPORTANT: Use subtype="PCM_16" explicitly — FLAC stores integer samples.
+          This means float32→int16 quantization on write, int16→float32 on read.
+
+        - read_audio(path: Path) -> tuple[np.ndarray, int]
+          Reads audio via soundfile.read(dtype="float32").
+          Returns (audio_array, sample_rate).
+
+        Tests use pytest.importorskip("soundfile") for graceful skip.
+        All tests marked @pytest.mark.voice.
+      </description>
+    </tdd_spec>
+    <implementation>
+      Add read_audio() and write_audio() to degradation.py with int16 FLAC subtype.
+    </implementation>
+  </task>
+
+  <task id="2.3" status="PENDING">
+    <title>compute_wer() and check_domain_keywords() in voice/metrics.py</title>
+    <priority>P0</priority>
+    <phase>2</phase>
+    <files>
+      <create>src/music_attribution/voice/metrics.py</create>
+    </files>
+    <tdd_spec>
+      <test_file>tests/unit/voice/test_metrics.py</test_file>
+      <test_cases>
+        <case>test_compute_wer_identical — compute_wer("hello world", "hello world") == 0.0</case>
+        <case>test_compute_wer_completely_wrong — compute_wer("hello world", "foo bar baz") == 1.0</case>
+        <case>test_compute_wer_partial — compute_wer("one two three", "one two four") — assert 0.0 &lt; wer &lt; 1.0</case>
+        <case>test_compute_wer_empty_both — compute_wer("", "") == 0.0</case>
+        <case>test_compute_wer_case_insensitive — compute_wer("Hello World", "hello world") == 0.0</case>
+        <case>test_compute_wer_strips_punctuation — compute_wer("Hello, world!", "hello world") == 0.0</case>
+        <case>test_check_domain_keywords_all_found — check_domain_keywords("attribution saved for headlock", ["attribution", "saved"]) returns (["attribution", "saved"], [])</case>
+        <case>test_check_domain_keywords_some_missed — check_domain_keywords("attribution updated", ["attribution", "saved"]) returns (["attribution"], ["saved"])</case>
+        <case>test_check_domain_keywords_case_insensitive — check_domain_keywords("Attribution SAVED", ["attribution", "saved"]) returns (["attribution", "saved"], [])</case>
+      </test_cases>
+      <description>
+        Create src/music_attribution/voice/metrics.py with compute_wer() and
+        check_domain_keywords(). These are MOVED from scripts/benchmark_voice.py
+        into src/ to avoid fragile cross-layer imports (reviewer finding).
+
+        The implementation is identical to the existing code in benchmark_voice.py
+        lines 44-124. Copy the functions (_normalize_text, compute_wer,
+        check_domain_keywords) as-is — they are well-tested and correct.
+
+        This module has NO external dependencies (just stdlib re).
+
+        NOTE: The existing scripts/benchmark_voice.py should NOT be modified.
+        It can continue using its own copy. Later, it can be refactored to
+        import from this module, but that's out of scope for this plan.
+
+        No @pytest.mark.voice needed — these tests use only stdlib.
+      </description>
+    </tdd_spec>
+    <implementation>
+      Create voice/metrics.py with compute_wer() and check_domain_keywords().
+    </implementation>
+  </task>
+
+  <!-- ═══════════════════════════════════════════════════════════════════
+       PHASE 3: Golden Dataset Generation Script (Tasks 3.1–3.2)
+       Script to synthesize 20 commands × 5 presets = 100 FLAC fixtures.
+       ═══════════════════════════════════════════════════════════════════ -->
+
+  <task id="3.1" status="PENDING">
+    <title>synthesize_command() and generate_clean_fixtures() with soxr resampling</title>
+    <priority>P0</priority>
+    <phase>3</phase>
+    <depends_on>1.3, 2.2</depends_on>
+    <files>
+      <create>scripts/generate_golden_dataset.py</create>
+    </files>
+    <tdd_spec>
+      <test_file>tests/unit/voice/test_generate_golden.py</test_file>
+      <test_cases>
+        <case>test_synthesize_command_returns_audio_array — Mock Piper TTS output (return fake 22050Hz int16 array), call synthesize_command("hello"), assert returns np.ndarray with len > 0 and dtype float32</case>
+        <case>test_synthesize_command_resampled_to_16k — Mock Piper at 22050Hz output, assert synthesize_command() returns audio at 16000Hz (verify length ratio: output_len / input_len ≈ 16000/22050)</case>
+        <case>test_generate_clean_fixtures_creates_20_files — Mock synthesize_command, run generate_clean_fixtures(tmp_path), assert 20 FLAC files created</case>
+        <case>test_clean_fixture_naming_convention — Assert files named cmd_01_clean.flac through cmd_20_clean.flac</case>
+        <case>test_synthesize_command_approximate_idempotency — Mock Piper to return deterministic output, call synthesize_command() twice, assert np.allclose(out1, out2, atol=1e-4). Note: real Piper VITS may vary across platforms, so we test with mocked deterministic output.</case>
+      </test_cases>
+      <description>
+        Create scripts/generate_golden_dataset.py with:
+
+        - synthesize_command(text: str, voice_id: str = "en_US-lessac-medium")
+            -> tuple[np.ndarray, int]
+          Uses Piper TTS to synthesize a single command. Returns (audio, 16000).
+
+          Piper TTS API: Use the generate_command_wavs() pattern from the
+          existing scripts/benchmark_voice.py as reference. The pipecat-ai[piper]
+          package provides PiperTTSService but it requires a pipeline context.
+          For standalone generation, use subprocess to call the piper CLI:
+              piper --model {voice_id} --output_file {tmp_wav} &lt; {text_input}
+          OR use the piper-tts Python package directly if available.
+          The script should document which interface it uses.
+
+          Piper (lessac model) outputs at 22050 Hz. Resample to 16000 Hz using
+          soxr.resample(audio, 22050, 16000, quality="HQ").
+
+          IMPORTANT: Use soxr (NOT scipy.signal.resample). scipy uses Fourier
+          resampling which is inappropriate for speech (introduces ringing).
+          soxr uses polyphase filtering — the industry standard for audio.
+
+          Piper VITS uses a stochastic duration predictor, so output may vary
+          slightly across platforms/versions. Idempotency test uses atol=1e-4
+          tolerance, not byte-identical comparison.
+
+        - generate_clean_fixtures(output_dir: Path,
+                                   voice_id: str = "en_US-lessac-medium")
+            -> list[Path]
+          Iterates GOLDEN_COMMANDS (from voice.golden_commands), synthesizes each,
+          writes to {output_dir}/cmd_{id}_clean.flac via write_audio().
+          Returns list of created paths.
+
+        Tests mock Piper TTS (no actual model download in unit tests).
+        The script is run manually: uv run --group voice-gpl --group voice-test \
+            python scripts/generate_golden_dataset.py
+
+        Output: tests/fixtures/voice/audio/cmd_01_clean.flac ... cmd_20_clean.flac
+      </description>
+    </tdd_spec>
+    <implementation>
+      Create generate_golden_dataset.py with synthesize and generation functions.
+    </implementation>
+  </task>
+
+  <task id="3.2" status="PENDING">
+    <title>generate_degraded_fixtures(), CLI entry point, and manifest.json</title>
+    <priority>P0</priority>
+    <phase>3</phase>
+    <depends_on>2.1, 3.1</depends_on>
+    <files>
+      <modify>scripts/generate_golden_dataset.py</modify>
+    </files>
+    <tdd_spec>
+      <test_file>tests/unit/voice/test_generate_golden.py</test_file>
+      <test_cases>
+        <case>test_generate_degraded_creates_80_files — Given 20 clean FLACs (mocked), generate_degraded_fixtures() creates 80 degraded FLACs (4 non-clean presets × 20)</case>
+        <case>test_degraded_fixture_naming — Assert files named cmd_01_office.flac, cmd_01_codec.flac, cmd_01_noisy_cafe.flac, cmd_01_extreme.flac, etc.</case>
+        <case>test_degraded_fixtures_deterministic — Run generate_degraded_fixtures() twice with seed=42 using mocked clean audio, assert all output files are byte-identical</case>
+        <case>test_manifest_json_has_100_entries — Assert manifest.json contains exactly 100 entries (20 clean + 80 degraded)</case>
+        <case>test_manifest_entry_has_required_fields — Each entry has: filename, command_id, preset, text, domain_keywords, sha256</case>
+        <case>test_manifest_sha256_matches_content — For a test entry, compute sha256 of file and assert it matches manifest value</case>
+        <case>test_cli_runs_without_error — Run main() with --output-dir tmp_path and mocked Piper, assert exit code 0</case>
+      </test_cases>
+      <description>
+        Add to scripts/generate_golden_dataset.py:
+
+        - generate_degraded_fixtures(clean_dir: Path, output_dir: Path,
+                                      seed: int = 42) -> list[Path]
+          For each clean FLAC in clean_dir:
+            For each DegradationPreset EXCEPT CLEAN:
+              1. Read clean audio with read_audio()
+              2. Apply apply_degradation(audio, 16000, preset, seed=seed)
+              3. Write to {output_dir}/cmd_{id}_{preset.value}.flac
+          Clean files are also copied to output_dir as cmd_{id}_clean.flac.
+          Returns list of all paths (clean + degraded = 100 files).
+
+        - generate_manifest(output_dir: Path, paths: list[Path]) -> dict
+          Creates manifest dict with version, seed, sample_rate, format, files[].
+          Each file entry: filename, command_id, preset, text, domain_keywords,
+          sha256, duration_seconds (actual audio length — varies for reverbed presets).
+          sha256 via hashlib.sha256(path.read_bytes()).hexdigest().
+
+        - main() — CLI entry point:
+            parser = argparse.ArgumentParser(...)
+            --output-dir (default: Path("tests/fixtures/voice/audio"))
+            --seed (default: 42)
+            --voice-id (default: "en_US-lessac-medium")
+
+          Steps:
+            1. generate_clean_fixtures(output_dir, voice_id)
+            2. generate_degraded_fixtures(output_dir, output_dir, seed)
+            3. generate_manifest(output_dir, all_paths)
+            4. Write manifest.json to output_dir
+
+        Usage:
+          uv run --group voice-gpl --group voice-test \
+              python scripts/generate_golden_dataset.py
+
+        Total output: 100 FLAC files + manifest.json ≈ 5-10 MB.
+        (Noisy presets compress less efficiently in FLAC — Gaussian noise
+        is incompressible, so NOISY_CAFE/EXTREME files are 2-3x larger than CLEAN.)
+      </description>
+    </tdd_spec>
+    <implementation>
+      Add degraded fixture generation, manifest, and CLI entry point.
+    </implementation>
+  </task>
+
+  <!-- ═══════════════════════════════════════════════════════════════════
+       PHASE 4: STT Regression Tests (Tasks 4.1–4.3)
+       Test suite that loads golden fixtures and validates STT accuracy.
+       ═══════════════════════════════════════════════════════════════════ -->
+
+  <task id="4.1" status="PENDING">
+    <title>Fixture loading helpers, WER thresholds, and conftest integration</title>
+    <priority>P0</priority>
+    <phase>4</phase>
+    <depends_on>2.2, 2.3</depends_on>
+    <files>
+      <create>tests/unit/voice/test_golden_stt.py</create>
+      <modify>tests/unit/voice/conftest.py</modify>
+    </files>
+    <tdd_spec>
+      <test_file>tests/unit/voice/test_golden_stt.py</test_file>
+      <test_cases>
+        <case>test_wer_thresholds_defined_for_all_presets — Assert WER_THRESHOLDS has entries for all 5 DegradationPreset values</case>
+        <case>test_keyword_thresholds_defined_for_all_presets — Assert KEYWORD_THRESHOLDS has entries for all 5 DegradationPreset values</case>
+        <case>test_wer_thresholds_monotonically_ordered — Assert clean &lt;= codec &lt;= office &lt;= noisy_cafe &lt;= extreme</case>
+        <case>test_golden_fixtures_available_returns_bool — Assert golden_fixtures_available() returns True or False (no exception)</case>
+        <case>test_load_fixture_audio_with_mock — Create a fake FLAC in tmp_path, patch FIXTURES_DIR, call load_fixture("cmd_01", "clean"), assert returns (np.ndarray, 16000)</case>
+        <case>test_load_manifest_with_mock — Create a fake manifest.json in tmp_path, patch FIXTURES_DIR, call load_manifest(), assert returns dict with "files" key</case>
+      </test_cases>
+      <description>
+        1. Create tests/unit/voice/test_golden_stt.py with:
+
+           WER_THRESHOLDS: dict[DegradationPreset, float] = {
+               DegradationPreset.CLEAN: 0.10,
+               DegradationPreset.OFFICE: 0.15,
+               DegradationPreset.CODEC: 0.15,
+               DegradationPreset.NOISY_CAFE: 0.25,
+               DegradationPreset.EXTREME: 0.50,
+           }
+
+           KEYWORD_THRESHOLDS: dict[DegradationPreset, float] = {
+               DegradationPreset.CLEAN: 0.90,
+               DegradationPreset.OFFICE: 0.85,
+               DegradationPreset.CODEC: 0.85,
+               DegradationPreset.NOISY_CAFE: 0.70,
+               DegradationPreset.EXTREME: 0.50,
+           }
+
+        2. Add to tests/unit/voice/conftest.py (DO NOT replace existing content,
+           APPEND these after the existing commercial_config fixture):
+
+           FIXTURES_DIR calculation — use robust path:
+               FIXTURES_DIR = Path(__file__).resolve().parent.parent.parent / "fixtures" / "voice" / "audio"
+
+           IMPORTANT: The following are PLAIN PYTHON FUNCTIONS (NOT @pytest.fixture).
+           They MUST be regular functions because they are called inside
+           @pytest.mark.skipif() decorators, which are evaluated at MODULE
+           COLLECTION TIME (before any fixtures are resolved). If you accidentally
+           make these into @pytest.fixture, the skipif decorators will break.
+
+           Plain helper functions (NO @pytest.fixture decorator):
+           - golden_fixtures_available() -> bool:
+               return (FIXTURES_DIR / "manifest.json").is_file()
+
+           - load_fixture(command_id: str, preset: str) -> tuple[np.ndarray, int]:
+               from music_attribution.voice.degradation import read_audio
+               path = FIXTURES_DIR / f"{command_id}_{preset}.flac"
+               return read_audio(path)
+
+           - load_manifest() -> dict:
+               import json
+               return json.loads((FIXTURES_DIR / "manifest.json").read_text(encoding="utf-8"))
+
+           The ONE actual pytest fixture (WITH @pytest.fixture decorator):
+           - whisper_model (session-scoped):
+               @pytest.fixture(scope="session")
+               def whisper_model():
+                   try:
+                       from faster_whisper import WhisperModel
+                   except ImportError:
+                       pytest.skip("faster-whisper not installed")
+                   return WhisperModel("small", device="cpu", compute_type="int8")
+
+           whisper_model is in conftest.py (not in the test file) so it's shared
+           across all voice test files and loaded once per session.
+
+        All fixture-dependent tests use:
+            @pytest.mark.skipif(not golden_fixtures_available(),
+                                reason="Golden fixtures not generated")
+      </description>
+    </tdd_spec>
+    <implementation>
+      Create test file with thresholds, add conftest helpers and whisper fixture.
+    </implementation>
+  </task>
+
+  <task id="4.2" status="PENDING">
+    <title>Parametrized STT accuracy tests across all presets and commands</title>
+    <priority>P0</priority>
+    <phase>4</phase>
+    <depends_on>4.1</depends_on>
+    <files>
+      <modify>tests/unit/voice/test_golden_stt.py</modify>
+    </files>
+    <tdd_spec>
+      <test_file>tests/unit/voice/test_golden_stt.py</test_file>
+      <test_cases>
+        <case>test_stt_wer_per_preset_aggregate — For each DegradationPreset, compute mean WER across all 20 commands, assert &lt; WER_THRESHOLDS[preset]. Marked @pytest.mark.slow, @pytest.mark.voice, skipif not golden_fixtures_available(), skipif not faster_whisper.</case>
+        <case>test_stt_keyword_survival_per_preset — For each preset, compute domain keyword survival rate across 20 commands, assert >= KEYWORD_THRESHOLDS[preset]. Same markers.</case>
+        <case>test_stt_clean_individual_commands — Parametrized across 20 commands with CLEAN preset, assert each individual WER &lt; 0.20 (no single command catastrophically fails). Generous per-command threshold.</case>
+      </test_cases>
+      <description>
+        Add parametrized STT regression tests to test_golden_stt.py.
+
+        Test approach:
+        1. Load golden fixture FLAC for (command_id, preset) via load_fixture()
+        2. Transcribe with whisper_model fixture (faster-whisper small, CPU, int8)
+           Use these Whisper kwargs for best results on short domain utterances:
+             segments, _ = whisper_model.transcribe(
+                 audio,
+                 vad_filter=True,
+                 initial_prompt="Music attribution, confidence score, assurance level, "
+                                "MusicBrainz, Discogs, Imogen Heap, Frou Frou",
+             )
+           The initial_prompt provides domain vocabulary hints to Whisper,
+           improving recognition of domain-specific terms.
+           vad_filter=True helps with short utterances that may have
+           silence padding from TTS.
+        3. Compute WER using compute_wer() from voice.metrics
+        4. Compute keyword survival using check_domain_keywords() from voice.metrics
+        5. Assert thresholds per preset
+
+        The aggregate tests compute mean WER / keyword survival across all 20
+        commands for a given preset, smoothing individual outliers.
+        The individual clean test catches catastrophic single-command failures.
+
+        All STT tests are marked:
+        - @pytest.mark.slow (STT model loading + 100 transcriptions)
+        - @pytest.mark.voice (voice dependency gating)
+        - @pytest.mark.skipif(not golden_fixtures_available())
+
+        Fixture-only tests (4.3) are marked @pytest.mark.voice but NOT slow.
+      </description>
+    </tdd_spec>
+    <implementation>
+      Add parametrized STT accuracy tests with WER and keyword thresholds.
+    </implementation>
+  </task>
+
+  <task id="4.3" status="PENDING">
+    <title>Fixture integrity tests and signal-processing validation</title>
+    <priority>P1</priority>
+    <phase>4</phase>
+    <depends_on>2.1, 4.1</depends_on>
+    <files>
+      <modify>tests/unit/voice/test_golden_stt.py</modify>
+      <modify>tests/unit/voice/test_degradation.py</modify>
+    </files>
+    <tdd_spec>
+      <test_file>tests/unit/voice/test_golden_stt.py</test_file>
+      <test_cases>
+        <!-- Fixture integrity tests (in test_golden_stt.py) -->
+        <case>test_fixture_checksums_match_manifest — Load manifest.json, verify sha256 of each FLAC matches recorded checksum. Marked @pytest.mark.voice, skipif not golden_fixtures_available(). NOT marked slow (no STT inference).</case>
+        <case>test_fixture_count_matches_manifest — Assert number of FLAC files in fixtures dir equals len(manifest["files"]) == 100</case>
+        <case>test_all_presets_represented — Assert fixtures exist for all 5 presets for cmd_01</case>
+      </test_cases>
+      <description>
+        Part A: Add fixture integrity tests to test_golden_stt.py.
+        These verify committed FLAC fixtures match manifest.json checksums.
+        Uses hashlib.sha256(). Fast (no STT). Marked @pytest.mark.voice only.
+
+        Part B: Add signal-processing unit tests to test_degradation.py.
+        These test the degradation module without golden fixtures:
+
+        (in test_degradation.py, appended to existing tests)
+        - test_office_increases_rms_noise: Apply OFFICE to silence (np.zeros),
+          assert RMS of output > 0.0 (noise was injected)
+        - test_extreme_has_higher_noise_than_office: Apply both to same sine
+          wave, assert MSE(extreme, original) > MSE(office, original)
+        - test_bandpass_attenuates_low_freq: Apply EXTREME (200Hz cutoff) to
+          50Hz sine wave, assert amplitude reduced by at least 10dB
+        - test_reverb_adds_energy_tail: Apply OFFICE (RT60=0.3) to short
+          impulse (np.zeros(16000); impulse[0]=1.0), assert energy exists
+          beyond original impulse position
+        - test_mp3_compression_changes_audio: Apply CODEC preset to sine wave,
+          assert output is NOT identical to input (codec artifacts present)
+        - test_mp3_compression_preserves_length: Apply CODEC preset specifically
+          (no reverb, so no length extension), assert len(output) == len(input).
+          NOTE: For presets WITH reverb (OFFICE, NOISY_CAFE, EXTREME), output
+          will be LONGER than input due to reverb tail — that is expected. This
+          test only validates that Mp3Compression itself preserves length.
+
+        Signal-processing tests:
+        - Marked @pytest.mark.voice (need audiomentations + pyroomacoustics)
+        - Use pytest.importorskip("audiomentations") for graceful skip
+        - NOT marked slow (no STT, no fixtures)
+      </description>
+    </tdd_spec>
+    <implementation>
+      Add fixture integrity and signal-processing validation tests.
+    </implementation>
+  </task>
+
+  <!-- ═══════════════════════════════════════════════════════════════════
+       PHASE 5: CI Integration (Tasks 5.1–5.2)
+       Makefile targets, pytest markers, GitHub Actions job.
+       ═══════════════════════════════════════════════════════════════════ -->
+
+  <task id="5.1" status="PENDING">
+    <title>Register voice pytest marker and add test-voice-golden Makefile target</title>
+    <priority>P1</priority>
+    <phase>5</phase>
+    <depends_on>4.2</depends_on>
+    <files>
+      <modify>pyproject.toml</modify>
+      <modify>Makefile</modify>
+    </files>
+    <tdd_spec>
+      <test_file>tests/unit/voice/test_golden_stt.py</test_file>
+      <test_cases>
+        <case>test_voice_marker_registered — Read pyproject.toml with tomllib (stdlib in 3.11+), parse markers list from [tool.pytest.ini_options], assert any marker string starts with "voice:". This validates marker registration without needing subprocess or fighting with --strict-markers collection-time evaluation.</case>
+      </test_cases>
+      <description>
+        1. Add "voice" marker to pyproject.toml [tool.pytest.ini_options] markers:
+           "voice: Voice pipeline tests requiring audio dependencies (audiomentations, etc.)"
+
+           The "slow" marker ALREADY exists — do NOT add it again.
+
+        2. Add Makefile targets (DO NOT modify existing test-voice target):
+
+           test-voice-golden:  ## Run golden dataset STT regression tests
+           	.venv/bin/python -m pytest tests/unit/voice/ -m "voice" -v --timeout=300
+
+           generate-golden-dataset:  ## Generate golden voice dataset (requires Piper)
+           	uv run --group voice-gpl --group voice-test python scripts/generate_golden_dataset.py
+
+           Add to the .PHONY line that already has install-voice test-voice:
+           .PHONY: test-voice-golden generate-golden-dataset
+
+        3. DO NOT modify the existing `test-voice` target. It runs ALL voice
+           unit tests (config, pipeline, etc.) without the `voice` marker filter.
+           The new `test-voice-golden` target runs only tests marked @pytest.mark.voice.
+
+        4. DO NOT modify the existing `test` or `test-local` targets.
+           They use Docker / exclude slow tests respectively — leave them as-is.
+      </description>
+    </tdd_spec>
+    <implementation>
+      Register voice marker, add Makefile targets for golden dataset.
+    </implementation>
+  </task>
+
+  <task id="5.2" status="PENDING">
+    <title>GitHub Actions CI job for voice regression tests</title>
+    <priority>P2</priority>
+    <phase>5</phase>
+    <depends_on>5.1</depends_on>
+    <files>
+      <modify>.github/workflows/ci.yml</modify>
+    </files>
+    <tdd_spec>
+      <test_file>tests/unit/voice/test_golden_stt.py</test_file>
+      <test_cases>
+        <case>test_ci_workflow_has_voice_job — Read .github/workflows/ci.yml with yaml.safe_load(), assert a job named "voice-regression" exists with expected structure (uses actions/checkout, installs voice deps, runs pytest with voice marker). NOTE: This test reads YAML, not Python — no AST required.</case>
+      </test_cases>
+      <description>
+        Add a "voice-regression" job to .github/workflows/ci.yml:
+
+        voice-regression:
+          runs-on: ubuntu-latest
+          needs: [test]  # Only run if unit tests pass
+          if: needs.changes.outputs.backend == 'true'
+          steps:
+            - uses: actions/checkout@v4
+              with:
+                lfs: true  # In case fixtures move to LFS later
+            - uses: astral-sh/setup-uv@v4
+            - name: Install dependencies
+              run: uv sync --frozen --group voice --group voice-gpl --group voice-test
+            - name: Run voice regression tests
+              run: |
+                uv run pytest tests/unit/voice/ -m "voice" -v --timeout=600
+              env:
+                CUDA_VISIBLE_DEVICES: ""
+
+        The job:
+        - Runs on ubuntu-latest (CPU only, int8 quantization for Whisper)
+        - Uses --frozen flag (matches existing CI convention, no lock file updates)
+        - Installs ALL voice dependency groups (voice + voice-gpl + voice-test)
+        - Uses `voice` marker to run golden dataset + signal-processing tests
+        - Disables CUDA (tests use CPU int8 for Whisper small model)
+        - 10 min timeout (model download + 100 transcriptions)
+        - Golden fixtures are committed to repo — no generation step in CI
+        - Only runs when backend files change (if: backend == 'true')
+
+        Do NOT add a separate job for generating fixtures. The generation
+        script is developer-only (run once locally, commit results).
+      </description>
+    </tdd_spec>
+    <implementation>
+      Add voice-regression job to CI workflow.
+    </implementation>
+  </task>
+</plan>
