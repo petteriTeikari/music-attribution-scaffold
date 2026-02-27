@@ -369,3 +369,123 @@ class TestFixtureDirectory:
         """The tests/fixtures/voice/audio directory exists."""
         fixtures_dir = Path(__file__).resolve().parents[3] / "tests" / "fixtures" / "voice" / "audio"
         assert fixtures_dir.is_dir(), f"Fixture directory does not exist: {fixtures_dir}"
+
+
+class TestSignalProcessingValidation:
+    """Signal-processing unit tests for degradation pipeline."""
+
+    @pytest.mark.voice
+    def test_office_increases_rms_noise(self) -> None:
+        """OFFICE preset increases RMS compared to clean pass on same input."""
+        pytest.importorskip("audiomentations")
+        import numpy as np_mod
+
+        from music_attribution.voice.degradation import DegradationPreset, apply_degradation
+
+        # Use a low-amplitude sine wave (AddGaussianSNR scales noise to signal)
+        t = np_mod.linspace(0, 1.0, 16000, endpoint=False, dtype=np_mod.float32)
+        sine = 0.1 * np_mod.sin(2 * np_mod.pi * 440 * t)
+
+        clean_out = apply_degradation(sine.copy(), 16000, DegradationPreset.CLEAN, seed=42)
+        office_out = apply_degradation(sine.copy(), 16000, DegradationPreset.OFFICE, seed=42)
+
+        # Trim to original length for fair comparison
+        min_len = min(len(clean_out), len(office_out))
+        mse_clean = float(np_mod.mean((clean_out[:min_len] - sine[:min_len]) ** 2))
+        mse_office = float(np_mod.mean((office_out[:min_len] - sine[:min_len]) ** 2))
+        assert mse_office > mse_clean, "OFFICE should introduce more distortion than CLEAN"
+
+    @pytest.mark.voice
+    def test_extreme_has_higher_noise_than_office(self) -> None:
+        """EXTREME produces more distortion than OFFICE on same input."""
+        pytest.importorskip("audiomentations")
+        import numpy as np_mod
+
+        from music_attribution.voice.degradation import DegradationPreset, apply_degradation
+
+        # 440Hz sine wave at 0.5 amplitude
+        t = np_mod.linspace(0, 1.0, 16000, endpoint=False, dtype=np_mod.float32)
+        sine = 0.5 * np_mod.sin(2 * np_mod.pi * 440 * t)
+
+        office_out = apply_degradation(sine.copy(), 16000, DegradationPreset.OFFICE, seed=42)
+        extreme_out = apply_degradation(sine.copy(), 16000, DegradationPreset.EXTREME, seed=42)
+
+        # Trim to minimum length (reverb extends output)
+        min_len = min(len(sine), len(office_out), len(extreme_out))
+        mse_office = float(np_mod.mean((office_out[:min_len] - sine[:min_len]) ** 2))
+        mse_extreme = float(np_mod.mean((extreme_out[:min_len] - sine[:min_len]) ** 2))
+        assert mse_extreme > mse_office, "EXTREME should distort more than OFFICE"
+
+    @pytest.mark.voice
+    def test_bandpass_attenuates_low_freq(self) -> None:
+        """EXTREME high-pass (200Hz) reduces 50Hz spectral component."""
+        pytest.importorskip("audiomentations")
+        import numpy as np_mod
+
+        from music_attribution.voice.degradation import DegradationPreset, apply_degradation
+
+        # Pure 50Hz sine (below EXTREME's 200Hz cutoff)
+        t = np_mod.linspace(0, 1.0, 16000, endpoint=False, dtype=np_mod.float32)
+        sine_50hz = 0.5 * np_mod.sin(2 * np_mod.pi * 50 * t)
+
+        degraded = apply_degradation(sine_50hz.copy(), 16000, DegradationPreset.EXTREME, seed=42)
+        # Trim to original length for FFT
+        degraded_trimmed = degraded[: len(sine_50hz)]
+
+        # Compute FFT magnitudes at 50Hz bin
+        fft_orig = np_mod.abs(np_mod.fft.rfft(sine_50hz))
+        fft_deg = np_mod.abs(np_mod.fft.rfft(degraded_trimmed))
+
+        # 50Hz bin index = 50 * N / sample_rate = 50 * 16000 / 16000 = 50
+        bin_50hz = 50
+        assert fft_deg[bin_50hz] < fft_orig[bin_50hz], (
+            f"50Hz component should be attenuated: orig={fft_orig[bin_50hz]:.1f}, deg={fft_deg[bin_50hz]:.1f}"
+        )
+
+    @pytest.mark.voice
+    def test_reverb_adds_energy_tail(self) -> None:
+        """OFFICE reverb (RT60=0.3) spreads energy beyond original impulse."""
+        pytest.importorskip("pyroomacoustics")
+        pytest.importorskip("audiomentations")
+        import numpy as np_mod
+
+        from music_attribution.voice.degradation import DegradationPreset, apply_degradation
+
+        # Short impulse at sample 0
+        impulse = np_mod.zeros(16000, dtype=np_mod.float32)
+        impulse[0] = 1.0
+
+        degraded = apply_degradation(impulse.copy(), 16000, DegradationPreset.OFFICE, seed=42)
+        # Energy should exist beyond the original impulse position
+        # Check second half of output has non-zero energy
+        second_half = degraded[8000:]
+        rms_tail = float(np_mod.sqrt(np_mod.mean(second_half**2)))
+        assert rms_tail > 1e-6, "Reverb tail should have energy in second half"
+
+    @pytest.mark.voice
+    def test_mp3_compression_changes_audio(self) -> None:
+        """CODEC preset (32kbps MP3) produces different output than input."""
+        pytest.importorskip("audiomentations")
+        import numpy as np_mod
+
+        from music_attribution.voice.degradation import DegradationPreset, apply_degradation
+
+        t = np_mod.linspace(0, 1.0, 16000, endpoint=False, dtype=np_mod.float32)
+        sine = 0.5 * np_mod.sin(2 * np_mod.pi * 440 * t)
+
+        degraded = apply_degradation(sine.copy(), 16000, DegradationPreset.CODEC, seed=42)
+        assert not np_mod.array_equal(sine, degraded), "CODEC should alter audio"
+
+    @pytest.mark.voice
+    def test_mp3_compression_preserves_length(self) -> None:
+        """CODEC preset (no reverb) preserves audio length."""
+        pytest.importorskip("audiomentations")
+        import numpy as np_mod
+
+        from music_attribution.voice.degradation import DegradationPreset, apply_degradation
+
+        t = np_mod.linspace(0, 1.0, 16000, endpoint=False, dtype=np_mod.float32)
+        sine = 0.5 * np_mod.sin(2 * np_mod.pi * 440 * t)
+
+        degraded = apply_degradation(sine.copy(), 16000, DegradationPreset.CODEC, seed=42)
+        assert len(degraded) == len(sine), f"CODEC (no reverb) should preserve length: {len(degraded)} != {len(sine)}"

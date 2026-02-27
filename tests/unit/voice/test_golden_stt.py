@@ -2,19 +2,21 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
 from pathlib import Path
-from typing import TYPE_CHECKING
 from unittest.mock import patch
 
 import pytest
 
 from music_attribution.voice.degradation import DegradationPreset
 from music_attribution.voice.golden_commands import GOLDEN_COMMANDS
-from tests.unit.voice.conftest import golden_fixtures_available, load_fixture
-
-if TYPE_CHECKING:
-    pass
+from tests.unit.voice.conftest import (
+    FIXTURES_DIR,
+    golden_fixtures_available,
+    load_fixture,
+    load_manifest,
+)
 
 # ─── WER and keyword survival thresholds per preset ────────────────────
 
@@ -204,3 +206,35 @@ class TestSTTAccuracy:
         transcript = _transcribe_fixture(whisper_model, cmd["id"], "clean")
         wer = compute_wer(cmd["text"], transcript)
         assert wer < 0.20, f"{cmd['id']}: WER {wer:.3f} >= 0.20 (ref={cmd['text']!r}, hyp={transcript!r})"
+
+
+# ─── Fixture integrity tests (no STT, fast) ───────────────────────────
+
+
+@pytest.mark.voice
+@pytest.mark.skipif(
+    not golden_fixtures_available(),
+    reason="Golden fixtures not generated",
+)
+class TestFixtureIntegrity:
+    """Validate committed FLAC fixtures match manifest checksums."""
+
+    def test_fixture_checksums_match_manifest(self) -> None:
+        """SHA256 of each FLAC matches the value recorded in manifest.json."""
+        manifest = load_manifest()
+        for entry in manifest["files"]:
+            path = FIXTURES_DIR / entry["filename"]
+            actual_sha = hashlib.sha256(path.read_bytes()).hexdigest()
+            assert actual_sha == entry["sha256"], f"Checksum mismatch for {entry['filename']}"
+
+    def test_fixture_count_matches_manifest(self) -> None:
+        """Number of FLAC files equals manifest entry count (100)."""
+        manifest = load_manifest()
+        flac_files = list(FIXTURES_DIR.glob("*.flac"))
+        assert len(flac_files) == len(manifest["files"])
+
+    def test_all_presets_represented(self) -> None:
+        """All 5 presets exist for cmd_01."""
+        for preset in DegradationPreset:
+            path = FIXTURES_DIR / f"cmd_01_{preset.value}.flac"
+            assert path.exists(), f"Missing fixture: {path.name}"
