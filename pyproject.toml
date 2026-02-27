@@ -82,6 +82,13 @@ voice-persona = [
     "mem0ai>=1.0",
     "nemoguardrails>=0.20",
 ]
+voice-test = [
+    "audiomentations>=0.36",
+    "fast-mp3-augment>=0.2",
+    "soundfile>=0.13",
+    "pyroomacoustics>=0.7",
+    "soxr>=0.4",
+]
 voice-gpl = [
     "pipecat-ai[piper]>=0.0.100",
 ]
@@ -161,7 +168,7 @@ exclude = [
 ]
 
 [[tool.mypy.overrides]]
-module = ["musicbrainzngs", "musicbrainzngs.*", "discogs_client", "discogs_client.*", "acoustid", "acoustid.*", "jellyfish", "jellyfish.*", "thefuzz", "thefuzz.*", "pandas", "pandas.*", "splink", "splink.*", "pgvector", "pgvector.*", "sse_starlette", "sse_starlette.*", "pydantic_ai", "pydantic_ai.*", "tinytag", "tinytag.*", "pipecat", "pipecat.*", "deepeval", "deepeval.*", "letta", "letta.*", "letta_client", "letta_client.*", "mem0", "mem0.*", "nemoguardrails", "nemoguardrails.*"]
+module = ["musicbrainzngs", "musicbrainzngs.*", "discogs_client", "discogs_client.*", "acoustid", "acoustid.*", "jellyfish", "jellyfish.*", "thefuzz", "thefuzz.*", "pandas", "pandas.*", "splink", "splink.*", "pgvector", "pgvector.*", "sse_starlette", "sse_starlette.*", "pydantic_ai", "pydantic_ai.*", "tinytag", "tinytag.*", "pipecat", "pipecat.*", "deepeval", "deepeval.*", "letta", "letta.*", "letta_client", "letta_client.*", "mem0", "mem0.*", "nemoguardrails", "nemoguardrails.*", "audiomentations", "audiomentations.*", "pyroomacoustics", "pyroomacoustics.*", "soundfile", "soxr", "fast_mp3_augment"]
 ignore_missing_imports = true
 follow_untyped_imports = true
 
