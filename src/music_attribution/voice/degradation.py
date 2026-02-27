@@ -12,6 +12,7 @@ import math
 import random
 from dataclasses import dataclass
 from enum import Enum
+from pathlib import Path
 
 import numpy as np
 
@@ -199,3 +200,32 @@ def apply_degradation(
     # Step 7: Final clip + dtype
     result: np.ndarray = np.clip(degraded, -1.0, 1.0).astype(np.float32)
     return result
+
+
+def write_audio(path: Path, audio: np.ndarray, sample_rate: int = 16000) -> None:
+    """Write float32 audio to FLAC file with int16 subtype.
+
+    Args:
+        path: Output file path (parent dirs created automatically).
+        audio: Audio data as float32 numpy array.
+        sample_rate: Sample rate in Hz.
+    """
+    import soundfile as sf
+
+    path.parent.mkdir(parents=True, exist_ok=True)
+    sf.write(str(path), audio, sample_rate, subtype="PCM_16", format="FLAC")
+
+
+def read_audio(path: Path) -> tuple[np.ndarray, int]:
+    """Read audio from a FLAC file as float32.
+
+    Args:
+        path: Path to FLAC file.
+
+    Returns:
+        Tuple of (audio_array, sample_rate).
+    """
+    import soundfile as sf
+
+    audio, sample_rate = sf.read(str(path), dtype="float32")
+    return audio, sample_rate

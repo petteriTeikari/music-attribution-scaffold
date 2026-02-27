@@ -253,6 +253,98 @@ class TestApplyDegradation:
         assert len(output) >= len(audio)
 
 
+class TestFlacIO:
+    """Tests for read_audio() and write_audio() FLAC I/O helpers."""
+
+    @staticmethod
+    def _sine_wave(freq: float = 440.0, duration: float = 1.0, sr: int = 16000) -> np.ndarray:
+        """Generate a sine wave for testing."""
+        import numpy as np_mod
+
+        t = np_mod.arange(int(sr * duration), dtype=np_mod.float32) / sr
+        return (0.5 * np_mod.sin(2 * np_mod.pi * freq * t)).astype(np_mod.float32)
+
+    @pytest.mark.voice
+    def test_write_then_read_flac_roundtrip(self, tmp_path: Path) -> None:
+        """Write float32 to FLAC, read back — within int16 quantization tolerance."""
+        pytest.importorskip("soundfile")
+        import numpy as np_mod
+
+        from music_attribution.voice.degradation import read_audio, write_audio
+
+        audio = self._sine_wave()
+        flac_path = tmp_path / "test.flac"
+        write_audio(flac_path, audio, sample_rate=16000)
+        recovered, sr = read_audio(flac_path)
+        assert sr == 16000
+        assert np_mod.allclose(audio, recovered, atol=1 / 32768)
+
+    @pytest.mark.voice
+    def test_read_audio_returns_float32(self, tmp_path: Path) -> None:
+        """read_audio() returns float32 numpy array."""
+        pytest.importorskip("soundfile")
+        import numpy as np_mod
+
+        from music_attribution.voice.degradation import read_audio, write_audio
+
+        audio = self._sine_wave()
+        flac_path = tmp_path / "test.flac"
+        write_audio(flac_path, audio)
+        recovered, _ = read_audio(flac_path)
+        assert recovered.dtype == np_mod.float32
+
+    @pytest.mark.voice
+    def test_read_audio_returns_correct_sample_rate(self, tmp_path: Path) -> None:
+        """read_audio() returns the correct sample rate."""
+        pytest.importorskip("soundfile")
+
+        from music_attribution.voice.degradation import read_audio, write_audio
+
+        audio = self._sine_wave()
+        flac_path = tmp_path / "test.flac"
+        write_audio(flac_path, audio, sample_rate=16000)
+        _, sr = read_audio(flac_path)
+        assert sr == 16000
+
+    @pytest.mark.voice
+    def test_write_audio_creates_flac_file(self, tmp_path: Path) -> None:
+        """write_audio() creates a .flac file."""
+        pytest.importorskip("soundfile")
+
+        from music_attribution.voice.degradation import write_audio
+
+        audio = self._sine_wave()
+        flac_path = tmp_path / "test.flac"
+        write_audio(flac_path, audio)
+        assert flac_path.exists()
+        assert flac_path.suffix == ".flac"
+
+    @pytest.mark.voice
+    def test_write_audio_creates_parent_dirs(self, tmp_path: Path) -> None:
+        """write_audio() creates parent directories if needed."""
+        pytest.importorskip("soundfile")
+
+        from music_attribution.voice.degradation import write_audio
+
+        audio = self._sine_wave()
+        flac_path = tmp_path / "a" / "b" / "test.flac"
+        write_audio(flac_path, audio)
+        assert flac_path.exists()
+
+    @pytest.mark.voice
+    def test_write_audio_file_size_reasonable(self, tmp_path: Path) -> None:
+        """3s audio FLAC is between 1KB and 100KB."""
+        pytest.importorskip("soundfile")
+
+        from music_attribution.voice.degradation import write_audio
+
+        audio = self._sine_wave(duration=3.0)
+        flac_path = tmp_path / "test.flac"
+        write_audio(flac_path, audio)
+        size = flac_path.stat().st_size
+        assert 1000 < size < 100_000
+
+
 class TestVoiceTestDependencies:
     """Tests that voice-test dependency group is installable."""
 
