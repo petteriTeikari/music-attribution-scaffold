@@ -118,6 +118,7 @@ markers = [
     "e2e: End-to-end tests (full pipeline, may be slow)",
     "slow: Tests that take > 30 seconds",
     "persona_eval: Persona fidelity evaluation tests (uses LLM, slow)",
+    "voice: Voice pipeline tests requiring audio dependencies (audiomentations, etc.)",
 ]
 asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "function"

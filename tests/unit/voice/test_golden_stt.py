@@ -238,3 +238,22 @@ class TestFixtureIntegrity:
         for preset in DegradationPreset:
             path = FIXTURES_DIR / f"cmd_01_{preset.value}.flac"
             assert path.exists(), f"Missing fixture: {path.name}"
+
+
+# ─── CI integration tests ─────────────────────────────────────────────
+
+
+class TestVoiceMarkerRegistration:
+    """Validate voice pytest marker is registered."""
+
+    def test_voice_marker_registered(self) -> None:
+        """pyproject.toml has 'voice:' marker registered."""
+        import tomllib
+
+        pyproject = Path(__file__).resolve().parents[3] / "pyproject.toml"
+        with pyproject.open("rb") as f:
+            config = tomllib.load(f)
+
+        markers = config["tool"]["pytest"]["ini_options"]["markers"]
+        voice_markers = [m for m in markers if m.startswith("voice:")]
+        assert len(voice_markers) >= 1, "voice marker not registered in pyproject.toml"
