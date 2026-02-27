@@ -58,6 +58,14 @@ MUST use AST, no matter how "simple" the check appears.
 - NEVER push untested changes to CI - test locally first
 - If local verification is not possible, explicitly state what was NOT verified
 
+### Issue Tracking (MANDATORY)
+- ALWAYS create a GitHub issue for every task before starting work on it
+- ALWAYS close the issue (with `gh issue close`) after the task is completed and verified
+- This provides an audit trail of all changes made to the repo
+- Use `gh issue create --title "..." --body "..." --label "..."` to create issues
+- Reference the issue number in commit messages where appropriate
+- This applies to ALL plan-driven work (TDD skill, manual tasks, etc.)
+
 ### Pre-Push Verification (MANDATORY)
 Before EVERY `git push`, run ALL of these checks and confirm they pass:
 ```bash

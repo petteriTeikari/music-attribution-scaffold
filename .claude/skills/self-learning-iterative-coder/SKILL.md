@@ -87,6 +87,9 @@ When tests fail, analyze the failure and fix it. Don't move on with broken tests
 ### 6. RESPECT PROJECT CONVENTIONS
 Read the project's `CLAUDE.md` before starting. Follow all project-specific rules: package manager, file operations, code analysis approach, encoding, paths, timezone handling. The skill adapts to the project, not the other way around.
 
+### 7. ISSUE TRACKING (MANDATORY)
+Every plan task MUST have a corresponding GitHub issue. Create issues for ALL tasks at plan start (batch creation). Close each issue when the task converges (all tests pass, lint+types clean). This provides a complete audit trail. Reference issue numbers in commit messages. See [protocols/checkpoint.md](protocols/checkpoint.md) §4.5.
+
 ## Activation
 
 Before starting, run through the [ACTIVATION-CHECKLIST.md](ACTIVATION-CHECKLIST.md).

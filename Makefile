@@ -5,7 +5,7 @@
 .PHONY: ci-docker docker-build docker-clean clean
 .PHONY: dev-frontend test-frontend lint-frontend build-frontend test-e2e test-e2e-ui
 .PHONY: agent dev-agent
-.PHONY: install-voice test-voice dev-voice benchmark-voice voice-local
+.PHONY: install-voice test-voice dev-voice benchmark-voice voice-local test-voice-golden generate-golden-dataset download-piper-model
 .PHONY: docs docs-serve test-docs
 .PHONY: zenodo-archive
 
@@ -159,6 +159,16 @@ voice-local:  ## Run fully local voice agent (Whisper + Piper, $0/min)
 	@echo "Starting fully local voice agent"
 	@echo "Requires: VOICE_LLM_API_KEY set in .env (see .env.example)"
 	VOICE_STT_PROVIDER=whisper VOICE_TTS_PROVIDER=piper uv run python scripts/voice_demo.py
+
+test-voice-golden:  ## Run golden dataset STT regression tests
+	.venv/bin/python -m pytest tests/unit/voice/ -m "voice" -v --timeout=300
+
+generate-golden-dataset:  ## Generate golden voice dataset (requires Piper)
+	uv run --group voice-gpl --group voice-test python scripts/generate_golden_dataset.py
+
+download-piper-model:  ## Download Piper TTS model for voice fixture generation
+	uv run --group voice-gpl --group voice-test python -c \
+		"from music_attribution.voice.piper_utils import ensure_piper_model; print(ensure_piper_model('en_US-lessac-medium'))"
 
 # =============================================================================
 # DOCUMENTATION

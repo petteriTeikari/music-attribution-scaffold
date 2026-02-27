@@ -1,0 +1,1339 @@
+{
+  "version": "1.0",
+  "seed": 42,
+  "sample_rate": 16000,
+  "format": "FLAC",
+  "output_directory": "tests/fixtures/voice/audio",
+  "files": [
+    {
+      "filename": "cmd_01_clean.flac",
+      "command_id": "cmd_01",
+      "preset": "clean",
+      "text": "Attribution saved for Headlock",
+      "domain_keywords": [
+        "attribution",
+        "saved",
+        "headlock"
+      ],
+      "sha256": "df6586bdfca5299e672c1bdff440adf85e9c317b69fe41e7da6c4310d0be867e",
+      "duration_seconds": 1.9156
+    },
+    {
+      "filename": "cmd_01_codec.flac",
+      "command_id": "cmd_01",
+      "preset": "codec",
+      "text": "Attribution saved for Headlock",
+      "domain_keywords": [
+        "attribution",
+        "saved",
+        "headlock"
+      ],
+      "sha256": "67b99741bd2edfcc6086d70ed7c4df22c09c48025425f6f1168890be96bb0bb0",
+      "duration_seconds": 1.9156
+    },
+    {
+      "filename": "cmd_01_extreme.flac",
+      "command_id": "cmd_01",
+      "preset": "extreme",
+      "text": "Attribution saved for Headlock",
+      "domain_keywords": [
+        "attribution",
+        "saved",
+        "headlock"
+      ],
+      "sha256": "fe1507bec3d6bf8c67ec17d96aa0e4fd45e04eb00d4e5c07cfd8269656fd243c",
+      "duration_seconds": 5.4921
+    },
+    {
+      "filename": "cmd_01_noisy_cafe.flac",
+      "command_id": "cmd_01",
+      "preset": "noisy_cafe",
+      "text": "Attribution saved for Headlock",
+      "domain_keywords": [
+        "attribution",
+        "saved",
+        "headlock"
+      ],
+      "sha256": "8d55969d01d1d21c9990341ee88446ea79f241e13787b7ab7a46655b6f32d5e2",
+      "duration_seconds": 3.7021
+    },
+    {
+      "filename": "cmd_01_office.flac",
+      "command_id": "cmd_01",
+      "preset": "office",
+      "text": "Attribution saved for Headlock",
+      "domain_keywords": [
+        "attribution",
+        "saved",
+        "headlock"
+      ],
+      "sha256": "5c00d64d2e1750f2577e33c7ca4fe29c1aae6d4005d84797c08cea1115a7e544",
+      "duration_seconds": 2.8157
+    },
+    {
+      "filename": "cmd_02_clean.flac",
+      "command_id": "cmd_02",
+      "preset": "clean",
+      "text": "Confidence updated to 0.87",
+      "domain_keywords": [
+        "confidence",
+        "updated"
+      ],
+      "sha256": "ed51ab30e07a028cfb938971f785c53c93b3137231f4550943a6fcaaf9089db0",
+      "duration_seconds": 2.7864
+    },
+    {
+      "filename": "cmd_02_codec.flac",
+      "command_id": "cmd_02",
+      "preset": "codec",
+      "text": "Confidence updated to 0.87",
+      "domain_keywords": [
+        "confidence",
+        "updated"
+      ],
+      "sha256": "fdfa7873f8b42cd01e355cf9902d71d86422ea0dfeff280c3ca76d0568e47b3a",
+      "duration_seconds": 2.7864
+    },
+    {
+      "filename": "cmd_02_extreme.flac",
+      "command_id": "cmd_02",
+      "preset": "extreme",
+      "text": "Confidence updated to 0.87",
+      "domain_keywords": [
+        "confidence",
+        "updated"
+      ],
+      "sha256": "286f9507e6f5cd5ab4247d055636032d49f797aa85b45166d218b80c664611a8",
+      "duration_seconds": 6.3629
+    },
+    {
+      "filename": "cmd_02_noisy_cafe.flac",
+      "command_id": "cmd_02",
+      "preset": "noisy_cafe",
+      "text": "Confidence updated to 0.87",
+      "domain_keywords": [
+        "confidence",
+        "updated"
+      ],
+      "sha256": "6befc0d5cc4a2001bff7f8b27ff03032e5424b03813b186cf8295a42b9c1e2c7",
+      "duration_seconds": 4.5729
+    },
+    {
+      "filename": "cmd_02_office.flac",
+      "command_id": "cmd_02",
+      "preset": "office",
+      "text": "Confidence updated to 0.87",
+      "domain_keywords": [
+        "confidence",
+        "updated"
+      ],
+      "sha256": "52d78569bc3cd20b0ee28f5131fb0051e1c3f688df09f0f00b3c89ddebb8badc",
+      "duration_seconds": 3.6865
+    },
+    {
+      "filename": "cmd_03_clean.flac",
+      "command_id": "cmd_03",
+      "preset": "clean",
+      "text": "Three tracks queued for review",
+      "domain_keywords": [
+        "tracks",
+        "queued",
+        "review"
+      ],
+      "sha256": "c46f2cb9cce5086c17c4b0b55cef70e09a93c3fce041c275bf404f62a23757df",
+      "duration_seconds": 1.7531
+    },
+    {
+      "filename": "cmd_03_codec.flac",
+      "command_id": "cmd_03",
+      "preset": "codec",
+      "text": "Three tracks queued for review",
+      "domain_keywords": [
+        "tracks",
+        "queued",
+        "review"
+      ],
+      "sha256": "bc7adcdfd2d1767decf73aab20eafa288c2ba83f2b39b3ad709ee0d0b362cfcf",
+      "duration_seconds": 1.7531
+    },
+    {
+      "filename": "cmd_03_extreme.flac",
+      "command_id": "cmd_03",
+      "preset": "extreme",
+      "text": "Three tracks queued for review",
+      "domain_keywords": [
+        "tracks",
+        "queued",
+        "review"
+      ],
+      "sha256": "096f4cdca53370c8f1bffd513aaaacce6a36d3df79a6827322a99cc38ecdecce",
+      "duration_seconds": 5.3296
+    },
+    {
+      "filename": "cmd_03_noisy_cafe.flac",
+      "command_id": "cmd_03",
+      "preset": "noisy_cafe",
+      "text": "Three tracks queued for review",
+      "domain_keywords": [
+        "tracks",
+        "queued",
+        "review"
+      ],
+      "sha256": "7fd356d697056ff0ee203e519249a3aef73c65a4c8b734a53815cb79c902c0b5",
+      "duration_seconds": 3.5396
+    },
+    {
+      "filename": "cmd_03_office.flac",
+      "command_id": "cmd_03",
+      "preset": "office",
+      "text": "Three tracks queued for review",
+      "domain_keywords": [
+        "tracks",
+        "queued",
+        "review"
+      ],
+      "sha256": "c7ac729c2489daea4b45984fa17d6b4f77180f3f2ec1182358e22a3863330559",
+      "duration_seconds": 2.6532
+    },
+    {
+      "filename": "cmd_04_clean.flac",
+      "command_id": "cmd_04",
+      "preset": "clean",
+      "text": "Found 12 results for Imogen Heap",
+      "domain_keywords": [
+        "results",
+        "imogen",
+        "heap"
+      ],
+      "sha256": "65fea3f7715cd135e77a89a8c89aaf64bb72f052d2ebca749db1bea956cafe92",
+      "duration_seconds": 2.113
+    },
+    {
+      "filename": "cmd_04_codec.flac",
+      "command_id": "cmd_04",
+      "preset": "codec",
+      "text": "Found 12 results for Imogen Heap",
+      "domain_keywords": [
+        "results",
+        "imogen",
+        "heap"
+      ],
+      "sha256": "cd9d6a54ec8f232f568a35f6cd2433d5374ab8b29c91d14dc0f1e70f84b740b4",
+      "duration_seconds": 2.113
+    },
+    {
+      "filename": "cmd_04_extreme.flac",
+      "command_id": "cmd_04",
+      "preset": "extreme",
+      "text": "Found 12 results for Imogen Heap",
+      "domain_keywords": [
+        "results",
+        "imogen",
+        "heap"
+      ],
+      "sha256": "3175053fd4f2a9725a649a892a0518b1de11df9287478c265efffc2444db86b0",
+      "duration_seconds": 5.6895
+    },
+    {
+      "filename": "cmd_04_noisy_cafe.flac",
+      "command_id": "cmd_04",
+      "preset": "noisy_cafe",
+      "text": "Found 12 results for Imogen Heap",
+      "domain_keywords": [
+        "results",
+        "imogen",
+        "heap"
+      ],
+      "sha256": "76e16e7a19fa6baba03da7d906c612523a54ff36cb4d0120eb25647f5c6accae",
+      "duration_seconds": 3.8995
+    },
+    {
+      "filename": "cmd_04_office.flac",
+      "command_id": "cmd_04",
+      "preset": "office",
+      "text": "Found 12 results for Imogen Heap",
+      "domain_keywords": [
+        "results",
+        "imogen",
+        "heap"
+      ],
+      "sha256": "bfeeff6461e5439d0ecf14a49411e937498c2667f1b8278a1f0ccf1ad94fd8f5",
+      "duration_seconds": 3.0131
+    },
+    {
+      "filename": "cmd_05_clean.flac",
+      "command_id": "cmd_05",
+      "preset": "clean",
+      "text": "Permission denied, AI training requires artist consent",
+      "domain_keywords": [
+        "permission",
+        "training",
+        "artist",
+        "consent"
+      ],
+      "sha256": "92d237bebdb15bde469b912687ec2317564e41c5801c1dce888aadc0cfbb7b24",
+      "duration_seconds": 3.4249
+    },
+    {
+      "filename": "cmd_05_codec.flac",
+      "command_id": "cmd_05",
+      "preset": "codec",
+      "text": "Permission denied, AI training requires artist consent",
+      "domain_keywords": [
+        "permission",
+        "training",
+        "artist",
+        "consent"
+      ],
+      "sha256": "d218f44f69bc52b42c539b2eb4fe61b5927b806f762c02545548bc7c6ecf908e",
+      "duration_seconds": 3.4249
+    },
+    {
+      "filename": "cmd_05_extreme.flac",
+      "command_id": "cmd_05",
+      "preset": "extreme",
+      "text": "Permission denied, AI training requires artist consent",
+      "domain_keywords": [
+        "permission",
+        "training",
+        "artist",
+        "consent"
+      ],
+      "sha256": "a344e153b47de81ff504f2e2b2fce40a41a3788255c194c3e1c7adc6752b9ec8",
+      "duration_seconds": 7.0015
+    },
+    {
+      "filename": "cmd_05_noisy_cafe.flac",
+      "command_id": "cmd_05",
+      "preset": "noisy_cafe",
+      "text": "Permission denied, AI training requires artist consent",
+      "domain_keywords": [
+        "permission",
+        "training",
+        "artist",
+        "consent"
+      ],
+      "sha256": "90f28066b11b92d0569235da875b056b0c73e8353b5c301e8160a93d20ffa72a",
+      "duration_seconds": 5.2114
+    },
+    {
+      "filename": "cmd_05_office.flac",
+      "command_id": "cmd_05",
+      "preset": "office",
+      "text": "Permission denied, AI training requires artist consent",
+      "domain_keywords": [
+        "permission",
+        "training",
+        "artist",
+        "consent"
+      ],
+      "sha256": "aebc3fada98404f17243f60006f1fdced6041b82ed5f8df983041aeec6805e1a",
+      "duration_seconds": 4.3251
+    },
+    {
+      "filename": "cmd_06_clean.flac",
+      "command_id": "cmd_06",
+      "preset": "clean",
+      "text": "Search for tracks by Frou Frou",
+      "domain_keywords": [
+        "search",
+        "tracks",
+        "frou"
+      ],
+      "sha256": "e41cbcafff2dffcfa84c4b65671a10e4c43a992509d72332f68c98e878a52858",
+      "duration_seconds": 1.7879
+    },
+    {
+      "filename": "cmd_06_codec.flac",
+      "command_id": "cmd_06",
+      "preset": "codec",
+      "text": "Search for tracks by Frou Frou",
+      "domain_keywords": [
+        "search",
+        "tracks",
+        "frou"
+      ],
+      "sha256": "ab3c88e7b05e6f3520776b61ab7ff2975b6158b96696522cfa396feca0fea33e",
+      "duration_seconds": 1.7879
+    },
+    {
+      "filename": "cmd_06_extreme.flac",
+      "command_id": "cmd_06",
+      "preset": "extreme",
+      "text": "Search for tracks by Frou Frou",
+      "domain_keywords": [
+        "search",
+        "tracks",
+        "frou"
+      ],
+      "sha256": "c0bafd3094e58d3ba47a7d5e8bb17c06cab4c86e99cc492961b7deb24e86cc5b",
+      "duration_seconds": 5.3645
+    },
+    {
+      "filename": "cmd_06_noisy_cafe.flac",
+      "command_id": "cmd_06",
+      "preset": "noisy_cafe",
+      "text": "Search for tracks by Frou Frou",
+      "domain_keywords": [
+        "search",
+        "tracks",
+        "frou"
+      ],
+      "sha256": "a3a09882bc3d892d62a621382f1c32428cee6c86f57aeeb418a5a9a8a90a670e",
+      "duration_seconds": 3.5744
+    },
+    {
+      "filename": "cmd_06_office.flac",
+      "command_id": "cmd_06",
+      "preset": "office",
+      "text": "Search for tracks by Frou Frou",
+      "domain_keywords": [
+        "search",
+        "tracks",
+        "frou"
+      ],
+      "sha256": "ef9c0bb14177334a1e6626de006624dd66b711ceadc1a92a926f28cd55e43b36",
+      "duration_seconds": 2.6881
+    },
+    {
+      "filename": "cmd_07_clean.flac",
+      "command_id": "cmd_07",
+      "preset": "clean",
+      "text": "Assurance level upgraded to A2",
+      "domain_keywords": [
+        "assurance",
+        "level",
+        "upgraded"
+      ],
+      "sha256": "5f00e87aab76277f9c24acbc70d37f943725effac72fa02d8ad60820b81b840f",
+      "duration_seconds": 2.113
+    },
+    {
+      "filename": "cmd_07_codec.flac",
+      "command_id": "cmd_07",
+      "preset": "codec",
+      "text": "Assurance level upgraded to A2",
+      "domain_keywords": [
+        "assurance",
+        "level",
+        "upgraded"
+      ],
+      "sha256": "c003df3fcbdd195389f336b7295b9a5db8adbc216ad46192fb0aa332f8c04f4a",
+      "duration_seconds": 2.113
+    },
+    {
+      "filename": "cmd_07_extreme.flac",
+      "command_id": "cmd_07",
+      "preset": "extreme",
+      "text": "Assurance level upgraded to A2",
+      "domain_keywords": [
+        "assurance",
+        "level",
+        "upgraded"
+      ],
+      "sha256": "bb92bfee8ac14f3f2d705eb05b65caa89dd836cdc425b5abaa2be37196e94bc4",
+      "duration_seconds": 5.6895
+    },
+    {
+      "filename": "cmd_07_noisy_cafe.flac",
+      "command_id": "cmd_07",
+      "preset": "noisy_cafe",
+      "text": "Assurance level upgraded to A2",
+      "domain_keywords": [
+        "assurance",
+        "level",
+        "upgraded"
+      ],
+      "sha256": "01704899546fe658b69b912a67a77a1e3c9ba4bc96619bd610f20a6da6b44acb",
+      "duration_seconds": 3.8995
+    },
+    {
+      "filename": "cmd_07_office.flac",
+      "command_id": "cmd_07",
+      "preset": "office",
+      "text": "Assurance level upgraded to A2",
+      "domain_keywords": [
+        "assurance",
+        "level",
+        "upgraded"
+      ],
+      "sha256": "9f60719ccf3d440bf32ae2536b6e9cca5854d249c51bd8b6dcbefa85de14eb32",
+      "duration_seconds": 3.0131
+    },
+    {
+      "filename": "cmd_08_clean.flac",
+      "command_id": "cmd_08",
+      "preset": "clean",
+      "text": "MusicBrainz and Discogs sources agree",
+      "domain_keywords": [
+        "musicbrainz",
+        "discogs",
+        "sources",
+        "agree"
+      ],
+      "sha256": "bdd64b5f22005b2775141476a9012e1394052371edf8071b0dc432a9145cb3e8",
+      "duration_seconds": 2.4729
+    },
+    {
+      "filename": "cmd_08_codec.flac",
+      "command_id": "cmd_08",
+      "preset": "codec",
+      "text": "MusicBrainz and Discogs sources agree",
+      "domain_keywords": [
+        "musicbrainz",
+        "discogs",
+        "sources",
+        "agree"
+      ],
+      "sha256": "ed67d4886ff36ab8ccc69ff79fcaa2a5a265ac66f894a29af9c6f4f1542bebbd",
+      "duration_seconds": 2.4729
+    },
+    {
+      "filename": "cmd_08_extreme.flac",
+      "command_id": "cmd_08",
+      "preset": "extreme",
+      "text": "MusicBrainz and Discogs sources agree",
+      "domain_keywords": [
+        "musicbrainz",
+        "discogs",
+        "sources",
+        "agree"
+      ],
+      "sha256": "84053da6f1f611d4b31c0533a25b7cc882bc014e9d6ccb09281c6cea3cbc95ec",
+      "duration_seconds": 6.0495
+    },
+    {
+      "filename": "cmd_08_noisy_cafe.flac",
+      "command_id": "cmd_08",
+      "preset": "noisy_cafe",
+      "text": "MusicBrainz and Discogs sources agree",
+      "domain_keywords": [
+        "musicbrainz",
+        "discogs",
+        "sources",
+        "agree"
+      ],
+      "sha256": "cc2d20294fb51edaf2a4f58ec6800c9715af4cbb76ee9706eeea11b95b34755d",
+      "duration_seconds": 4.2594
+    },
+    {
+      "filename": "cmd_08_office.flac",
+      "command_id": "cmd_08",
+      "preset": "office",
+      "text": "MusicBrainz and Discogs sources agree",
+      "domain_keywords": [
+        "musicbrainz",
+        "discogs",
+        "sources",
+        "agree"
+      ],
+      "sha256": "cb500156c05518498d2e2572bd05f2bc048a6f6a871d54229774ea7d79108d54",
+      "duration_seconds": 3.3731
+    },
+    {
+      "filename": "cmd_09_clean.flac",
+      "command_id": "cmd_09",
+      "preset": "clean",
+      "text": "Low confidence warning for track seven",
+      "domain_keywords": [
+        "confidence",
+        "warning",
+        "track"
+      ],
+      "sha256": "729b3ff1ce953782937241b7922affb5c520340d3e86c478a8ae94a78571e37e",
+      "duration_seconds": 2.2059
+    },
+    {
+      "filename": "cmd_09_codec.flac",
+      "command_id": "cmd_09",
+      "preset": "codec",
+      "text": "Low confidence warning for track seven",
+      "domain_keywords": [
+        "confidence",
+        "warning",
+        "track"
+      ],
+      "sha256": "58274844753a66b6ce34db0bd1fcba37dccf72f351efd323d1c7092c88d0d328",
+      "duration_seconds": 2.2059
+    },
+    {
+      "filename": "cmd_09_extreme.flac",
+      "command_id": "cmd_09",
+      "preset": "extreme",
+      "text": "Low confidence warning for track seven",
+      "domain_keywords": [
+        "confidence",
+        "warning",
+        "track"
+      ],
+      "sha256": "584ec5146269ad2bf42d68cca74bd290f52d58da56a57d23061d54d0f1c7f5fc",
+      "duration_seconds": 5.7824
+    },
+    {
+      "filename": "cmd_09_noisy_cafe.flac",
+      "command_id": "cmd_09",
+      "preset": "noisy_cafe",
+      "text": "Low confidence warning for track seven",
+      "domain_keywords": [
+        "confidence",
+        "warning",
+        "track"
+      ],
+      "sha256": "e89b4dd864abaa573a97a7be40c3cc838cba6addc462fb6aac4c90d55a3755c5",
+      "duration_seconds": 3.9924
+    },
+    {
+      "filename": "cmd_09_office.flac",
+      "command_id": "cmd_09",
+      "preset": "office",
+      "text": "Low confidence warning for track seven",
+      "domain_keywords": [
+        "confidence",
+        "warning",
+        "track"
+      ],
+      "sha256": "fc82e3ca67c0e75888209d3bcc3b0e6af8c0c5ae76ffb131f3ce358ac7285bbd",
+      "duration_seconds": 3.106
+    },
+    {
+      "filename": "cmd_10_clean.flac",
+      "command_id": "cmd_10",
+      "preset": "clean",
+      "text": "Batch review complete, 15 of 20 approved",
+      "domain_keywords": [
+        "batch",
+        "review",
+        "complete",
+        "approved"
+      ],
+      "sha256": "8ec1c68ec2f9041f33bba533076e3b3a1b9caf4097f92949ce4c9c5105576302",
+      "duration_seconds": 2.8213
+    },
+    {
+      "filename": "cmd_10_codec.flac",
+      "command_id": "cmd_10",
+      "preset": "codec",
+      "text": "Batch review complete, 15 of 20 approved",
+      "domain_keywords": [
+        "batch",
+        "review",
+        "complete",
+        "approved"
+      ],
+      "sha256": "2ccbe11cb9521583be2941a3627d73adee0076310f82d0c921e5ffbec8f96f47",
+      "duration_seconds": 2.8213
+    },
+    {
+      "filename": "cmd_10_extreme.flac",
+      "command_id": "cmd_10",
+      "preset": "extreme",
+      "text": "Batch review complete, 15 of 20 approved",
+      "domain_keywords": [
+        "batch",
+        "review",
+        "complete",
+        "approved"
+      ],
+      "sha256": "8b80863694ccf18605c0f4a61c54fabaf0fb3c4a63fcd623319d908e05b78658",
+      "duration_seconds": 6.3978
+    },
+    {
+      "filename": "cmd_10_noisy_cafe.flac",
+      "command_id": "cmd_10",
+      "preset": "noisy_cafe",
+      "text": "Batch review complete, 15 of 20 approved",
+      "domain_keywords": [
+        "batch",
+        "review",
+        "complete",
+        "approved"
+      ],
+      "sha256": "02e8d84e2213cdf822cd7ff6b323aabaa8d1ccf63c9ae447d2d97c8ebd17cf52",
+      "duration_seconds": 4.6078
+    },
+    {
+      "filename": "cmd_10_office.flac",
+      "command_id": "cmd_10",
+      "preset": "office",
+      "text": "Batch review complete, 15 of 20 approved",
+      "domain_keywords": [
+        "batch",
+        "review",
+        "complete",
+        "approved"
+      ],
+      "sha256": "26e0e8d3551eee8ee85b7c9ac96edc24af2e8d56cb232465c2abb4e0d0d5f09e",
+      "duration_seconds": 3.7214
+    },
+    {
+      "filename": "cmd_11_clean.flac",
+      "command_id": "cmd_11",
+      "preset": "clean",
+      "text": "What is the confidence score for Hide and Seek?",
+      "domain_keywords": [
+        "confidence",
+        "score",
+        "hide",
+        "seek"
+      ],
+      "sha256": "36cc48e8d16c41372988309834c349d3d4d9b31b733b06d1c1d607743aeb102a",
+      "duration_seconds": 2.4497
+    },
+    {
+      "filename": "cmd_11_codec.flac",
+      "command_id": "cmd_11",
+      "preset": "codec",
+      "text": "What is the confidence score for Hide and Seek?",
+      "domain_keywords": [
+        "confidence",
+        "score",
+        "hide",
+        "seek"
+      ],
+      "sha256": "478b4a94fd093039a30c53eb94a8b0d25729ef8784309d5b9543ae8f649258aa",
+      "duration_seconds": 2.4497
+    },
+    {
+      "filename": "cmd_11_extreme.flac",
+      "command_id": "cmd_11",
+      "preset": "extreme",
+      "text": "What is the confidence score for Hide and Seek?",
+      "domain_keywords": [
+        "confidence",
+        "score",
+        "hide",
+        "seek"
+      ],
+      "sha256": "5452fad09c2736295a9b1d4e09f8e104d1dfdda674ee13ee4cac1f5ffb7ba5ba",
+      "duration_seconds": 6.0263
+    },
+    {
+      "filename": "cmd_11_noisy_cafe.flac",
+      "command_id": "cmd_11",
+      "preset": "noisy_cafe",
+      "text": "What is the confidence score for Hide and Seek?",
+      "domain_keywords": [
+        "confidence",
+        "score",
+        "hide",
+        "seek"
+      ],
+      "sha256": "748e452b7b1bf9d8c752d8c2e08d91bf9eb8ebc5637323a8010cc49be32cffb2",
+      "duration_seconds": 4.2361
+    },
+    {
+      "filename": "cmd_11_office.flac",
+      "command_id": "cmd_11",
+      "preset": "office",
+      "text": "What is the confidence score for Hide and Seek?",
+      "domain_keywords": [
+        "confidence",
+        "score",
+        "hide",
+        "seek"
+      ],
+      "sha256": "6949df729d3abc8d0e0a86749b0c7bc0b2b6224a24cff88bd73943c94ad04977",
+      "duration_seconds": 3.3499
+    },
+    {
+      "filename": "cmd_12_clean.flac",
+      "command_id": "cmd_12",
+      "preset": "clean",
+      "text": "Show me low confidence attributions",
+      "domain_keywords": [
+        "low",
+        "confidence",
+        "attributions"
+      ],
+      "sha256": "e9a97240c09997151c6c5288e7bfc37e9664f48c130235f6bb286e3b5ffd7b9d",
+      "duration_seconds": 2.1479
+    },
+    {
+      "filename": "cmd_12_codec.flac",
+      "command_id": "cmd_12",
+      "preset": "codec",
+      "text": "Show me low confidence attributions",
+      "domain_keywords": [
+        "low",
+        "confidence",
+        "attributions"
+      ],
+      "sha256": "263f88e24bccf172bc93d34602bae412e632ef5a05d1c7b1c6144d27928a9750",
+      "duration_seconds": 2.1479
+    },
+    {
+      "filename": "cmd_12_extreme.flac",
+      "command_id": "cmd_12",
+      "preset": "extreme",
+      "text": "Show me low confidence attributions",
+      "domain_keywords": [
+        "low",
+        "confidence",
+        "attributions"
+      ],
+      "sha256": "081fe5621c2c4f286c0e167e24ac099a3609bd8ffbdd5417e18dec50764fd3e7",
+      "duration_seconds": 5.7244
+    },
+    {
+      "filename": "cmd_12_noisy_cafe.flac",
+      "command_id": "cmd_12",
+      "preset": "noisy_cafe",
+      "text": "Show me low confidence attributions",
+      "domain_keywords": [
+        "low",
+        "confidence",
+        "attributions"
+      ],
+      "sha256": "61fea13d8c08c9febd349d0e9a37da473c499c41a8744da515525defc41466c1",
+      "duration_seconds": 3.9344
+    },
+    {
+      "filename": "cmd_12_office.flac",
+      "command_id": "cmd_12",
+      "preset": "office",
+      "text": "Show me low confidence attributions",
+      "domain_keywords": [
+        "low",
+        "confidence",
+        "attributions"
+      ],
+      "sha256": "20b672155d668ae1feee695bd2a7b93e92889d685612460ae4dea61c5ba22166",
+      "duration_seconds": 3.048
+    },
+    {
+      "filename": "cmd_13_clean.flac",
+      "command_id": "cmd_13",
+      "preset": "clean",
+      "text": "The songwriter should be Imogen Heap",
+      "domain_keywords": [
+        "songwriter",
+        "imogen",
+        "heap"
+      ],
+      "sha256": "d058159c542ef0295dbe4370d16f02e5e078b71f6acf300b8c0008d9b88b0193",
+      "duration_seconds": 1.9969
+    },
+    {
+      "filename": "cmd_13_codec.flac",
+      "command_id": "cmd_13",
+      "preset": "codec",
+      "text": "The songwriter should be Imogen Heap",
+      "domain_keywords": [
+        "songwriter",
+        "imogen",
+        "heap"
+      ],
+      "sha256": "3eca36be101b29b99b06b2129ad9721e10d53741b4f85397ff11c6196d52fc1e",
+      "duration_seconds": 1.9969
+    },
+    {
+      "filename": "cmd_13_extreme.flac",
+      "command_id": "cmd_13",
+      "preset": "extreme",
+      "text": "The songwriter should be Imogen Heap",
+      "domain_keywords": [
+        "songwriter",
+        "imogen",
+        "heap"
+      ],
+      "sha256": "a7a594b95a13a559747c9b77069a6ef664758519563ebc068f50a3e7e0868a3d",
+      "duration_seconds": 5.5735
+    },
+    {
+      "filename": "cmd_13_noisy_cafe.flac",
+      "command_id": "cmd_13",
+      "preset": "noisy_cafe",
+      "text": "The songwriter should be Imogen Heap",
+      "domain_keywords": [
+        "songwriter",
+        "imogen",
+        "heap"
+      ],
+      "sha256": "730a1c9fdeaeaece741c263053e6a38543214be9cc060d654b4cf2dfe75414c9",
+      "duration_seconds": 3.7834
+    },
+    {
+      "filename": "cmd_13_office.flac",
+      "command_id": "cmd_13",
+      "preset": "office",
+      "text": "The songwriter should be Imogen Heap",
+      "domain_keywords": [
+        "songwriter",
+        "imogen",
+        "heap"
+      ],
+      "sha256": "a0ac2e2843dace6ab19c1fdd545b71027d94fb2899439682933a7611d0eaba15",
+      "duration_seconds": 2.8971
+    },
+    {
+      "filename": "cmd_14_clean.flac",
+      "command_id": "cmd_14",
+      "preset": "clean",
+      "text": "I rate this attribution nine out of ten",
+      "domain_keywords": [
+        "rate",
+        "attribution",
+        "nine",
+        "ten"
+      ],
+      "sha256": "309bc184c7d5cf694aa81596b747249efdd06011420c4822556491c1e360f60e",
+      "duration_seconds": 2.4381
+    },
+    {
+      "filename": "cmd_14_codec.flac",
+      "command_id": "cmd_14",
+      "preset": "codec",
+      "text": "I rate this attribution nine out of ten",
+      "domain_keywords": [
+        "rate",
+        "attribution",
+        "nine",
+        "ten"
+      ],
+      "sha256": "42a796f23d8b7e39580079aafa64cdc902b574171983eda764a1a3260083432a",
+      "duration_seconds": 2.4381
+    },
+    {
+      "filename": "cmd_14_extreme.flac",
+      "command_id": "cmd_14",
+      "preset": "extreme",
+      "text": "I rate this attribution nine out of ten",
+      "domain_keywords": [
+        "rate",
+        "attribution",
+        "nine",
+        "ten"
+      ],
+      "sha256": "efff423913976064553f32923b930b1f0980579487abe87a00ca4ff9d077b85b",
+      "duration_seconds": 6.0146
+    },
+    {
+      "filename": "cmd_14_noisy_cafe.flac",
+      "command_id": "cmd_14",
+      "preset": "noisy_cafe",
+      "text": "I rate this attribution nine out of ten",
+      "domain_keywords": [
+        "rate",
+        "attribution",
+        "nine",
+        "ten"
+      ],
+      "sha256": "9c1fb69085a3d05ceeac5b7be62bc5b106df99305e083cec14505d334577c216",
+      "duration_seconds": 4.2246
+    },
+    {
+      "filename": "cmd_14_office.flac",
+      "command_id": "cmd_14",
+      "preset": "office",
+      "text": "I rate this attribution nine out of ten",
+      "domain_keywords": [
+        "rate",
+        "attribution",
+        "nine",
+        "ten"
+      ],
+      "sha256": "a5375abe67bbca3e8f960aacc52f8b0f176288784b7d99ee77019b476c72fd1b",
+      "duration_seconds": 3.3382
+    },
+    {
+      "filename": "cmd_15_clean.flac",
+      "command_id": "cmd_15",
+      "preset": "clean",
+      "text": "Correct the artist name to Frou Frou",
+      "domain_keywords": [
+        "correct",
+        "artist",
+        "frou"
+      ],
+      "sha256": "819ab5b41663207e5f1780ab1d5259be3e6c0357256741184b154f24cbf5ccd1",
+      "duration_seconds": 2.3336
+    },
+    {
+      "filename": "cmd_15_codec.flac",
+      "command_id": "cmd_15",
+      "preset": "codec",
+      "text": "Correct the artist name to Frou Frou",
+      "domain_keywords": [
+        "correct",
+        "artist",
+        "frou"
+      ],
+      "sha256": "09c40031c8f3efc3d92df08ee1fd56573ca22b7947041b1fae1f92bc3b899699",
+      "duration_seconds": 2.3336
+    },
+    {
+      "filename": "cmd_15_extreme.flac",
+      "command_id": "cmd_15",
+      "preset": "extreme",
+      "text": "Correct the artist name to Frou Frou",
+      "domain_keywords": [
+        "correct",
+        "artist",
+        "frou"
+      ],
+      "sha256": "af8f4a585b0e1470dfcc1df7ecd1aa0c7c004cb29b08ef408e48d63de854092d",
+      "duration_seconds": 5.9101
+    },
+    {
+      "filename": "cmd_15_noisy_cafe.flac",
+      "command_id": "cmd_15",
+      "preset": "noisy_cafe",
+      "text": "Correct the artist name to Frou Frou",
+      "domain_keywords": [
+        "correct",
+        "artist",
+        "frou"
+      ],
+      "sha256": "df4a032f6da3bd52bb9d633b9fdf2659730f610ece7773d680e3c1a52e6862f7",
+      "duration_seconds": 4.1201
+    },
+    {
+      "filename": "cmd_15_office.flac",
+      "command_id": "cmd_15",
+      "preset": "office",
+      "text": "Correct the artist name to Frou Frou",
+      "domain_keywords": [
+        "correct",
+        "artist",
+        "frou"
+      ],
+      "sha256": "01b2f66a49a74c2a384bc4e461162616dfad8a81a1ed786eee760c4f6afeaa15",
+      "duration_seconds": 3.2338
+    },
+    {
+      "filename": "cmd_16_clean.flac",
+      "command_id": "cmd_16",
+      "preset": "clean",
+      "text": "What does assurance level A2 mean?",
+      "domain_keywords": [
+        "assurance",
+        "level",
+        "mean"
+      ],
+      "sha256": "b1e666ce202b4afda83714a31e93b10703c0d4ac651e5cbc23dd3d4a6c393714",
+      "duration_seconds": 2.0782
+    },
+    {
+      "filename": "cmd_16_codec.flac",
+      "command_id": "cmd_16",
+      "preset": "codec",
+      "text": "What does assurance level A2 mean?",
+      "domain_keywords": [
+        "assurance",
+        "level",
+        "mean"
+      ],
+      "sha256": "8ff403f54f0836446f84dde5bcfd4458db27e7943ce115bbe72c14c7de54899c",
+      "duration_seconds": 2.0782
+    },
+    {
+      "filename": "cmd_16_extreme.flac",
+      "command_id": "cmd_16",
+      "preset": "extreme",
+      "text": "What does assurance level A2 mean?",
+      "domain_keywords": [
+        "assurance",
+        "level",
+        "mean"
+      ],
+      "sha256": "5a48e311b691305017f6443c3ff528b8720585e5471e22bfef82c12e0cfad9d2",
+      "duration_seconds": 5.6547
+    },
+    {
+      "filename": "cmd_16_noisy_cafe.flac",
+      "command_id": "cmd_16",
+      "preset": "noisy_cafe",
+      "text": "What does assurance level A2 mean?",
+      "domain_keywords": [
+        "assurance",
+        "level",
+        "mean"
+      ],
+      "sha256": "53a81c27330143b81781d4a992997a183f0e1af819d500ac94b379507128bfd3",
+      "duration_seconds": 3.8646
+    },
+    {
+      "filename": "cmd_16_office.flac",
+      "command_id": "cmd_16",
+      "preset": "office",
+      "text": "What does assurance level A2 mean?",
+      "domain_keywords": [
+        "assurance",
+        "level",
+        "mean"
+      ],
+      "sha256": "bdb76f941340bf5379d77649d643c629aa19e6b7a66032d038c3fd2dbbea55d6",
+      "duration_seconds": 2.9784
+    },
+    {
+      "filename": "cmd_17_clean.flac",
+      "command_id": "cmd_17",
+      "preset": "clean",
+      "text": "Export attribution report for this album",
+      "domain_keywords": [
+        "export",
+        "attribution",
+        "report",
+        "album"
+      ],
+      "sha256": "cb4c3306510830b884cacd8418141937b233a452699b48826d707bf674230b2e",
+      "duration_seconds": 2.4961
+    },
+    {
+      "filename": "cmd_17_codec.flac",
+      "command_id": "cmd_17",
+      "preset": "codec",
+      "text": "Export attribution report for this album",
+      "domain_keywords": [
+        "export",
+        "attribution",
+        "report",
+        "album"
+      ],
+      "sha256": "bf4bb7852f0f80476030cb7ae5b6cc295c4095f08137290c0dd3550855bd9997",
+      "duration_seconds": 2.4961
+    },
+    {
+      "filename": "cmd_17_extreme.flac",
+      "command_id": "cmd_17",
+      "preset": "extreme",
+      "text": "Export attribution report for this album",
+      "domain_keywords": [
+        "export",
+        "attribution",
+        "report",
+        "album"
+      ],
+      "sha256": "78a6f56cdc477b034312533556f59b2f2e021061bd7249b949fe10757ba1db12",
+      "duration_seconds": 6.0726
+    },
+    {
+      "filename": "cmd_17_noisy_cafe.flac",
+      "command_id": "cmd_17",
+      "preset": "noisy_cafe",
+      "text": "Export attribution report for this album",
+      "domain_keywords": [
+        "export",
+        "attribution",
+        "report",
+        "album"
+      ],
+      "sha256": "d2938fdd29821eb6f5d21b5e5a590685ee930f4d1535f8862af9b453ef69401a",
+      "duration_seconds": 4.2826
+    },
+    {
+      "filename": "cmd_17_office.flac",
+      "command_id": "cmd_17",
+      "preset": "office",
+      "text": "Export attribution report for this album",
+      "domain_keywords": [
+        "export",
+        "attribution",
+        "report",
+        "album"
+      ],
+      "sha256": "b55ccfd18fec930e42f0a53dfd2b20f61d901850d9428560db171fddda0ed130",
+      "duration_seconds": 3.3963
+    },
+    {
+      "filename": "cmd_18_clean.flac",
+      "command_id": "cmd_18",
+      "preset": "clean",
+      "text": "Compare confidence across all tracks",
+      "domain_keywords": [
+        "compare",
+        "confidence",
+        "tracks"
+      ],
+      "sha256": "9613946e302e1ceaf5a0474981bc714449ec53c1fdfa4be1c99b3e62804df61c",
+      "duration_seconds": 2.1943
+    },
+    {
+      "filename": "cmd_18_codec.flac",
+      "command_id": "cmd_18",
+      "preset": "codec",
+      "text": "Compare confidence across all tracks",
+      "domain_keywords": [
+        "compare",
+        "confidence",
+        "tracks"
+      ],
+      "sha256": "d70a6c51ad33d199ea7aea79e0401b202ee83353e4c98b71dfe0208a693595d5",
+      "duration_seconds": 2.1943
+    },
+    {
+      "filename": "cmd_18_extreme.flac",
+      "command_id": "cmd_18",
+      "preset": "extreme",
+      "text": "Compare confidence across all tracks",
+      "domain_keywords": [
+        "compare",
+        "confidence",
+        "tracks"
+      ],
+      "sha256": "289abfb5d7f95043faacc511af46f302b97efb167b913c76708b436046db8809",
+      "duration_seconds": 5.7709
+    },
+    {
+      "filename": "cmd_18_noisy_cafe.flac",
+      "command_id": "cmd_18",
+      "preset": "noisy_cafe",
+      "text": "Compare confidence across all tracks",
+      "domain_keywords": [
+        "compare",
+        "confidence",
+        "tracks"
+      ],
+      "sha256": "058c67801921f1d0596dc1a73aea65b2bb11cf2f38813e0ff0c2dc942c90bc7d",
+      "duration_seconds": 3.9808
+    },
+    {
+      "filename": "cmd_18_office.flac",
+      "command_id": "cmd_18",
+      "preset": "office",
+      "text": "Compare confidence across all tracks",
+      "domain_keywords": [
+        "compare",
+        "confidence",
+        "tracks"
+      ],
+      "sha256": "58c6ae5ef83a4ebba41c91ab3da09b54138c21656c21c7a86f4462677661998b",
+      "duration_seconds": 3.0945
+    },
+    {
+      "filename": "cmd_19_clean.flac",
+      "command_id": "cmd_19",
+      "preset": "clean",
+      "text": "Flag this attribution for manual review",
+      "domain_keywords": [
+        "flag",
+        "attribution",
+        "manual",
+        "review"
+      ],
+      "sha256": "fad717ffd22c1f34600bd5edc372186fbfbe9a0e52e9451f633e24b49ecc7959",
+      "duration_seconds": 2.4149
+    },
+    {
+      "filename": "cmd_19_codec.flac",
+      "command_id": "cmd_19",
+      "preset": "codec",
+      "text": "Flag this attribution for manual review",
+      "domain_keywords": [
+        "flag",
+        "attribution",
+        "manual",
+        "review"
+      ],
+      "sha256": "a83d8f6e9edc2c7743130afa1e3f0c2a0931793da551f977210a897fe1794cde",
+      "duration_seconds": 2.4149
+    },
+    {
+      "filename": "cmd_19_extreme.flac",
+      "command_id": "cmd_19",
+      "preset": "extreme",
+      "text": "Flag this attribution for manual review",
+      "domain_keywords": [
+        "flag",
+        "attribution",
+        "manual",
+        "review"
+      ],
+      "sha256": "aaf946e760a7f405933e6a4f23f81864ede0f05099036d4947828766814e8245",
+      "duration_seconds": 5.9914
+    },
+    {
+      "filename": "cmd_19_noisy_cafe.flac",
+      "command_id": "cmd_19",
+      "preset": "noisy_cafe",
+      "text": "Flag this attribution for manual review",
+      "domain_keywords": [
+        "flag",
+        "attribution",
+        "manual",
+        "review"
+      ],
+      "sha256": "3e27440728a7ed4ec8b909239f6ced822d5e479abf82ee74ef3402e58603bde5",
+      "duration_seconds": 4.2014
+    },
+    {
+      "filename": "cmd_19_office.flac",
+      "command_id": "cmd_19",
+      "preset": "office",
+      "text": "Flag this attribution for manual review",
+      "domain_keywords": [
+        "flag",
+        "attribution",
+        "manual",
+        "review"
+      ],
+      "sha256": "d0d379a08810d8193810d656ead1480b2bacecb43e7346660e4391cb3ac86817",
+      "duration_seconds": 3.315
+    },
+    {
+      "filename": "cmd_20_clean.flac",
+      "command_id": "cmd_20",
+      "preset": "clean",
+      "text": "Cancel the last correction",
+      "domain_keywords": [
+        "cancel",
+        "last",
+        "correction"
+      ],
+      "sha256": "1f4cc032a274b921244958e20367d82f3ac96177388a4a68ff8469802cc6ba25",
+      "duration_seconds": 1.4396
+    },
+    {
+      "filename": "cmd_20_codec.flac",
+      "command_id": "cmd_20",
+      "preset": "codec",
+      "text": "Cancel the last correction",
+      "domain_keywords": [
+        "cancel",
+        "last",
+        "correction"
+      ],
+      "sha256": "17e51c800e957c1f0db0b9d52be542df06b239e93b7f98a0304a2152eb73e4c5",
+      "duration_seconds": 1.4396
+    },
+    {
+      "filename": "cmd_20_extreme.flac",
+      "command_id": "cmd_20",
+      "preset": "extreme",
+      "text": "Cancel the last correction",
+      "domain_keywords": [
+        "cancel",
+        "last",
+        "correction"
+      ],
+      "sha256": "763d85d1c2598cf51e2dc4a069c0c96606f4bdc653c0acf36e1913097ad75bea",
+      "duration_seconds": 5.0161
+    },
+    {
+      "filename": "cmd_20_noisy_cafe.flac",
+      "command_id": "cmd_20",
+      "preset": "noisy_cafe",
+      "text": "Cancel the last correction",
+      "domain_keywords": [
+        "cancel",
+        "last",
+        "correction"
+      ],
+      "sha256": "bbb320f5eb9e32c8181d354e52542d0e6d130ed63782b446321e960e1f0f7845",
+      "duration_seconds": 3.2261
+    },
+    {
+      "filename": "cmd_20_office.flac",
+      "command_id": "cmd_20",
+      "preset": "office",
+      "text": "Cancel the last correction",
+      "domain_keywords": [
+        "cancel",
+        "last",
+        "correction"
+      ],
+      "sha256": "ba4a7e13b0dc59138d7f6eed05b0757069b52fe94eb5a12ac93f7531940adff6",
+      "duration_seconds": 2.3397
+    }
+  ]
+}

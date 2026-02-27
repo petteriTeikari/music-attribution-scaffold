@@ -28,9 +28,21 @@ docs/prd/decisions/L3-implementation/voice-agent-stack.decision.yaml : PRD node.
 from __future__ import annotations
 
 from enum import Enum
+from pathlib import Path
+from typing import Final
 
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+# ── Pipeline constants — single source of truth for sample rates and defaults ──
+PIPELINE_SAMPLE_RATE: Final[int] = 16_000
+"""Whisper/STT target sample rate (Hz)."""
+
+PIPER_NATIVE_SAMPLE_RATE: Final[int] = 22_050
+"""Piper TTS native output sample rate (Hz)."""
+
+DEFAULT_PIPER_VOICE_ID: Final[str] = "en_US-lessac-medium"
+"""Default Piper TTS voice model identifier."""
 
 
 class STTProvider(str, Enum):
@@ -199,8 +211,12 @@ class VoiceConfig(BaseSettings):
 
     # ── TTS Voice IDs ──────────────────────────────────────────────
     piper_voice_id: str = Field(
-        default="en_US-lessac-medium",
+        default=DEFAULT_PIPER_VOICE_ID,
         description="Piper voice model name (auto-downloaded on first use)",
+    )
+    piper_model_dir: Path | None = Field(
+        default=None,
+        description="Explicit directory for Piper ONNX models (auto-discovered if None)",
     )
     elevenlabs_voice_id: str = Field(
         default="21m00Tcm4TlvDq8ikWAM",
