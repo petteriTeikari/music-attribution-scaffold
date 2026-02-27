@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import math
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import pytest
 
@@ -11,6 +12,9 @@ from music_attribution.voice.degradation import (
     PRESETS,
     DegradationPreset,
 )
+
+if TYPE_CHECKING:
+    import numpy as np
 
 
 class TestDegradationPreset:
@@ -86,6 +90,167 @@ class TestDegradationPreset:
         assert PRESETS[DegradationPreset.CODEC].mp3_bitrate_kbps is not None
         assert PRESETS[DegradationPreset.NOISY_CAFE].mp3_bitrate_kbps is not None
         assert PRESETS[DegradationPreset.EXTREME].mp3_bitrate_kbps is not None
+
+
+class TestApplyDegradation:
+    """Tests for apply_degradation() function."""
+
+    @staticmethod
+    def _sine_wave(freq: float = 440.0, duration: float = 1.0, sr: int = 16000) -> np.ndarray:
+        """Generate a sine wave for testing."""
+        import numpy as np
+
+        t = np.arange(int(sr * duration), dtype=np.float32) / sr
+        return (0.5 * np.sin(2 * np.pi * freq * t)).astype(np.float32)
+
+    @pytest.mark.voice
+    def test_apply_clean_is_passthrough(self) -> None:
+        """CLEAN preset returns audio unchanged (no noise/reverb/codec)."""
+        np = pytest.importorskip("audiomentations")  # noqa: F841
+        import numpy as np_mod
+
+        from music_attribution.voice.degradation import apply_degradation
+
+        audio = self._sine_wave()
+        output = apply_degradation(audio, 16000, DegradationPreset.CLEAN, seed=42)
+        assert np_mod.allclose(output, audio, atol=1e-5)
+
+    @pytest.mark.voice
+    def test_apply_office_changes_audio(self) -> None:
+        """OFFICE preset modifies audio (noise + reverb applied)."""
+        pytest.importorskip("audiomentations")
+        import numpy as np_mod
+
+        from music_attribution.voice.degradation import apply_degradation
+
+        audio = self._sine_wave()
+        output = apply_degradation(audio, 16000, DegradationPreset.OFFICE, seed=42)
+        assert not np_mod.allclose(output[: len(audio)], audio)
+
+    @pytest.mark.voice
+    def test_apply_codec_has_compression_artifacts(self) -> None:
+        """CODEC preset introduces mp3 artifacts but preserves structure."""
+        pytest.importorskip("audiomentations")
+        import numpy as np_mod
+
+        from music_attribution.voice.degradation import apply_degradation
+
+        audio = self._sine_wave()
+        output = apply_degradation(audio, 16000, DegradationPreset.CODEC, seed=42)
+        # Should differ (codec artifacts)
+        assert not np_mod.array_equal(output, audio)
+        # But high correlation (structure preserved)
+        corr = np_mod.corrcoef(output[: len(audio)], audio)[0, 1]
+        assert corr > 0.8
+
+    @pytest.mark.voice
+    def test_apply_noisy_cafe_has_codec_and_noise(self) -> None:
+        """NOISY_CAFE preset applies both env degradation and codec."""
+        pytest.importorskip("audiomentations")
+        import numpy as np_mod
+
+        from music_attribution.voice.degradation import apply_degradation
+
+        audio = self._sine_wave()
+        output = apply_degradation(audio, 16000, DegradationPreset.NOISY_CAFE, seed=42)
+        assert not np_mod.allclose(output[: len(audio)], audio)
+
+    @pytest.mark.voice
+    def test_apply_extreme_changes_audio(self) -> None:
+        """EXTREME preset modifies audio significantly."""
+        pytest.importorskip("audiomentations")
+        import numpy as np_mod
+
+        from music_attribution.voice.degradation import apply_degradation
+
+        audio = self._sine_wave()
+        output = apply_degradation(audio, 16000, DegradationPreset.EXTREME, seed=42)
+        assert not np_mod.allclose(output[: len(audio)], audio)
+
+    @pytest.mark.voice
+    def test_apply_degradation_deterministic(self) -> None:
+        """Same preset + same seed = identical output."""
+        pytest.importorskip("audiomentations")
+        import random
+
+        import numpy as np_mod
+
+        from music_attribution.voice.degradation import apply_degradation
+
+        audio = self._sine_wave()
+
+        random.seed(42)
+        np_mod.random.seed(42)
+        out1 = apply_degradation(audio, 16000, DegradationPreset.OFFICE, seed=42)
+
+        random.seed(42)
+        np_mod.random.seed(42)
+        out2 = apply_degradation(audio, 16000, DegradationPreset.OFFICE, seed=42)
+
+        assert np_mod.array_equal(out1, out2)
+
+    @pytest.mark.voice
+    def test_apply_degradation_different_seeds_differ(self) -> None:
+        """Different seeds produce different output."""
+        pytest.importorskip("audiomentations")
+        import numpy as np_mod
+
+        from music_attribution.voice.degradation import apply_degradation
+
+        audio = self._sine_wave()
+        out1 = apply_degradation(audio, 16000, DegradationPreset.OFFICE, seed=42)
+        out2 = apply_degradation(audio, 16000, DegradationPreset.OFFICE, seed=99)
+        assert not np_mod.array_equal(out1, out2)
+
+    @pytest.mark.voice
+    def test_codec_deterministic(self) -> None:
+        """CODEC preset is deterministic (Mp3Compression has no random component)."""
+        pytest.importorskip("audiomentations")
+        import numpy as np_mod
+
+        from music_attribution.voice.degradation import apply_degradation
+
+        audio = self._sine_wave()
+        out1 = apply_degradation(audio, 16000, DegradationPreset.CODEC, seed=42)
+        out2 = apply_degradation(audio, 16000, DegradationPreset.CODEC, seed=42)
+        assert np_mod.array_equal(out1, out2)
+
+    @pytest.mark.voice
+    def test_output_dtype_is_float32(self) -> None:
+        """Output dtype is float32 for all presets."""
+        pytest.importorskip("audiomentations")
+        import numpy as np_mod
+
+        from music_attribution.voice.degradation import apply_degradation
+
+        audio = self._sine_wave()
+        for preset in DegradationPreset:
+            output = apply_degradation(audio, 16000, preset, seed=42)
+            assert output.dtype == np_mod.float32, f"Wrong dtype for {preset.name}"
+
+    @pytest.mark.voice
+    def test_output_amplitude_bounded(self) -> None:
+        """Output amplitude is within [-1.0, 1.0] for all presets."""
+        pytest.importorskip("audiomentations")
+        import numpy as np_mod
+
+        from music_attribution.voice.degradation import apply_degradation
+
+        audio = self._sine_wave()
+        for preset in DegradationPreset:
+            output = apply_degradation(audio, 16000, preset, seed=42)
+            assert np_mod.all(np_mod.abs(output) <= 1.0), f"Amplitude exceeded for {preset.name}"
+
+    @pytest.mark.voice
+    def test_reverb_output_length(self) -> None:
+        """Reverb tail extends signal — output >= input length."""
+        pytest.importorskip("audiomentations")
+
+        from music_attribution.voice.degradation import apply_degradation
+
+        audio = self._sine_wave()
+        output = apply_degradation(audio, 16000, DegradationPreset.OFFICE, seed=42)
+        assert len(output) >= len(audio)
 
 
 class TestVoiceTestDependencies:
